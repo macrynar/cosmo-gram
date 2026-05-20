@@ -78,10 +78,10 @@ export default function Navbar() {
             <Image
               src="/logo-b-refined.svg"
               alt="Cosmogram"
-              width={168}
-              height={42}
+              width={200}
+              height={50}
               priority
-              className="h-[38px] w-auto transition-opacity duration-200 group-hover:opacity-85 [filter:brightness(0)_invert(1)]"
+              className="h-[46px] w-auto transition-opacity duration-200 group-hover:opacity-85 [filter:brightness(0)_invert(1)]"
             />
           </Link>
 
