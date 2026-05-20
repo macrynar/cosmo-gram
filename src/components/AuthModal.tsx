@@ -140,9 +140,8 @@ export default function AuthModal({ onClose }: Props) {
   // ── Login / Register view ──────────────────────────────────────
   return (
     <ModalShell onClose={onClose}>
-      {/* Title */}
-      <p className="text-center text-base font-semibold text-white font-brand mb-6">
-        {mode === "login" ? "Zaloguj się" : "Załóż konto"}
+      <p className="text-center text-sm text-slate-500 -mt-3 mb-5">
+        {mode === "login" ? "Witaj z powrotem" : "Dołącz do Cosmogram"}
       </p>
 
       {/* Social buttons */}
@@ -238,13 +237,13 @@ function ModalShell({ children, onClose }: { children: React.ReactNode; onClose:
         >
           <X className="w-5 h-5" />
         </button>
-        <div className="flex justify-center mb-6">
+        <div className="flex flex-col items-center mb-7">
           <Image
             src="/logo-b-refined.svg"
             alt="Cosmogram"
-            width={148}
-            height={37}
-            className="h-8 w-auto [filter:brightness(0)_invert(1)]"
+            width={200}
+            height={50}
+            className="h-11 w-auto [filter:brightness(0)_invert(1)]"
           />
         </div>
         {children}
