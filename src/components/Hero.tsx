@@ -12,6 +12,11 @@ export default function Hero() {
       <div className="absolute inset-0 star-bg" aria-hidden="true" />
       <div className="absolute inset-0 deep-space-stars" aria-hidden="true" />
       <div className="absolute inset-0 deep-space-stars layer-two" aria-hidden="true" />
+      <div className="absolute inset-0 deep-space-stars layer-three" aria-hidden="true" />
+      <div className="absolute inset-0 deep-space-stars layer-four" aria-hidden="true" />
+      <div className="absolute inset-0 star-sparkle" aria-hidden="true" />
+      <div className="absolute inset-0 star-sparkle delay-1" aria-hidden="true" />
+      <div className="absolute inset-0 star-sparkle delay-2" aria-hidden="true" />
       <div className="hero-celestial-motion" aria-hidden="true">
         <div className="hero-solar-core">
           <div className="hero-sun" />
