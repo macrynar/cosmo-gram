@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Mail, Lock, ArrowLeft, Loader2, Sparkles, Check } from "lucide-react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 
 type Mode = "login" | "register" | "forgot";
@@ -140,12 +141,9 @@ export default function AuthModal({ onClose }: Props) {
   return (
     <ModalShell onClose={onClose}>
       {/* Title */}
-      <div className="flex items-center gap-2 mb-6">
-        <Sparkles className="w-4 h-4 text-amber-400" />
-        <span className="text-lg font-semibold text-white font-brand">
-          {mode === "login" ? "Zaloguj się" : "Załóż konto"}
-        </span>
-      </div>
+      <p className="text-center text-base font-semibold text-white font-brand mb-6">
+        {mode === "login" ? "Zaloguj się" : "Załóż konto"}
+      </p>
 
       {/* Social buttons */}
       <div className="space-y-2 mb-5">
@@ -240,6 +238,15 @@ function ModalShell({ children, onClose }: { children: React.ReactNode; onClose:
         >
           <X className="w-5 h-5" />
         </button>
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/logo-b-refined.svg"
+            alt="Cosmogram"
+            width={148}
+            height={37}
+            className="h-8 w-auto [filter:brightness(0)_invert(1)]"
+          />
+        </div>
         {children}
       </div>
     </div>
