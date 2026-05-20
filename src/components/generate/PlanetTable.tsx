@@ -30,13 +30,13 @@ export default function PlanetTable({ chart }: Props) {
 
   return (
     <div className="glass-card rounded-2xl overflow-hidden">
-      <div className="px-4 py-3 border-b border-purple-900/30">
+      <div className="px-4 py-3 border-b border-amber-900/25">
         <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase">Pozycje Planet</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-xs text-slate-500 uppercase tracking-wider border-b border-purple-900/20">
+            <tr className="text-xs text-slate-500 uppercase tracking-wider border-b border-amber-900/15">
               <th className="text-left px-4 py-2.5">Planeta</th>
               <th className="text-left px-4 py-2.5">Znak</th>
               <th className="text-left px-4 py-2.5">Stopień</th>
@@ -45,8 +45,8 @@ export default function PlanetTable({ chart }: Props) {
           </thead>
           <tbody>
             {/* ASC row */}
-            <tr className="border-b border-purple-900/10 hover:bg-violet-900/10 transition-colors">
-              <td className="px-4 py-2.5 font-medium text-violet-300">
+            <tr className="border-b border-amber-900/10 hover:bg-amber-900/10 transition-colors">
+              <td className="px-4 py-2.5 font-medium text-slate-300">
                 <span className="mr-2 text-base">⬆</span>Ascendent
               </td>
               <td className="px-4 py-2.5 text-slate-300">
@@ -56,7 +56,7 @@ export default function PlanetTable({ chart }: Props) {
               <td className="px-4 py-2.5 text-slate-500">—</td>
             </tr>
             {/* MC row */}
-            <tr className="border-b border-purple-900/10 hover:bg-violet-900/10 transition-colors">
+            <tr className="border-b border-amber-900/10 hover:bg-amber-900/10 transition-colors">
               <td className="px-4 py-2.5 font-medium text-amber-300">
                 <span className="mr-2 text-base">⬆</span>MC
               </td>
@@ -70,7 +70,7 @@ export default function PlanetTable({ chart }: Props) {
               const color = PLANET_COLORS[p.name] ?? "#a78bfa";
               const house = houseOf(p.longitude, houses);
               return (
-                <tr key={p.name} className="border-b border-purple-900/10 hover:bg-violet-900/10 transition-colors last:border-0">
+                <tr key={p.name} className="border-b border-amber-900/10 hover:bg-amber-900/10 transition-colors last:border-0">
                   <td className="px-4 py-2.5 font-medium" style={{ color }}>
                     <span className="mr-2 text-base">{p.symbol}</span>{p.name}
                     {p.isRetrograde && <span className="ml-1 text-xs opacity-60">↺</span>}
@@ -82,7 +82,7 @@ export default function PlanetTable({ chart }: Props) {
                     {p.degree}°{p.minute.toString().padStart(2, "0")}′
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-900/30 border border-purple-800/30 text-slate-400">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-900/20 border border-amber-800/25 text-slate-400">
                       Dom {house}
                     </span>
                   </td>

@@ -7,7 +7,6 @@ import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/components/AuthContext";
 import PaywallModal from "@/components/PaywallModal";
 import { track } from "@/components/PostHogProvider";
-import ChartChatTabs from "@/components/ChartChatTabs";
 
 type Message = {
   role: "user" | "assistant";
@@ -189,11 +188,6 @@ export default function ChatPage() {
       <main className="relative z-10 flex flex-col flex-1 min-h-0 pt-16">
         <div className="flex flex-col flex-1 min-h-0 max-w-2xl mx-auto w-full px-4">
 
-          {/* Tab bar */}
-          <div className="py-3 shrink-0">
-            <ChartChatTabs />
-          </div>
-
           {/* Conversation bar */}
           <div className="flex items-center gap-2 py-3 border-b border-white/5 shrink-0">
             <div className="relative flex-1" ref={convListRef}>
@@ -201,7 +195,7 @@ export default function ChatPage() {
                 onClick={() => setShowConvList(v => !v)}
                 className="flex items-center gap-2 w-full text-left px-3 py-2 rounded-xl bg-white/5 hover:bg-white/8 text-sm text-slate-300 transition-colors"
               >
-                <MessageCircle className="w-4 h-4 text-violet-400 shrink-0" />
+                <MessageCircle className="w-4 h-4 text-amber-400 shrink-0" />
                 <span className="flex-1 truncate">
                   {activeConv ? activeConv.title : "Wybierz rozmowę…"}
                 </span>
@@ -209,7 +203,7 @@ export default function ChatPage() {
               </button>
 
               {showConvList && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-[#0e0a1f] border border-purple-900/40 rounded-xl shadow-xl z-20 max-h-60 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#0b0906]/95 border border-amber-900/30 rounded-xl shadow-xl z-20 max-h-60 overflow-y-auto backdrop-blur-xl">
                   {conversations.length === 0 ? (
                     <p className="text-slate-500 text-sm px-4 py-3">Brak rozmów — zacznij nową</p>
                   ) : (
@@ -217,7 +211,7 @@ export default function ChatPage() {
                       <button
                         key={c.id}
                         onClick={() => openConversation(c.id)}
-                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-purple-900/20 transition-colors ${c.id === activeId ? "text-white bg-purple-900/10" : "text-slate-400"}`}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-amber-900/15 transition-colors ${c.id === activeId ? "text-white bg-amber-900/10" : "text-slate-400"}`}
                       >
                         <span className="block truncate">{c.title}</span>
                       </button>
@@ -231,7 +225,7 @@ export default function ChatPage() {
               onClick={handleNewConversation}
               disabled={!session}
               title="Nowa rozmowa"
-              className="p-2 rounded-xl bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 hover:text-white transition-colors disabled:opacity-40 shrink-0"
+              className="p-2 rounded-xl bg-amber-900/20 border border-amber-700/35 text-amber-300 hover:bg-amber-800/30 hover:text-white transition-colors disabled:opacity-40 shrink-0"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -242,17 +236,17 @@ export default function ChatPage() {
 
             {!session && (
               <div className="text-center py-16">
-                <MessageCircle className="w-10 h-10 text-violet-400/30 mx-auto mb-3" />
+                <MessageCircle className="w-10 h-10 text-amber-400/30 mx-auto mb-3" />
                 <p className="text-slate-400 text-sm">Zaloguj się, żeby rozmawiać z Cosmogramem</p>
               </div>
             )}
 
             {session && !activeId && (
               <div className="py-8 text-center">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-600 to-purple-800 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-900/50">
-                  <MessageCircle className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-700 to-amber-900 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-950/50">
+                  <MessageCircle className="w-6 h-6 text-amber-100" />
                 </div>
-                <p className="text-white font-medium mb-1" style={{ fontFamily: "'Cinzel', serif" }}>Cosmogram Chat</p>
+                <p className="text-white font-medium mb-1 font-brand">Cosmogram Chat</p>
                 <p className="text-slate-500 text-xs mb-6">Zadaj pytanie o swój kosmogram</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-sm mx-auto">
                   {STARTERS.map(s => (
@@ -260,7 +254,7 @@ export default function ChatPage() {
                       key={s}
                       onClick={() => startWithMessage(s)}
                       disabled={sending}
-                      className="text-left px-3 py-2.5 rounded-xl border border-purple-800/30 text-slate-400 hover:text-white hover:border-purple-600/50 hover:bg-purple-900/20 text-xs transition-colors disabled:opacity-40"
+                      className="text-left px-3 py-2.5 rounded-xl border border-amber-900/25 text-slate-400 hover:text-white hover:border-amber-700/50 hover:bg-amber-900/15 text-xs transition-colors disabled:opacity-40"
                     >
                       {s}
                     </button>
@@ -271,13 +265,13 @@ export default function ChatPage() {
 
             {session && activeId && loadingHistory && (
               <div className="text-center py-8">
-                <div className="w-6 h-6 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin mx-auto" />
+                <div className="w-6 h-6 border-2 border-amber-600/30 border-t-amber-400 rounded-full animate-spin mx-auto" />
               </div>
             )}
 
             {session && activeId && isEmpty && !loadingHistory && (
               <div className="py-6">
-                <div className="glass-card rounded-2xl p-4 border border-violet-900/20 max-w-sm mx-auto text-center mb-4">
+                <div className="glass-card rounded-2xl p-4 border border-amber-900/20 max-w-sm mx-auto text-center mb-4">
                   <p className="text-slate-300 text-sm leading-relaxed">{WELCOME}</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-sm mx-auto">
@@ -286,7 +280,7 @@ export default function ChatPage() {
                       key={s}
                       onClick={() => sendMessage(s)}
                       disabled={sending}
-                      className="text-left px-3 py-2.5 rounded-xl border border-purple-800/30 text-slate-400 hover:text-white hover:border-purple-600/50 hover:bg-purple-900/20 text-xs transition-colors disabled:opacity-40"
+                      className="text-left px-3 py-2.5 rounded-xl border border-amber-900/25 text-slate-400 hover:text-white hover:border-amber-700/50 hover:bg-amber-900/15 text-xs transition-colors disabled:opacity-40"
                     >
                       {s}
                     </button>
@@ -299,14 +293,14 @@ export default function ChatPage() {
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 ${
                   msg.role === "user"
-                    ? "bg-violet-600/25 border border-violet-500/30 text-white rounded-tr-sm"
+                    ? "bg-amber-900/25 border border-amber-700/35 text-white rounded-tr-sm"
                     : "bg-white/5 border border-white/8 text-slate-200 rounded-tl-sm"
                 }`}>
                   {msg.role === "assistant" ? (
                     <ReactMarkdown
                       components={{
                         p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                        strong: ({ children }) => <strong className="text-violet-300 font-semibold">{children}</strong>,
+                        strong: ({ children }) => <strong className="text-amber-300 font-semibold">{children}</strong>,
                       }}
                     >
                       {msg.content}
@@ -322,9 +316,9 @@ export default function ChatPage() {
               <div className="flex justify-start">
                 <div className="bg-white/5 border border-white/8 rounded-2xl rounded-tl-sm px-4 py-3">
                   <div className="flex gap-1 items-center h-5">
-                    <span className="w-1.5 h-1.5 bg-violet-400/70 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 bg-violet-400/70 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-1.5 h-1.5 bg-violet-400/70 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <span className="w-1.5 h-1.5 bg-amber-400/70 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 bg-amber-400/70 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 bg-amber-400/70 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
                 </div>
               </div>
@@ -349,13 +343,13 @@ export default function ChatPage() {
                   disabled={sending}
                   placeholder="Wpisz pytanie… (Enter wysyła)"
                   rows={1}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/40 resize-none disabled:opacity-50 transition-colors"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-600/40 resize-none disabled:opacity-50 transition-colors"
                   style={{ maxHeight: "120px" }}
                 />
                 <button
                   onClick={() => sendMessage()}
                   disabled={!input.trim() || sending}
-                  className="p-3 rounded-2xl bg-violet-600 text-white hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                  className="p-3 rounded-2xl bg-amber-700 text-white hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
                 >
                   <Send className="w-4 h-4" />
                 </button>

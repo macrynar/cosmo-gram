@@ -11,7 +11,7 @@ interface Props {
 
 const SECTION_CONFIG = [
   { icon: Sun,         color: "text-amber-400",  border: "border-amber-800/30",  bg: "bg-amber-900/10"  },
-  { icon: Star,        color: "text-violet-400", border: "border-violet-800/30", bg: "bg-violet-900/10" },
+  { icon: Star,        color: "text-amber-300",  border: "border-amber-800/25",  bg: "bg-amber-900/8"   },
   { icon: Heart,       color: "text-pink-400",   border: "border-pink-800/30",   bg: "bg-pink-900/10"   },
   { icon: Briefcase,   color: "text-blue-400",   border: "border-blue-800/30",   bg: "bg-blue-900/10"   },
   { icon: TrendingUp,  color: "text-green-400",  border: "border-green-800/30",  bg: "bg-green-900/10"  },
@@ -60,7 +60,7 @@ function MarkdownBlock({ content }: { content: string }) {
         ol: ({ children }) => <ol className="list-decimal pl-5 text-slate-300 text-sm space-y-1 mb-3">{children}</ol>,
         li: ({ children }) => <li>{children}</li>,
         strong: ({ children }) => <strong className="text-slate-100 font-semibold">{children}</strong>,
-        hr: () => <hr className="my-3 border-purple-900/40" />,
+        hr: () => <hr className="my-3 border-amber-900/20" />,
       }}
     >
       {content}
@@ -79,7 +79,7 @@ export default function Interpretation({ text, loading }: Props) {
   return (
     <div className="glass-card rounded-2xl overflow-hidden">
       {/* Panel header */}
-      <div className="px-5 py-4 border-b border-purple-900/30 flex items-center gap-2">
+      <div className="px-5 py-4 border-b border-amber-900/25 flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-amber-400" />
         <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase">Interpretacja AI</h3>
       </div>
@@ -87,14 +87,14 @@ export default function Interpretation({ text, loading }: Props) {
       <div className="px-5 py-5">
         {loading ? (
           <div className="flex items-center gap-3 text-slate-400 py-12 justify-center">
-            <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
+            <Loader2 className="w-5 h-5 animate-spin text-amber-400" />
             <span className="text-sm">AI analizuje Twój kosmogram…</span>
           </div>
         ) : text ? (
           <div className="space-y-4">
             {/* Intro paragraph (if any) */}
             {intro?.body && (
-              <div className="rounded-xl border border-purple-900/30 bg-purple-950/20 p-4">
+              <div className="rounded-xl border border-amber-900/25 bg-amber-950/10 p-4">
                 <MarkdownBlock content={intro.body} />
               </div>
             )}
@@ -130,7 +130,7 @@ export default function Interpretation({ text, loading }: Props) {
         ) : null}
       </div>
 
-      <div className="px-5 pb-4 text-xs text-slate-600 border-t border-purple-900/20 pt-3">
+      <div className="px-5 pb-4 text-xs text-slate-600 border-t border-amber-900/15 pt-3">
         Obliczenia: astronomy-engine · Domy: Equal House · Interpretacja: Claude AI
       </div>
     </div>

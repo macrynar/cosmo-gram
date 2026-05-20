@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles, MessageCircle } from "lucide-react";
+import { Sparkles, MessageCircle, Sun } from "lucide-react";
 
 const TABS = [
   { label: "Kosmogram", href: "/generate", icon: Sparkles },
+  { label: "Horoskop dzienny", href: "/horoskop-dzienny", icon: Sun },
   { label: "Chat", href: "/chat", icon: MessageCircle },
 ];
 

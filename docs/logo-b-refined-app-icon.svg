@@ -1,0 +1,8 @@
+<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+<title>Cosmogram - Logo B (proper crescent, iOS-style app icon)</title>
+<rect x="0" y="0" width="180" height="180" rx="40" fill="#1a1d3a"/>
+<g transform="translate(92, 90)" fill="#ffffff" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+<path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/>
+<circle cx="10" cy="0" r="9" stroke="none"/>
+</g>
+</svg>

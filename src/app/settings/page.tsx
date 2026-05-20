@@ -28,7 +28,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   free: "text-slate-400 border-slate-700 bg-slate-900/30",
-  trialing: "text-violet-300 border-violet-700/50 bg-violet-900/20",
+  trialing: "text-amber-300 border-amber-700/50 bg-amber-900/20",
   active: "text-green-300 border-green-700/50 bg-green-900/20",
   past_due: "text-red-300 border-red-700/50 bg-red-900/20",
   canceled: "text-slate-400 border-slate-700 bg-slate-900/30",
@@ -114,7 +114,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-[#03010d] text-white">
       <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
-      <Star className="fixed top-[20%] left-[7%] w-2 h-2 text-violet-400/30 animate-pulse pointer-events-none" style={{ animationDuration: "3.8s" }} />
+      <Star className="fixed top-[20%] left-[7%] w-2 h-2 text-amber-400/30 animate-pulse pointer-events-none" style={{ animationDuration: "3.8s" }} />
 
       <Navbar />
 
@@ -123,7 +123,7 @@ export default function SettingsPage() {
       <main className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 pt-24 pb-20 space-y-6">
 
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "'Cinzel', serif" }}>
+          <h1 className="text-2xl font-bold text-white font-brand">
             Ustawienia
           </h1>
           <p className="text-slate-500 text-sm mt-1">Konto, hasło i subskrypcja</p>
@@ -132,8 +132,8 @@ export default function SettingsPage() {
         {/* Account info */}
         <section className="glass-card rounded-2xl p-6 border border-white/8">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-8 h-8 rounded-full bg-violet-900/40 flex items-center justify-center">
-              <User className="w-4 h-4 text-violet-400" />
+            <div className="w-8 h-8 rounded-full bg-amber-900/25 flex items-center justify-center">
+              <User className="w-4 h-4 text-amber-400" />
             </div>
             <h2 className="text-white font-semibold">Konto</h2>
           </div>
@@ -160,8 +160,8 @@ export default function SettingsPage() {
         {isEmailProvider && (
           <section className="glass-card rounded-2xl p-6 border border-white/8">
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-8 h-8 rounded-full bg-violet-900/40 flex items-center justify-center">
-                <Lock className="w-4 h-4 text-violet-400" />
+              <div className="w-8 h-8 rounded-full bg-amber-900/25 flex items-center justify-center">
+                <Lock className="w-4 h-4 text-amber-400" />
               </div>
               <h2 className="text-white font-semibold">Zmiana hasła</h2>
             </div>
@@ -174,7 +174,7 @@ export default function SettingsPage() {
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
                   placeholder="Minimum 8 znaków"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/40 transition-colors"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-600/40 transition-colors"
                 />
               </div>
               <div>
@@ -184,7 +184,7 @@ export default function SettingsPage() {
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="Powtórz nowe hasło"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/40 transition-colors"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-600/40 transition-colors"
                 />
               </div>
 
@@ -204,7 +204,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={passwordLoading || !newPassword || !confirmPassword}
-                className="px-5 py-2.5 rounded-xl bg-violet-600/20 border border-violet-500/30 text-violet-300 text-sm hover:bg-violet-600/30 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 rounded-xl bg-amber-900/20 border border-amber-700/35 text-amber-300 text-sm hover:bg-amber-800/30 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Zmień hasło"}
               </button>
@@ -215,8 +215,8 @@ export default function SettingsPage() {
         {/* Subscription */}
         <section className="glass-card rounded-2xl p-6 border border-white/8">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-8 h-8 rounded-full bg-violet-900/40 flex items-center justify-center">
-              <CreditCard className="w-4 h-4 text-violet-400" />
+            <div className="w-8 h-8 rounded-full bg-amber-900/25 flex items-center justify-center">
+              <CreditCard className="w-4 h-4 text-amber-400" />
             </div>
             <h2 className="text-white font-semibold">Subskrypcja</h2>
           </div>
@@ -271,7 +271,7 @@ export default function SettingsPage() {
                   </p>
                   <button
                     onClick={() => setShowPaywall(true)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-semibold shadow-lg shadow-purple-900/40 hover:scale-[1.01] transition-all"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-700 to-amber-600 text-white text-sm font-semibold shadow-lg shadow-amber-950/40 hover:scale-[1.01] transition-all"
                   >
                     <CreditCard className="w-4 h-4" />
                     Przejdź na Cosmogram Plus

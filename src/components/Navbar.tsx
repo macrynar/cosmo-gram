@@ -2,15 +2,17 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Sparkles, Settings, LogOut, Menu, X } from "lucide-react";
+import { Settings, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import AuthModal from "@/components/AuthModal";
 
 const NAV_LINKS = [
   { label: "Kosmogram", href: "/generate" },
+  { label: "Horoskop dzienny", href: "/horoskop-dzienny" },
   { label: "Astro Match", href: "/astro-match" },
-  { label: "Dziecko", href: "/children" },
+  { label: "Horoskop Dziecka", href: "/children" },
 ];
 
 function getInitials(email?: string | null) {
@@ -20,10 +22,10 @@ function getInitials(email?: string | null) {
 
 function getAvatarColor(email?: string | null) {
   const colors = [
-    "from-violet-600 to-purple-700",
-    "from-indigo-600 to-violet-700",
-    "from-purple-600 to-fuchsia-700",
-    "from-violet-500 to-indigo-600",
+    "from-amber-600 to-amber-800",
+    "from-amber-700 to-yellow-800",
+    "from-yellow-600 to-amber-700",
+    "from-amber-500 to-amber-700",
   ];
   if (!email) return colors[0];
   return colors[email.charCodeAt(0) % colors.length];
@@ -64,7 +66,7 @@ export default function Navbar() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-[#07031a]/90 backdrop-blur-xl border-b border-purple-900/20 shadow-lg shadow-purple-950/20"
+          ? "bg-[#050311]/88 backdrop-blur-xl border-b border-amber-800/25 shadow-lg shadow-black/35"
           : "bg-transparent"
       }`}
     >
@@ -73,15 +75,14 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group shrink-0" aria-label="Cosmo-gram home">
-            <div className="relative">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-800/40 group-hover:shadow-purple-600/60 transition-shadow duration-300">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <div className="absolute inset-0 rounded-full bg-purple-500/20 blur-md group-hover:bg-purple-500/40 transition-all duration-300" />
-            </div>
-            <span className="text-lg font-semibold text-white" style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.05em" }}>
-              Cosmo<span className="text-violet-400">-gram</span>
-            </span>
+            <Image
+              src="/logo-b-refined.svg"
+              alt="Cosmogram"
+              width={168}
+              height={42}
+              priority
+              className="h-[38px] w-auto transition-opacity duration-200 group-hover:opacity-85 [filter:brightness(0)_invert(1)]"
+            />
           </Link>
 
           {/* Desktop nav */}
@@ -90,15 +91,15 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                className={`relative px-4 py-2 rounded-full text-sm font-medium tracking-wide transition-all duration-200 ${
                   isActive(link.href)
-                    ? "text-white bg-white/8"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                    ? "text-amber-100 bg-amber-900/25 border border-amber-700/30"
+                    : "text-slate-400 hover:text-amber-100 hover:bg-amber-900/10"
                 }`}
               >
                 {link.label}
                 {isActive(link.href) && (
-                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-violet-400" />
+                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-400" />
                 )}
               </Link>
             ))}
@@ -111,24 +112,24 @@ export default function Navbar() {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen(v => !v)}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-white/5 transition-colors group"
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-amber-900/10 transition-colors group"
                     aria-label="Menu konta"
                   >
-                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarColor(user.email)} flex items-center justify-center text-xs font-bold text-white shadow-lg shadow-purple-900/40`}>
+                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarColor(user.email)} flex items-center justify-center text-xs font-bold text-white shadow-lg shadow-amber-900/40`}>
                       {getInitials(user.email)}
                     </div>
-                    <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors max-w-[100px] truncate">
+                    <span className="text-xs text-slate-400 group-hover:text-amber-100 transition-colors max-w-[100px] truncate">
                       {user.email?.split("@")[0]}
                     </span>
-                    <svg className={`w-3 h-3 text-slate-500 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-3 h-3 text-amber-500/70 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
 
                   {/* Dropdown */}
                   {dropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-white/8 bg-[#0d0820]/95 backdrop-blur-xl shadow-2xl shadow-purple-950/50 overflow-hidden">
-                      <div className="px-4 py-3 border-b border-white/6">
+                    <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-amber-900/30 bg-[#0b0719]/95 backdrop-blur-xl shadow-2xl shadow-black/50 overflow-hidden">
+                      <div className="px-4 py-3 border-b border-amber-900/20">
                         <p className="text-xs text-slate-500">Zalogowany jako</p>
                         <p className="text-sm text-slate-300 truncate mt-0.5">{user.email}</p>
                       </div>
@@ -136,9 +137,9 @@ export default function Navbar() {
                         <Link
                           href="/settings"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/6 transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-300 hover:text-amber-100 hover:bg-amber-900/15 transition-colors"
                         >
-                          <Settings className="w-4 h-4 text-slate-500" />
+                          <Settings className="w-4 h-4 text-amber-500/70" />
                           Ustawienia
                         </Link>
                         <button
@@ -155,7 +156,7 @@ export default function Navbar() {
               ) : (
                 <button
                   onClick={() => setAuthOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-violet-600/20 border border-violet-500/40 text-violet-300 hover:bg-violet-600/30 hover:border-violet-400/60 hover:text-white transition-all duration-200"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-amber-900/20 border border-amber-700/40 text-amber-200 hover:bg-amber-800/25 hover:border-amber-600/60 hover:text-white transition-all duration-200"
                 >
                   Zaloguj się
                 </button>
@@ -171,7 +172,7 @@ export default function Navbar() {
               </div>
             )}
             <button
-              className="p-2 text-slate-400 hover:text-white transition-colors"
+              className="p-2 text-slate-400 hover:text-amber-100 transition-colors"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle menu"
             >
@@ -182,26 +183,26 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden pb-4 border-t border-purple-900/20 mt-1 pt-3">
+          <div className="md:hidden pb-4 border-t border-amber-900/20 mt-1 pt-3">
             <div className="space-y-0.5 mb-3">
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm tracking-wide transition-colors ${
                     isActive(link.href)
-                      ? "text-white bg-violet-900/30 font-medium"
-                      : "text-slate-300 hover:text-white hover:bg-white/5"
+                      ? "text-amber-100 bg-amber-900/25 font-medium border border-amber-700/25"
+                      : "text-slate-300 hover:text-amber-100 hover:bg-amber-900/10"
                   }`}
                 >
-                  {isActive(link.href) && <span className="w-1 h-1 rounded-full bg-violet-400 shrink-0" />}
+                  {isActive(link.href) && <span className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />}
                   {link.label}
                 </Link>
               ))}
             </div>
 
             {/* Mobile account section */}
-            <div className="border-t border-purple-900/20 pt-3 space-y-0.5">
+            <div className="border-t border-amber-900/20 pt-3 space-y-0.5">
               {!loading && user ? (
                 <>
                   <div className="flex items-center gap-2.5 px-3 py-2 mb-1">
@@ -212,9 +213,9 @@ export default function Navbar() {
                   </div>
                   <Link
                     href="/settings"
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:text-amber-100 hover:bg-amber-900/10 transition-colors"
                   >
-                    <Settings className="w-4 h-4 text-slate-500" />
+                    <Settings className="w-4 h-4 text-amber-500/70" />
                     Ustawienia
                   </Link>
                   <button
@@ -228,7 +229,7 @@ export default function Navbar() {
               ) : (
                 <button
                   onClick={() => { setMenuOpen(false); setAuthOpen(true); }}
-                  className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium bg-violet-600/20 border border-violet-500/40 text-violet-300"
+                  className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium bg-amber-900/20 border border-amber-700/40 text-amber-200"
                 >
                   Zaloguj się
                 </button>

@@ -44,7 +44,7 @@ export default function PaywallModal({ onClose, reason }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative glass-card rounded-3xl p-6 sm:p-8 max-w-md w-full border border-violet-500/20 shadow-2xl shadow-purple-950/50">
+      <div className="relative glass-card rounded-3xl p-6 sm:p-8 max-w-md w-full border border-amber-700/25 shadow-2xl shadow-black/50">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
@@ -53,10 +53,10 @@ export default function PaywallModal({ onClose, reason }: Props) {
         </button>
 
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-violet-600 to-purple-700 mb-4 shadow-lg shadow-purple-900/50">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 mb-4 shadow-lg shadow-amber-950/50">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-1" style={{ fontFamily: "'Cinzel', serif" }}>
+          <h2 className="text-xl font-bold text-white mb-1 font-brand">
             Cosmogram Plus
           </h2>
           {reason && (
@@ -68,7 +68,7 @@ export default function PaywallModal({ onClose, reason }: Props) {
         <ul className="space-y-2 mb-6">
           {FEATURES.map(f => (
             <li key={f} className="flex items-start gap-2.5 text-sm text-slate-300">
-              <Check className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
+              <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               {f}
             </li>
           ))}
@@ -78,7 +78,7 @@ export default function PaywallModal({ onClose, reason }: Props) {
           <button
             onClick={() => handleCheckout("monthly")}
             disabled={!!loading}
-            className="w-full py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold text-sm shadow-lg shadow-purple-900/40 hover:scale-[1.01] transition-all disabled:opacity-60"
+            className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-700 to-amber-600 text-white font-semibold text-sm shadow-lg shadow-amber-950/40 hover:scale-[1.01] transition-all disabled:opacity-60"
           >
             {loading === "monthly" ? (
               <Loader2 className="w-4 h-4 animate-spin mx-auto" />
@@ -90,14 +90,14 @@ export default function PaywallModal({ onClose, reason }: Props) {
           <button
             onClick={() => handleCheckout("yearly")}
             disabled={!!loading}
-            className="w-full py-3 rounded-2xl border border-violet-500/40 text-violet-300 text-sm hover:bg-violet-900/20 transition-colors disabled:opacity-60 relative"
+            className="w-full py-3 rounded-2xl border border-amber-700/40 text-amber-300 text-sm hover:bg-amber-900/15 transition-colors disabled:opacity-60 relative"
           >
             {loading === "yearly" ? (
               <Loader2 className="w-4 h-4 animate-spin mx-auto" />
             ) : (
               <>
                 Roczny — 290 zł / rok
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs bg-violet-600/30 text-violet-300 px-2 py-0.5 rounded-full">
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs bg-amber-900/30 text-amber-300 px-2 py-0.5 rounded-full">
                   -17%
                 </span>
               </>

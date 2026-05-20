@@ -104,7 +104,7 @@ export default function AuthModal({ onClose }: Props) {
           Wróć do logowania
         </button>
 
-        <h2 className="text-lg font-semibold text-white mb-1" style={{ fontFamily: "'Cinzel', serif" }}>
+        <h2 className="text-lg font-semibold text-white mb-1 font-brand">
           Resetowanie hasła
         </h2>
         <p className="text-slate-500 text-xs mb-5">
@@ -142,7 +142,7 @@ export default function AuthModal({ onClose }: Props) {
       {/* Title */}
       <div className="flex items-center gap-2 mb-6">
         <Sparkles className="w-4 h-4 text-amber-400" />
-        <span className="text-lg font-semibold text-white" style={{ fontFamily: "'Cinzel', serif" }}>
+        <span className="text-lg font-semibold text-white font-brand">
           {mode === "login" ? "Zaloguj się" : "Załóż konto"}
         </span>
       </div>
@@ -196,7 +196,7 @@ export default function AuthModal({ onClose }: Props) {
             <button
               type="button"
               onClick={() => switchMode("forgot")}
-              className="mt-1.5 text-[11px] text-slate-500 hover:text-violet-400 transition-colors float-right"
+              className="mt-1.5 text-[11px] text-slate-500 hover:text-amber-400 transition-colors float-right"
             >
               Zapomniałem hasła
             </button>
@@ -218,7 +218,7 @@ export default function AuthModal({ onClose }: Props) {
         {mode === "login" ? "Nie masz konta?" : "Masz już konto?"}{" "}
         <button
           onClick={() => switchMode(mode === "login" ? "register" : "login")}
-          className="text-violet-400 hover:text-violet-300 transition-colors"
+          className="text-amber-400 hover:text-amber-300 transition-colors"
         >
           {mode === "login" ? "Zarejestruj się" : "Zaloguj się"}
         </button>
@@ -233,7 +233,7 @@ function ModalShell({ children, onClose }: { children: React.ReactNode; onClose:
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-sm rounded-2xl border border-white/8 bg-[#0d0818]/95 backdrop-blur-xl p-7 shadow-2xl shadow-purple-950/50">
+      <div className="relative z-10 w-full max-w-sm rounded-2xl border border-amber-900/25 bg-[#0a0807]/95 backdrop-blur-xl p-7 shadow-2xl shadow-black/60">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-slate-600 hover:text-white transition-colors"
@@ -291,7 +291,7 @@ function InputField({
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/8 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/50 focus:bg-violet-900/10 transition-colors"
+        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/8 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-600/50 focus:bg-amber-900/10 transition-colors"
       />
     </div>
   );
@@ -308,7 +308,7 @@ function SubmitButton({
     <button
       type="submit"
       disabled={disabled}
-      className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
+      className="w-full py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
     >
       {loading && <Loader2 className="w-4 h-4 animate-spin" />}
       {children}

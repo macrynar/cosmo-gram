@@ -198,7 +198,7 @@ export default function AstroMatchPage() {
       <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
       <div aria-hidden="true" className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] nebula-orb opacity-30 pointer-events-none" />
       <Star className="fixed top-[22%] left-[6%] w-2 h-2 text-pink-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "3.2s" }} />
-      <Star className="fixed top-[60%] right-[5%] w-2 h-2 text-violet-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "4.5s" }} />
+      <Star className="fixed top-[60%] right-[5%] w-2 h-2 text-amber-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "4.5s" }} />
 
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
 
@@ -212,8 +212,8 @@ export default function AstroMatchPage() {
             <Heart className="w-3.5 h-3.5 text-pink-400" />
             Analiza kompatybilności
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2" style={{ fontFamily: "'Cinzel', serif" }}>
-            Astro <span className="bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">Match</span>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 font-brand">
+            Astro <span className="bg-gradient-to-r from-pink-400 to-amber-300 bg-clip-text text-transparent">Match</span>
           </h1>
           <p className="text-slate-500 text-sm">Porównaj dwa kosmogramy · Synastria · Interpretacja AI</p>
         </div>
@@ -236,7 +236,7 @@ export default function AstroMatchPage() {
         {/* Loading history */}
         {loadingHistory && (
           <div className="glass-card rounded-2xl p-10 text-center mb-6">
-            <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin mx-auto mb-3" />
+            <div className="w-8 h-8 border-2 border-amber-600/30 border-t-amber-400 rounded-full animate-spin mx-auto mb-3" />
             <p className="text-slate-500 text-sm">Wczytuję poprzednie matche…</p>
           </div>
         )}
@@ -257,7 +257,7 @@ export default function AstroMatchPage() {
               <div className="glass-card rounded-2xl p-6">
                 <PersonBirthForm
                   label="Osoba 1"
-                  accentColor="text-violet-400"
+                  accentColor="text-amber-400"
                   onChange={setPerson1}
                   disabled={loading}
                 />
@@ -284,8 +284,8 @@ export default function AstroMatchPage() {
                 disabled={!canSubmit}
                 className={`inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-semibold transition-all duration-300 ${
                   canSubmit
-                    ? "bg-gradient-to-r from-pink-600 to-violet-600 text-white shadow-lg shadow-purple-900/50 hover:shadow-purple-700/60 hover:scale-[1.02] active:scale-[0.99]"
-                    : "bg-purple-900/30 text-slate-500 cursor-not-allowed"
+                    ? "bg-gradient-to-r from-pink-600 to-amber-600 text-white shadow-lg shadow-amber-950/40 hover:shadow-amber-800/50 hover:scale-[1.02] active:scale-[0.99]"
+                    : "bg-amber-900/20 text-slate-500 cursor-not-allowed"
                 }`}
               >
                 {loading ? (

@@ -51,7 +51,7 @@ export default function HistorySelector({
   }
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-purple-900/40">
+    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-amber-900/30">
       {items.map((item) => {
         const isSelected = item.id === selectedId;
         const isEditing  = item.id === editingId;
@@ -62,8 +62,8 @@ export default function HistorySelector({
             onClick={() => !isEditing && onSelect(item.id)}
             className={`group flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm whitespace-nowrap shrink-0 cursor-pointer transition-all ${
               isSelected
-                ? "bg-violet-900/40 border-violet-500/50 text-white"
-                : "bg-purple-950/20 border-purple-900/30 text-slate-400 hover:text-white hover:border-purple-700/50"
+                ? "bg-amber-900/30 border-amber-600/45 text-white"
+                : "bg-amber-950/10 border-amber-900/25 text-slate-400 hover:text-white hover:border-amber-700/45"
             }`}
           >
             {isEditing ? (
@@ -95,7 +95,7 @@ export default function HistorySelector({
                 <div className={`flex items-center gap-1 ${isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity`}>
                   <button
                     onClick={(e) => startEdit(item, e)}
-                    className="text-slate-500 hover:text-violet-400 transition-colors p-0.5"
+                    className="text-slate-500 hover:text-amber-400 transition-colors p-0.5"
                     title="Zmień nazwę"
                   >
                     <Pencil className="w-3 h-3" />
@@ -116,7 +116,7 @@ export default function HistorySelector({
 
       <button
         onClick={onNew}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed border-purple-800/40 text-slate-500 hover:text-white hover:border-violet-500/50 text-sm whitespace-nowrap shrink-0 transition-all"
+        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed border-amber-900/35 text-slate-500 hover:text-white hover:border-amber-600/50 text-sm whitespace-nowrap shrink-0 transition-all"
       >
         <Plus className="w-3.5 h-3.5" />
         {newLabel}

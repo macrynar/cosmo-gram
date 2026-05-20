@@ -7,12 +7,10 @@ import BirthForm from "@/components/generate/BirthForm";
 import NatalChartSVG from "@/components/generate/NatalChartSVG";
 import PlanetTable from "@/components/generate/PlanetTable";
 import Interpretation from "@/components/generate/Interpretation";
-import DailyReading from "@/components/generate/DailyReading";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
 import { NatalChart } from "@/lib/astro-types";
 import { useAuth } from "@/components/AuthContext";
 import { track } from "@/components/PostHogProvider";
-import ChartChatTabs from "@/components/ChartChatTabs";
 
 type SavedReading = {
   id: string;
@@ -37,11 +35,8 @@ export default function GeneratePage() {
   // Live generation state
   const [chart, setChart]                       = useState<NatalChart | null>(null);
   const [interpretation, setInterpretation]     = useState("");
-  const [dailyReading, setDailyReading]         = useState("");
-  const [dailyDateLabel, setDailyDateLabel]     = useState("");
   const [chartLoading, setChartLoading]         = useState(false);
   const [interpretLoading, setInterpretLoading] = useState(false);
-  const [dailyLoading, setDailyLoading]         = useState(false);
   const [error, setError]                       = useState("");
   const [showForm, setShowForm]                 = useState(false);
 
@@ -83,8 +78,6 @@ export default function GeneratePage() {
   function displayReading(r: SavedReading) {
     setChart(r.chart_data);
     setInterpretation(r.interpretation);
-    setDailyReading(r.daily_reading);
-    setDailyDateLabel("");
   }
 
   function handleSelect(id: string) {
@@ -110,7 +103,6 @@ export default function GeneratePage() {
         setSelectedId(null);
         setChart(null);
         setInterpretation("");
-        setDailyReading("");
         setShowForm(true);
       }
     }
@@ -129,8 +121,6 @@ export default function GeneratePage() {
     setSelectedId(null);
     setChart(null);
     setInterpretation("");
-    setDailyReading("");
-    setDailyDateLabel("");
     setError("");
     setShowForm(true);
   }
@@ -142,8 +132,6 @@ export default function GeneratePage() {
     setError("");
     setChart(null);
     setInterpretation("");
-    setDailyReading("");
-    setDailyDateLabel("");
     setShowForm(false);
 
     try {
@@ -175,27 +163,6 @@ export default function GeneratePage() {
         setInterpretation(text);
       }
 
-      setDailyLoading(true);
-      const dailyRes = await fetch("/api/daily-reading", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          promptContext,
-          interpretationContext: interpretationText,
-          timezone: newChart.birthData.timezone,
-        }),
-      });
-
-      let dailyText = "";
-      if (dailyRes.ok) {
-        const { dailyReading: readingText, dateLabel } = await dailyRes.json() as {
-          dailyReading: string; dateLabel: string;
-        };
-        dailyText = readingText;
-        setDailyReading(readingText);
-        setDailyDateLabel(dateLabel);
-      }
-
       track("first_natal_view", { has_time: !!data.time, place: data.place.split(",")[0] });
 
       // Save and refresh list
@@ -209,7 +176,7 @@ export default function GeneratePage() {
             birthPlace: data.place,
             chart: newChart,
             interpretation: interpretationText,
-            dailyReading: dailyText,
+            dailyReading: "",
           }),
         });
         if (saveRes.ok) {
@@ -219,7 +186,7 @@ export default function GeneratePage() {
             id, name: defaultName,
             birth_date: data.date, birth_time: data.time, birth_place: data.place,
             chart_data: newChart, interpretation: interpretationText,
-            daily_reading: dailyText, created_at: new Date().toISOString(),
+            daily_reading: "", created_at: new Date().toISOString(),
           };
           setReadings(prev => [newEntry, ...prev]);
           setSelectedId(id);
@@ -231,7 +198,6 @@ export default function GeneratePage() {
       setShowForm(true);
     } finally {
       setInterpretLoading(false);
-      setDailyLoading(false);
     }
   }
 
@@ -248,21 +214,18 @@ export default function GeneratePage() {
       <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
       <div aria-hidden="true" className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] nebula-orb opacity-40 pointer-events-none" />
       <Star className="fixed top-[18%] left-[8%] w-2 h-2 text-amber-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "3.5s" }} />
-      <Star className="fixed top-[55%] right-[4%] w-2 h-2 text-violet-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "4s" }} />
+      <Star className="fixed top-[55%] right-[4%] w-2 h-2 text-amber-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "4s" }} />
 
       <Navbar />
 
       <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-24 pb-20">
 
         {/* Header */}
-        <div className="mb-8">
-          <ChartChatTabs />
-          <div className="mt-6 text-center">
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2" style={{ fontFamily: "'Cinzel', serif" }}>
-              Twój <span className="gradient-text text-glow">Kosmogram Natalny</span>
-            </h1>
-            <p className="text-slate-500 text-sm">Obliczenia astronomiczne · Swiss Ephemeris · Interpretacja AI</p>
-          </div>
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 font-brand">
+            Twój <span className="gradient-text text-glow">Kosmogram Natalny</span>
+          </h1>
+          <p className="text-slate-500 text-sm">Obliczenia astronomiczne · Swiss Ephemeris · Interpretacja AI</p>
         </div>
 
         {/* History selector */}
@@ -283,7 +246,7 @@ export default function GeneratePage() {
         {/* Loading history */}
         {loadingHistory && (
           <div className="glass-card rounded-2xl p-10 text-center mb-6">
-            <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin mx-auto mb-3" />
+            <div className="w-8 h-8 border-2 border-amber-600/30 border-t-amber-400 rounded-full animate-spin mx-auto mb-3" />
             <p className="text-slate-500 text-sm">Wczytuję kosmogramy…</p>
           </div>
         )}
@@ -303,7 +266,7 @@ export default function GeneratePage() {
         {/* Computing */}
         {chartLoading && (
           <div className="glass-card rounded-2xl p-16 text-center mb-8">
-            <div className="w-14 h-14 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin mx-auto mb-4" />
+            <div className="w-14 h-14 border-2 border-amber-600/30 border-t-amber-400 rounded-full animate-spin mx-auto mb-4" />
             <p className="text-slate-400 text-sm">Obliczam pozycje planet…</p>
           </div>
         )}
@@ -312,17 +275,17 @@ export default function GeneratePage() {
         {hasResults && (
           <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
-              <span className="px-3 py-1 rounded-full bg-purple-900/20 border border-purple-800/30 text-slate-400">
+              <span className="px-3 py-1 rounded-full bg-amber-900/15 border border-amber-800/25 text-slate-400">
                 📅 {chart.birthData.date}
               </span>
-              <span className="px-3 py-1 rounded-full bg-purple-900/20 border border-purple-800/30 text-slate-400">
+              <span className="px-3 py-1 rounded-full bg-amber-900/15 border border-amber-800/25 text-slate-400">
                 🕐 {chart.birthData.timeUnknown ? "godzina nieznana" : chart.birthData.time}
               </span>
-              <span className="px-3 py-1 rounded-full bg-purple-900/20 border border-purple-800/30 text-slate-400 max-w-[240px] truncate">
+              <span className="px-3 py-1 rounded-full bg-amber-900/15 border border-amber-800/25 text-slate-400 max-w-[240px] truncate">
                 📍 {chart.birthData.place}
               </span>
               {!chart.birthData.timeUnknown && (
-                <span className="px-3 py-1 rounded-full bg-purple-900/20 border border-purple-800/30 text-slate-500">
+                <span className="px-3 py-1 rounded-full bg-amber-900/15 border border-amber-800/25 text-slate-500">
                   🌐 {chart.birthData.timezone}
                 </span>
               )}
@@ -338,9 +301,9 @@ export default function GeneratePage() {
               <div className="glass-card rounded-3xl p-4 sm:p-5">
                 <NatalChartSVG chart={chart} />
                 {!chart.birthData.timeUnknown && (
-                  <div className="flex flex-wrap justify-center gap-3 text-xs text-slate-500 mt-4 pt-3 border-t border-purple-900/20">
+                  <div className="flex flex-wrap justify-center gap-3 text-xs text-slate-500 mt-4 pt-3 border-t border-amber-900/15">
                     {[
-                      { color: "bg-violet-400/60", label: "Koniunkcja (0°)" },
+                      { color: "bg-amber-400/60", label: "Koniunkcja (0°)" },
                       { color: "bg-green-400/60",  label: "Trygon (120°)" },
                       { color: "bg-red-400/60",    label: "Opozycja (180°)" },
                       { color: "bg-orange-400/60", label: "Kwadrat (90°)" },
@@ -358,7 +321,6 @@ export default function GeneratePage() {
             </div>
 
             <Interpretation text={interpretation} loading={interpretLoading} />
-            <DailyReading text={dailyReading} loading={dailyLoading} dateLabel={dailyDateLabel || "Dzisiaj"} />
 
             {!session && (
               <p className="text-center text-xs text-slate-600">

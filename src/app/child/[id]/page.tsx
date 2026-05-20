@@ -99,7 +99,7 @@ export default function ChildPage() {
                   <Baby className="w-6 h-6 text-green-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: "'Cinzel', serif" }}>
+                  <h1 className="text-2xl font-bold text-white mb-1 font-brand">
                     {child.name}
                   </h1>
                   <p className="text-slate-500 text-sm">

@@ -132,7 +132,7 @@ export default function AddChildModal({ onClose, onSubmit, loading, error: exter
 
   const isValid = !!name.trim() && !!date && !!time && !!selected && !dateError;
 
-  const inputClass = `w-full px-3 py-2.5 rounded-xl bg-[#0d0626] border border-purple-900/40 text-white text-sm
+  const inputClass = `w-full px-3 py-2.5 rounded-xl bg-[#0a0806] border border-amber-900/35 text-white text-sm
     focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/60
     disabled:opacity-40 [color-scheme:dark] transition`;
 
@@ -152,7 +152,7 @@ export default function AddChildModal({ onClose, onSubmit, loading, error: exter
             <Sparkles className="w-3 h-3" />
             Nowa karta dziecka
           </div>
-          <h2 className="text-xl font-bold text-white" style={{ fontFamily: "'Cinzel', serif" }}>
+          <h2 className="text-xl font-bold text-white font-brand">
             Dane urodzeniowe
           </h2>
           <p className="text-slate-500 text-xs mt-1">Wszystkie pola wymagane · Godzina urodzenia jest ważna dla dokładności</p>
@@ -226,10 +226,10 @@ export default function AddChildModal({ onClose, onSubmit, loading, error: exter
               {selected && !geocoding && <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-400 text-sm">✓</span>}
             </div>
             {dropdownOpen && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-purple-900/40 bg-[#07031a]/98 backdrop-blur shadow-2xl z-50 overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-amber-900/30 bg-[#0a0807]/98 backdrop-blur shadow-2xl z-50 overflow-hidden">
                 {suggestions.map((r, i) => (
                   <button key={i} type="button" onMouseDown={() => handleSelectPlace(r)}
-                    className="w-full text-left px-3 py-2.5 text-sm text-slate-300 hover:bg-green-900/30 hover:text-white transition-colors border-b border-purple-900/20 last:border-0 truncate">
+                    className="w-full text-left px-3 py-2.5 text-sm text-slate-300 hover:bg-green-900/30 hover:text-white transition-colors border-b border-amber-900/15 last:border-0 truncate">
                     <MapPin className="inline w-3 h-3 text-green-400 mr-1.5 -mt-0.5" />
                     {r.displayName}
                   </button>

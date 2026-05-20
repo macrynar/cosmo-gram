@@ -20,7 +20,7 @@ export default function SubscriptionSuccessPage() {
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-900/50">
           <Check className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: "'Cinzel', serif" }}>
+        <h1 className="text-2xl font-bold text-white mb-2 font-brand">
           Witaj w Cosmogram Plus
         </h1>
         <p className="text-slate-400 text-sm mb-2">
@@ -32,7 +32,7 @@ export default function SubscriptionSuccessPage() {
         </p>
         <button
           onClick={() => router.push("/generate")}
-          className="mt-6 px-6 py-2.5 rounded-full bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors"
+          className="mt-6 px-6 py-2.5 rounded-full bg-amber-700 text-white text-sm font-medium hover:bg-amber-600 transition-colors"
         >
           Przejdź teraz
         </button>

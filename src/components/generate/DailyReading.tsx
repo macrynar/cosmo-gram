@@ -59,7 +59,7 @@ export default function DailyReading({ text, loading, dateLabel }: Props) {
 
             {/* Headline */}
             <div>
-              <h3 className="text-lg sm:text-xl font-bold text-white leading-snug" style={{ fontFamily: "'Cinzel', serif" }}>
+              <h3 className="text-lg sm:text-xl font-bold text-white leading-snug font-mystic">
                 {reading.headline}
               </h3>
               {reading.theme && (
@@ -68,7 +68,7 @@ export default function DailyReading({ text, loading, dateLabel }: Props) {
             </div>
 
             {/* Divider */}
-            <div className="h-px bg-gradient-to-r from-transparent via-purple-800/40 to-transparent" />
+            <div className="h-px bg-gradient-to-r from-transparent via-amber-800/30 to-transparent" />
 
             {/* Insight */}
             {reading.insight && (
@@ -102,8 +102,8 @@ export default function DailyReading({ text, loading, dateLabel }: Props) {
             {/* Mantra */}
             {reading.mantra && (
               <div className="flex items-center gap-3 pt-1">
-                <Quote className="w-4 h-4 text-violet-400/50 shrink-0 -scale-x-100" />
-                <p className="text-sm text-violet-300/70 italic">{reading.mantra}</p>
+                <Quote className="w-4 h-4 text-amber-400/50 shrink-0 -scale-x-100" />
+                <p className="text-sm text-amber-300/70 italic">{reading.mantra}</p>
               </div>
             )}
 

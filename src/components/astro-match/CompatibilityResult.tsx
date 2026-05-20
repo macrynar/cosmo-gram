@@ -33,7 +33,7 @@ function ScoreRing({ score, size = 140 }: { score: number; size?: number }) {
         />
       </svg>
       <div className="absolute text-center">
-        <div className="text-3xl font-bold text-white" style={{ fontFamily: "'Cinzel', serif" }}>
+        <div className="text-3xl font-bold text-white font-brand">
           {score}
         </div>
         <div className="text-xs text-slate-400">/ 100</div>
@@ -48,7 +48,7 @@ function CategoryCard({ cat }: { cat: CompatibilityCategory }) {
   const effectiveScore = isChallenge ? 100 - cat.score : cat.score;
 
   const barColor =
-    effectiveScore >= 75 ? "bg-violet-500" :
+    effectiveScore >= 75 ? "bg-amber-500" :
     effectiveScore >= 50 ? "bg-amber-500" :
     "bg-red-500";
 
@@ -58,12 +58,12 @@ function CategoryCard({ cat }: { cat: CompatibilityCategory }) {
         <span className="text-sm font-semibold text-white flex items-center gap-2">
           <span>{icon}</span> {cat.name}
         </span>
-        <span className="text-lg font-bold text-white" style={{ fontFamily: "'Cinzel', serif" }}>
+        <span className="text-lg font-bold text-white font-brand">
           {cat.score}<span className="text-xs text-slate-500 font-normal">/100</span>
         </span>
       </div>
 
-      <div className="h-1.5 bg-purple-950/60 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-amber-950/40 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-700 ${barColor}`}
           style={{ width: `${cat.score}%` }}
@@ -72,9 +72,9 @@ function CategoryCard({ cat }: { cat: CompatibilityCategory }) {
 
       <p className="text-sm text-slate-300 leading-relaxed">{cat.interpretation}</p>
 
-      <div className="pt-1 border-t border-purple-900/20">
-        <p className="text-xs text-violet-400/80 leading-relaxed">
-          <span className="font-semibold text-violet-400">→ </span>{cat.insight}
+      <div className="pt-1 border-t border-amber-900/15">
+        <p className="text-xs text-amber-400/80 leading-relaxed">
+          <span className="font-semibold text-amber-400">→ </span>{cat.insight}
         </p>
       </div>
     </div>
@@ -102,13 +102,13 @@ export default function CompatibilityResultView({ result, person1Name, person2Na
       {/* Overall score */}
       <div className="glass-card rounded-3xl p-8 text-center">
         <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">Kompatybilność</p>
-        <h2 className="text-lg font-semibold text-white mb-6" style={{ fontFamily: "'Cinzel', serif" }}>
-          {label1} <span className="text-violet-400">×</span> {label2}
+        <h2 className="text-lg font-semibold text-white mb-6 font-brand">
+          {label1} <span className="text-amber-400">×</span> {label2}
         </h2>
 
         <ScoreRing score={result.overallScore} />
 
-        <p className="mt-4 text-sm font-medium text-violet-300">{overallLabel}</p>
+        <p className="mt-4 text-sm font-medium text-amber-300">{overallLabel}</p>
         <p className="mt-3 text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
           {result.summary}
         </p>

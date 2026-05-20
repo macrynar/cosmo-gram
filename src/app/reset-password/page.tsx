@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Lock, Check, Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { Lock, Check, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function ResetPasswordPage() {
@@ -51,27 +52,30 @@ export default function ResetPasswordPage() {
       <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-800/50">
-            <Sparkles className="w-4 h-4 text-white" />
+        <div className="flex items-center justify-center mb-8">
+          <div className="rounded-lg bg-white/95 px-2 py-1 shadow-md shadow-black/20">
+            <Image
+              src="/logo-b-refined.svg"
+              alt="Cosmogram"
+              width={168}
+              height={42}
+              priority
+            />
           </div>
-          <span className="text-lg font-semibold text-white" style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.05em" }}>
-            Cosmo<span className="text-violet-400">-gram</span>
-          </span>
         </div>
 
-        <div className="rounded-2xl border border-white/8 bg-[#0d0818]/95 backdrop-blur-xl p-7 shadow-2xl shadow-purple-950/50">
+        <div className="rounded-2xl border border-amber-900/25 bg-[#0a0807]/95 backdrop-blur-xl p-7 shadow-2xl shadow-black/60">
           {done ? (
             <div className="text-center py-4">
               <div className="w-12 h-12 rounded-full bg-green-900/30 border border-green-700/30 flex items-center justify-center mx-auto mb-4">
                 <Check className="w-6 h-6 text-green-400" />
               </div>
-              <h2 className="text-white font-semibold mb-1" style={{ fontFamily: "'Cinzel', serif" }}>Hasło zmienione</h2>
+              <h2 className="text-white font-semibold mb-1 font-brand">Hasło zmienione</h2>
               <p className="text-slate-500 text-sm">Przekierowuję do aplikacji…</p>
             </div>
           ) : (
             <>
-              <h2 className="text-lg font-semibold text-white mb-1" style={{ fontFamily: "'Cinzel', serif" }}>
+              <h2 className="text-lg font-semibold text-white mb-1 font-brand">
                 Ustaw nowe hasło
               </h2>
               <p className="text-slate-500 text-xs mb-6">Minimum 8 znaków.</p>
@@ -92,7 +96,7 @@ export default function ResetPasswordPage() {
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       placeholder="Nowe hasło"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/8 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/50 focus:bg-violet-900/10 transition-colors"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/8 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-600/50 focus:bg-amber-900/10 transition-colors"
                     />
                   </div>
                   <div className="relative">
@@ -104,7 +108,7 @@ export default function ResetPasswordPage() {
                       value={confirm}
                       onChange={e => setConfirm(e.target.value)}
                       placeholder="Powtórz hasło"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/8 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/50 focus:bg-violet-900/10 transition-colors"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/8 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-600/50 focus:bg-amber-900/10 transition-colors"
                     />
                   </div>
 
@@ -118,7 +122,7 @@ export default function ResetPasswordPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2 mt-1"
+                    className="w-full py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2 mt-1"
                   >
                     {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                     Zapisz nowe hasło

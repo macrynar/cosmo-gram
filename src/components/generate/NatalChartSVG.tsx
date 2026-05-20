@@ -63,12 +63,12 @@ export default function NatalChartSVG({ chart }: Props) {
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
         <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#0d0626" />
-          <stop offset="100%" stopColor="#07031a" />
+          <stop offset="0%" stopColor="#0c0a08" />
+          <stop offset="100%" stopColor="#03010d" />
         </radialGradient>
         <radialGradient id="inner-grad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#130a38" />
-          <stop offset="100%" stopColor="#0a0520" />
+          <stop offset="0%" stopColor="#100d09" />
+          <stop offset="100%" stopColor="#060407" />
         </radialGradient>
       </defs>
 
@@ -77,7 +77,7 @@ export default function NatalChartSVG({ chart }: Props) {
 
       {/* Zodiac segments */}
       {ZODIAC_SIGNS.map((sign) => {
-        const fill   = ZODIAC_ELEMENTS[sign.symbol] ?? "#8b5cf6";
+        const fill   = ZODIAC_ELEMENTS[sign.symbol] ?? "#b9894c";
         const stroke = ZODIAC_STROKE[sign.symbol]   ?? "#a78bfa";
         const startA = lonToAngle(sign.from, asc);
         const endA   = lonToAngle((sign.from + 30) % 360, asc);
@@ -110,14 +110,14 @@ export default function NatalChartSVG({ chart }: Props) {
         const outer = polarToXY(a, R_OUTER);
         const inner = polarToXY(a, R_OUTER - (i % 3 === 0 ? 12 : 6));
         return <line key={i} x1={outer.x} y1={outer.y} x2={inner.x} y2={inner.y}
-          stroke="rgba(139,92,246,0.35)" strokeWidth={i % 3 === 0 ? 1.2 : 0.5} />;
+          stroke="rgba(185,137,76,0.30)" strokeWidth={i % 3 === 0 ? 1.2 : 0.5} />;
       })}
 
       {/* Ring borders */}
-      <circle cx={CX} cy={CY} r={R_OUTER}     fill="none" stroke="#7c3aed" strokeWidth={1.8} />
-      <circle cx={CX} cy={CY} r={R_ZODIAC}    fill="none" stroke="#4c1d95" strokeWidth={1.2} />
-      <circle cx={CX} cy={CY} r={R_HOUSE_OUT} fill="none" stroke="#2d1467" strokeWidth={0.8} />
-      <circle cx={CX} cy={CY} r={R_HOUSE_IN}  fill="none" stroke="#1a0b3e" strokeWidth={0.6} />
+      <circle cx={CX} cy={CY} r={R_OUTER}     fill="none" stroke="#b9894c" strokeWidth={1.8} />
+      <circle cx={CX} cy={CY} r={R_ZODIAC}    fill="none" stroke="#7a5530" strokeWidth={1.2} />
+      <circle cx={CX} cy={CY} r={R_HOUSE_OUT} fill="none" stroke="#3d2510" strokeWidth={0.8} />
+      <circle cx={CX} cy={CY} r={R_HOUSE_IN}  fill="none" stroke="#1e1008" strokeWidth={0.6} />
 
       {/* House cusps */}
       {houses.map((h) => {
@@ -131,11 +131,11 @@ export default function NatalChartSVG({ chart }: Props) {
         return (
           <g key={h.house}>
             <line x1={outer.x} y1={outer.y} x2={inner.x} y2={inner.y}
-              stroke={isAngular ? "#8b5cf6" : "#2e1065"}
+              stroke={isAngular ? "#d6b07d" : "#2a1508"}
               strokeWidth={isAngular ? 1.8 : 0.7}
               strokeDasharray={isAngular ? undefined : "3 3"} />
             <text x={numPos.x} y={numPos.y} textAnchor="middle" dominantBaseline="central"
-              fontSize="12" fill={isAngular ? "#8b5cf6" : "#475569"}
+              fontSize="12" fill={isAngular ? "#d6b07d" : "#475569"}
               fontWeight={isAngular ? "bold" : "normal"}
               style={{ fontFamily: "'Inter', sans-serif" }}>
               {h.house}
@@ -145,7 +145,7 @@ export default function NatalChartSVG({ chart }: Props) {
       })}
 
       {/* Inner disc */}
-      <circle cx={CX} cy={CY} r={R_INNER} fill="url(#inner-grad)" stroke="#4c1d95" strokeWidth={1.5} />
+      <circle cx={CX} cy={CY} r={R_INNER} fill="url(#inner-grad)" stroke="#7a5530" strokeWidth={1.5} />
 
       {/* Aspect lines */}
       {planets.flatMap((p1, i) =>
@@ -190,7 +190,7 @@ export default function NatalChartSVG({ chart }: Props) {
             <circle cx={pos.x} cy={pos.y} r={19} fill={color} fillOpacity={0.05} />
             {/* Planet circle */}
             <circle cx={pos.x} cy={pos.y} r={15}
-              fill="#0e0730" stroke={color} strokeWidth={2}
+              fill="#0a0705" stroke={color} strokeWidth={2}
               style={{ filter: `drop-shadow(0 0 5px ${color}60)` }} />
             {/* Symbol */}
             <text x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="central"
@@ -212,9 +212,9 @@ export default function NatalChartSVG({ chart }: Props) {
         const p2 = polarToXY(a, R_INNER);
         const lbl = polarToXY(a, R_OUTER + 24);
         return (<g>
-          <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#8b5cf6" strokeWidth={2.5} />
+          <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#d6b07d" strokeWidth={2.5} />
           <text x={lbl.x} y={lbl.y} textAnchor="middle" dominantBaseline="central"
-            fontSize="13" fill="#a78bfa" fontWeight="bold" style={{ fontFamily: "'Inter',sans-serif" }}>ASC</text>
+            fontSize="13" fill="#e8d7bf" fontWeight="bold" style={{ fontFamily: "'Inter',sans-serif" }}>ASC</text>
         </g>);
       })()}
       {/* DSC */}
@@ -224,9 +224,9 @@ export default function NatalChartSVG({ chart }: Props) {
         const p2 = polarToXY(a, R_INNER);
         const lbl = polarToXY(a, R_OUTER + 24);
         return (<g>
-          <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#6d28d9" strokeWidth={1.2} strokeDasharray="5 3" />
+          <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#7a5530" strokeWidth={1.2} strokeDasharray="5 3" />
           <text x={lbl.x} y={lbl.y} textAnchor="middle" dominantBaseline="central"
-            fontSize="12" fill="#6d28d9" fontWeight="bold" style={{ fontFamily: "'Inter',sans-serif" }}>DSC</text>
+            fontSize="12" fill="#7a5530" fontWeight="bold" style={{ fontFamily: "'Inter',sans-serif" }}>DSC</text>
         </g>);
       })()}
       {/* MC axis */}
@@ -255,8 +255,8 @@ export default function NatalChartSVG({ chart }: Props) {
       })()}
 
       {/* Centre */}
-      <circle cx={CX} cy={CY} r={5} fill="#a78bfa" />
-      <circle cx={CX} cy={CY} r={9} fill="none" stroke="#a78bfa" strokeWidth={1} strokeOpacity={0.35} />
+      <circle cx={CX} cy={CY} r={5} fill="#d6b07d" />
+      <circle cx={CX} cy={CY} r={9} fill="none" stroke="#d6b07d" strokeWidth={1} strokeOpacity={0.35} />
     </svg>
   );
 }

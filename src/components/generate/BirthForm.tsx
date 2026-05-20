@@ -111,8 +111,8 @@ export default function BirthForm({ onSubmit, loading }: Props) {
 
   const isValid = !!date && (timeUnknown || !!time) && placeQuery.length >= 2;
 
-  const inputClass = `w-full px-3 py-2.5 rounded-xl bg-[#0d0626] border border-purple-900/40 text-white text-sm
-    focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/60
+  const inputClass = `w-full px-3 py-2.5 rounded-xl bg-[#0a0806] border border-amber-900/35 text-white text-sm
+    focus:outline-none focus:ring-2 focus:ring-amber-600/40 focus:border-amber-600/55
     [color-scheme:dark] transition`;
 
   return (
@@ -121,7 +121,7 @@ export default function BirthForm({ onSubmit, loading }: Props) {
         {/* Date */}
         <div className="flex-1 min-w-0">
           <label className="flex items-center gap-1 text-xs font-medium text-slate-400 mb-1.5">
-            <Calendar className="w-3 h-3 text-violet-400" /> Data urodzenia
+            <Calendar className="w-3 h-3 text-amber-400" /> Data urodzenia
           </label>
           <input
             type="date"
@@ -137,18 +137,18 @@ export default function BirthForm({ onSubmit, loading }: Props) {
         <div className="w-full sm:w-44 flex-shrink-0">
           <div className="flex items-center justify-between mb-1.5">
             <label className="flex items-center gap-1 text-xs font-medium text-slate-400">
-              <Clock className="w-3 h-3 text-violet-400" /> Godzina
+              <Clock className="w-3 h-3 text-amber-400" /> Godzina
             </label>
             <button
               type="button"
               onClick={() => setTimeUnknown(v => !v)}
-              className="text-xs text-slate-500 hover:text-violet-400 transition-colors"
+              className="text-xs text-slate-500 hover:text-amber-400 transition-colors"
             >
               {timeUnknown ? "✕ wróć" : "Nie znam"}
             </button>
           </div>
           {timeUnknown ? (
-            <div className="w-full px-3 py-2.5 rounded-xl bg-[#0d0626] border border-purple-900/20 text-slate-600 text-sm italic">
+            <div className="w-full px-3 py-2.5 rounded-xl bg-[#0a0806] border border-amber-900/20 text-slate-600 text-sm italic">
               nieznana
             </div>
           ) : (
@@ -165,7 +165,7 @@ export default function BirthForm({ onSubmit, loading }: Props) {
         {/* Place */}
         <div ref={wrapperRef} className="flex-[2] min-w-0 relative">
           <label className="flex items-center gap-1 text-xs font-medium text-slate-400 mb-1.5">
-            <MapPin className="w-3 h-3 text-violet-400" /> Miejsce urodzenia
+            <MapPin className="w-3 h-3 text-amber-400" /> Miejsce urodzenia
           </label>
           <div className="relative">
             <input
@@ -176,15 +176,15 @@ export default function BirthForm({ onSubmit, loading }: Props) {
               required
               className={`${inputClass} pr-8`}
             />
-            {geocoding && <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-violet-400 animate-spin" />}
+            {geocoding && <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-amber-400 animate-spin" />}
             {selected && !geocoding && <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-400 text-sm">✓</span>}
           </div>
           {dropdownOpen && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-purple-900/40 bg-[#07031a]/98 backdrop-blur shadow-2xl z-50 overflow-hidden">
+            <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-amber-900/30 bg-[#0a0807]/98 backdrop-blur shadow-2xl z-50 overflow-hidden">
               {suggestions.map((r, i) => (
                 <button key={i} type="button" onMouseDown={() => handleSelect(r)}
-                  className="w-full text-left px-3 py-2.5 text-sm text-slate-300 hover:bg-violet-900/30 hover:text-white transition-colors border-b border-purple-900/20 last:border-0 truncate">
-                  <MapPin className="inline w-3 h-3 text-violet-400 mr-1.5 -mt-0.5" />
+                  className="w-full text-left px-3 py-2.5 text-sm text-slate-300 hover:bg-amber-900/20 hover:text-white transition-colors border-b border-amber-900/15 last:border-0 truncate">
+                  <MapPin className="inline w-3 h-3 text-amber-400 mr-1.5 -mt-0.5" />
                   {r.displayName}
                 </button>
               ))}
@@ -199,8 +199,8 @@ export default function BirthForm({ onSubmit, loading }: Props) {
             disabled={!isValid || loading}
             className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap
               ${isValid && !loading
-                ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-purple-900/50 hover:shadow-purple-700/60 hover:scale-[1.02] active:scale-[0.99]"
-                : "bg-purple-900/30 text-slate-500 cursor-not-allowed"
+                ? "bg-gradient-to-r from-amber-700 to-amber-600 text-white shadow-lg shadow-amber-950/40 hover:shadow-amber-800/50 hover:scale-[1.02] active:scale-[0.99]"
+                : "bg-amber-900/20 text-slate-500 cursor-not-allowed"
               }`}
           >
             {loading

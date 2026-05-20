@@ -48,7 +48,7 @@ export default function ChildCard({ id, name, birthDate, birthPlace, chartData, 
     >
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="text-white font-semibold text-lg" style={{ fontFamily: "'Cinzel', serif" }}>
+          <h3 className="text-white font-semibold text-lg font-brand">
             {name}
           </h3>
           <p className="text-slate-500 text-xs mt-0.5">

@@ -193,7 +193,7 @@ export default function ChildrenPage() {
             <Baby className="w-3.5 h-3.5 text-green-400" />
             Karta urodzeniowa dziecka
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2" style={{ fontFamily: "'Cinzel', serif" }}>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 font-brand">
             Kosmogram <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">Dziecka</span>
           </h1>
           <p className="text-slate-500 text-sm">Tendencje · Potrzeby · Wskazówki dla rodzica · Interpretacja AI</p>
