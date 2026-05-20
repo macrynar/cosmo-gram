@@ -3,8 +3,6 @@ import Stripe from "stripe";
 import { upsertSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
 function subFromEvent(sub: Stripe.Subscription) {
   return {
     stripeSubscriptionId: sub.id,
@@ -16,6 +14,7 @@ function subFromEvent(sub: Stripe.Subscription) {
 }
 
 export async function POST(req: NextRequest) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
   if (!sig) return NextResponse.json({ error: "No signature" }, { status: 400 });

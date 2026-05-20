@@ -3,9 +3,8 @@ import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { getUserSubscription } from "@/lib/subscription";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
 export async function POST(req: NextRequest) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) return NextResponse.json({ error: "Brak autoryzacji" }, { status: 401 });
 
