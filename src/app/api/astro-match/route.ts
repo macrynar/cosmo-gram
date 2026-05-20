@@ -171,7 +171,7 @@ Przeanalizuj kompatybilność tych dwóch kart urodzeniowych. Skup się na aspek
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 2000,
+        max_tokens: 3500,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userMessage }],
       }),
@@ -182,15 +182,23 @@ Przeanalizuj kompatybilność tych dwóch kart urodzeniowych. Skup się na aspek
       return NextResponse.json({ error: "AI unavailable" }, { status: 502 });
     }
 
-    const data = await response.json() as { content: Array<{ type: string; text: string }> };
+    const data = await response.json() as {
+      content: Array<{ type: string; text: string }>;
+      stop_reason: string;
+    };
+
+    if (data.stop_reason === "max_tokens") {
+      console.error("Astro-match response truncated by max_tokens");
+    }
+
     const rawText = data.content?.find(b => b.type === "text")?.text ?? "";
 
     let result: CompatibilityResult;
     try {
       result = extractJson(rawText);
     } catch {
-      console.error("JSON parse error, raw:", rawText.slice(0, 500));
-      return NextResponse.json({ error: "Błąd parsowania odpowiedzi AI" }, { status: 500 });
+      console.error("JSON parse error (stop_reason:", data.stop_reason, "), raw:", rawText.slice(0, 500));
+      return NextResponse.json({ error: "Analiza nie powiodła się — spróbuj ponownie." }, { status: 500 });
     }
 
     return NextResponse.json({
