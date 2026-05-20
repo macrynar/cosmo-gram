@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Sparkles, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import BirthForm from "@/components/generate/BirthForm";
 import NatalChartSVG from "@/components/generate/NatalChartSVG";
@@ -12,6 +12,7 @@ import HistorySelector, { type HistoryItem } from "@/components/HistorySelector"
 import { NatalChart } from "@/lib/astro-types";
 import { useAuth } from "@/components/AuthContext";
 import { track } from "@/components/PostHogProvider";
+import ChartChatTabs from "@/components/ChartChatTabs";
 
 type SavedReading = {
   id: string;
@@ -254,15 +255,14 @@ export default function GeneratePage() {
       <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-24 pb-20">
 
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full border border-violet-500/30 bg-violet-900/20 text-violet-300 text-xs font-medium tracking-wide">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            Kalkulator Kosmogramu
+        <div className="mb-8">
+          <ChartChatTabs />
+          <div className="mt-6 text-center">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2" style={{ fontFamily: "'Cinzel', serif" }}>
+              Twój <span className="gradient-text text-glow">Kosmogram Natalny</span>
+            </h1>
+            <p className="text-slate-500 text-sm">Obliczenia astronomiczne · Swiss Ephemeris · Interpretacja AI</p>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2" style={{ fontFamily: "'Cinzel', serif" }}>
-            Twój <span className="gradient-text text-glow">Kosmogram Natalny</span>
-          </h1>
-          <p className="text-slate-500 text-sm">Obliczenia astronomiczne · Swiss Ephemeris · Interpretacja AI</p>
         </div>
 
         {/* History selector */}

@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/components/AuthContext";
 import PaywallModal from "@/components/PaywallModal";
 import { track } from "@/components/PostHogProvider";
+import ChartChatTabs from "@/components/ChartChatTabs";
 
 type Message = {
   role: "user" | "assistant";
@@ -187,6 +188,11 @@ export default function ChatPage() {
 
       <main className="relative z-10 flex flex-col flex-1 min-h-0 pt-16">
         <div className="flex flex-col flex-1 min-h-0 max-w-2xl mx-auto w-full px-4">
+
+          {/* Tab bar */}
+          <div className="py-3 shrink-0">
+            <ChartChatTabs />
+          </div>
 
           {/* Conversation bar */}
           <div className="flex items-center gap-2 py-3 border-b border-white/5 shrink-0">
