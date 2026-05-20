@@ -33,7 +33,7 @@ export default function Hero() {
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
         <h1
-          className="font-brand text-4xl sm:text-6xl lg:text-7xl font-semibold text-white leading-tight mb-6"
+          className="font-brand text-4xl sm:text-6xl lg:text-7xl font-semibold text-white leading-[1.05] mb-6"
         >
           Zrozum siebie i swoje relacje za pomocą gwiazd.
         </h1>
