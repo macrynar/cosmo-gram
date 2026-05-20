@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export type DailyReadingData = {
+  headline: string;
+  theme: string;
+  insight: string;
+  action: string;
+  avoid: string;
+  mantra: string;
+};
+
 interface DailyReadingBody {
   promptContext: string;
   interpretationContext?: string;
@@ -16,6 +25,77 @@ function buildTodayLabel(timezone: string): string {
   }).format(new Date());
 }
 
+const SYSTEM_PROMPT = `Jesteś doświadczoną astrologią piszącą dzienną interpretację karty natury. Piszesz w języku polskim.
+
+# Twoja rola
+Tworzysz GOTOWY dzienny horoskop — nie opisujesz tranzyty, nie obliczasz, nie wyjaśniasz procesu. Bezpośrednio przechodzisz do narracji.
+
+# Zasady naczelne
+1. Każde zdanie MUSI wynikać z konkretnego tranzytu lub natal plaementu. Wymień tranzyt (np. "Mars kwadrat natal Jowisz", "tranzytujący Saturn seksyl natal Saturn").
+2. Zero kliszy: "zaufaj intuicji", "wszechświat", "otwórz serce", "moc chwili", "follow your dreams".
+3. Pisz konkretnie i behawioralnie — nie o "energii miłości" ale o tym CO konkretnie robić lub czuć.
+4. Ton: jak inteligentna przyjaciółka która zna astrologię — ciepło, bezpośrednio, bez mistycyzmu.
+5. Użyj "dziś", "możesz", "warto", "pojawia się" — nie "Twój" co zdanie.
+
+# FORMAT — zwróć WYŁĄCZNIE poprawny JSON, bez markdown, bez żadnego tekstu poza JSON
+
+{
+  "headline": "<Konkretny obraz dnia, 8-14 słów. Odwołanie do głównego tranzytu lub napięcia. Nie banał.>",
+  "theme": "<1 zdanie. Główny tranzyt dnia i jego ogólny klimat emocjonalny/energetyczny. Max 20 słów.>",
+  "insight": "<2-3 zdania. Główna interpretacja — co to oznacza praktycznie dla osoby z tą kartą. Konkretne, osobiste, wynikające z aspektów. Max 80 słów.>",
+  "action": "<1 konkretne zdanie co zrobić dziś. Zachowanie fizyczne/decyzja/rozmowa. Wynika z harmonijnego tranzytu. Max 25 słów.>",
+  "avoid": "<1 konkretne zdanie czego unikać. Wynika z trudnego tranzytu. Nie katastrofizuj. Max 25 słów.>",
+  "mantra": "<Krótka fraza do zapamiętania, 5-9 słów. Konkretna, nie generic. Może nawiązywać do znaku lub planety.>"
+}
+
+# Przykłady DOBRYCH pól:
+
+headline:
+✓ "Saturn seksyl Saturn: czas audytu bez emocji"
+✓ "Mars kwadrat Mars — energia jest, kierunek rozmyty"
+✗ "Dzień pełen możliwości i wyzwań" (puste)
+✗ "Twoja moc budzi się dzisiaj" (klisza)
+
+insight:
+✓ "Tranzytujący Saturn w ścisłym sekstylu do natal Saturna to rzadkie okno na chłodną ocenę zasobów — czas, pieniądze, zobowiązania. Emocje nie blokują dziś analizy, co jest rzadkością. Jednocześnie Mars kwadrat natal Mars tworzy podskórną irytację — energia szuka ujścia, ale działanie bez planu będzie kontrproduktywne."
+✗ "Dziś możesz poczuć silną energię i chęć do działania. Warto słuchać swojego ciała." (generic)
+
+action:
+✓ "Przejdź przez jedną odłożoną decyzję finansową krok po kroku — Saturn dziś sprzyja trzeźwej kalkulacji."
+✗ "Spędź czas z bliskimi i ciesz się chwilą." (nic nie wnosi)
+
+mantra:
+✓ "Energia bez kierunku to tylko hałas."
+✓ "Saturn uczy cierpliwości, nie bezruchu."
+✗ "Wszystko jest możliwe." (bez wartości)`;
+
+function extractJson(raw: string): DailyReadingData {
+  const stripped = raw
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
+    .trim();
+
+  try {
+    return JSON.parse(stripped) as DailyReadingData;
+  } catch { /* fall through */ }
+
+  const match = stripped.match(/\{[\s\S]*\}/);
+  if (match) return JSON.parse(match[0]) as DailyReadingData;
+
+  throw new Error("No JSON in response");
+}
+
+function offlineReading(todayLabel: string): DailyReadingData {
+  return {
+    headline: "Czas konkretnych decyzji — wybierz jedną i domknij",
+    theme: "Saturn sprzyja dziś trzeźwej ocenie priorytetów i zasobów.",
+    insight: "To dobry moment na porządkowanie myśli bez emocjonalnych zakłóceń. Jedna szczera rozmowa lub konkretna decyzja da dziś więcej niż tydzień planowania. Unikaj jednak rozrzucania energii — skup się na tym, co realnie możesz zamknąć.",
+    action: "Wybierz jedną odłożoną sprawę i zrób pierwszy konkretny krok przed południem.",
+    avoid: "Brania na siebie cudzych spraw kosztem własnych priorytetów — dziś liczy się fokus.",
+    mantra: "Mniej, ale naprawdę.",
+  };
+}
+
 export async function POST(req: NextRequest) {
   const { promptContext, interpretationContext, timezone } = await req.json() as DailyReadingBody;
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -29,41 +109,13 @@ export async function POST(req: NextRequest) {
   if (!apiKey) {
     return NextResponse.json({
       dateLabel: todayLabel,
-      dailyReading: generateOfflineDailyReading(todayLabel),
+      dailyReading: JSON.stringify(offlineReading(todayLabel)),
     });
   }
 
   try {
-    const systemPrompt = `Jesteś astrologiem z 20+ lat praktyki. Tworzysz dzienny horoskop który user czyta rano przed pracą - ma 30 sekund, nie 3 minuty.
+    const trimmedInterpretation = (interpretationContext || "").slice(0, 3000);
 
-# Zasady naczelne
-
-- Max 150 słów ŁĄCZNIE. Liczone słowa, nie znaki. Przekroczenie = błąd.
-- Każdy element MUSI wynikać z konkretnego tranzytu lub natal placementu tej karty. Nic generic.
-- Zero: "zaufaj swojej intuicji", "Twoje pierwsze przeczucie", "wszechświat dziś", "otwórz się", "zaufaj procesowi".
-- Pisz jak doświadczona astrolożka która ma 2 minuty żeby przekazać sedno - bez owijania w bawełnę.
-- Mów bezosobowo: "można zauważyć", "warto", "pojawia się" - NIE "Ty", NIE "Twój" w każdym zdaniu.
-
-# FORMAT OUTPUTU (sztywny, zachowaj dokładnie)
-
-## [Nagłówek dnia - konkretny obraz, 8-15 słów]
-
-**Co dziś wspiera:** [max 50 słów. Oparty o JEDEN konkretny tranzyt lub najsilniejszy natal aspekt dnia. Wymień go z nazwy. Jak konkretnie wpływa na działanie/myślenie/emocje.]
-
-**Co dziś uwiera:** [max 40 słów. Oparty o JEDEN trudny tranzyt. Bez katastrofizowania. "To nie problem - wymaga uwagi."]
-
-**Dziś:**
-- Zrób: [1 zdanie, konkretne behawioralne polecenie - co zrobić fizycznie/w rozmowie/w decyzji]
-- Unikaj: [1 zdanie, konkretne]
-
-# Przykład nagłówka
-
-DOBRZE: "Dzień konkretnych decyzji - z mglistych planów wybierz jeden."
-DOBRZE: "Merkury kwadrat Saturn: zanim wyślesz, przeczytaj dwa razy."
-ŹLE: "Twoja intuicja pracuje szybciej niż umysł." (klisza bez tranzytu)
-ŹLE: "Dzień pełen możliwości." (puste)`;
-
-    const trimmedInterpretation = (interpretationContext || "").slice(0, 4500);
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -73,40 +125,42 @@ DOBRZE: "Merkury kwadrat Saturn: zanim wyślesz, przeczytaj dwa razy."
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 400,
-        system: systemPrompt,
+        max_tokens: 600,
+        system: SYSTEM_PROMPT,
         messages: [
           {
             role: "user",
-            content: `Data docelowa horoskopu: ${todayLabel}\nStrefa czasowa: ${safeTz}\n\nDane kosmogramu:\n${promptContext}\n\nSkrót aktualnej interpretacji AI (kontekst):\n${trimmedInterpretation || "Brak - wygeneruj na bazie danych kosmogramu."}\n\nPrzygotuj dzienny horoskop na wskazany dzień.`,
+            content: `Data horoskopu: ${todayLabel}\nStrefa czasowa: ${safeTz}\n\nDane kosmogramu natury:\n${promptContext}\n\n${trimmedInterpretation ? `Kontekst z interpretacji natury:\n${trimmedInterpretation}\n\n` : ""}Wygeneruj dzienny horoskop. Zwróć TYLKO JSON.`,
           },
         ],
       }),
     });
 
     if (!response.ok) {
-      const err = await response.text();
-      console.error("Anthropic daily-reading error:", err);
+      console.error("Anthropic daily-reading error:", await response.text());
       return NextResponse.json({
         dateLabel: todayLabel,
-        dailyReading: generateOfflineDailyReading(todayLabel),
+        dailyReading: JSON.stringify(offlineReading(todayLabel)),
       });
     }
 
-    const data = await response.json() as {
-      content: Array<{ type: string; text: string }>;
-    };
+    const data = await response.json() as { content: Array<{ type: string; text: string }> };
+    const raw = data.content?.find((b) => b.type === "text")?.text ?? "";
 
-    const text = data.content?.find((b) => b.type === "text")?.text ?? "";
-    return NextResponse.json({ dateLabel: todayLabel, dailyReading: text });
+    let reading: DailyReadingData;
+    try {
+      reading = extractJson(raw);
+    } catch {
+      console.error("Daily reading JSON parse error:", raw.slice(0, 300));
+      reading = offlineReading(todayLabel);
+    }
+
+    return NextResponse.json({ dateLabel: todayLabel, dailyReading: JSON.stringify(reading) });
   } catch (err) {
     console.error("Daily reading error:", err);
     return NextResponse.json({
       dateLabel: todayLabel,
-      dailyReading: generateOfflineDailyReading(todayLabel),
+      dailyReading: JSON.stringify(offlineReading(todayLabel)),
     });
   }
 }
-
-function generateOfflineDailyReading(todayLabel: string): string {
-  return `## ✨ Nagłówek dnia\nDziś zwolnij tempo i wybierz jedną rzecz, którą domkniesz naprawdę dobrze.\n\n## ✅ Co dziś wspiera\nTo dobry moment na porządkowanie myśli i priorytetów. Jeśli od rana ustawisz 2-3 jasne cele, łatwiej utrzymasz energię i nie rozproszysz się drobiazgami.\n\nW relacjach działa prostota: mów krócej, ale konkretniej. Jedna szczera rozmowa da dziś więcej niż długie tłumaczenia.\n\n## ⚠️ Co może dziś uwierać\nMożesz mieć tendencję do nadanalizy i odkładania decyzji. Gdy zauważysz, że kręcisz się w kółko, wróć do pytania: co jest najważniejsze na ten moment?\n\n## 🎯 Dziś zrób / dziś unikaj\n- Dziś zrób: zaplanuj dzień w 3 punktach i zrealizuj pierwszy punkt przed południem.\n- Dziś unikaj: brania na siebie cudzych spraw kosztem własnych priorytetów.\n\n_Data: ${todayLabel}_`;}
