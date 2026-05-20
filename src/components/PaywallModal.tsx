@@ -1,0 +1,114 @@
+"use client";
+
+import { useState } from "react";
+import { X, Sparkles, Check, Loader2 } from "lucide-react";
+import { useAuth } from "@/components/AuthContext";
+
+type Props = {
+  onClose: () => void;
+  reason?: string;
+};
+
+const FEATURES = [
+  "Pełna interpretacja Twojego kosmogramu",
+  "Dzienny odczyt astrologiczny każdego ranka",
+  "Nieograniczone Astro-Matche",
+  "Cosmogram Chat bez limitu",
+  "Karta kosmogramu dziecka",
+];
+
+export default function PaywallModal({ onClose, reason }: Props) {
+  const { session } = useAuth();
+  const [loading, setLoading] = useState<"monthly" | "yearly" | null>(null);
+
+  async function handleCheckout(priceType: "monthly" | "yearly") {
+    if (!session) return;
+    setLoading(priceType);
+    try {
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ priceType }),
+      });
+      const { url, error } = await res.json() as { url?: string; error?: string };
+      if (error) { console.error(error); return; }
+      if (url) window.location.href = url;
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative glass-card rounded-3xl p-6 sm:p-8 max-w-md w-full border border-violet-500/20 shadow-2xl shadow-purple-950/50">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-violet-600 to-purple-700 mb-4 shadow-lg shadow-purple-900/50">
+            <Sparkles className="w-6 h-6 text-white" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-1" style={{ fontFamily: "'Cinzel', serif" }}>
+            Cosmogram Plus
+          </h2>
+          {reason && (
+            <p className="text-slate-400 text-sm mt-1">{reason}</p>
+          )}
+          <p className="text-slate-500 text-xs mt-1">7 dni bezpłatnego trialu · anuluj kiedy chcesz</p>
+        </div>
+
+        <ul className="space-y-2 mb-6">
+          {FEATURES.map(f => (
+            <li key={f} className="flex items-start gap-2.5 text-sm text-slate-300">
+              <Check className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
+              {f}
+            </li>
+          ))}
+        </ul>
+
+        <div className="space-y-2">
+          <button
+            onClick={() => handleCheckout("monthly")}
+            disabled={!!loading}
+            className="w-full py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold text-sm shadow-lg shadow-purple-900/40 hover:scale-[1.01] transition-all disabled:opacity-60"
+          >
+            {loading === "monthly" ? (
+              <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+            ) : (
+              "Zacznij trial — 29 zł / miesiąc"
+            )}
+          </button>
+
+          <button
+            onClick={() => handleCheckout("yearly")}
+            disabled={!!loading}
+            className="w-full py-3 rounded-2xl border border-violet-500/40 text-violet-300 text-sm hover:bg-violet-900/20 transition-colors disabled:opacity-60 relative"
+          >
+            {loading === "yearly" ? (
+              <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+            ) : (
+              <>
+                Roczny — 290 zł / rok
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs bg-violet-600/30 text-violet-300 px-2 py-0.5 rounded-full">
+                  -17%
+                </span>
+              </>
+            )}
+          </button>
+        </div>
+
+        <p className="text-center text-slate-600 text-xs mt-4">
+          Bezpieczna płatność przez Stripe · VAT wliczony
+        </p>
+      </div>
+    </div>
+  );
+}

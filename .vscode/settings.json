@@ -1,0 +1,9 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "ss": true,
+        "/^cat package\\.json \\| python3 -c \"import sys,json; d=json\\.load\\(sys\\.stdin\\); print\\(json\\.dumps\\(d\\.get\\('dependencies',\\{\\}\\), indent=2\\)\\); print\\('---'\\); print\\(json\\.dumps\\(d\\.get\\('devDependencies',\\{\\}\\), indent=2\\)\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

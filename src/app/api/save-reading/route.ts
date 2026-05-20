@@ -1,0 +1,48 @@
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase-server";
+import { createClient } from "@supabase/supabase-js";
+
+export async function POST(req: NextRequest) {
+  // Verify user is logged in via their session token
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return NextResponse.json({ error: "Brak autoryzacji" }, { status: 401 });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const userClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  );
+
+  const { data: { user }, error: authError } = await userClient.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Nieprawidłowy token" }, { status: 401 });
+  }
+
+  const body = await req.json() as {
+    birthDate: string;
+    birthTime: string;
+    birthPlace: string;
+    chart: unknown;
+    interpretation: string;
+    dailyReading: string;
+  };
+
+  const defaultName = `${body.birthPlace.split(",")[0]} · ${body.birthDate}`;
+
+  const { data: inserted, error } = await supabaseAdmin.from("readings").insert({
+    user_id: user.id,
+    name: defaultName,
+    birth_date: body.birthDate,
+    birth_time: body.birthTime,
+    birth_place: body.birthPlace,
+    chart_data: body.chart,
+    interpretation: body.interpretation,
+    daily_reading: body.dailyReading,
+  }).select("id").single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true, id: inserted?.id });
+}
