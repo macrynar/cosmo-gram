@@ -6,9 +6,31 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import ChildInterpretation from "@/components/children/ChildInterpretation";
+import NatalChartSVG from "@/components/generate/NatalChartSVG";
+import PlanetTable from "@/components/generate/PlanetTable";
 import { useAuth } from "@/components/AuthContext";
 import { calcAgeYears } from "@/lib/prompts/child-v1";
 import type { NatalChart } from "@/lib/astro-types";
+
+const ELEMENTS: Record<string, string> = {
+  "Baran": "Ogień", "Lew": "Ogień", "Strzelec": "Ogień",
+  "Byk": "Ziemia", "Panna": "Ziemia", "Koziorożec": "Ziemia",
+  "Bliźnięta": "Powietrze", "Waga": "Powietrze", "Wodnik": "Powietrze",
+  "Rak": "Woda", "Skorpion": "Woda", "Ryby": "Woda",
+};
+const ELEMENT_STYLE: Record<string, { emoji: string; color: string }> = {
+  "Ogień":     { emoji: "🔥", color: "border-red-800/30 text-red-300/80 bg-red-900/10" },
+  "Ziemia":    { emoji: "🌿", color: "border-green-800/30 text-green-300/80 bg-green-900/10" },
+  "Powietrze": { emoji: "💨", color: "border-sky-800/30 text-sky-300/80 bg-sky-900/10" },
+  "Woda":      { emoji: "💧", color: "border-blue-800/30 text-blue-300/80 bg-blue-900/10" },
+};
+
+function getDominantElement(chart: NatalChart) {
+  const counts: Record<string, number> = { "Ogień": 0, "Ziemia": 0, "Powietrze": 0, "Woda": 0 };
+  chart.planets.forEach(p => { const el = ELEMENTS[p.sign]; if (el) counts[el]++; });
+  const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+  return { label: dominant, ...ELEMENT_STYLE[dominant] };
+}
 
 type ChildData = {
   id: string;
@@ -66,7 +88,7 @@ export default function ChildPage() {
 
       <Navbar />
 
-      <main className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 pt-24 pb-20">
+      <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-24 pb-20">
         <div className="mb-6">
           <Link
             href="/children"
@@ -126,7 +148,38 @@ export default function ChildPage() {
                     Asc {ascSign}
                   </span>
                 )}
+                {(() => {
+                  const el = getDominantElement(child.chart_data);
+                  return (
+                    <span className={`text-xs px-3 py-1 rounded-full border ${el.color}`}>
+                      {el.emoji} Dominuje {el.label}
+                    </span>
+                  );
+                })()}
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+              <div className="glass-card rounded-3xl p-4 sm:p-5 flex flex-col">
+                <NatalChartSVG chart={child.chart_data} />
+                {!child.chart_data.birthData?.timeUnknown && (
+                  <div className="flex flex-wrap justify-center gap-3 text-xs text-slate-500 mt-4 pt-3 border-t border-green-900/15">
+                    {[
+                      { color: "bg-amber-400/60", label: "Koniunkcja (0°)" },
+                      { color: "bg-green-400/60",  label: "Trygon (120°)" },
+                      { color: "bg-red-400/60",    label: "Opozycja (180°)" },
+                      { color: "bg-orange-400/60", label: "Kwadrat (90°)" },
+                      { color: "bg-blue-400/60",   label: "Sekstyl (60°)" },
+                    ].map(({ color, label }) => (
+                      <span key={label} className="flex items-center gap-1.5">
+                        <span className={`inline-block w-3 h-1.5 rounded-full ${color}`} />
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="h-full"><PlanetTable chart={child.chart_data} /></div>
             </div>
 
             <ChildInterpretation
