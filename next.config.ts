@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["tz-lookup", "astronomy-engine"],
   async rewrites() {
     return [
       {
