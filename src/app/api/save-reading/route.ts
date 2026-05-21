@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json() as {
+    name?: string;
     birthDate: string;
     birthTime: string;
     birthPlace: string;
@@ -30,11 +31,11 @@ export async function POST(req: NextRequest) {
     dailyReading: string;
   };
 
-  const defaultName = `${body.birthPlace.split(",")[0]} · ${body.birthDate}`;
+  const name = body.name?.trim() || `${body.birthPlace.split(",")[0]} · ${body.birthDate}`;
 
   const { data: inserted, error } = await supabaseAdmin.from("readings").insert({
     user_id: user.id,
-    name: defaultName,
+    name,
     birth_date: body.birthDate,
     birth_time: body.birthTime,
     birth_place: body.birthPlace,

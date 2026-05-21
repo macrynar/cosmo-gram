@@ -106,8 +106,9 @@ export default function ChildInterpretation({ text, loading, childName }: Props)
             {named.map((section, i) => {
               const cfg = SECTION_CONFIG[i % SECTION_CONFIG.length];
               const Icon = cfg.icon;
+              const isLastOdd = named.length % 2 !== 0 && i === named.length - 1;
               return (
-                <div key={i} className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4`}>
+                <div key={i} className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4${isLastOdd ? " xl:col-span-2" : ""}`}>
                   <div className={`flex items-center gap-2 mb-2 ${cfg.color}`}>
                     <Icon className="w-4 h-4 shrink-0" />
                     <h4 className="text-sm font-semibold">{section.header}</h4>

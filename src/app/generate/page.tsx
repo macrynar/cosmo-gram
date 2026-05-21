@@ -171,6 +171,7 @@ export default function GeneratePage() {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeader },
           body: JSON.stringify({
+            name: data.name.trim() || undefined,
             birthDate: data.date,
             birthTime: data.time,
             birthPlace: data.place,
@@ -341,8 +342,8 @@ export default function GeneratePage() {
               </p>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              <div className="glass-card rounded-3xl p-4 sm:p-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+              <div className="glass-card rounded-3xl p-4 sm:p-5 flex flex-col">
                 <NatalChartSVG chart={chart} />
                 {!chart.birthData.timeUnknown && (
                   <div className="flex flex-wrap justify-center gap-3 text-xs text-slate-500 mt-4 pt-3 border-t border-amber-900/15">
@@ -361,7 +362,7 @@ export default function GeneratePage() {
                   </div>
                 )}
               </div>
-              <PlanetTable chart={chart} />
+              <div className="h-full"><PlanetTable chart={chart} /></div>
             </div>
 
             <Interpretation text={interpretation} loading={interpretLoading} />
