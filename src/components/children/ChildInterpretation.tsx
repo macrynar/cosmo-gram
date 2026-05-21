@@ -84,8 +84,9 @@ export default function ChildInterpretation({ text, loading, childName }: Props)
   if (!text) return null;
 
   const sections = parseSections(text);
+  const SKIP = /workflow|wstępny|sygnatury|krok\s*\d|top\s*\d/i;
   const intro = sections.find((s) => !s.header);
-  const named = sections.filter((s) => s.header);
+  const named = sections.filter((s) => s.header && !SKIP.test(s.header));
 
   return (
     <div className="glass-card rounded-2xl overflow-hidden border border-green-900/20">

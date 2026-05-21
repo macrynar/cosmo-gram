@@ -71,9 +71,10 @@ function MarkdownBlock({ content }: { content: string }) {
 export default function Interpretation({ text, loading }: Props) {
   const sections = text ? parseSections(text) : [];
 
-  // Separate intro (no header) from named sections
+  // Separate intro (no header) from named sections; strip AI workflow leakage
+  const SKIP = /workflow|wstępny|sygnatury|krok\s*\d|top\s*\d/i;
   const intro = sections.find((s) => !s.header);
-  const named = sections.filter((s) => s.header);
+  const named = sections.filter((s) => s.header && !SKIP.test(s.header));
   const hasMissingSections = named.length > 0 && named.length < 7;
 
   return (
