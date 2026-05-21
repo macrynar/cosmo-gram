@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, Sparkles, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
+import { track } from "@/components/PostHogProvider";
 
 type Props = {
   onClose: () => void;
@@ -21,8 +22,13 @@ export default function PaywallModal({ onClose, reason }: Props) {
   const { session } = useAuth();
   const [loading, setLoading] = useState<"monthly" | "yearly" | null>(null);
 
+  useEffect(() => {
+    track("paywall_shown", { reason: reason ?? "generic" });
+  }, [reason]);
+
   async function handleCheckout(priceType: "monthly" | "yearly") {
     if (!session) return;
+    track("checkout_initiated", { price_type: priceType });
     setLoading(priceType);
     try {
       const res = await fetch("/api/create-checkout-session", {

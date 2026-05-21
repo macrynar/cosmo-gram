@@ -133,52 +133,41 @@ export default function ChildPage() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 mt-4">
-                {sun && (
-                  <span className="text-xs px-3 py-1 rounded-full border border-amber-700/40 text-amber-300/80 bg-amber-900/10">
-                    ☉ {sun.sign}
-                  </span>
-                )}
-                {moon && (
-                  <span className="text-xs px-3 py-1 rounded-full border border-blue-700/40 text-blue-300/80 bg-blue-900/10">
-                    ☽ {moon.sign}
-                  </span>
-                )}
-                {ascSign && (
-                  <span className="text-xs px-3 py-1 rounded-full border border-green-700/40 text-green-300/80 bg-green-900/10">
-                    Asc {ascSign}
-                  </span>
-                )}
-                {(() => {
-                  const el = getDominantElement(child.chart_data);
-                  return (
-                    <span className={`text-xs px-3 py-1 rounded-full border ${el.color}`}>
-                      {el.emoji} Dominuje {el.label}
-                    </span>
-                  );
-                })()}
-              </div>
             </div>
-
-            {/* Personality tags */}
-            {(() => {
-              const tags = getPersonalityTags(child.chart_data);
-              return tags.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {tags.map(tag => (
-                    <span key={tag} className="px-3 py-1 rounded-full text-xs border border-slate-700/30 text-slate-400 bg-slate-800/30">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              ) : null;
-            })()}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
               <div className="glass-card rounded-3xl p-4 sm:p-5 flex flex-col">
                 <NatalChartSVG chart={child.chart_data} />
+
+                {/* Sun / Moon / Asc / element — below the chart */}
+                <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-green-900/15">
+                  {sun && (
+                    <span className="text-xs px-3 py-1 rounded-full border border-amber-700/40 text-amber-300/80 bg-amber-900/10">
+                      ☉ {sun.sign}
+                    </span>
+                  )}
+                  {moon && (
+                    <span className="text-xs px-3 py-1 rounded-full border border-blue-700/40 text-blue-300/80 bg-blue-900/10">
+                      ☽ {moon.sign}
+                    </span>
+                  )}
+                  {ascSign && (
+                    <span className="text-xs px-3 py-1 rounded-full border border-green-700/40 text-green-300/80 bg-green-900/10">
+                      Asc {ascSign}
+                    </span>
+                  )}
+                  {(() => {
+                    const el = getDominantElement(child.chart_data);
+                    return (
+                      <span className={`text-xs px-3 py-1 rounded-full border ${el.color}`}>
+                        {el.emoji} Dominuje {el.label}
+                      </span>
+                    );
+                  })()}
+                </div>
+
                 {!child.chart_data.birthData?.timeUnknown && (
-                  <div className="flex flex-wrap justify-center gap-3 text-xs text-slate-500 mt-4 pt-3 border-t border-green-900/15">
+                  <div className="flex flex-wrap justify-center gap-3 text-xs text-slate-500 mt-3 pt-3 border-t border-green-900/15">
                     {[
                       { color: "bg-amber-400/60", label: "Koniunkcja (0°)" },
                       { color: "bg-green-400/60",  label: "Trygon (120°)" },
@@ -196,6 +185,20 @@ export default function ChildPage() {
               </div>
               <div className="h-full"><PlanetTable chart={child.chart_data} /></div>
             </div>
+
+            {/* Personality tags — above the interpretation */}
+            {(() => {
+              const tags = getPersonalityTags(child.chart_data);
+              return tags.length > 0 ? (
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {tags.map(tag => (
+                    <span key={tag} className="px-3 py-1 rounded-full text-xs border border-slate-700/30 text-slate-400 bg-slate-800/30">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null;
+            })()}
 
             <ChildInterpretation
               text={child.interpretation}

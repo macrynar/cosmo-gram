@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
 import DailyReading from "@/components/generate/DailyReading";
 import { useAuth } from "@/components/AuthContext";
+import { track } from "@/components/PostHogProvider";
 import type { NatalChart } from "@/lib/astro-types";
 
 type SavedReading = {
@@ -164,6 +165,7 @@ export default function DailyHoroscopePage() {
           promptContext,
           interpretationContext: selectedReading.interpretation,
           timezone: birth.timezone,
+          chartData: selectedReading.chart_data,
         }),
       });
 
@@ -178,6 +180,7 @@ export default function DailyHoroscopePage() {
 
       setDailyReading(readingText);
       setDailyDateLabel(dateLabel || "Dzisiaj");
+      track("daily_reading_generated", { chart_id: selectedReading.id });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Nieznany błąd podczas generowania.");
     } finally {

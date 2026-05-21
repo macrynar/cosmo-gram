@@ -168,7 +168,7 @@ export default function ChatPage() {
 
       if (!res.ok) {
         const { error: err } = await res.json() as { error: string };
-        if (err === "PAYWALL") { setShowPaywall(true); setMessages(prev => prev.slice(0, -1)); return; }
+        if (err === "PAYWALL") { track("chat_paywall_hit"); setShowPaywall(true); setMessages(prev => prev.slice(0, -1)); return; }
         setError(err ?? "Błąd AI");
         return;
       }

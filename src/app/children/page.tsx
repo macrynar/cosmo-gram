@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import AddChildModal, { type ChildFormData } from "@/components/children/AddChildModal";
 import ChildCard from "@/components/children/ChildCard";
 import { useAuth } from "@/components/AuthContext";
+import { track } from "@/components/PostHogProvider";
 import type { NatalChart } from "@/lib/astro-types";
 
 type SavedChild = {
@@ -108,6 +109,7 @@ export default function ChildrenPage() {
         created_at: new Date().toISOString(),
       };
       setChildren(prev => [newEntry, ...prev]);
+      track("child_chart_added", { birth_date: data.date, birth_place: data.place });
       setShowModal(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Nieznany błąd");

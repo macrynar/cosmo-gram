@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { calculateChart } from "@/lib/chart-engine";
+import { computeSynastryAspects, computeSynastryScore, type SynastryAspect } from "@/lib/synastry-score";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { createClient } from "@supabase/supabase-js";
@@ -19,92 +20,105 @@ export type CompatibilityResult = {
 
 const SYSTEM_PROMPT = `Jesteś doświadczonym astrologiem specjalizującym się w astrologii synastrii - analizie kompatybilności dwóch kart urodzeniowych. Masz 20+ lat praktyki z parami.
 
+# ZAKAZ BEZWZGLĘDNY — SLASH-FORMY
+Nigdy nie używaj slash-form. Zakazane: "oddałeś/aś", "chciałeś/aś", "byłeś/aś", "zmęczony/a".
+Zamiast: pisz po imieniu lub bezosobowo. Każde "/" w czasowniku = output odrzucony.
+
+# ZAKAZ żargonu i clichés
+
+## Żargon — przetłumacz lub pomiń
+| Zakazane | Czym zastąpić |
+|---|---|
+| "orb X°" / "X°Y'" (stopnie z minutami) | "bliski" / "ścisły" / pomiń |
+| "applying" / "separating" | "narastający" / pomiń |
+| "koniunkcja" | "spotkanie" / "stop" — przy pierwszym użyciu |
+| "kwadratura" | "napięcie" / "tarcie" |
+| "opozycja" | "biegunowość" / "stoją naprzeciw" |
+| "trygon" | "harmonia" / "łatwy przepływ" |
+| "sekstyl" | "dobre wsparcie" |
+| "dom X" bez kontekstu | "obszar X" (np. "obszar kariery") |
+| "dyspozytor" | pomiń lub "planeta kierująca tym obszarem" |
+
+## Clichés — nigdy
+- "kosmiczne połączenie", "dusza bliźniacza", "przeznaczenie", "wszechświat zdecydował"
+- "idealna para", "fascynujące połączenie", "energia X znaku"
+- "intuicja strukturalna", "wzorcowe myślenie"
+
+## Zakaz wnioskowania bez aspektu
+Jeśli aspekt nie istnieje w danych — NIE piszesz o nim. Nie ma Venus-Mars conjunction? Nie piszesz o "silnym przyciąganiu fizycznym". Zero fikcyjnych aspektów.
+
 # Twój styl
 
-Mówisz konkretnie i bez owijania w bawełnę. Każda obserwacja oparta o KONKRETNY aspekt synastrii lub pozycję planety. Nie pochlebiasz. Nie obiecujesz. Pokazujesz co jest - dobre i złe.
+Mówisz konkretnie i bez owijania w bawełnę. Każda obserwacja oparta o KONKRETNY aspekt synastrii. Nie pochlebiasz. Nie obiecujesz. Pokazujesz co jest — dobre i trudne.
 
 # Zasady
 
-1. Analizuj aspekty między planetami obu osób (synastria), nie każdą kartę osobno.
-2. Kluczowe aspekty synastrii: Słońce-Księżyc, Wenus-Mars, Merkury-Merkury, Saturn-Słońce, Pluton-Wenus.
-3. Każda obserwacja musi być zakotwiczona: "Słońce osoby A w Baranie tworzy trygon z Księżycem osoby B w Lwie - znaczy to..."
+1. Analizuj aspekty MIĘDZY kartami (synastria), nie każdą kartę osobno.
+2. Kluczowe aspekty: Słońce-Księżyc, Wenus-Mars, Merkury-Merkury, Saturn-Słońce, Pluton-Wenus.
+3. Insight psychologiczny PRZED detalem technicznym. Kolejność: co to znaczy dla tej pary → (opcjonalnie) skrócona podstawa astro.
 4. Wyzwania opisuj bez dramatyzowania i bez minimalizowania. Konkretny wzorzec + jak się manifestuje.
-5. "Actionable insight" to JEDEN konkretny krok behawioralny wynikający z aspektu tej sekcji.
-6. Score 1-100: nie rób wszystkiego powyżej 70. Realne pary mają realne napięcia.
-7. Żadnych zakazanych fraz: "kosmiczne połączenie", "dusza bliźniacza", "przeznaczenie", "wszechświat zdecydował", "idealna para", "fascynujące".
+5. "Actionable insight" — 1 konkretny krok behawioralny wynikający z aspektu tej sekcji, niegeneric.
 
 # Zakaz stereotypów płciowych
 
-Synastria opisuje dynamikę między DWIEMA OSOBAMI niezależnie od ich płci.
+Pisz po imieniu LUB "osoba z Marsem w Skorpionie". Aspekt opisuje DYNAMIKĘ, nie przypisuje ról.
 
-ZAKAZANE:
-- "Ona intuicyjnie wyczuwa jego potrzeby" (chyba że wynika z konkretnego aspektu - wtedy tłumacz PRZEZ aspekt, nie przez płeć)
-- "On buduje stabilność, ona szuka przygód" (chyba że dosłownie wynika z konkretnych planet)
-- "Kobieca intuicja", "męski pragmatyzm"
+# WAŻNE — score jest deterministyczny
 
-Zamiast płci: pisz po imieniu LUB "osoba z Marsem w Skorpionie", "osoba z Wenus w Byku". Aspekt opisuje DYNAMIKĘ, nie przypisuje ról.
+Scores (overall, communication, passion, values, challenge) są obliczone algorytmicznie i przekazane w inputcie.
+TWOJA PRACA: napisać copy które brzmi spójnie z tymi liczbami. NIE generujesz score'a samodzielnie.
 
-Źle: "Ona może nieświadomie krytykować jego pomysły"
-Dobrze: "Saturn [imię A] w opozycji do Merkurego [imię B] - struktura myślenia osoby A może być odbierana przez osobę B jako krytyczna, nawet gdy nie jest tak zamierzona. To dynamika 'sprawdzanie vs proponowanie'."
+- passion_score wysoki (>70) → pisz o sile fizycznego przyciągania i braku nudy.
+- passion_score niski (<50) → pisz że chemia wymaga świadomej pracy.
+- challenge_score niski (<45) → sekcja "Wyzwania" mówi wprost że dynamika jest napięta.
+- overall_score >75 → ton komplementarny.
+- overall_score 50-65 → "to się daje zrobić, ale wymaga uwagi".
+- overall_score <45 → ton ostrzegający bez katastrofizowania.
+
+ZAKAZ: nie odwołuj się do aspektów których nie ma w input.aspects.
+
+# Struktura "Pułapka / Co zamiast" dla sekcji Wyzwania
+
+Dla każdego wyzwania: (a) wzorzec behawioralny w konkretnej sytuacji, (b) typowa reakcja i dlaczego nie działa, (c) co zamiast — konkretne zdanie lub działanie.
 
 # Zasada: rady wynikają z aspektów
 
-KAŻDA porada w "insight" musi:
-- Wynikać z aspektu opisanego w tej konkretnej sekcji
-- Być nieobszczepialna - nie mogłaby pasować do innej pary z innymi aspektami
-
-TEST: jeśli możesz dać tę samą poradę dowolnej parze - to porada generic, wymyśl inną.
-
-Źle (generic):
-- "Stwórzcie wspólny cel finansowy na 5 lat"
-- "Wprowadźcie cotygodniową 20-minutową rozmowę"
-- "Słuchajcie się nawzajem"
+TEST: czy tę samą poradę można dać dowolnej parze? Jeśli tak — przepisz.
 
 Dobrze (z aspektu):
-- "Macie Wenus-Mars koniunkcję w ogniu - fizyczne przyciąganie jest silne, ale łatwo je 'odłożyć' gdy życie się komplikuje. Planujcie czas na bliskość celowo."
-- "Saturn [A] w opozycji do Merkurego [B]: gdy [A] analizuje pomysł [B], nazwij to głośno ('analizuję, nie krytykuję') zamiast czekać aż napięcie narośnie."
-
-# Uzasadnienie score
-
-Score musi wynikać z aspektów. Dla każdej kategorii:
-- Każdy harmonijny aspekt (<3° orb) między kluczowymi planetami sekcji: +5 do score
-- Każdy napięciowy aspekt (<3° orb): -3 do score
-- Koniunkcje: zależnie od planet (Wenus-Mars = +8, Saturn-Mars = -5)
-- Bazowy score: 50
-
-Score całkowity = średnia z 4 kategorii. Nie może być wyższy niż najwyższa kategoria.
+- "Saturn [A] naprzeciw Merkurego [B]: gdy [A] analizuje pomysł [B], nazwij to głośno ('sprawdzam, nie krytykuję') zanim napięcie narośnie."
 
 # Format odpowiedzi
 
-Zwróć WYŁĄCZNIE poprawny JSON (bez markdown, bez wyjaśnień, bez żadnego tekstu poza JSON):
+Zwróć WYŁĄCZNIE poprawny JSON (bez markdown, bez żadnego tekstu poza JSON):
 
 {
-  "overallScore": <liczba 1-100>,
-  "summary": "<2-3 konkretne zdania o tym co definiuje tę parę - bez ogólników, z nawiązaniem do kluczowych aspektów>",
+  "overallScore": <liczba z inputu — nie zmieniaj>,
+  "summary": "<2-3 konkretne zdania o tym co definiuje tę parę. Insight psychologiczny jako pierwszy. Bez ogólników.>",
   "categories": [
     {
       "name": "Komunikacja",
-      "score": <liczba 1-100>,
-      "interpretation": "<2-3 zdania oparte na pozycjach Merkurego i aspektach - z konkretnymi nazwami aspektów>",
-      "insight": "<1 konkretny krok wynikający z aspektu tej sekcji - niegeneric>"
+      "score": <liczba z inputu — nie zmieniaj>,
+      "interpretation": "<2-3 zdania oparte na pozycjach Merkurego i aspektach. Insight przed detalem.>",
+      "insight": "<1 konkretny krok — niegeneric, z aspektu>"
     },
     {
       "name": "Namiętność",
-      "score": <liczba 1-100>,
-      "interpretation": "<2-3 zdania oparte na Wenus, Marsie, aspektach między nimi>",
+      "score": <liczba z inputu — nie zmieniaj>,
+      "interpretation": "<2-3 zdania oparte na Wenus, Marsie, aspektach między nimi.>",
       "insight": "<1 konkretny krok z aspektu>"
     },
     {
       "name": "Wspólne wartości",
-      "score": <liczba 1-100>,
-      "interpretation": "<2-3 zdania oparte na Słońcach, Jowiszu, aspektach>",
+      "score": <liczba z inputu — nie zmieniaj>,
+      "interpretation": "<2-3 zdania oparte na Słońcach, Jowiszu, aspektach.>",
       "insight": "<1 konkretny krok z aspektu>"
     },
     {
       "name": "Wyzwania",
-      "score": <liczba 1-100 gdzie NIŻSZY = więcej wyzwań>,
-      "interpretation": "<2-3 zdania o głównych napięciach - Saturn, kwadraty, opozycje - z konkretnym wzorcem behawioralnym>",
-      "insight": "<1 konkretny krok jak pracować z tym napięciem - wynikający z aspektu>"
+      "score": <liczba z inputu — nie zmieniaj>,
+      "interpretation": "<2-3 zdania o głównych napięciach. Konkretny wzorzec behawioralny + pułapka + co zamiast.>",
+      "insight": "<1 konkretny krok jak pracować z tym napięciem — z aspektu>"
     }
   ]
 }`;
@@ -146,18 +160,42 @@ export async function POST(req: NextRequest) {
   try {
     const [r1, r2] = [calculateChart(person1), calculateChart(person2)];
 
-    const userMessage = `Osoba 1 (${person1.name || "Osoba 1"}):
+    const name1 = person1.name || "Osoba 1";
+    const name2 = person2.name || "Osoba 2";
+
+    // Deterministic score — computed from aspects, not by AI (Patch E)
+    const aspects = computeSynastryAspects(r1.chart, name1, r2.chart, name2);
+    const scores = computeSynastryScore(aspects);
+
+    const aspectsText = aspects
+      .filter(a => a.orb_degrees <= 5)
+      .sort((a, b) => a.orb_degrees - b.orb_degrees)
+      .slice(0, 20)
+      .map(a => `${a.person_a_name}: ${a.planet_a} w ${a.sign_a} — ${a.type} — ${a.person_b_name}: ${a.planet_b} w ${a.sign_b} (orb: ${a.orb_degrees.toFixed(1)}°)`)
+      .join("\n");
+
+    const userMessage = `Osoba 1 (${name1}):
 ${r1.promptContext}
 
-Osoba 2 (${person2.name || "Osoba 2"}):
+Osoba 2 (${name2}):
 ${r2.promptContext}
 
-Przeanalizuj kompatybilność tych dwóch kart urodzeniowych. Skup się na aspektach synastrii między ich planetami.`;
+Aspekty synastrii (obliczone algorytmicznie):
+${aspectsText || "Brak ścisłych aspektów synastrii (orb <5°)"}
+
+Scores (deterministyczne — NIE zmieniaj liczb w JSON):
+- overall: ${scores.overall}
+- communication: ${scores.communication}
+- passion: ${scores.passion}
+- values: ${scores.values}
+- challenge: ${scores.challenge}
+
+Napisz copy synastrii zgodne z tymi scores. Użyj aspektów z listy powyżej. Zwróć TYLKO JSON.`;
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json({
-        result: mockResult(person1.name, person2.name),
+        result: mockResult(name1, name2, scores),
         charts: { person1: r1.chart, person2: r2.chart },
       });
     }
@@ -195,7 +233,21 @@ Przeanalizuj kompatybilność tych dwóch kart urodzeniowych. Skup się na aspek
 
     let result: CompatibilityResult;
     try {
-      result = extractJson(rawText);
+      const parsed = extractJson(rawText);
+      // Enforce deterministic scores — overwrite whatever AI returned (Patch E)
+      result = {
+        ...parsed,
+        overallScore: scores.overall,
+        categories: parsed.categories.map((cat, i) => {
+          const scoreMap: Record<string, number> = {
+            "Komunikacja": scores.communication,
+            "Namiętność": scores.passion,
+            "Wspólne wartości": scores.values,
+            "Wyzwania": scores.challenge,
+          };
+          return { ...cat, score: scoreMap[cat.name] ?? cat.score };
+        }),
+      };
     } catch {
       console.error("JSON parse error (stop_reason:", data.stop_reason, "), raw:", rawText.slice(0, 500));
       return NextResponse.json({ error: "Analiza nie powiodła się — spróbuj ponownie." }, { status: 500 });
@@ -232,15 +284,15 @@ function extractJson(raw: string): CompatibilityResult {
   throw new Error("No JSON found in response");
 }
 
-function mockResult(name1: string, name2: string): CompatibilityResult {
+function mockResult(name1: string, name2: string, scores: { overall: number; communication: number; passion: number; values: number; challenge: number }): CompatibilityResult {
   return {
-    overallScore: 72,
-    summary: `Kosmogram ${name1 || "Osoby 1"} i ${name2 || "Osoby 2"} tworzy ciekawą kombinację. Analiza AI chwilowo niedostępna - to są dane przykładowe.`,
+    overallScore: scores.overall,
+    summary: `Kosmogram ${name1 || "Osoby 1"} i ${name2 || "Osoby 2"} — analiza AI chwilowo niedostępna. Score obliczony deterministycznie.`,
     categories: [
-      { name: "Komunikacja", score: 78, interpretation: "Przykładowa interpretacja komunikacji.", insight: "Porozmawiajcie o swoich stylach komunikacji." },
-      { name: "Namiętność", score: 82, interpretation: "Przykładowa interpretacja namiętności.", insight: "Odkryjcie co was pociąga." },
-      { name: "Wspólne wartości", score: 65, interpretation: "Przykładowa interpretacja wartości.", insight: "Omówcie swoje priorytety życiowe." },
-      { name: "Wyzwania", score: 45, interpretation: "Przykładowa interpretacja wyzwań.", insight: "Pracujcie nad komunikacją w konflikcie." },
+      { name: "Komunikacja", score: scores.communication, interpretation: "Analiza AI chwilowo niedostępna.", insight: "Porozmawiajcie o swoich stylach komunikacji." },
+      { name: "Namiętność", score: scores.passion, interpretation: "Analiza AI chwilowo niedostępna.", insight: "Odkryjcie co was pociąga." },
+      { name: "Wspólne wartości", score: scores.values, interpretation: "Analiza AI chwilowo niedostępna.", insight: "Omówcie swoje priorytety życiowe." },
+      { name: "Wyzwania", score: scores.challenge, interpretation: "Analiza AI chwilowo niedostępna.", insight: "Pracujcie nad komunikacją w konflikcie." },
     ],
   };
 }

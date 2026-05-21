@@ -92,7 +92,7 @@ export default function ChildInterpretation({ text, loading, childName }: Props)
     <div className="glass-card rounded-2xl overflow-hidden border border-green-900/20">
       <div className="px-5 py-4 border-b border-green-900/25 flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-green-400" />
-        <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase">Interpretacja AI · {childName}</h3>
+        <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase">Analiza Cosmogram AI · {childName}</h3>
       </div>
 
       <div className="px-5 py-5 space-y-4">

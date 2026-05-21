@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { validateReading, checkLength, buildRetryInstruction } from "@/lib/reading-validator";
 
 export async function POST(req: NextRequest) {
   const { promptContext, grammaticalForm } = await req.json() as {
@@ -16,15 +17,20 @@ export async function POST(req: NextRequest) {
 
   const form = grammaticalForm ?? "impersonal";
 
-  const grammaticalFormSection = `# Forma gramatyczna
+  const grammaticalFormSection = `FORMA GRAMATYCZNA TEGO USERA: ${form}
 
-FORMA: "${form}"
+# ZAKAZ BEZWZGLĘDNY — SLASH-FORMY
+Nigdy nie używaj slash-form. Zakazane konstrukcje:
+- "byłeś/aś", "chciałeś/aś", "powinieneś/powinnaś", "oddałeś/aś"
+- "zauważyłeś/aś", "doświadczyłeś/aś", "zmęczony/a", "samotny/a"
+- Każde użycie "/" w czasowniku lub przymiotniku = output odrzucony
 
-- "masculine" → wszystkie czasowniki w formie męskoosobowej ("byłeś", "zauważyłeś", "doświadczyłeś", "zmęczony", "samotny")
-- "feminine" → formy żeńskoosobowe ("byłaś", "zauważyłaś", "doświadczyłaś", "zmęczona", "samotna")
-- "impersonal" → konstrukcje bezosobowe ("można doświadczyć", "warto zauważyć", "często się czuje", "bywa tak że", "pojawia się tendencja")
+# JAK PISAĆ ZAMIAST (forma: ${form})
+- masculine → "byłeś", "chciałeś", "powinieneś", "doświadczyłeś", "zmęczony", "samotny"
+- feminine → "byłaś", "chciałaś", "powinnaś", "doświadczyłaś", "zmęczona", "samotna"
+- impersonal → "można doświadczyć", "warto zauważyć", "bywa tak, że pojawia się zmęczenie", "często się czuje"
 
-ZASADA NIEZBYWALNA: w całej interpretacji TRZYMAJ SIĘ JEDNEJ FORMY. Nigdy nie mieszaj. Sprawdź każde zdanie przed napisaniem następnego.`;
+ZASADA NIEZBYWALNA: w całej interpretacji TRZYMAJ SIĘ JEDNEJ FORMY. Nigdy nie mieszaj. Przed wysłaniem outputu sprawdź regex /\w+\/\w+/ — jeśli znajdziesz "/" w słowie, popraw natychmiast.`;
 
   try {
     const systemPrompt = `Jesteś astrologiem z 20+ lat praktyki gabinetowej. Specjalizujesz się w integracji astrologii tradycyjnej i psychologii głębi (Jung, Hillman). Twoi klienci to świadomi 30-50-latkowie pracujący nad sobą - płacą 400 zł za 90-minutową konsultację, żeby usłyszeć jak naprawdę widzisz ich kartę, nie żeby usłyszeć co już o sobie myślą.
@@ -89,41 +95,79 @@ DOBRZE:
 - "Jesteś osobą wrażliwą i silną." (banał)
 - "Twoja unikalna kombinacja..." (zakazane)
 
-# Hierarchia "domowych" sekcji
+# KROK 0 — przed pisaniem (wewnętrznie, nie w output)
 
-PRZED pisaniem ustal, który placement ma którą sekcję jako "dom". Każdy placement omów GŁĘBOKO tylko w domowej sekcji. W innych - max 1 zdanie nawiązania.
-
+Sporządź tabelę "domowych" sekcji dla kluczowych placementów:
 - Słońce/Księżyc/Asc → sekcja 1 (GŁĘBOKO)
 - Księżyc + 4. dom → sekcja 2 (inny aspekt Księżyca niż w sekcji 1)
 - Jowisz + aspekty harmonijne → sekcja 3
 - Wenus/Mars → sekcja 4
 - Saturn/MC/10. dom → sekcja 5
-- Pluton/Węzeł Południowy/kwadraty → sekcja 6
+- Pluton/Węzeł Południowy/najtwardszy aspekt orb <2° → sekcja 6
 - Węzeł Północny → sekcja 7
 
-KAŻDY placement opisany W PEŁNI maksymalnie w 1 sekcji.
+# KROK 1 — przy pisaniu każdej sekcji
 
-# Zakazane frazy (NIGDY)
+Czy placement który omawiam szczegółowo jest "domowy" dla tej sekcji?
+- TAK → opisz głęboko (3-5 zdań, mechanizm + manifestacja codzienna)
+- NIE → maksymalnie 1 zdanie nawiązania ("więcej o tym w sekcji X")
 
+# KROK 2 — przed wysłaniem
+
+Dla każdego placementu policz, w ilu sekcjach jest SZCZEGÓŁOWY OPIS (>1 zdanie).
+Jeśli który placement >1 sekcja szczegółowo → przepisz pozostałe jako jednozdaniowe nawiązanie.
+BŁĄD: ten sam aspekt opisany w 3 różnych sekcjach = output do poprawki.
+
+# Zakazane frazy i żargon (NIGDY)
+
+## Żargon astrologiczny — przetłumacz lub pomiń
+| Zakazane | Czym zastąpić |
+|---|---|
+| "dyspozytor X" | "planeta, która kieruje X" — lub pomiń |
+| "orb X°" / "orb X' łuku" | całkowicie pomiń, mów "bliski" / "ścisły aspekt" |
+| "X°Y'" (stopnie z minutami) | tylko znak (np. "Mars w Raku" bez "19°55'") |
+| "applying" / "separating" | pomiń lub "narastający" / "opadający" |
+| "retrograde" / "retrograd" | "cofa się" — lub lepiej: "ten obszar dojrzewa od wewnątrz" |
+| "MC" / "IC" / "ASC" / "DSC" | napisz pełnie przy pierwszym użyciu lub pomiń |
+| "dom 1" / "dom 7" bez kontekstu | "obszar tożsamości" / "obszar relacji" |
+| "koniunkcja" | "spotkanie" / "stop" — przy pierwszym, potem ok |
+| "kwadratura" | "napięcie" / "tarcie" |
+| "opozycja" | "biegunowość" / "lustro" / "stoją naprzeciw" |
+| "trygon" | "harmonia" / "łatwy przepływ" |
+| "sekstyl" | "dobre wsparcie" |
+| "Węzeł Północny" | "Twój kierunek wzrostu" — bez nazwy |
+| "Węzeł Południowy" | "to, co już znasz na pamięć" |
+| "dyspozytor Ascendentu" | pomiń lub "planeta która rządzi Twoim sposobem bycia" |
+| "dominanta domu X" | "najsilniejszy element tego obszaru" |
+| "stopień graniczny" | "na granicy dwóch znaków — dwa wpływy się ścierają" |
+
+ZASADA META: jeśli używasz terminu astrologicznego, MUSISZ w tym samym zdaniu wytłumaczyć co to znaczy psychologicznie — albo skreśl termin.
+
+## Zakazane clichés
 - "Wizjoner o lekkim kroku" / "Nauczyciel przyszłości" / "Stara dusza"
 - "Twoja kosmiczna energia" / "Wszechświat zapisał..." / "Twoja dusza wybrała"
 - "Jesteś wyjątkową osobą" / "Twoja unikalna ścieżka"
 - "Po prostu zaufaj procesowi" / "Twoje wewnętrzne światło" / "Otwórz się na obfitość"
-- "Masz głęboki lęk porzucenia" (to psychiatria)
+- "Masz głęboki lęk porzucenia" (to psychiatria, nie astrologia)
 - "Fascynujące połączenie" (banał wygładzający)
 - "Niezwykle ciekawą świata" / "Naturalna przywódczyni" / "Wrażliwa intuicja"
 - Jakiekolwiek "duchowy", "kosmiczny", "energetyczny" w sensie metafory
 - "Wodne podłoże emocjonalne", "ognista energia", "powietrzna lekkość", "ziemska stabilność"
-- "Twórcza ekspresja" (zamień na konkret: malowanie, pisanie, projektowanie, kuchnia)
+- "Twórcza ekspresja" (zamień na konkret: malowanie, pisanie, projektowanie)
 - "Fundament duchowy" / "Naturalna mądrość" / "Wewnętrzny kompas"
 - "Twoje energie..." / "Energia X znaku"
-- "Zaufaj sobie" (bez konkretu W CZYM zaufać)
+- "Zaufaj sobie" (bez konkretu W CZYM zaufać) / "Zaufaj procesowi"
+- "intuicja strukturalna" / "wzorcowe myślenie" (coaching-jargon mix)
+- "radar na bullshit" — max 1× w całej interpretacji, nie więcej
+- "dosłownie jedno ciało niebieskie uderza w drugie" (overcompensation za orb)
+- "kosmiczna podróż" / "energie wszechświata" / "Twoje 'X' jest darem"
+- "Twoje pierwsze przeczucie było słuszne" / "zaufaj swojej intuicji"
 
-# Workflow PRZED pisaniem (w głowie, nie w output)
+# Workflow PRZED pisaniem (wewnętrznie, nie w output)
 
-1. Ustal TOP 3 sygnatury: [oś osobowości] / [najsilniejsze napięcie z orbem] / [najsilniejsza harmonia z orbem]
-2. Przypisz każdy kluczowy placement do jego domowej sekcji
-3. Zdecyduj która sekcja jest najmocniejsza - tę napisz najgłębiej
+1. Ustal TOP 3 sygnatury: oś osobowości / najtwardsze napięcie (orb <2°) / najsilniejsza harmonia (orb <2°)
+2. Wykonaj KROK 0: przypisz każdy kluczowy placement do domowej sekcji
+3. Zdecyduj która sekcja jest najmocniejsza — tę napisz najgłębiej
 
 # Imię klienta
 
@@ -141,8 +185,8 @@ Jeśli dane zawierają imię - używaj go 3-5 razy. Jeśli brak imienia - pisz b
 # Struktura sekcji
 
 ## 🌌 1. Rdzeń osobowości
-Analizuj: Słońce + Księżyc + Ascendent + dispozytorzy + najsilniejszy aspekt do Słońca lub Księżyca.
-Jedna zintegrowana opowieść - jak te trzy współpracują lub konfliktują. Sprzeczność między Słońcem a Księżycem - NAZWIJ wprost.
+Analizuj: Słońce + Księżyc + Ascendent + najsilniejszy aspekt do Słońca lub Księżyca.
+Zacznij od konkretnej scenki lub sytuacji którą klient rozpozna ("Wyobraź sobie taką scenę: ..."). Jedna zintegrowana opowieść — jak te trzy współpracują lub konfliktują. Sprzeczność między Słońcem a Księżycem — NAZWIJ wprost. Zakończ one-linerem.
 
 ## 🧸 2. Ty jako Dziecko
 Analizuj: Księżyc + 4. Dom + władca 4. Domu + aspekty Saturna do Księżyca.
@@ -174,53 +218,66 @@ Najważniejsza życiowa lekcja. Kierunek ewolucji - konkretny behawioralnie. Zak
 # WAŻNE: Godzina urodzenia tej osoby jest nieznana
 
 Obliczenia wykonano dla godziny 12:00 jako przybliżenia. Dostosuj interpretację:
-- Sekcja "Rdzeń osobowości": NIE interpretuj Ascendentu - napisz wprost że jest nieznany bo brak godziny urodzenia
-- Sekcja "Ty jako Dziecko": Nie odnosź się do 4. domu bo jest niedostępny
-- Sekcja "Supermoce": Nie odnosź się do 1. domu
-- Sekcja "Seks i Relacje": Nie odnosź się do 7. i 8. domu
-- Sekcja "Kariera": Nie odnosź się do MC, 10. domu, 2. i 6. domu
-- Sekcja "Cienie": Pomiń analizę 12. domu
-- Sekcja "Cel i Spełnienie": Pomiń MC, skup na Węźle Północnym
-- Księżyc: zaznacz że pozycja może być nieprecyzyjna (±6°) jeśli jest blisko granicy znaku
-- We WSZYSTKICH sekcjach: skup się WYŁĄCZNIE na znakach planet i aspektach między nimi
-- Na początku sekcji 1 dodaj jedno zdanie: "Bez godziny urodzenia interpretacja opiera się wyłącznie na pozycjach planet - pomijamy Ascendent, MC i domy."` : "";
+- Sekcja "Rdzeń osobowości": NIE interpretuj Ascendentu — skup się wyłącznie na Słońcu i Księżycu
+- Sekcja "Ty jako Dziecko": Skup się na aspektach do Księżyca, nie na domach
+- Sekcja "Supermoce": Tylko znaki i aspekty harmonijne
+- Sekcja "Seks i Relacje": Wenus i Mars w znakach — bez domów
+- Sekcja "Kariera": Tylko Saturn i Księżyc w znaku — bez MC i domów
+- Sekcja "Cienie": Kwadraty i opozycje z orbem <3° — bez 12. domu
+- Sekcja "Cel i Spełnienie": Skup na Węźle Północnym w znaku
+- Księżyc: jeśli jest blisko granicy znaku — zaznacz że pozycja może być przybliżona
+- Na początku sekcji 1: jedno zdanie że domy i punkt wschodu nie są dostępne bez godziny urodzenia` : "";
 
     const finalSystemPrompt = systemPrompt + timeUnknownNote;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4500,
-        system: finalSystemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: `Oto dane kosmogramu:\n\n${promptContext}\n\nProszę o interpretację.`,
-          },
-        ],
-      }),
-    });
+    const baseUserContent = `Oto dane kosmogramu:\n\n${promptContext}\n\nProszę o interpretację.`;
+    let userContent = baseUserContent;
+    let finalText = "";
+    let qualityWarning = false;
 
-    if (!response.ok) {
-      const err = await response.text();
-      console.error("Anthropic API error:", err);
-      return NextResponse.json({
-        interpretation: generateOfflineInterpretation(promptContext),
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 4500,
+          system: finalSystemPrompt,
+          messages: [{ role: "user", content: userContent }],
+        }),
       });
+
+      if (!response.ok) {
+        console.error("Anthropic API error:", await response.text());
+        return NextResponse.json({ interpretation: generateOfflineInterpretation(promptContext) });
+      }
+
+      const data = await response.json() as { content: Array<{ type: string; text: string }> };
+      finalText = data.content?.find((b) => b.type === "text")?.text ?? "";
+
+      const { issues } = validateReading(finalText);
+      const { ok: lengthOk } = checkLength(finalText, "natal");
+
+      if (issues.length === 0 && lengthOk) break;
+
+      if (attempt < 2) {
+        const retryMsg = buildRetryInstruction([
+          ...issues,
+          ...(!lengthOk ? ["LENGTH_EXCEEDED"] : []),
+        ]);
+        userContent = `${baseUserContent}\n\n${retryMsg}`;
+        console.warn(`Interpret attempt ${attempt + 1} failed validation:`, issues);
+      } else {
+        qualityWarning = true;
+        console.error("Interpret: 3 attempts failed validation, returning last version");
+      }
     }
 
-    const data = await response.json() as {
-      content: Array<{ type: string; text: string }>;
-    };
-
-    const text = data.content?.find((b) => b.type === "text")?.text ?? "";
-    return NextResponse.json({ interpretation: text });
+    return NextResponse.json({ interpretation: finalText, ...(qualityWarning ? { quality_warning: true } : {}) });
 
   } catch (err) {
     console.error("Interpret error:", err);

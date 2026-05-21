@@ -164,3 +164,103 @@ Planety:\n${planetList.join("\n")}`;
 
   return { chart, promptContext };
 }
+
+export type TransitAspect = {
+  transit_planet: string;
+  transit_sign: string;
+  aspect_type: string;
+  natal_planet: string;
+  natal_sign: string;
+  orb_degrees: number;
+  favorable: boolean;
+};
+
+const ASPECT_ANGLES_TRANSIT: Record<string, number> = {
+  conjunction: 0, sextile: 60, trine: 120, square: 90, opposition: 180,
+};
+
+const FAVORABLE_ASPECTS = new Set(["conjunction_beneficial", "sextile", "trine"]);
+const TENSE_ASPECTS = new Set(["square", "opposition"]);
+
+const CONJUNCTION_FAVORABLE: Record<string, boolean> = {
+  "Jowisz": true, "Wenus": true, "Słońce": true,
+  "Saturn": false, "Mars": false, "Neptun": false, "Pluton": false,
+};
+
+export function computeTopTransits(natalChart: NatalChart, date: Date = new Date()): {
+  supporting: TransitAspect | null;
+  challenging: TransitAspect | null;
+} {
+  const transitLongitudes: { name: string; longitude: number; sign: string }[] = PLANET_DEFS.map(({ name, body }) => {
+    const longitude = getEclipticLongitude(body, date);
+    const { name: signName } = longitudeToSign(longitude);
+    return { name, longitude, sign: signName };
+  });
+
+  const aspects: TransitAspect[] = [];
+
+  for (const transit of transitLongitudes) {
+    for (const natal of natalChart.planets) {
+      let diff = Math.abs(transit.longitude - natal.longitude) % 360;
+      if (diff > 180) diff = 360 - diff;
+
+      for (const [typeName, angle] of Object.entries(ASPECT_ANGLES_TRANSIT)) {
+        const orb = Math.abs(diff - angle);
+        if (orb > 5) continue;
+
+        let favorable: boolean;
+        if (typeName === "conjunction") {
+          favorable = CONJUNCTION_FAVORABLE[transit.name] ?? true;
+        } else {
+          favorable = FAVORABLE_ASPECTS.has(typeName);
+        }
+
+        const aspect_type = typeName === "conjunction"
+          ? (favorable ? "spotkanie (harmonia)" : "spotkanie (napięcie)")
+          : typeName === "sextile" ? "dobre wsparcie"
+          : typeName === "trine" ? "harmonia"
+          : typeName === "square" ? "napięcie"
+          : "biegunowość";
+
+        aspects.push({
+          transit_planet: transit.name,
+          transit_sign: transit.sign,
+          aspect_type,
+          natal_planet: natal.name,
+          natal_sign: natal.sign,
+          orb_degrees: orb,
+          favorable,
+        });
+      }
+    }
+  }
+
+  // Weight by planet importance and orb closeness
+  const planetPriority: Record<string, number> = {
+    "Słońce": 10, "Księżyc": 10, "Wenus": 8, "Mars": 8, "Merkury": 6,
+    "Jowisz": 5, "Saturn": 5, "Uran": 2, "Neptun": 2, "Pluton": 2,
+  };
+
+  const score = (a: TransitAspect) => {
+    const p = (planetPriority[a.transit_planet] ?? 1) + (planetPriority[a.natal_planet] ?? 1);
+    const orbScore = (5 - a.orb_degrees) / 5;
+    return p * orbScore;
+  };
+
+  const supporting = aspects
+    .filter(a => a.favorable)
+    .sort((a, b) => score(b) - score(a))[0] ?? null;
+
+  const challenging = aspects
+    .filter(a => !a.favorable && (TENSE_ASPECTS.has(Object.keys(ASPECT_ANGLES_TRANSIT).find(k =>
+      a.aspect_type.includes("napięcie") || a.aspect_type.includes("biegunowość")
+    ) ?? "")))
+    .sort((a, b) => score(b) - score(a))[0] ?? null;
+
+  // Fallback: if no tense aspect classified above, take lowest-favorable
+  const challengingFallback = challenging ?? aspects
+    .filter(a => !a.favorable)
+    .sort((a, b) => score(b) - score(a))[0] ?? null;
+
+  return { supporting, challenging: challengingFallback };
+}

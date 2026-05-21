@@ -82,7 +82,7 @@ export default function Interpretation({ text, loading }: Props) {
       {/* Panel header */}
       <div className="px-5 py-4 border-b border-amber-900/25 flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-amber-400" />
-        <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase">Interpretacja AI</h3>
+        <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase">Analiza Cosmogram AI</h3>
       </div>
 
       <div className="px-5 py-5">

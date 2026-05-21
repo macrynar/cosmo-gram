@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { upsertSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 function subFromEvent(sub: Stripe.Subscription) {
   return {
@@ -27,6 +28,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
+  const posthog = getPostHogClient();
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {
@@ -39,6 +42,14 @@ export async function POST(req: NextRequest) {
           userId,
           stripeCustomerId: session.customer as string,
           ...subFromEvent(sub),
+        });
+        posthog.capture({
+          distinctId: userId,
+          event: "subscription_activated",
+          properties: {
+            price_id: sub.items.data[0]?.price.id ?? null,
+            status: sub.status,
+          },
         });
         break;
       }
@@ -61,6 +72,14 @@ export async function POST(req: NextRequest) {
           stripeCustomerId: customerId,
           ...subFromEvent(sub),
         });
+
+        if (event.type === "customer.subscription.deleted") {
+          posthog.capture({
+            distinctId: existing.user_id,
+            event: "subscription_cancelled",
+            properties: { price_id: sub.items.data[0]?.price.id ?? null },
+          });
+        }
         break;
       }
 

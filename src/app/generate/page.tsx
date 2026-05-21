@@ -313,44 +313,6 @@ export default function GeneratePage() {
               )}
             </div>
 
-            {/* Sun / Moon / dominant element */}
-            {(() => {
-              const sun  = chart.planets.find(p => p.name === "Słońce");
-              const moon = chart.planets.find(p => p.name === "Księżyc");
-              const el   = getDominantElement(chart);
-              return (
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  {sun && (
-                    <span className="px-3 py-1 rounded-full text-xs border border-amber-700/40 text-amber-200/90 bg-amber-900/15">
-                      ☀️ {sun.sign}
-                    </span>
-                  )}
-                  {moon && (
-                    <span className="px-3 py-1 rounded-full text-xs border border-slate-700/40 text-slate-300/80 bg-slate-900/20">
-                      🌙 {moon.sign}
-                    </span>
-                  )}
-                  <span className={`px-3 py-1 rounded-full text-xs border ${el.color}`}>
-                    {el.emoji} Dominuje {el.label}
-                  </span>
-                </div>
-              );
-            })()}
-
-            {/* Personality tags */}
-            {(() => {
-              const tags = getPersonalityTags(chart);
-              return tags.length > 0 ? (
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  {tags.map(tag => (
-                    <span key={tag} className="px-3 py-1 rounded-full text-xs border border-slate-700/30 text-slate-400 bg-slate-800/30">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              ) : null;
-            })()}
-
             {chart.birthData.timeUnknown && (
               <p className="text-center text-xs text-amber-500/60">
                 Bez godziny urodzenia — wyniki bez Ascendentu, MC i domów.
@@ -360,8 +322,33 @@ export default function GeneratePage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
               <div className="glass-card rounded-3xl p-4 sm:p-5 flex flex-col">
                 <NatalChartSVG chart={chart} />
+
+                {/* Sun / Moon / Ascendant / element — below the chart */}
+                {(() => {
+                  const sun  = chart.planets.find(p => p.name === "Słońce");
+                  const moon = chart.planets.find(p => p.name === "Księżyc");
+                  const el   = getDominantElement(chart);
+                  return (
+                    <div className="flex flex-wrap items-center justify-center gap-2 mt-4 pt-3 border-t border-amber-900/15">
+                      {sun && (
+                        <span className="px-3 py-1 rounded-full text-xs border border-amber-700/40 text-amber-200/90 bg-amber-900/15">
+                          ☀️ {sun.sign}
+                        </span>
+                      )}
+                      {moon && (
+                        <span className="px-3 py-1 rounded-full text-xs border border-slate-700/40 text-slate-300/80 bg-slate-900/20">
+                          🌙 {moon.sign}
+                        </span>
+                      )}
+                      <span className={`px-3 py-1 rounded-full text-xs border ${el.color}`}>
+                        {el.emoji} Dominuje {el.label}
+                      </span>
+                    </div>
+                  );
+                })()}
+
                 {!chart.birthData.timeUnknown && (
-                  <div className="flex flex-wrap justify-center gap-3 text-xs text-slate-500 mt-4 pt-3 border-t border-amber-900/15">
+                  <div className="flex flex-wrap justify-center gap-3 text-xs text-slate-500 mt-3 pt-3 border-t border-amber-900/15">
                     {[
                       { color: "bg-amber-400/60", label: "Koniunkcja (0°)" },
                       { color: "bg-green-400/60",  label: "Trygon (120°)" },
@@ -379,6 +366,20 @@ export default function GeneratePage() {
               </div>
               <div className="h-full"><PlanetTable chart={chart} /></div>
             </div>
+
+            {/* Personality tags — above the interpretation */}
+            {(() => {
+              const tags = getPersonalityTags(chart);
+              return tags.length > 0 ? (
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {tags.map(tag => (
+                    <span key={tag} className="px-3 py-1 rounded-full text-xs border border-slate-700/30 text-slate-400 bg-slate-800/30">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null;
+            })()}
 
             <Interpretation text={interpretation} loading={interpretLoading} />
 
