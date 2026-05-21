@@ -17,29 +17,50 @@ export default function Hero() {
       <div className="absolute inset-0 star-sparkle" aria-hidden="true" />
       <div className="absolute inset-0 star-sparkle delay-1" aria-hidden="true" />
       <div className="absolute inset-0 star-sparkle delay-2" aria-hidden="true" />
+
+      {/* Solar system */}
       <div className="hero-celestial-motion" aria-hidden="true">
         <div className="hero-solar-core">
           <div className="hero-sun" />
-          <div className="hero-orbit orbit-main">
-            <span className="hero-planet planet-main" />
+
+          {/* Mercury */}
+          <div className="hero-orbit orbit-mercury">
+            <span className="hero-planet planet-mercury" />
           </div>
-          <div className="hero-orbit orbit-secondary">
-            <span className="hero-planet planet-secondary" />
+          {/* Venus */}
+          <div className="hero-orbit orbit-venus">
+            <span className="hero-planet planet-venus" />
           </div>
-          <div className="hero-orbit orbit-tertiary">
-            <span className="hero-planet planet-tertiary" />
+          {/* Earth */}
+          <div className="hero-orbit orbit-earth">
+            <span className="hero-planet planet-earth" />
+          </div>
+          {/* Mars */}
+          <div className="hero-orbit orbit-mars">
+            <span className="hero-planet planet-mars" />
+          </div>
+          {/* Jupiter */}
+          <div className="hero-orbit orbit-jupiter">
+            <span className="hero-planet planet-jupiter" />
+          </div>
+          {/* Saturn */}
+          <div className="hero-orbit orbit-saturn">
+            <span className="hero-planet planet-saturn" />
+          </div>
+          {/* Uranus */}
+          <div className="hero-orbit orbit-uranus">
+            <span className="hero-planet planet-uranus" />
           </div>
         </div>
       </div>
+
       <div
         aria-hidden="true"
-        className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[900px] h-[700px] nebula-orb opacity-60 pointer-events-none"
+        className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[900px] h-[700px] nebula-orb opacity-50 pointer-events-none"
       />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
-        <h1
-          className="font-brand text-4xl sm:text-6xl lg:text-7xl font-semibold text-white leading-[1.05] mb-6"
-        >
+        <h1 className="font-brand text-4xl sm:text-6xl lg:text-7xl font-semibold text-white leading-[1.05] mb-6">
           Zrozum siebie i swoje relacje za pomocą gwiazd.
         </h1>
 

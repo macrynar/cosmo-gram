@@ -247,119 +247,168 @@
 
 .hero-sun {
   position: absolute;
-  width: 74px;
-  height: 74px;
+  width: 72px;
+  height: 72px;
   border-radius: 9999px;
-  background: radial-gradient(circle at 35% 35%, rgba(255, 242, 205, 0.98) 0%, rgba(245, 184, 92, 0.92) 38%, rgba(185, 137, 76, 0.62) 68%, rgba(185, 137, 76, 0) 100%);
-  box-shadow: 0 0 30px rgba(245, 184, 92, 0.55), 0 0 90px rgba(185, 137, 76, 0.28);
+  background: radial-gradient(circle at 35% 35%,
+    rgba(255, 248, 210, 0.99) 0%,
+    rgba(250, 200, 80, 0.95) 30%,
+    rgba(215, 155, 50, 0.75) 62%,
+    rgba(185, 120, 30, 0) 100%);
+  box-shadow:
+    0 0 28px rgba(250, 200, 80, 0.65),
+    0 0 80px rgba(215, 155, 50, 0.35),
+    0 0 160px rgba(185, 120, 30, 0.15);
   animation: hero-sun-pulse ease-in-out 8s infinite;
 }
 
+/* shared orbit ring */
 .hero-orbit {
   position: absolute;
   border-radius: 9999px;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  border: 1px solid rgba(214, 176, 125, 0.2);
-  box-shadow: inset 0 0 50px rgba(185, 137, 76, 0.08);
+  border: 1px solid rgba(214, 176, 125, 0.22);
   animation: hero-orbit-spin linear infinite;
   will-change: transform;
 }
 
-.hero-orbit.orbit-main {
-  width: clamp(560px, 115vw, 1100px);
-  height: clamp(560px, 115vw, 1100px);
-  animation-duration: 72s;
+/* Mercury – grey, fast */
+.hero-orbit.orbit-mercury {
+  width: clamp(130px, 22vw, 210px);
+  height: clamp(130px, 22vw, 210px);
+  animation-duration: 14s;
+  border-color: rgba(180, 175, 170, 0.25);
+}
+/* Venus – cream */
+.hero-orbit.orbit-venus {
+  width: clamp(200px, 36vw, 340px);
+  height: clamp(200px, 36vw, 340px);
+  animation-duration: 26s;
+  border-color: rgba(232, 205, 160, 0.22);
+}
+/* Earth – blue */
+.hero-orbit.orbit-earth {
+  width: clamp(280px, 50vw, 470px);
+  height: clamp(280px, 50vw, 470px);
+  animation-duration: 42s;
+  border-color: rgba(90, 160, 220, 0.22);
+}
+/* Mars – reddish */
+.hero-orbit.orbit-mars {
+  width: clamp(370px, 65vw, 610px);
+  height: clamp(370px, 65vw, 610px);
+  animation-duration: 70s;
+  border-color: rgba(200, 80, 30, 0.22);
+}
+/* Jupiter – amber */
+.hero-orbit.orbit-jupiter {
+  width: clamp(480px, 86vw, 810px);
+  height: clamp(480px, 86vw, 810px);
+  animation-duration: 130s;
+  border-color: rgba(200, 140, 60, 0.20);
+}
+/* Saturn – golden */
+.hero-orbit.orbit-saturn {
+  width: clamp(600px, 108vw, 1020px);
+  height: clamp(600px, 108vw, 1020px);
+  animation-duration: 220s;
+  border-color: rgba(228, 209, 145, 0.18);
+}
+/* Uranus – teal */
+.hero-orbit.orbit-uranus {
+  width: clamp(720px, 130vw, 1230px);
+  height: clamp(720px, 130vw, 1230px);
+  animation-duration: 380s;
+  border-color: rgba(100, 220, 220, 0.14);
 }
 
-.hero-orbit.orbit-secondary {
-  width: clamp(420px, 86vw, 860px);
-  height: clamp(420px, 86vw, 860px);
-  animation-duration: 52s;
-}
-
-.hero-orbit.orbit-tertiary {
-  width: clamp(280px, 58vw, 600px);
-  height: clamp(280px, 58vw, 600px);
-  animation-duration: 34s;
-}
-
+/* shared planet */
 .hero-planet {
   position: absolute;
   top: 50%;
-  left: -5px;
   transform: translateY(-50%);
   border-radius: 9999px;
   will-change: transform;
 }
 
-.hero-planet.planet-main {
-  width: 14px;
-  height: 14px;
-  background: radial-gradient(circle, rgba(255, 215, 0, 1) 0%, rgba(255, 165, 0, 0.8) 70%, transparent 100%);
+/* Mercury – small grey */
+.hero-planet.planet-mercury {
+  width: 6px; height: 6px; left: -3px;
+  background: radial-gradient(circle at 35% 35%, #e0dbd6 0%, #9c958e 65%);
+  box-shadow: 0 0 6px rgba(180,175,170,0.7);
 }
-
-.hero-planet.planet-secondary {
-  width: 10px;
-  height: 10px;
-  background: radial-gradient(circle, rgba(135, 206, 250, 1) 0%, rgba(70, 130, 180, 0.8) 70%, transparent 100%);
+/* Venus – cream-gold */
+.hero-planet.planet-venus {
+  width: 10px; height: 10px; left: -5px;
+  background: radial-gradient(circle at 35% 35%, #f8eec8 0%, #d4a84b 60%);
+  box-shadow: 0 0 10px rgba(232,205,160,0.75);
 }
-
-.hero-planet.planet-tertiary {
-  width: 8px;
-  height: 8px;
-  background: radial-gradient(circle at 35% 35%, rgba(255, 180, 165, 0.95) 0%, rgba(235, 86, 66, 0.92) 45%, rgba(156, 33, 33, 0.82) 80%, transparent 100%);
+/* Earth – blue */
+.hero-planet.planet-earth {
+  width: 11px; height: 11px; left: -5.5px;
+  background: radial-gradient(circle at 35% 35%, #b0e0f8 0%, #2a7ec0 50%, #1a5c2a 80%);
+  box-shadow: 0 0 12px rgba(40,130,200,0.7);
+}
+/* Mars – rusty red */
+.hero-planet.planet-mars {
+  width: 7px; height: 7px; left: -3.5px;
+  background: radial-gradient(circle at 35% 35%, #f09070 0%, #c03818 65%);
+  box-shadow: 0 0 8px rgba(200,60,20,0.7);
+}
+/* Jupiter – large orange-tan */
+.hero-planet.planet-jupiter {
+  width: 24px; height: 24px; left: -12px;
+  background: radial-gradient(circle at 35% 35%, #f4dca8 0%, #d09040 38%, #b07030 58%, #8b5220 82%);
+  box-shadow: 0 0 18px rgba(200,140,60,0.65);
+}
+/* Saturn – golden + ring */
+.hero-planet.planet-saturn {
+  width: 18px; height: 18px; left: -9px;
+  background: radial-gradient(circle at 35% 35%, #f8f0c0 0%, #d8c060 42%, #a89030 72%);
+  box-shadow: 0 0 16px rgba(228,209,145,0.65);
+}
+.hero-planet.planet-saturn::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) rotate(-28deg);
+  width: 36px; height: 12px;
+  border: 2px solid rgba(228, 209, 145, 0.50);
+  border-radius: 50%;
+}
+/* Uranus – cyan */
+.hero-planet.planet-uranus {
+  width: 14px; height: 14px; left: -7px;
+  background: radial-gradient(circle at 35% 35%, #c8f8f8 0%, #38c8c8 55%);
+  box-shadow: 0 0 14px rgba(60,210,210,0.65);
 }
 
 @keyframes hero-orbit-spin {
-  0% {
-    transform: translate(-50%, -50%) rotate(0deg);
-  }
-  100% {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
+  0%   { transform: translate(-50%, -50%) rotate(0deg);   }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 @keyframes hero-sun-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 30px rgba(245, 184, 92, 0.5), 0 0 90px rgba(185, 137, 76, 0.25);
+  0%, 100% {
+    box-shadow: 0 0 28px rgba(250,200,80,0.6), 0 0 80px rgba(215,155,50,0.32), 0 0 160px rgba(185,120,30,0.12);
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 40px rgba(245, 184, 92, 0.65), 0 0 120px rgba(185, 137, 76, 0.35);
-    transform: scale(1.04);
+    box-shadow: 0 0 40px rgba(250,200,80,0.75), 0 0 110px rgba(215,155,50,0.44), 0 0 200px rgba(185,120,30,0.18);
+    transform: scale(1.05);
   }
-}
-
-.hero-astro-symbol.symbol-main {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 1.5rem;
-  animation-duration: 20s;
 }
 
 @keyframes deep-space-twinkle {
-  0% {
-    opacity: 0.24;
-  }
-  50% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 0.34;
-  }
+  0%   { opacity: 0.22; }
+  50%  { opacity: 0.52; }
+  100% { opacity: 0.32; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .celestial-body,
-  .astral-symbol,
-  .hero-orbit,
-  .hero-astro-symbol {
-    animation: none;
-  }
+  .hero-orbit, .hero-astro-symbol, .hero-sun { animation: none; }
 }
 
 /* ─── Step connector line ─── */

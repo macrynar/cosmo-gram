@@ -58,9 +58,11 @@ export async function POST(req: NextRequest) {
   const { data: { user }, error: authError } = await userClient.auth.getUser();
   if (authError || !user) return NextResponse.json({ error: "Nieprawidłowy token" }, { status: 401 });
 
-  const { conversationId, content } = await req.json() as {
+  const { conversationId, content, chartContextType, chartContextId } = await req.json() as {
     conversationId: string;
     content: string;
+    chartContextType?: "natal" | "child";
+    chartContextId?: string;
   };
 
   if (!conversationId || !content?.trim()) {
@@ -99,24 +101,44 @@ export async function POST(req: NextRequest) {
 
   if (!conv) return NextResponse.json({ error: "Nie znaleziono rozmowy" }, { status: 404 });
 
-  // Get user's natal chart context
+  // Get chart context — passed from frontend per-message
   let natalContext = "";
-  const { data: latestReading } = await supabaseAdmin
-    .from("readings")
-    .select("chart_data")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+  let chartPersonName = "";
+  try {
+    let chartData: NatalChart | null = null;
 
-  if (latestReading?.chart_data) {
-    try {
-      const chart = latestReading.chart_data as NatalChart;
-      const bd = chart.birthData;
+    if (chartContextId && chartContextType === "child") {
+      const { data } = await supabaseAdmin
+        .from("children")
+        .select("chart_data, name")
+        .eq("id", chartContextId)
+        .single();
+      if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
+    } else if (chartContextId && chartContextType === "natal") {
+      const { data } = await supabaseAdmin
+        .from("readings")
+        .select("chart_data, name")
+        .eq("id", chartContextId)
+        .single();
+      if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
+    } else {
+      // fallback: latest natal reading
+      const { data } = await supabaseAdmin
+        .from("readings")
+        .select("chart_data, name")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
+    }
+
+    if (chartData) {
+      const bd = chartData.birthData;
       const { promptContext } = calculateChart({ date: bd.date, time: bd.time, lat: bd.lat, lng: bd.lng, place: bd.place });
-      natalContext = promptContext;
-    } catch { /* use empty context */ }
-  }
+      natalContext = chartPersonName ? `Osoba: ${chartPersonName}\n\n${promptContext}` : promptContext;
+    }
+  } catch { /* use empty context */ }
 
   // Get last 10 messages for context
   const { data: history } = await supabaseAdmin
