@@ -126,7 +126,7 @@ export default function GeneratePage() {
   }
 
   async function handleFormSubmit(data: {
-    date: string; time: string; place: string; lat: number; lng: number; timeUnknown: boolean;
+    name: string; date: string; time: string; place: string; lat: number; lng: number; timeUnknown: boolean;
   }) {
     setChartLoading(true);
     setError("");
@@ -181,7 +181,7 @@ export default function GeneratePage() {
         });
         if (saveRes.ok) {
           const { id } = await saveRes.json() as { id: string };
-          const defaultName = `${data.place.split(",")[0]} · ${data.date}`;
+          const defaultName = data.name.trim() || `${data.place.split(",")[0]} · ${data.date}`;
           const newEntry: SavedReading = {
             id, name: defaultName,
             birth_date: data.date, birth_time: data.time, birth_place: data.place,
@@ -199,6 +199,26 @@ export default function GeneratePage() {
     } finally {
       setInterpretLoading(false);
     }
+  }
+
+  function getDominantElement(c: NatalChart): { label: string; emoji: string; color: string } {
+    const ELEMENTS: Record<string, string> = {
+      "Baran": "Ogień", "Lew": "Ogień", "Strzelec": "Ogień",
+      "Byk": "Ziemia", "Panna": "Ziemia", "Koziorożec": "Ziemia",
+      "Bliźnięta": "Powietrze", "Waga": "Powietrze", "Wodnik": "Powietrze",
+      "Rak": "Woda", "Skorpion": "Woda", "Ryby": "Woda",
+    };
+    const counts: Record<string, number> = { "Ogień": 0, "Ziemia": 0, "Powietrze": 0, "Woda": 0 };
+    c.planets.forEach(p => { const el = ELEMENTS[p.sign]; if (el) counts[el]++; });
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const dominant = top[0][0];
+    const map: Record<string, { emoji: string; color: string }> = {
+      "Ogień":     { emoji: "🔥", color: "border-red-800/30 text-red-300/80 bg-red-900/10" },
+      "Ziemia":    { emoji: "🌿", color: "border-green-800/30 text-green-300/80 bg-green-900/10" },
+      "Powietrze": { emoji: "💨", color: "border-sky-800/30 text-sky-300/80 bg-sky-900/10" },
+      "Woda":      { emoji: "💧", color: "border-blue-800/30 text-blue-300/80 bg-blue-900/10" },
+    };
+    return { label: dominant, ...map[dominant] };
   }
 
   const selectorItems: HistoryItem[] = readings.map(r => ({
@@ -290,6 +310,30 @@ export default function GeneratePage() {
                 </span>
               )}
             </div>
+
+            {/* Sun / Moon / dominant element */}
+            {(() => {
+              const sun  = chart.planets.find(p => p.name === "Słońce");
+              const moon = chart.planets.find(p => p.name === "Księżyc");
+              const el   = getDominantElement(chart);
+              return (
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {sun && (
+                    <span className="px-3 py-1 rounded-full text-xs border border-amber-700/40 text-amber-200/90 bg-amber-900/15">
+                      ☀️ {sun.sign}
+                    </span>
+                  )}
+                  {moon && (
+                    <span className="px-3 py-1 rounded-full text-xs border border-slate-700/40 text-slate-300/80 bg-slate-900/20">
+                      🌙 {moon.sign}
+                    </span>
+                  )}
+                  <span className={`px-3 py-1 rounded-full text-xs border ${el.color}`}>
+                    {el.emoji} Dominuje {el.label}
+                  </span>
+                </div>
+              );
+            })()}
 
             {chart.birthData.timeUnknown && (
               <p className="text-center text-xs text-amber-500/60">

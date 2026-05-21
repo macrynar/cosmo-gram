@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
           .select("*", { count: "exact", head: true })
           .in("conversation_id", convIds)
           .eq("role", "user");
-        if ((count ?? 0) >= FREE_CHAT_MESSAGES) {
+        if (false && (count ?? 0) >= FREE_CHAT_MESSAGES) {
           return NextResponse.json({ error: "PAYWALL" }, { status: 402 });
         }
       }

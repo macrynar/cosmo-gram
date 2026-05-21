@@ -11,6 +11,7 @@ interface GeoResult {
 
 interface Props {
   onSubmit: (data: {
+    name: string;
     date: string;
     time: string;
     place: string;
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export default function BirthForm({ onSubmit, loading }: Props) {
+  const [name, setName]               = useState("");
   const [date, setDate]               = useState("");
   const [time, setTime]               = useState("");
   const [timeUnknown, setTimeUnknown] = useState(false);
@@ -100,6 +102,7 @@ export default function BirthForm({ onSubmit, loading }: Props) {
     if (!loc) return;
 
     onSubmit({
+      name,
       date,
       time: timeUnknown ? "12:00" : time,
       place: loc.displayName,
@@ -117,6 +120,20 @@ export default function BirthForm({ onSubmit, loading }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      {/* Name */}
+      <div>
+        <label className="flex items-center gap-1 text-xs font-medium text-slate-400 mb-1.5">
+          Imię osoby
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="np. Anna"
+          className={inputClass}
+        />
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-3 items-end">
         {/* Date */}
         <div className="flex-1 min-w-0">
