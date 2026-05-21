@@ -11,6 +11,7 @@ import HistorySelector, { type HistoryItem } from "@/components/HistorySelector"
 import { NatalChart } from "@/lib/astro-types";
 import { useAuth } from "@/components/AuthContext";
 import { track } from "@/components/PostHogProvider";
+import { getPersonalityTags } from "@/lib/personality-tags";
 
 type SavedReading = {
   id: string;
@@ -334,6 +335,20 @@ export default function GeneratePage() {
                   </span>
                 </div>
               );
+            })()}
+
+            {/* Personality tags */}
+            {(() => {
+              const tags = getPersonalityTags(chart);
+              return tags.length > 0 ? (
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {tags.map(tag => (
+                    <span key={tag} className="px-3 py-1 rounded-full text-xs border border-slate-700/30 text-slate-400 bg-slate-800/30">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null;
             })()}
 
             {chart.birthData.timeUnknown && (

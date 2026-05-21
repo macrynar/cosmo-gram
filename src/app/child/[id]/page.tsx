@@ -11,6 +11,7 @@ import PlanetTable from "@/components/generate/PlanetTable";
 import { useAuth } from "@/components/AuthContext";
 import { calcAgeYears } from "@/lib/prompts/child-v1";
 import type { NatalChart } from "@/lib/astro-types";
+import { getPersonalityTags } from "@/lib/personality-tags";
 
 const ELEMENTS: Record<string, string> = {
   "Baran": "Ogień", "Lew": "Ogień", "Strzelec": "Ogień",
@@ -158,6 +159,20 @@ export default function ChildPage() {
                 })()}
               </div>
             </div>
+
+            {/* Personality tags */}
+            {(() => {
+              const tags = getPersonalityTags(child.chart_data);
+              return tags.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map(tag => (
+                    <span key={tag} className="px-3 py-1 rounded-full text-xs border border-slate-700/30 text-slate-400 bg-slate-800/30">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null;
+            })()}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
               <div className="glass-card rounded-3xl p-4 sm:p-5 flex flex-col">
