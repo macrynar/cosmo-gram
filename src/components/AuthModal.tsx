@@ -66,10 +66,7 @@ export default function AuthModal({ onClose }: Props) {
     setLoading("email");
 
     if (mode === "register") {
-      const emailRedirectTo = typeof window !== "undefined"
-        ? `${window.location.origin}/generate`
-        : undefined;
-      const { error: err } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
+      const { error: err } = await supabase.auth.signUp({ email, password });
       if (err) setError(err.message);
       else setInfo("Sprawdź skrzynkę — wysłaliśmy link potwierdzający rejestrację.");
     } else {
