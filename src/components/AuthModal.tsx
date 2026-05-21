@@ -49,12 +49,13 @@ export default function AuthModal({ onClose }: Props) {
   async function handleOAuth(provider: "google" | "facebook") {
     setLoading(provider);
     setError("");
-    const redirectTo = typeof window !== "undefined"
-      ? `${window.location.origin}/generate`
-      : "/generate";
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo },
+      options: {
+        redirectTo: typeof window !== "undefined"
+          ? `${window.location.origin}/auth/callback`
+          : undefined,
+      },
     });
     if (err) setError(err.message);
     setLoading(null);
