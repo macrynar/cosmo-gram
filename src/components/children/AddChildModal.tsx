@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { X, MapPin, Calendar, Clock, User, Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { X, MapPin, Calendar, Clock, User, Loader2, AlertCircle } from "lucide-react";
+import { CosmoIcon } from "@/components/CosmoIcon";
 
 type GeoResult = { displayName: string; lat: number; lng: number };
 
@@ -73,9 +74,13 @@ export default function AddChildModal({ onClose, onSubmit, loading, error: exter
       const data = await res.json() as { results: GeoResult[] };
       const results = data.results ?? [];
       setSuggestions(results);
-      if (results.length > 0) {
+      if (results.length === 1) {
         setSelected(results[0]);
-        setDropdownOpen(results.length > 1);
+        setPlaceQuery(results[0].displayName);
+        setDropdownOpen(false);
+      } else if (results.length > 1) {
+        setSelected(null);
+        setDropdownOpen(true);
       } else {
         setSelected(null);
         setDropdownOpen(false);
@@ -130,7 +135,7 @@ export default function AddChildModal({ onClose, onSubmit, loading, error: exter
     });
   }
 
-  const isValid = !!name.trim() && !!date && !!time && !!selected && !dateError;
+  const isValid = !!name.trim() && !!date && !!time && !!selected && !dateError && !geocoding;
 
   const inputClass = `w-full px-3 py-2.5 rounded-xl bg-[#0a0806] border border-amber-900/35 text-white text-sm
     focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/60
@@ -149,7 +154,7 @@ export default function AddChildModal({ onClose, onSubmit, loading, error: exter
 
         <div className="mb-5">
           <div className="inline-flex items-center gap-2 px-3 py-1 mb-3 rounded-full border border-green-500/30 bg-green-900/20 text-green-300 text-xs font-medium">
-            <Sparkles className="w-3 h-3" />
+            <CosmoIcon className="w-3 h-3" />
             Nowa karta dziecka
           </div>
           <h2 className="text-xl font-bold text-white font-brand">
@@ -256,7 +261,7 @@ export default function AddChildModal({ onClose, onSubmit, loading, error: exter
           >
             {loading
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Generuję interpretację…</>
-              : <><Sparkles className="w-4 h-4" /> Generuj kartę dziecka</>
+              : <><CosmoIcon className="w-4 h-4" /> Generuj kartę dziecka</>
             }
           </button>
         </form>

@@ -192,7 +192,7 @@ export default function ChildPage() {
               return tags.length > 0 ? (
                 <div className="flex flex-wrap gap-2 justify-center">
                   {tags.map(tag => (
-                    <span key={tag} className="px-3 py-1 rounded-full text-xs border border-slate-700/30 text-slate-400 bg-slate-800/30">
+                    <span key={tag} className="px-3 py-1 rounded-full text-xs border border-amber-700/35 text-amber-200/80 bg-amber-900/15">
                       {tag}
                     </span>
                   ))}

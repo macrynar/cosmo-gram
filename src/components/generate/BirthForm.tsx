@@ -54,9 +54,15 @@ export default function BirthForm({ onSubmit, loading }: Props) {
       const data = await res.json() as { results: GeoResult[] };
       const results = data.results ?? [];
       setSuggestions(results);
-      if (results.length > 0) {
+      if (results.length === 1) {
+        // Single unambiguous result — auto-select and fill input
         setSelected(results[0]);
-        setDropdownOpen(results.length > 1);
+        setPlaceQuery(results[0].displayName);
+        setDropdownOpen(false);
+      } else if (results.length > 1) {
+        // Multiple results — show dropdown, user must pick explicitly
+        setSelected(null);
+        setDropdownOpen(true);
       } else {
         setSelected(null);
         setDropdownOpen(false);
@@ -113,7 +119,7 @@ export default function BirthForm({ onSubmit, loading }: Props) {
     });
   }
 
-  const isValid = !!date && (timeUnknown || !!time) && placeQuery.length >= 2;
+  const isValid = !!date && (timeUnknown || !!time) && !!selected;
 
   const inputClass = `w-full px-3 py-2.5 rounded-xl bg-[#0a0806] border border-amber-900/35 text-white text-sm
     focus:outline-none focus:ring-2 focus:ring-amber-600/40 focus:border-amber-600/55

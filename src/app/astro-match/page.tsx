@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Heart, Sparkles, Star } from "lucide-react";
+import { Heart, Star } from "lucide-react";
+import { CosmoIcon } from "@/components/CosmoIcon";
 import Navbar from "@/components/Navbar";
 import PersonBirthForm, { type PersonData } from "@/components/astro-match/PersonBirthForm";
 import CompatibilityResultView from "@/components/astro-match/CompatibilityResult";
@@ -291,7 +292,7 @@ export default function AstroMatchPage() {
                 {loading ? (
                   <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Analizuję…</>
                 ) : (
-                  <><Sparkles className="w-4 h-4" /> Analizuj kompatybilność</>
+                  <><CosmoIcon className="w-4 h-4" /> Analizuj kompatybilność</>
                 )}
               </button>
 
