@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { MapPin, Calendar, Clock, Loader2, Sparkles } from "lucide-react";
+import { MapPin, Calendar, Clock, Loader2 } from "lucide-react";
+import { CosmoIcon } from "@/components/CosmoIcon";
 
 interface GeoResult {
   displayName: string;
@@ -222,7 +223,7 @@ export default function BirthForm({ onSubmit, loading }: Props) {
           >
             {loading
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Liczę…</>
-              : <><Sparkles className="w-4 h-4" /> Generuj</>
+              : <><CosmoIcon className="w-4 h-4" /> Generuj</>
             }
           </button>
         </div>

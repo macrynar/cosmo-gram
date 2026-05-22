@@ -1,31 +1,99 @@
 import type { NatalChart } from "@/lib/astro-types";
 
-const SIGN_TRAITS: Record<string, [string, string, string]> = {
-  "Baran":      ["Pionierski",    "Odważny",        "Bezpośredni"],
-  "Byk":        ["Wytrwały",      "Zmysłowy",       "Stabilny"],
-  "Bliźnięta":  ["Ciekawski",     "Komunikatywny",  "Zwinny"],
-  "Rak":        ["Empatyczny",    "Intuicyjny",     "Opiekuńczy"],
-  "Lew":        ["Kreatywny",     "Charyzmatyczny", "Hojny"],
-  "Panna":      ["Analityczny",   "Precyzyjny",     "Praktyczny"],
-  "Waga":       ["Harmonijny",    "Dyplomatyczny",  "Sprawiedliwy"],
-  "Skorpion":   ["Intensywny",    "Przenikliwy",    "Transformacyjny"],
-  "Strzelec":   ["Filozoficzny",  "Optymistyczny",  "Wolny"],
-  "Koziorożec": ["Ambitny",       "Zdyscyplinowany","Odpowiedzialny"],
-  "Wodnik":     ["Nowatorski",    "Niezależny",     "Humanitarny"],
-  "Ryby":       ["Wrażliwy",      "Duchowy",        "Empatyczny"],
+// Sun: 2 core identity traits per sign
+const SUN_TRAITS: Record<string, [string, string]> = {
+  "Baran":      ["Pionierski",    "Odważny"],
+  "Byk":        ["Wytrwały",      "Konsekwentny"],
+  "Bliźnięta":  ["Błyskotliwy",   "Komunikatywny"],
+  "Rak":        ["Opiekuńczy",    "Wrażliwy"],
+  "Lew":        ["Kreatywny",     "Charyzmatyczny"],
+  "Panna":      ["Precyzyjny",    "Analityczny"],
+  "Waga":       ["Dyplomatyczny", "Estetyczny"],
+  "Skorpion":   ["Intensywny",    "Magnetyczny"],
+  "Strzelec":   ["Optymistyczny", "Przygodowy"],
+  "Koziorożec": ["Ambitny",       "Strategiczny"],
+  "Wodnik":     ["Wizjonerski",   "Ekscentryczny"],
+  "Ryby":       ["Marzycielski",  "Subtelny"],
 };
 
-const ELEMENT_TRAIT: Record<string, string> = {
-  "Ogień":     "Energiczny",
-  "Ziemia":    "Pragmatyczny",
-  "Powietrze": "Intelektualny",
-  "Woda":      "Głęboko czujący",
+// Moon: emotional nature — pick first that isn't already in the tag list
+const MOON_TRAITS: Record<string, string[]> = {
+  "Baran":      ["Spontaniczny",       "Temperamentny",   "Energiczny"],
+  "Byk":        ["Stabilizujący",      "Czuły",           "Cierpliwy"],
+  "Bliźnięta":  ["Kapryśny",           "Ciekawski",       "Intelektualny"],
+  "Rak":        ["Intuicyjny",         "Emocjonalny",     "Przywiązany"],
+  "Lew":        ["Lojalny",            "Ekspresywny",     "Teatralny"],
+  "Panna":      ["Troskliwy",          "Pomocny",         "Wnikliwy"],
+  "Waga":       ["Harmonijny",         "Pokojowy",        "Delikatny"],
+  "Skorpion":   ["Głęboki",            "Przenikliwy",     "Czujny"],
+  "Strzelec":   ["Beztroski",          "Radosny",         "Swobodny"],
+  "Koziorożec": ["Opanowany",          "Powściągliwy",    "Zdystansowany"],
+  "Wodnik":     ["Niekonwencjonalny",  "Oryginalny",      "Niezależny"],
+  "Ryby":       ["Empatyczny",         "Delikatny",       "Mistyczny"],
 };
 
-const MODALITY_TRAIT: Record<string, string> = {
-  "Baran": "Inicjatywny", "Rak": "Inicjatywny", "Waga": "Inicjatywny", "Koziorożec": "Inicjatywny",
-  "Byk": "Zdeterminowany", "Lew": "Zdeterminowany", "Skorpion": "Zdeterminowany", "Wodnik": "Zdeterminowany",
-  "Bliźnięta": "Elastyczny", "Panna": "Elastyczny", "Strzelec": "Elastyczny", "Ryby": "Elastyczny",
+// Mercury: thinking and communication style
+const MERCURY_TRAITS: Record<string, string> = {
+  "Baran":      "Bezpośredni",
+  "Byk":        "Gruntowny",
+  "Bliźnięta":  "Wielowątkowy",
+  "Rak":        "Imaginatywny",
+  "Lew":        "Twórczy",
+  "Panna":      "Drobiazgowy",
+  "Waga":       "Wyważony",
+  "Skorpion":   "Penetrujący",
+  "Strzelec":   "Dalekowzroczny",
+  "Koziorożec": "Pragmatyczny",
+  "Wodnik":     "Innowacyjny",
+  "Ryby":       "Poetycki",
+};
+
+// Venus: love and values
+const VENUS_TRAITS: Record<string, string> = {
+  "Baran":      "Żarliwy",
+  "Byk":        "Zmysłowy",
+  "Bliźnięta":  "Uroczy",
+  "Rak":        "Oddany",
+  "Lew":        "Romantyczny",
+  "Panna":      "Dyskretny",
+  "Waga":       "Czarujący",
+  "Skorpion":   "Namiętny",
+  "Strzelec":   "Niezobowiązujący",
+  "Koziorożec": "Wierny",
+  "Wodnik":     "Przyjacielski",
+  "Ryby":       "Bezwarunkowy",
+};
+
+// Mars: drive and action
+const MARS_TRAITS: Record<string, string> = {
+  "Baran":      "Wojowniczy",
+  "Byk":        "Nieodwołalny",
+  "Bliźnięta":  "Zwinny",
+  "Rak":        "Ochronny",
+  "Lew":        "Honorowy",
+  "Panna":      "Metodyczny",
+  "Waga":       "Taktyczny",
+  "Skorpion":   "Nieugięty",
+  "Strzelec":   "Entuzjastyczny",
+  "Koziorożec": "Nieustraszony",
+  "Wodnik":     "Rewolucyjny",
+  "Ryby":       "Duchowy",
+};
+
+// Ascendant: outer presentation / first impression
+const ASC_TRAITS: Record<string, string> = {
+  "Baran":      "Zadziorny",
+  "Byk":        "Solidny",
+  "Bliźnięta":  "Towarzyski",
+  "Rak":        "Ciepły",
+  "Lew":        "Okazały",
+  "Panna":      "Schludny",
+  "Waga":       "Wdzięczny",
+  "Skorpion":   "Enigmatyczny",
+  "Strzelec":   "Nieformalny",
+  "Koziorożec": "Stateczny",
+  "Wodnik":     "Niepowtarzalny",
+  "Ryby":       "Eteryczny",
 };
 
 const ELEMENTS: Record<string, string> = {
@@ -33,6 +101,19 @@ const ELEMENTS: Record<string, string> = {
   "Byk": "Ziemia", "Panna": "Ziemia", "Koziorożec": "Ziemia",
   "Bliźnięta": "Powietrze", "Waga": "Powietrze", "Wodnik": "Powietrze",
   "Rak": "Woda", "Skorpion": "Woda", "Ryby": "Woda",
+};
+
+const ELEMENT_TRAIT: Record<string, string> = {
+  "Ogień":     "Energiczny",
+  "Ziemia":    "Pragmatyczny",
+  "Powietrze": "Intelektualny",
+  "Woda":      "Uczuciowy",
+};
+
+const MODALITY_TRAIT: Record<string, string> = {
+  "Baran": "Inicjatywny", "Rak": "Inicjatywny", "Waga": "Inicjatywny", "Koziorożec": "Inicjatywny",
+  "Byk": "Zdeterminowany", "Lew": "Zdeterminowany", "Skorpion": "Zdeterminowany", "Wodnik": "Zdeterminowany",
+  "Bliźnięta": "Elastyczny", "Panna": "Elastyczny", "Strzelec": "Elastyczny", "Ryby": "Elastyczny",
 };
 
 function getDominantElement(chart: NatalChart): string {
@@ -47,51 +128,66 @@ function signFromDegree(deg: number): string {
 }
 
 export function getPersonalityTags(chart: NatalChart): string[] {
-  const tags: string[] = [];
   const used = new Set<string>();
+  const tags: string[] = [];
+  const add = (tag: string) => { if (tag && !used.has(tag)) { used.add(tag); tags.push(tag); } };
 
-  const add = (tag: string) => {
-    if (!used.has(tag)) { used.add(tag); tags.push(tag); }
-  };
+  const sun     = chart.planets.find(p => p.name === "Słońce");
+  const moon    = chart.planets.find(p => p.name === "Księżyc");
+  const mercury = chart.planets.find(p => p.name === "Merkury");
+  const venus   = chart.planets.find(p => p.name === "Wenus");
+  const mars    = chart.planets.find(p => p.name === "Mars");
 
-  const sun  = chart.planets.find(p => p.name === "Słońce");
-  const moon = chart.planets.find(p => p.name === "Księżyc");
-
-  // 2 traits from Sun sign
+  // 1. Sun: 2 core identity traits
   if (sun) {
-    const traits = SIGN_TRAITS[sun.sign];
-    if (traits) { add(traits[0]); add(traits[1]); }
+    const [t0, t1] = SUN_TRAITS[sun.sign] ?? ["", ""];
+    add(t0); add(t1);
   }
 
-  // 1 trait from Moon sign (3rd trait to avoid Sun duplicate)
+  // 2. Moon: first unused emotional trait
   if (moon) {
-    const traits = SIGN_TRAITS[moon.sign];
-    if (traits) {
-      const pick = traits.find(t => !used.has(t));
-      if (pick) add(pick);
-    }
+    const pick = (MOON_TRAITS[moon.sign] ?? []).find(t => !used.has(t));
+    if (pick) add(pick);
   }
 
-  // 1 trait from Ascendant sign if available
-  if (chart.ascendant != null) {
-    const ascSign = signFromDegree(chart.ascendant);
-    const traits = SIGN_TRAITS[ascSign];
-    if (traits) {
-      const pick = traits.find(t => !used.has(t));
-      if (pick) add(pick);
-    }
+  // 3. Ascendant: outer presentation (if time known)
+  if (chart.ascendant != null && !chart.birthData?.timeUnknown) {
+    const trait = ASC_TRAITS[signFromDegree(chart.ascendant)];
+    if (trait) add(trait);
   }
 
-  // Modality from Sun sign
-  if (sun) {
-    const mod = MODALITY_TRAIT[sun.sign];
-    if (mod) add(mod);
+  // 4. Mercury: thinking/communication
+  if (mercury) {
+    const trait = MERCURY_TRAITS[mercury.sign];
+    if (trait) add(trait);
   }
 
-  // Dominant element trait
-  const domEl = getDominantElement(chart);
-  const elTrait = ELEMENT_TRAIT[domEl];
-  if (elTrait) add(elTrait);
+  // 5. Venus: love & values
+  if (venus) {
+    const trait = VENUS_TRAITS[venus.sign];
+    if (trait) add(trait);
+  }
 
-  return tags.slice(0, 6);
+  // 6. Mars: drive & action
+  if (mars) {
+    const trait = MARS_TRAITS[mars.sign];
+    if (trait) add(trait);
+  }
+
+  // 7. Special: Sun and Moon in same element → inner consistency tag
+  if (sun && moon && ELEMENTS[sun.sign] === ELEMENTS[moon.sign]) {
+    add("Spójny");
+  }
+
+  // 8. Fallback: dominant element
+  if (tags.length < 5) {
+    add(ELEMENT_TRAIT[getDominantElement(chart)] ?? "");
+  }
+
+  // 9. Fallback: modality
+  if (sun && tags.length < 5) {
+    add(MODALITY_TRAIT[sun.sign] ?? "");
+  }
+
+  return tags.slice(0, 7);
 }

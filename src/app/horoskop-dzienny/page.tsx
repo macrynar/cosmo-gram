@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Sparkles, Sun } from "lucide-react";
+import { CalendarDays } from "lucide-react";
+import { CosmoIcon } from "@/components/CosmoIcon";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
@@ -214,7 +215,7 @@ export default function DailyHoroscopePage() {
 
         {emptyState && (
           <div className="glass-card rounded-2xl p-8 sm:p-10 text-center">
-            <Sun className="w-8 h-8 text-amber-400 mx-auto mb-3" />
+            <CosmoIcon className="w-8 h-8 text-amber-400 mx-auto mb-3" />
             <h2 className="text-xl text-white font-semibold mb-2 font-brand">Najpierw stwórz swój kosmogram</h2>
             <p className="text-slate-400 text-sm mb-6">
               Żeby wygenerować horoskop dzienny, potrzebujemy co najmniej jednego zapisanego kosmogramu.
@@ -223,7 +224,7 @@ export default function DailyHoroscopePage() {
               href="/generate"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm bg-gradient-to-r from-amber-700 to-amber-500 text-white shadow-lg shadow-amber-950/40 hover:shadow-amber-800/40 transition-all"
             >
-              <Sparkles className="w-4 h-4" />
+              <CosmoIcon className="w-4 h-4" />
               Przejdź do tworzenia kosmogramu
             </Link>
           </div>
@@ -263,7 +264,7 @@ export default function DailyHoroscopePage() {
                   {dailyLoading ? (
                     <span className="w-4 h-4 border-2 border-amber-200/25 border-t-amber-200 rounded-full animate-spin" />
                   ) : (
-                    <Sun className="w-4 h-4" />
+                    <CosmoIcon className="w-4 h-4" />
                   )}
                   {dailyLoading ? "Generuję..." : "Generuj dzienny horoskop"}
                 </button>

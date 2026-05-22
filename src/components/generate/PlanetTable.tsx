@@ -22,7 +22,9 @@ export default function PlanetTable({ chart }: Props) {
   const { planets, houses, ascendant, mc } = chart;
   const ascSign = Math.floor(ascendant / 30);
   const mcSign  = Math.floor(mc / 30);
-  const SIGNS = ["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"];
+  // U+FE0E (VS15) forces text (not emoji) rendering so CSS color applies
+  const vs = "︎";
+  const SIGNS = ["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"].map(s => s + vs);
   const SIGN_NAMES = ["Baran","Byk","Bliźnięta","Rak","Lew","Panna","Waga","Skorpion","Strzelec","Koziorożec","Wodnik","Ryby"];
 
   const ascDeg = Math.floor(((ascendant % 30) + 30) % 30);
@@ -50,7 +52,7 @@ export default function PlanetTable({ chart }: Props) {
                 <span className="mr-2 text-base">⬆</span>Ascendent
               </td>
               <td className="px-4 py-2.5 text-slate-300">
-                {SIGNS[ascSign]} {SIGN_NAMES[ascSign]}
+                <span className="text-amber-400/90">{SIGNS[ascSign]}</span> {SIGN_NAMES[ascSign]}
               </td>
               <td className="px-4 py-2.5 text-slate-400">{ascDeg}°</td>
               <td className="px-4 py-2.5 text-slate-500">—</td>
@@ -61,7 +63,7 @@ export default function PlanetTable({ chart }: Props) {
                 <span className="mr-2 text-base">⬆</span>MC
               </td>
               <td className="px-4 py-2.5 text-slate-300">
-                {SIGNS[mcSign]} {SIGN_NAMES[mcSign]}
+                <span className="text-amber-400/90">{SIGNS[mcSign]}</span> {SIGN_NAMES[mcSign]}
               </td>
               <td className="px-4 py-2.5 text-slate-400">{mcDeg}°</td>
               <td className="px-4 py-2.5 text-slate-500">—</td>
@@ -76,7 +78,7 @@ export default function PlanetTable({ chart }: Props) {
                     {p.isRetrograde && <span className="ml-1 text-xs opacity-60">↺</span>}
                   </td>
                   <td className="px-4 py-2.5 text-slate-300">
-                    {p.signSymbol} {p.sign}
+                    <span className="text-amber-400/90">{p.signSymbol + vs}</span> {p.sign}
                   </td>
                   <td className="px-4 py-2.5 text-slate-400">
                     {p.degree}°{p.minute.toString().padStart(2, "0")}′
