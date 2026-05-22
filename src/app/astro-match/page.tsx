@@ -7,6 +7,8 @@ import Navbar from "@/components/Navbar";
 import PersonBirthForm, { type PersonData } from "@/components/astro-match/PersonBirthForm";
 import CompatibilityResultView from "@/components/astro-match/CompatibilityResult";
 import PaywallModal from "@/components/astro-match/PaywallModal";
+import ShareModal from "@/components/ShareModal";
+import { Share2 } from "lucide-react";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
 import { useAuth } from "@/components/AuthContext";
 import { track } from "@/components/PostHogProvider";
@@ -36,6 +38,7 @@ export default function AstroMatchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
   const authHeader: Record<string, string> = session
@@ -244,11 +247,24 @@ export default function AstroMatchPage() {
 
         {/* Result */}
         {result && !showForm && (
-          <CompatibilityResultView
-            result={result}
-            person1Name={resultNames.p1}
-            person2Name={resultNames.p2}
-          />
+          <>
+            <CompatibilityResultView
+              result={result}
+              person1Name={resultNames.p1}
+              person2Name={resultNames.p2}
+            />
+            {selectedId && (
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={() => setShowShare(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-pink-700/40 text-pink-300 text-sm hover:bg-pink-900/20 transition-colors"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Udostępnij wynik
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Form */}
@@ -312,6 +328,14 @@ export default function AstroMatchPage() {
         )}
 
       </main>
+
+      {showShare && selectedId && (
+        <ShareModal
+          type="match"
+          matchId={selectedId}
+          onClose={() => setShowShare(false)}
+        />
+      )}
     </div>
   );
 }

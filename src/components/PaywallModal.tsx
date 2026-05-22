@@ -5,6 +5,7 @@ import { X, Check, Loader2 } from "lucide-react";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
 import { track } from "@/components/PostHogProvider";
+import { supabase } from "@/lib/supabase";
 
 type Props = {
   onClose: () => void;
@@ -32,14 +33,23 @@ export default function PaywallModal({ onClose, reason }: Props) {
     track("checkout_initiated", { price_type: priceType });
     setLoading(priceType);
     try {
+      // Always fetch a fresh session to avoid stale token issues
+      const { data: { session: freshSession } } = await supabase.auth.getSession();
+      const token = freshSession?.access_token ?? session.access_token;
+
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ priceType }),
       });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Checkout error", res.status, text.slice(0, 200));
+        return;
+      }
       const { url, error } = await res.json() as { url?: string; error?: string };
       if (error) { console.error(error); return; }
       if (url) window.location.href = url;

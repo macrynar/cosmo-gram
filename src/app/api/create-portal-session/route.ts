@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     { global: { headers: { Authorization: `Bearer ${token}` } } }
   );
 
-  const { data: { user }, error: authError } = await userClient.auth.getUser();
+  const { data: { user }, error: authError } = await userClient.auth.getUser(token);
   if (authError || !user) return NextResponse.json({ error: "Nieprawidłowy token" }, { status: 401 });
 
   const sub = await getUserSubscription(user.id);

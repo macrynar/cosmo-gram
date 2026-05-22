@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     { global: { headers: { Authorization: `Bearer ${token}` } } }
   );
 
-  const { data: { user } } = await userClient.auth.getUser();
+  const { data: { user } } = await userClient.auth.getUser(token);
   if (!user) return NextResponse.json({ hasSubscription: false });
 
   const sub = await getUserSubscription(user.id);

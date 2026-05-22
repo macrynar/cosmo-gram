@@ -6,8 +6,10 @@ import Navbar from "@/components/Navbar";
 import AddChildModal, { type ChildFormData } from "@/components/children/AddChildModal";
 import ChildCard from "@/components/children/ChildCard";
 import { useAuth } from "@/components/AuthContext";
+import { useSubscription } from "@/components/SubscriptionContext";
 import { track } from "@/components/PostHogProvider";
 import type { NatalChart } from "@/lib/astro-types";
+import PaywallModal from "@/components/PaywallModal";
 
 type SavedChild = {
   id: string;
@@ -23,10 +25,12 @@ type SavedChild = {
 
 export default function ChildrenPage() {
   const { session } = useAuth();
+  const { isPro, isLoading: subLoading } = useSubscription();
 
   const [children, setChildren]       = useState<SavedChild[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [showModal, setShowModal]     = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   const [generating, setGenerating]   = useState(false);
   const [error, setError]             = useState("");
   const [regenProgress, setRegenProgress] = useState<{ current: number; total: number } | null>(null);
@@ -230,7 +234,12 @@ export default function ChildrenPage() {
                 <h3 className="text-white font-semibold mb-2">Brak kart dzieci</h3>
                 <p className="text-slate-500 text-sm mb-6">Dodaj pierwsze dziecko żeby wygenerować interpretację jego karty urodzeniowej</p>
                 <button
-                  onClick={() => { setError(""); setShowModal(true); }}
+                  onClick={() => {
+                    if (subLoading) return;
+                    if (!isPro) { setShowPaywall(true); return; }
+                    setError("");
+                    setShowModal(true);
+                  }}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-semibold shadow-lg shadow-green-900/50 hover:scale-[1.02] transition-all"
                 >
                   <Plus className="w-4 h-4" />
@@ -255,7 +264,12 @@ export default function ChildrenPage() {
 
                 <div className="text-center">
                   <button
-                    onClick={() => { setError(""); setShowModal(true); }}
+                    onClick={() => {
+                      if (subLoading) return;
+                      if (!isPro) { setShowPaywall(true); return; }
+                      setError("");
+                      setShowModal(true);
+                    }}
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-dashed border-green-800/40 text-slate-500 hover:text-white hover:border-green-500/50 text-sm transition-all"
                   >
                     <Plus className="w-4 h-4" />
@@ -274,6 +288,13 @@ export default function ChildrenPage() {
           onSubmit={handleAddChild}
           loading={generating}
           error={error}
+        />
+      )}
+
+      {showPaywall && (
+        <PaywallModal
+          onClose={() => setShowPaywall(false)}
+          reason="Karty dzieci są dostępne w planie Plus."
         />
       )}
     </div>

@@ -1,6 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Check, Crown } from "lucide-react";
 import { CosmoIcon } from "@/components/CosmoIcon";
+import { useAuth } from "@/components/AuthContext";
+import { useRouter } from "next/navigation";
+import PaywallModal from "@/components/PaywallModal";
 
 const freePlan = [
   "Pełny kosmogram natalny z wykresem",
@@ -18,6 +24,18 @@ const proPlan = [
 ];
 
 export default function PricingSection() {
+  const { session } = useAuth();
+  const router = useRouter();
+  const [showPaywall, setShowPaywall] = useState(false);
+
+  function handlePlusCTA() {
+    if (session) {
+      setShowPaywall(true);
+    } else {
+      router.push("/generate");
+    }
+  }
+
   return (
     <section id="pricing" className="relative py-24 sm:py-28">
       <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1a140d]/30 to-transparent pointer-events-none" />
@@ -97,12 +115,17 @@ export default function PricingSection() {
               ))}
             </ul>
 
-            <Link href="/generate" className="inline-flex items-center justify-center w-full px-4 py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-500 text-white hover:from-amber-600 hover:to-amber-400 transition-colors relative z-10">
+            <button
+              onClick={handlePlusCTA}
+              className="inline-flex items-center justify-center w-full px-4 py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-500 text-white hover:from-amber-600 hover:to-amber-400 transition-colors relative z-10"
+            >
               Zacznij trial — 7 dni gratis
-            </Link>
+            </button>
           </article>
         </div>
       </div>
+
+      {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
     </section>
   );
 }

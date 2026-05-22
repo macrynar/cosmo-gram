@@ -10,8 +10,12 @@ import Interpretation from "@/components/generate/Interpretation";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
 import { NatalChart } from "@/lib/astro-types";
 import { useAuth } from "@/components/AuthContext";
+import { useSubscription } from "@/components/SubscriptionContext";
 import { track } from "@/components/PostHogProvider";
 import { getPersonalityTags } from "@/lib/personality-tags";
+import PaywallModal from "@/components/PaywallModal";
+import ShareModal from "@/components/ShareModal";
+import { Share2 } from "lucide-react";
 
 type SavedReading = {
   id: string;
@@ -27,6 +31,9 @@ type SavedReading = {
 
 export default function GeneratePage() {
   const { session, loading: authLoading } = useAuth();
+  const { isPro, isLoading: subLoading } = useSubscription();
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   // History
   const [readings, setReadings]     = useState<SavedReading[]>([]);
@@ -119,6 +126,10 @@ export default function GeneratePage() {
   }
 
   function handleNew() {
+    if (session && !subLoading && !isPro && readings.length >= 1) {
+      setShowPaywall(true);
+      return;
+    }
     setSelectedId(null);
     setChart(null);
     setInterpretation("");
@@ -129,6 +140,10 @@ export default function GeneratePage() {
   async function handleFormSubmit(data: {
     name: string; date: string; time: string; place: string; lat: number; lng: number; timeUnknown: boolean;
   }) {
+    if (session && !subLoading && !isPro && readings.length >= 1) {
+      setShowPaywall(true);
+      return;
+    }
     setChartLoading(true);
     setError("");
     setChart(null);
@@ -383,6 +398,18 @@ export default function GeneratePage() {
 
             <Interpretation text={interpretation} loading={interpretLoading} />
 
+            {!interpretLoading && interpretation && selectedId && (
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setShowShare(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-amber-700/40 text-amber-300 text-sm hover:bg-amber-900/20 transition-colors"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Udostępnij kosmogram
+                </button>
+              </div>
+            )}
+
             {!session && (
               <p className="text-center text-xs text-slate-600">
                 Zaloguj się, żeby Twój kosmogram był zapamiętany po odświeżeniu strony.
@@ -392,6 +419,21 @@ export default function GeneratePage() {
         )}
 
       </main>
+
+      {showPaywall && (
+        <PaywallModal
+          onClose={() => setShowPaywall(false)}
+          reason="Darmowy plan obejmuje 1 kosmogram. Przejdź na Plus, żeby tworzyć kolejne."
+        />
+      )}
+
+      {showShare && selectedId && (
+        <ShareModal
+          type="natal"
+          readingId={selectedId}
+          onClose={() => setShowShare(false)}
+        />
+      )}
     </div>
   );
 }

@@ -64,7 +64,7 @@ export default function Hero() {
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
         <h1 className="font-brand text-4xl sm:text-6xl lg:text-7xl font-semibold text-white leading-[1.05] mb-6">
-          Zrozum siebie i swoje relacje za pomocą gwiazd.
+          Zrozum siebie i swoje relacje z pomocą gwiazd.
         </h1>
 
         <h2 className="max-w-3xl mx-auto text-base sm:text-xl text-slate-400 leading-relaxed mb-8 font-medium">

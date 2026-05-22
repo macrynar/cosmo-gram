@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         { global: { headers: { Authorization: `Bearer ${token}` } } }
       );
-      const { data: { user } } = await userClient.auth.getUser();
+      const { data: { user } } = await userClient.auth.getUser(token);
       if (user) {
         const isPaid = await hasActiveSubscription(user.id);
         if (!isPaid) {

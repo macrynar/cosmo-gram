@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthContext";
+import { SubscriptionProvider } from "@/components/SubscriptionContext";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import ChatFAB from "@/components/ChatFAB";
 
@@ -50,8 +51,10 @@ export default function RootLayout({
       <body className={`${montserrat.variable} ${cormorant.variable} antialiased`}>
         <PostHogProvider>
           <AuthProvider>
-            {children}
-            <ChatFAB />
+            <SubscriptionProvider>
+              {children}
+              <ChatFAB />
+            </SubscriptionProvider>
           </AuthProvider>
         </PostHogProvider>
         <script

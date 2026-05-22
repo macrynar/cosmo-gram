@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     { global: { headers: { Authorization: `Bearer ${token}` } } }
   );
 
-  const { data: { user }, error: authError } = await userClient.auth.getUser();
+  const { data: { user }, error: authError } = await userClient.auth.getUser(token);
   if (authError || !user) return NextResponse.json({ error: "Nieprawidłowy token" }, { status: 401 });
 
   const [{ data: readings }, { data: children }] = await Promise.all([

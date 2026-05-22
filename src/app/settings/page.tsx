@@ -5,12 +5,7 @@ import { User, Lock, CreditCard, Check, Loader2, Star, AlertCircle } from "lucid
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/components/AuthContext";
 import PaywallModal from "@/components/PaywallModal";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabase";
 
 type SubStatus = {
   hasSubscription: boolean;
