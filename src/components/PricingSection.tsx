@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Check, Crown, Sparkles } from "lucide-react";
+import { Check, Crown } from "lucide-react";
+import { CosmoIcon } from "@/components/CosmoIcon";
 
 const freePlan = [
   "Pełny kosmogram natalny z wykresem",
@@ -66,26 +67,38 @@ export default function PricingSection() {
               <div>
                 <p className="text-sm text-amber-300">Plan</p>
                 <h3 className="text-2xl text-white font-semibold flex items-center gap-2">
-                  Premium
+                  Plus
                   <Crown className="w-5 h-5 text-amber-400" />
                 </h3>
               </div>
-              <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-200">Najczęściej wybierany</span>
+              <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-200">
+                ✦ Early Access
+              </span>
             </div>
 
-            <p className="text-3xl font-bold text-white mb-5 relative z-10">od 39 zł / mies.</p>
+            <div className="mb-5 relative z-10">
+              <div className="flex items-baseline gap-1.5">
+                <p className="text-3xl font-bold text-white">19,90 zł</p>
+                <span className="text-slate-400 text-base">/ miesiąc</span>
+              </div>
+              <p className="text-sm text-slate-400 mt-1">
+                lub <span className="text-amber-300 font-medium">199 zł / rok</span>
+                <span className="ml-1.5 text-xs text-slate-500">≈ 16,60 zł/mc · oszczędzasz -17%</span>
+              </p>
+              <p className="text-xs text-amber-400/70 mt-1.5">7 dni bezpłatnego trialu · anuluj kiedy chcesz</p>
+            </div>
 
             <ul className="space-y-3 mb-7 relative z-10">
               {proPlan.map((item) => (
                 <li key={item} className="flex items-start gap-2 text-sm text-slate-100">
-                  <Sparkles className="w-4 h-4 mt-0.5 text-amber-300 shrink-0" />
+                  <CosmoIcon className="w-4 h-4 mt-0.5 text-amber-300 shrink-0" />
                   {item}
                 </li>
               ))}
             </ul>
 
             <Link href="/generate" className="inline-flex items-center justify-center w-full px-4 py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-500 text-white hover:from-amber-600 hover:to-amber-400 transition-colors relative z-10">
-              Odblokuj pełną wersję
+              Zacznij trial — 7 dni gratis
             </Link>
           </article>
         </div>

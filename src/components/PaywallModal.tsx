@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Sparkles, Check, Loader2 } from "lucide-react";
+import { X, Check, Loader2 } from "lucide-react";
+import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
 import { track } from "@/components/PostHogProvider";
 
@@ -60,11 +61,14 @@ export default function PaywallModal({ onClose, reason }: Props) {
 
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 mb-4 shadow-lg shadow-amber-950/50">
-            <Sparkles className="w-6 h-6 text-white" />
+            <CosmoIcon className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-1 font-brand">
+          <h2 className="text-xl font-bold text-white mb-2 font-brand">
             Cosmogram Plus
           </h2>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium mb-2">
+            ✦ Early Access · dla pierwszych 500 subskrybentów
+          </div>
           {reason && (
             <p className="text-slate-400 text-sm mt-1">{reason}</p>
           )}
@@ -89,7 +93,7 @@ export default function PaywallModal({ onClose, reason }: Props) {
             {loading === "monthly" ? (
               <Loader2 className="w-4 h-4 animate-spin mx-auto" />
             ) : (
-              "Zacznij trial — 29 zł / miesiąc"
+              "Zacznij trial — 19,90 zł / miesiąc"
             )}
           </button>
 
@@ -102,9 +106,9 @@ export default function PaywallModal({ onClose, reason }: Props) {
               <Loader2 className="w-4 h-4 animate-spin mx-auto" />
             ) : (
               <>
-                Roczny — 290 zł / rok
+                Roczny — 199 zł / rok
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs bg-amber-900/30 text-amber-300 px-2 py-0.5 rounded-full">
-                  -17%
+                  ≈ 16,60 zł/mc
                 </span>
               </>
             )}
