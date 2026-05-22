@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getUserSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
@@ -7,14 +6,7 @@ export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) return NextResponse.json({ hasSubscription: false });
 
-  const token = authHeader.replace("Bearer ", "");
-  const userClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  );
-
-  const { data: { user } } = await userClient.auth.getUser(token);
+  const token = authHeader.replace("Bearer ", "");const { data: { user } } = await supabaseAdmin.auth.getUser(token);
   if (!user) return NextResponse.json({ hasSubscription: false });
 
   const sub = await getUserSubscription(user.id);

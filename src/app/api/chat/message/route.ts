@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
-import { createClient } from "@supabase/supabase-js";
 import { calculateChart } from "@/lib/chart-engine";
 import { hasActiveSubscription } from "@/lib/subscription";
 import type { NatalChart } from "@/lib/astro-types";
@@ -48,14 +47,7 @@ export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) return NextResponse.json({ error: "Brak autoryzacji" }, { status: 401 });
 
-  const token = authHeader.replace("Bearer ", "");
-  const userClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  );
-
-  const { data: { user }, error: authError } = await userClient.auth.getUser(token);
+  const token = authHeader.replace("Bearer ", "");const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
   if (authError || !user) return NextResponse.json({ error: "Nieprawidłowy token" }, { status: 401 });
 
   const { conversationId, content, chartContextType, chartContextId } = await req.json() as {

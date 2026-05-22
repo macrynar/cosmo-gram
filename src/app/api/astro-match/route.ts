@@ -3,7 +3,6 @@ import { calculateChart } from "@/lib/chart-engine";
 import { computeSynastryAspects, computeSynastryScore, type SynastryAspect } from "@/lib/synastry-score";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
-import { createClient } from "@supabase/supabase-js";
 
 export type CompatibilityCategory = {
   name: string;
@@ -128,13 +127,7 @@ export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get("Authorization");
     if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      const userClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        { global: { headers: { Authorization: `Bearer ${token}` } } }
-      );
-      const { data: { user } } = await userClient.auth.getUser(token);
+      const token = authHeader.replace("Bearer ", "");const { data: { user } } = await supabaseAdmin.auth.getUser(token);
       if (user) {
         const isPaid = await hasActiveSubscription(user.id);
         if (!isPaid) {
