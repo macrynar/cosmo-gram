@@ -1,10 +1,29 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-// Strip any trailing path segments (e.g. /auth/v1, /rest/v1) and trailing slashes
-// that can appear when the env var is copied from Supabase dashboard connection strings.
-const url = rawUrl.replace(/\/(auth|rest|storage|realtime|functions)(\/.*)?$/, "").replace(/\/+$/, "");
+function normalizeUrl(raw: string): string {
+  return raw
+    .replace(/\/(auth|rest|storage|realtime|functions)(\/.*)?$/, "")
+    .replace(/\/+$/, "");
+}
 
-const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+// Lazy singleton — defers createClient() to first use so the module can be
+// imported during Next.js static prerendering without crashing when env vars
+// aren't injected at build time.
+let _client: SupabaseClient | null = null;
 
-export const supabase = createClient(url, anon);
+function getClient(): SupabaseClient {
+  if (!_client) {
+    const url  = normalizeUrl(process.env.NEXT_PUBLIC_SUPABASE_URL  ?? "");
+    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+    _client = createClient(url, anon);
+  }
+  return _client;
+}
+
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_t, prop) {
+    const client = getClient();
+    const val = (client as unknown as Record<string | symbol, unknown>)[prop];
+    return typeof val === "function" ? (val as (...a: unknown[]) => unknown).bind(client) : val;
+  },
+});
