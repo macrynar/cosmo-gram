@@ -8,15 +8,20 @@ export default function AuthCallback() {
   const router = useRouter();
 
   useEffect(() => {
-    // Supabase SDK detects ?code= in URL and auto-exchanges it for a session.
-    // We just wait for SIGNED_IN then send the user to /generate.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") {
+    const code = new URLSearchParams(window.location.search).get("code");
+
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(() => {
         router.replace("/generate");
-      }
+      });
+      return;
+    }
+
+    // Fallback: magic-link / implicit flow — SDK already has the session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") router.replace("/generate");
     });
 
-    // Handle the case where the session was already established before we subscribed.
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) router.replace("/generate");
     });
