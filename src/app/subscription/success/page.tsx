@@ -10,7 +10,7 @@ export default function SubscriptionSuccessPage() {
 
   useEffect(() => {
     track("trial_started");
-    const t = setTimeout(() => router.push("/generate"), 5000);
+    const t = setTimeout(() => router.push("/app/cosmogram"), 5000);
     return () => clearTimeout(t);
   }, [router]);
 
@@ -31,7 +31,7 @@ export default function SubscriptionSuccessPage() {
           Za chwilę zostaniesz przekierowany do swojego kosmogramu…
         </p>
         <button
-          onClick={() => router.push("/generate")}
+          onClick={() => router.push("/app/cosmogram")}
           className="mt-6 px-6 py-2.5 rounded-full bg-amber-700 text-white text-sm font-medium hover:bg-amber-600 transition-colors"
         >
           Przejdź teraz

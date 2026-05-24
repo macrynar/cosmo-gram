@@ -25,7 +25,7 @@ export default function BottomCTA() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link href="/generate" className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-amber-700 to-amber-500 hover:from-amber-600 hover:to-amber-400 shadow-xl shadow-amber-950/40 hover:shadow-amber-800/40 transition-all duration-200 glow-nebula whitespace-nowrap">
+          <Link href="/signup" className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-amber-700 to-amber-500 hover:from-amber-600 hover:to-amber-400 shadow-xl shadow-amber-950/40 hover:shadow-amber-800/40 transition-all duration-200 glow-nebula whitespace-nowrap">
             Generuj kosmogram
             <ArrowRight className="w-4 h-4" />
           </Link>

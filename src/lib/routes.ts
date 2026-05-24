@@ -1,0 +1,49 @@
+export const ROUTES = {
+  public: {
+    home:           { path: "/",                label: "Strona główna" },
+    cosmogram:      { path: "/cosmogram",       label: "Kosmogram" },
+    dailyHoroscope: { path: "/daily-horoscope", label: "Horoskop dzienny" },
+    match:          { path: "/match",           label: "Cosmo Match" },
+    forKids:        { path: "/for-kids",        label: "Kosmogram dziecka" },
+    pricing:        { path: "/pricing",         label: "Cennik" },
+    blog:           { path: "/blog",            label: "Blog" },
+    about:          { path: "/about",           label: "O projekcie" },
+    contact:        { path: "/contact",         label: "Kontakt" },
+    howAiWorks:     { path: "/how-ai-works",    label: "Jak działa AI" },
+    login:          { path: "/login",           label: "Logowanie",           cta: "Zaloguj" },
+    signup:         { path: "/signup",          label: "Rejestracja",         cta: "Załóż konto" },
+    forgotPassword: { path: "/forgot-password", label: "Odzyskiwanie hasła" },
+    terms:          { path: "/terms",           label: "Regulamin" },
+    privacy:        { path: "/privacy",         label: "Polityka prywatności" },
+    cookies:        { path: "/cookies",         label: "Polityka cookies" },
+  },
+  app: {
+    today:                 { path: "/app/today",                  label: "Dziś" },
+    cosmogram:             { path: "/app/cosmogram",              label: "Twój kosmogram",  navLabel: "Kosmogram" },
+    horoscope:             { path: "/app/horoscope",              label: "Horoskop" },
+    match:                 { path: "/app/match",                  label: "Cosmo Match" },
+    matchNew:              { path: "/app/match/new",              label: "Nowa analiza" },
+    library:               { path: "/app/library",                label: "Biblioteka" },
+    libraryNew:            { path: "/app/library/new",            label: "Dodaj profil" },
+    chat:                  { path: "/app/chat",                   label: "Cosmo Chat" },
+    settings:              { path: "/app/settings",               label: "Konto" },
+    settingsProfile:       { path: "/app/settings/profile",       label: "Dane" },
+    settingsSubscription:  { path: "/app/settings/subscription",  label: "Subskrypcja" },
+    settingsNotifications: { path: "/app/settings/notifications", label: "Powiadomienia" },
+    settingsPrivacy:       { path: "/app/settings/privacy",       label: "Prywatność" },
+  },
+} as const;
+
+export const BRAND = {
+  product: "Cosmogram",
+  match:   "Cosmo Match",
+  chat:    "Cosmo Chat",
+} as const;
+
+export const buildPath = {
+  blogPost:    (slug: string) => `/blog/${slug}`,
+  match:       (id: string)   => `/app/match/${id}`,
+  libraryItem: (id: string)   => `/app/library/${id}`,
+  shareReading:(id: string)   => `/share/reading/${id}`,
+  shareMatch:  (id: string)   => `/share/match/${id}`,
+};

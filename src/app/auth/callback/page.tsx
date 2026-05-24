@@ -12,18 +12,18 @@ export default function AuthCallback() {
 
     if (code) {
       supabase.auth.exchangeCodeForSession(code).then(() => {
-        router.replace("/generate");
+        router.replace("/app/cosmogram");
       });
       return;
     }
 
     // Fallback: magic-link / implicit flow — SDK already has the session
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") router.replace("/generate");
+      if (event === "SIGNED_IN") router.replace("/app/cosmogram");
     });
 
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) router.replace("/generate");
+      if (data.session) router.replace("/app/cosmogram");
     });
 
     return () => subscription.unsubscribe();

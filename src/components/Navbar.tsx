@@ -6,13 +6,23 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Settings, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
-import AuthModal from "@/components/AuthModal";
+import { ROUTES, BRAND } from "@/lib/routes";
 
-const NAV_LINKS = [
-  { label: "Kosmogram", href: "/generate" },
-  { label: "Horoskop dzienny", href: "/horoskop-dzienny" },
-  { label: "Astro Match", href: "/astro-match" },
-  { label: "Horoskop Dziecka", href: "/children" },
+const PUBLIC_NAV = [
+  { label: ROUTES.public.cosmogram.label,      href: ROUTES.public.cosmogram.path },
+  { label: ROUTES.public.dailyHoroscope.label, href: ROUTES.public.dailyHoroscope.path },
+  { label: BRAND.match,                        href: ROUTES.public.match.path },
+  { label: ROUTES.public.blog.label,           href: ROUTES.public.blog.path },
+  { label: ROUTES.public.pricing.label,        href: ROUTES.public.pricing.path },
+];
+
+const APP_NAV = [
+  { label: ROUTES.app.today.label,                href: ROUTES.app.today.path },
+  { label: ROUTES.app.cosmogram.navLabel ?? ROUTES.app.cosmogram.label, href: ROUTES.app.cosmogram.path },
+  { label: ROUTES.app.horoscope.label,            href: ROUTES.app.horoscope.path },
+  { label: BRAND.match,                           href: ROUTES.app.match.path },
+  { label: BRAND.chat,                            href: ROUTES.app.chat.path },
+  { label: ROUTES.app.library.label,              href: ROUTES.app.library.path },
 ];
 
 function getInitials(email?: string | null) {
@@ -34,11 +44,14 @@ function getAvatarColor(email?: string | null) {
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
   const pathname = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isApp = pathname.startsWith("/app");
+  const navLinks = isApp ? APP_NAV : PUBLIC_NAV;
+  const logoHref = user ? ROUTES.app.today.path : ROUTES.public.home.path;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -56,7 +69,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => { setMenuOpen(false); }, [pathname]);
 
   const isActive = (href: string) =>
@@ -74,7 +86,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group shrink-0" aria-label="Cosmo-gram home">
+          <Link href={logoHref} className="flex items-center gap-2 group shrink-0" aria-label="Cosmogram">
             <Image
               src="/logo-b-refined.svg"
               alt="Cosmogram"
@@ -87,7 +99,7 @@ export default function Navbar() {
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -105,7 +117,7 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Desktop right: auth */}
+          {/* Desktop right */}
           <div className="hidden md:flex items-center gap-3">
             {!loading && (
               user ? (
@@ -126,7 +138,6 @@ export default function Navbar() {
                     </svg>
                   </button>
 
-                  {/* Dropdown */}
                   {dropdownOpen && (
                     <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-amber-900/30 bg-[#0b0719]/95 backdrop-blur-xl shadow-2xl shadow-black/50 overflow-hidden">
                       <div className="px-4 py-3 border-b border-amber-900/20">
@@ -135,12 +146,12 @@ export default function Navbar() {
                       </div>
                       <div className="p-1.5">
                         <Link
-                          href="/settings"
+                          href={ROUTES.app.settings.path}
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-300 hover:text-amber-100 hover:bg-amber-900/15 transition-colors"
                         >
                           <Settings className="w-4 h-4 text-amber-500/70" />
-                          Ustawienia
+                          {ROUTES.app.settings.label}
                         </Link>
                         <button
                           onClick={() => { signOut(); setDropdownOpen(false); }}
@@ -154,12 +165,20 @@ export default function Navbar() {
                   )}
                 </div>
               ) : (
-                <button
-                  onClick={() => setAuthOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-amber-900/20 border border-amber-700/40 text-amber-200 hover:bg-amber-800/25 hover:border-amber-600/60 hover:text-white transition-all duration-200"
-                >
-                  Zaloguj się
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={ROUTES.public.login.path}
+                    className="px-4 py-2 rounded-full text-sm font-medium text-slate-400 hover:text-amber-100 hover:bg-amber-900/10 transition-all duration-200"
+                  >
+                    {ROUTES.public.login.cta}
+                  </Link>
+                  <Link
+                    href={ROUTES.public.signup.path}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-amber-900/20 border border-amber-700/40 text-amber-200 hover:bg-amber-800/25 hover:border-amber-600/60 hover:text-white transition-all duration-200"
+                  >
+                    {ROUTES.public.signup.cta}
+                  </Link>
+                </div>
               )
             )}
           </div>
@@ -185,7 +204,7 @@ export default function Navbar() {
         {menuOpen && (
           <div className="md:hidden pb-4 border-t border-amber-900/20 mt-1 pt-3">
             <div className="space-y-0.5 mb-3">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -201,7 +220,6 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* Mobile account section */}
             <div className="border-t border-amber-900/20 pt-3 space-y-0.5">
               {!loading && user ? (
                 <>
@@ -212,11 +230,11 @@ export default function Navbar() {
                     <span className="text-xs text-slate-500 truncate">{user.email}</span>
                   </div>
                   <Link
-                    href="/settings"
+                    href={ROUTES.app.settings.path}
                     className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:text-amber-100 hover:bg-amber-900/10 transition-colors"
                   >
                     <Settings className="w-4 h-4 text-amber-500/70" />
-                    Ustawienia
+                    {ROUTES.app.settings.label}
                   </Link>
                   <button
                     onClick={signOut}
@@ -227,19 +245,25 @@ export default function Navbar() {
                   </button>
                 </>
               ) : (
-                <button
-                  onClick={() => { setMenuOpen(false); setAuthOpen(true); }}
-                  className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium bg-amber-900/20 border border-amber-700/40 text-amber-200"
-                >
-                  Zaloguj się
-                </button>
+                <div className="flex flex-col gap-2 px-3">
+                  <Link
+                    href={ROUTES.public.login.path}
+                    className="flex items-center justify-center px-4 py-2.5 rounded-xl text-sm text-slate-300 hover:text-amber-100 hover:bg-amber-900/10 border border-white/10 transition-colors"
+                  >
+                    {ROUTES.public.login.cta}
+                  </Link>
+                  <Link
+                    href={ROUTES.public.signup.path}
+                    className="flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-medium bg-amber-900/20 border border-amber-700/40 text-amber-200"
+                  >
+                    {ROUTES.public.signup.cta}
+                  </Link>
+                </div>
               )}
             </div>
           </div>
         )}
       </nav>
-
-      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
     </header>
   );
 }

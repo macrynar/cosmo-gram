@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       allow_promotion_codes: true,
       subscription_data: { trial_period_days: 7 },
       success_url: `${appUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/generate`,
+      cancel_url: `${appUrl}/app/cosmogram`,
       metadata: { user_id: user.id },
       locale: "pl",
     });

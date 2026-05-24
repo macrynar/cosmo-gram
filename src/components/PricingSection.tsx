@@ -32,7 +32,7 @@ export default function PricingSection() {
     if (session) {
       setShowPaywall(true);
     } else {
-      router.push("/generate");
+      router.push("/signup");
     }
   }
 
@@ -74,7 +74,7 @@ export default function PricingSection() {
               ))}
             </ul>
 
-            <Link href="/generate" className="inline-flex items-center justify-center w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-100 hover:bg-white/10 transition-colors">
+            <Link href="/signup" className="inline-flex items-center justify-center w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-100 hover:bg-white/10 transition-colors">
               Startuję za darmo
             </Link>
           </article>

@@ -109,10 +109,10 @@ export default function Features() {
         </div>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link href="/generate" className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-500 text-white text-sm font-semibold hover:from-amber-600 hover:to-amber-400 transition-colors">
+          <Link href="/signup" className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-500 text-white text-sm font-semibold hover:from-amber-600 hover:to-amber-400 transition-colors">
             Wygeneruj kosmogram
           </Link>
-          <Link href="/astro-match" className="px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-semibold hover:bg-white/10 transition-colors">
+          <Link href="/match" className="px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-semibold hover:bg-white/10 transition-colors">
             Zobacz Astro Match
           </Link>
         </div>

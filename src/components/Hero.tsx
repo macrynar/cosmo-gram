@@ -73,7 +73,7 @@ export default function Hero() {
 
         <div className="mt-6">
           <Link
-            href="/generate"
+            href="/signup"
             className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full font-semibold text-sm bg-gradient-to-r from-amber-700 to-amber-500 text-white shadow-lg shadow-amber-950/50 hover:shadow-amber-800/50 hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
           >
             <CosmogramSignet className="w-4 h-4" />

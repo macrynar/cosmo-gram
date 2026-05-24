@@ -1,0 +1,16 @@
+{
+  "redirects": [
+    { "source": "/generate",           "destination": "/app/cosmogram",        "permanent": true },
+    { "source": "/astro-match",        "destination": "/app/match",            "permanent": true },
+    { "source": "/astro-match/:path*", "destination": "/app/match/:path*",     "permanent": true },
+    { "source": "/chat",               "destination": "/app/chat",             "permanent": true },
+    { "source": "/children",           "destination": "/app/library",          "permanent": true },
+    { "source": "/child/:id",          "destination": "/app/library/:id",      "permanent": true },
+    { "source": "/settings",           "destination": "/app/settings/profile", "permanent": true },
+    { "source": "/profile",            "destination": "/app/settings/profile", "permanent": true },
+    { "source": "/dashboard",          "destination": "/app/today",            "permanent": true },
+    { "source": "/natal",              "destination": "/app/cosmogram",        "permanent": true },
+    { "source": "/horoskop-dzienny",   "destination": "/daily-horoscope",      "permanent": true },
+    { "source": "/reset-password",     "destination": "/forgot-password",      "permanent": true }
+  ]
+}

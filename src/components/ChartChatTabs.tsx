@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sparkles, MessageCircle, Sun } from "lucide-react";
+import { ROUTES, BRAND } from "@/lib/routes";
 
 const TABS = [
-  { label: "Kosmogram", href: "/generate", icon: Sparkles },
-  { label: "Horoskop dzienny", href: "/horoskop-dzienny", icon: Sun },
-  { label: "Chat", href: "/chat", icon: MessageCircle },
+  { label: ROUTES.app.cosmogram.navLabel ?? ROUTES.app.cosmogram.label, href: ROUTES.app.cosmogram.path, icon: Sparkles },
+  { label: ROUTES.app.horoscope.label,                                  href: ROUTES.app.horoscope.path,  icon: Sun },
+  { label: BRAND.chat,                                                   href: ROUTES.app.chat.path,       icon: MessageCircle },
 ];
 
 export default function ChartChatTabs() {
