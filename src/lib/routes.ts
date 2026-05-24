@@ -18,7 +18,7 @@ export const ROUTES = {
     cookies:        { path: "/cookies",         label: "Polityka cookies" },
   },
   app: {
-    today:                 { path: "/app/today",                  label: "Dziś" },
+    today:                 { path: "/app/cosmogram",              label: "Kosmogram" },
     cosmogram:             { path: "/app/cosmogram",              label: "Twój kosmogram",  navLabel: "Kosmogram" },
     horoscope:             { path: "/app/horoscope",              label: "Horoskop" },
     match:                 { path: "/app/match",                  label: "Cosmo Match" },
