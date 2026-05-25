@@ -21,9 +21,10 @@ interface Props {
     timeUnknown: boolean;
   }) => void;
   loading: boolean;
+  onDateChange?: (date: string) => void;
 }
 
-export default function BirthForm({ onSubmit, loading }: Props) {
+export default function BirthForm({ onSubmit, loading, onDateChange }: Props) {
   const [name, setName]               = useState("");
   const [date, setDate]               = useState("");
   const [time, setTime]               = useState("");
@@ -150,7 +151,7 @@ export default function BirthForm({ onSubmit, loading }: Props) {
           <input
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => { setDate(e.target.value); onDateChange?.(e.target.value); }}
             required
             max={new Date().toISOString().split("T")[0]}
             className={inputClass}

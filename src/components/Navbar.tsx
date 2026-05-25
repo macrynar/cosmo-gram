@@ -21,7 +21,6 @@ const APP_NAV = [
   { label: ROUTES.app.horoscope.label,                                  href: ROUTES.app.horoscope.path },
   { label: BRAND.match,                                                  href: ROUTES.app.match.path },
   { label: BRAND.chat,                                                   href: ROUTES.app.chat.path },
-  { label: ROUTES.app.library.label,                                     href: ROUTES.app.library.path },
 ];
 
 function getInitials(email?: string | null) {
