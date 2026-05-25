@@ -67,8 +67,7 @@ export default function CosmoMapPage() {
 
   // Load user lines
   useEffect(() => {
-    if (!session || subLoading) return;
-    if (!isPremium) return;
+    if (!session) return;
     setMapLoading(true);
     setError("");
     fetch("/api/cosmo-map-compute", {
@@ -208,7 +207,7 @@ export default function CosmoMapPage() {
           <p className="text-slate-500 text-sm mt-0.5">Twoja mapa mocy planetarnej</p>
         </div>
 
-        {!isPremium ? (
+        {false && !isPremium ? (
           <div className="h-[520px]">
             <PaywallTeaser />
           </div>
