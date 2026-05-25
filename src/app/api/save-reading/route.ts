@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
     chart: unknown;
     interpretation: string;
     dailyReading: string;
+    promptVersionId?: string;
   };
 
   const name = body.name?.trim() || `${body.birthPlace.split(",")[0]} · ${body.birthDate}`;
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
     chart_data: body.chart,
     interpretation: body.interpretation,
     daily_reading: body.dailyReading,
+    ...(body.promptVersionId ? { prompt_version_id: body.promptVersionId } : {}),
   }).select("id").single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

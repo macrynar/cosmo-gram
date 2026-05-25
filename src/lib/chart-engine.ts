@@ -98,10 +98,79 @@ export type ChartInput = {
   timeUnknown?: boolean;
 };
 
+export type ChartPlacement = {
+  planet: string;
+  sign: string;
+  house: number | null;
+  retrograde?: boolean;
+};
+
+export type NatalAspect = {
+  planet_a: string;
+  planet_b: string;
+  type: "conjunction" | "sextile" | "square" | "trine" | "opposition";
+};
+
+export type ChartNodes = {
+  north_node_sign: string;
+  north_node_house: number | null;
+  south_node_sign: string;
+  south_node_house: number | null;
+};
+
 export type ChartResult = {
   chart: NatalChart;
   promptContext: string;
+  placements: ChartPlacement[];
+  aspects: NatalAspect[];
+  nodes: ChartNodes;
 };
+
+function getMeanNorthNodeLongitude(utcDate: Date): number {
+  const jd = Astronomy.MakeTime(utcDate).ut + 2451545.0;
+  const T = (jd - 2451545.0) / 36525;
+  return ((125.04452 - 1934.136261 * T) % 360 + 360) % 360;
+}
+
+function getPlanetHouse(longitude: number, houses: HouseCusp[]): number {
+  for (let i = 0; i < 12; i++) {
+    const cur  = houses[i].longitude;
+    const next = houses[(i + 1) % 12].longitude;
+    if (cur <= next) {
+      if (longitude >= cur && longitude < next) return i + 1;
+    } else {
+      if (longitude >= cur || longitude < next) return i + 1;
+    }
+  }
+  return 1;
+}
+
+const ASPECT_DEFS: Array<{ type: NatalAspect["type"]; angle: number; orb: number }> = [
+  { type: "conjunction", angle: 0,   orb: 8 },
+  { type: "sextile",     angle: 60,  orb: 5 },
+  { type: "square",      angle: 90,  orb: 7 },
+  { type: "trine",       angle: 120, orb: 8 },
+  { type: "opposition",  angle: 180, orb: 8 },
+];
+
+function computeNatalAspects(
+  bodies: Array<{ name: string; longitude: number }>
+): NatalAspect[] {
+  const result: NatalAspect[] = [];
+  for (let i = 0; i < bodies.length; i++) {
+    for (let j = i + 1; j < bodies.length; j++) {
+      let diff = Math.abs(bodies[i].longitude - bodies[j].longitude) % 360;
+      if (diff > 180) diff = 360 - diff;
+      for (const { type, angle, orb } of ASPECT_DEFS) {
+        if (Math.abs(diff - angle) <= orb) {
+          result.push({ planet_a: bodies[i].name, planet_b: bodies[j].name, type });
+          break;
+        }
+      }
+    }
+  }
+  return result;
+}
 
 export function calculateChart(input: ChartInput): ChartResult {
   const { date, lat, lng, place, timeUnknown } = input;
@@ -162,7 +231,38 @@ Medium Coeli (MC): ${mcSign.degree}°${mcSign.minute}' ${ZODIAC_SIGNS[Math.floor
 Planety:\n${planetList.join("\n")}`;
   }
 
-  return { chart, promptContext };
+  // ── Structured data for new AI prompt format ───────────────────────────
+  const northNodeLon = getMeanNorthNodeLongitude(utcDate);
+  const southNodeLon = (northNodeLon + 180) % 360;
+
+  const northNodeSign = longitudeToSign(northNodeLon);
+  const southNodeSign = longitudeToSign(southNodeLon);
+
+  const placements: ChartPlacement[] = planets.map((p) => ({
+    planet: p.name,
+    sign: p.sign,
+    house: timeUnknown ? null : getPlanetHouse(p.longitude, houses),
+    ...(p.isRetrograde ? { retrograde: true } : {}),
+  }));
+
+  if (!timeUnknown) {
+    const ascSign = longitudeToSign(asc);
+    placements.unshift({ planet: "Ascendent", sign: ascSign.name, house: 1 });
+  }
+
+  const bodiesForAspects = planets.map((p) => ({ name: p.name, longitude: p.longitude }));
+  bodiesForAspects.push({ name: "Węzeł Północny", longitude: northNodeLon });
+
+  const aspects = computeNatalAspects(bodiesForAspects);
+
+  const nodes: ChartNodes = {
+    north_node_sign: northNodeSign.name,
+    north_node_house: timeUnknown ? null : getPlanetHouse(northNodeLon, houses),
+    south_node_sign: southNodeSign.name,
+    south_node_house: timeUnknown ? null : getPlanetHouse(southNodeLon, houses),
+  };
+
+  return { chart, promptContext, placements, aspects, nodes };
 }
 
 export type TransitAspect = {

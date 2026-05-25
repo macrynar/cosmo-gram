@@ -33,6 +33,16 @@ export const ROUTES = {
     settingsNotifications: { path: "/app/settings/notifications", label: "Powiadomienia" },
     settingsPrivacy:       { path: "/app/settings/privacy",       label: "Prywatność" },
   },
+  admin: {
+    root:          { path: "/app/admin",                     label: "Admin" },
+    prompts:       { path: "/app/admin/prompts",             label: "Prompty" },
+    promptNew:     { path: "/app/admin/prompts/new",         label: "Nowy prompt" },
+    promptEdit:    (id: string) => ({ path: `/app/admin/prompts/${id}/edit`, label: "Edycja" }),
+    promptCompare: { path: "/app/admin/prompts/compare",     label: "Porównanie" },
+    evals:         { path: "/app/admin/evals",               label: "Ewaluacje" },
+    golden:        { path: "/app/admin/golden",              label: "Golden Tests" },
+    fewShots:      { path: "/app/admin/few-shots",           label: "Few-shot" },
+  },
 } as const;
 
 export const BRAND = {

@@ -173,10 +173,17 @@ export default function GeneratePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ promptContext }),
       });
-      if (interpRes.ok) {
-        const { interpretation: text } = await interpRes.json() as { interpretation: string };
-        interpretationText = text;
-        setInterpretation(text);
+      if (interpRes.ok && interpRes.body) {
+        const reader = interpRes.body.getReader();
+        const decoder = new TextDecoder();
+        let acc = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          acc += decoder.decode(value, { stream: true });
+          setInterpretation(acc);
+        }
+        interpretationText = acc;
       }
 
       track("first_natal_view", { has_time: !!data.time, place: data.place.split(",")[0] });

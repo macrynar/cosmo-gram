@@ -270,6 +270,82 @@ export const LINE_PL_SHORT: Record<LineType, string> = {
   DSC: "DSC",
 };
 
+// What each line type means in plain language
+export const LINE_TYPE_MEANING: Record<LineType, string> = {
+  MC:  "linia kariery i publicznego wizerunku — tu masz siłę sprawczą i publiczne rozpoznanie",
+  IC:  "linia domu i korzeni — tu możesz się zakorzenić, poczuć się bezpiecznie i głęboko odpocząć",
+  ASC: "linia osobowości i energii — tu emanujesz tą planetą, inni postrzegają cię przez jej pryzmat",
+  DSC: "linia relacji i partnerstwa — tu przyciągasz partnerów i okazje związane z tą planetą",
+};
+
+// What specific planet+line combinations mean in plain Polish (for city list)
+export const PLANET_LINE_MEANING: Partial<Record<Planet, Partial<Record<LineType, string>>>> = {
+  Sun: {
+    MC: "pełnia energii i kariery — tu błyszczy Twoja tożsamość i ambicje",
+    IC: "głęboki odpoczynek i regeneracja sił witalnych",
+    ASC: "silna, pewna siebie osobowość — tu Twoja charyzma działa natychmiast",
+    DSC: "przyciągasz charyzmatycznych, pewnych siebie partnerów",
+  },
+  Moon: {
+    MC: "emocjonalne spełnienie w pracy — tu Twoja wrażliwość jest atutem",
+    IC: "idealne miejsce na dom i rodzinę — głębokie poczucie bezpieczeństwa",
+    ASC: "naturalna empatia i otwartość — ludzie od razu Ci ufają",
+    DSC: "głęboka bliskość emocjonalna w związkach — intymne, opiekuńcze relacje",
+  },
+  Venus: {
+    MC: "sukces przez piękno i relacje — kariera w sztuce, modzie lub dyplomacji",
+    IC: "dom pełen harmonii i estetyki — naturalne piękno otoczenia",
+    ASC: "magnetyzm i naturalny urok — przyciągasz sympatię bez wysiłku",
+    DSC: "głęboka, harmonijna miłość — tu spotkasz kogoś ważnego",
+  },
+  Mars: {
+    MC: "energia i ambicja na szczycie — tu walczysz i wygrywasz",
+    IC: "dynamiczna, aktywna baza domowa — dużo energii w prywatnym życiu",
+    ASC: "silna, dynamiczna osobowość — inicjatywa i odwaga w pierwszym wrażeniu",
+    DSC: "namiętne, intensywne związki — przyciągasz energicznych partnerów",
+  },
+  Jupiter: {
+    MC: "ekspansja i szczęście w karierze — okazje same się pojawiają",
+    IC: "obfitość i optymizm w życiu domowym — tu wszystko rośnie",
+    ASC: "naturalna radość i optymizm — inni postrzegają cię jako osobę, której sprzyja los",
+    DSC: "hojni, pozytywni partnerzy — relacje pełne wzrostu i możliwości",
+  },
+  Saturn: {
+    MC: "ciężka praca przynosi trwałe efekty — tu budujesz coś na lata",
+    IC: "stabilność i struktura jako fundament — solidny, pewny dom",
+    ASC: "poważna, dojrzała osobowość — inni postrzegają cię jako kogoś odpowiedzialnego i godnego zaufania",
+    DSC: "trwałe, zobowiązujące relacje — poważni, dojrzali partnerzy",
+  },
+  Neptune: {
+    MC: "artystyczna, duchowa kariera — tu Twoja intuicja jest Twoją siłą",
+    IC: "magiczne, duchowe otoczenie domowe — głęboki spokój i marzenia",
+    ASC: "tajemnicza, duchowa aura — przyciągasz uwagę swoją wrażliwością",
+    DSC: "duchowe, głęboko emocjonalne związki — niemal telepatyczna więź",
+  },
+  Mercury: {
+    MC: "błyskotliwa komunikacja i kariera intelektualna — mówisz, piszesz, uczysz",
+    IC: "intelektualna stymulacja w domu — żywe, ciekawe środowisko",
+    ASC: "dowcipna, inteligentna osobowość — szybka, błyskotliwa w kontaktach",
+    DSC: "partnerzy pełni pomysłów — stymulujące intelektualnie relacje",
+  },
+  Uranus: {
+    MC: "przełomowa, innowacyjna kariera — tu robisz coś inaczej niż wszyscy",
+    IC: "niekonwencjonalne, wolne życie domowe — własne zasady",
+    ASC: "oryginalna, niepowtarzalna osobowość — wyróżniasz się z tłumu",
+    DSC: "nieoczekiwane, ekscytujące relacje — partnerzy, którzy zmieniają Twoje życie",
+  },
+  Pluto: {
+    MC: "transformacja przez karierę — głębokie zmiany i moc sprawcza",
+    IC: "głęboka transformacja korzeni — tu przepracowujesz przeszłość",
+    ASC: "intensywna, magnetyczna osobowość — wywierasz głębokie wrażenie",
+    DSC: "transformujące, intensywne relacje — związki, które zmieniają wszystko",
+  },
+};
+
+export function getPlanetLineMeaning(planet: Planet, type: LineType): string {
+  return PLANET_LINE_MEANING[planet]?.[type] ?? `${PLANET_PL[planet]} na ${LINE_TYPE_MEANING[type]}`;
+}
+
 // Planet color palette for map lines
 export const PLANET_COLORS: Record<Planet, string> = {
   Sun:     "#f59e0b",
@@ -283,6 +359,22 @@ export const PLANET_COLORS: Record<Planet, string> = {
   Neptune: "#818cf8",
   Pluto:   "#a78bfa",
 };
+
+export function filterLinesByScenario(
+  planets: Record<Planet, PlanetLines>,
+  scenarioLines: Array<{ planet: Planet; type: LineType }>,
+): Array<{ planet: Planet; type: LineType; data: number | Point[] }> {
+  const result: Array<{ planet: Planet; type: LineType; data: number | Point[] }> = [];
+  for (const { planet, type } of scenarioLines) {
+    const pl = planets[planet];
+    if (!pl) continue;
+    if (type === "MC") result.push({ planet, type, data: pl.mc_longitude });
+    else if (type === "IC") result.push({ planet, type, data: pl.ic_longitude });
+    else if (type === "ASC") result.push({ planet, type, data: pl.asc_curve });
+    else result.push({ planet, type, data: pl.dsc_curve });
+  }
+  return result;
+}
 
 // Planet "weight" for sorting cities by influence strength
 export const PLANET_WEIGHT: Record<Planet, number> = {

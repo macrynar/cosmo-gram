@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CHILD_SYSTEM_PROMPT, getAgeGroup, calcAgeYears } from "@/lib/prompts/child-v1";
 import { validateReading, checkLength, buildRetryInstruction } from "@/lib/reading-validator";
+import { deepSeekChat } from "@/lib/deepseek";
+
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const { name, birthDate, promptContext } = await req.json() as {
@@ -9,7 +12,7 @@ export async function POST(req: NextRequest) {
     promptContext: string;
   };
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "Brak klucza API" }, { status: 500 });
   }
@@ -31,28 +34,17 @@ Proszę o pełną interpretację karty urodzeniowej dziecka dla rodzica.`;
 
   try {
     for (let attempt = 0; attempt < 3; attempt++) {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 4500,
+      try {
+        finalText = await deepSeekChat({
+          apiKey,
           system: CHILD_SYSTEM_PROMPT,
           messages: [{ role: "user", content: currentUserMessage }],
-        }),
-      });
-
-      if (!response.ok) {
-        console.error("Anthropic API error:", await response.text());
+          maxTokens: 4500,
+        });
+      } catch (error) {
+        console.error("DeepSeek API error:", error);
         return NextResponse.json({ error: "Błąd generowania interpretacji" }, { status: 500 });
       }
-
-      const data = await response.json() as { content: Array<{ type: string; text: string }> };
-      finalText = data.content?.find((b) => b.type === "text")?.text ?? "";
 
       const { issues } = validateReading(finalText);
       const { ok: lengthOk } = checkLength(finalText, "child");

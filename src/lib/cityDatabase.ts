@@ -214,6 +214,81 @@ export const CITIES: City[] = [
   { slug: "chiang-mai",    name_pl: "Chiang Mai",     name_en: "Chiang Mai",   country_pl: "Tajlandia",   country_en: "Thailand",       lat: 18.79,  lon: 98.98,  population: 131090  },
 ];
 
+export type CityRegion = "europa" | "azja" | "bliski-wschod" | "afryka" | "ameryki" | "oceania";
+
+export type CityContinent = "europe" | "asia" | "middle_east" | "africa" | "north_america" | "south_america" | "oceania";
+
+export const REGION_LABELS: Record<CityRegion | "global", string> = {
+  global:         "Globalnie",
+  europa:         "Europa",
+  azja:           "Azja",
+  "bliski-wschod":"Bliski Wschód",
+  ameryki:        "Ameryki",
+  afryka:         "Afryka",
+  oceania:        "Oceania",
+};
+
+const SLUG_TO_REGION: Record<string, CityRegion> = {
+  // Polska
+  "warszawa":"europa","krakow":"europa","lodz":"europa","wroclaw":"europa","poznan":"europa",
+  "gdansk":"europa","szczecin":"europa","bydgoszcz":"europa","lublin":"europa","katowice":"europa",
+  "bialystok":"europa","gdynia":"europa","czestochowa":"europa","radom":"europa","sosnowiec":"europa",
+  "torun":"europa","rzeszow":"europa","kielce":"europa","gliwice":"europa","zabrze":"europa",
+  "olsztyn":"europa","opole":"europa","zielona-gora":"europa","gorzow":"europa",
+  "walbrzych":"europa","koszalin":"europa","zakopane":"europa",
+  // Europa Zachodnia + Wschodnia
+  "londyn":"europa","berlin":"europa","paryż":"europa","madryt":"europa","barcelona":"europa",
+  "rzym":"europa","mediolan":"europa","amsterdam":"europa","bruksela":"europa","wiedeń":"europa",
+  "zurych":"europa","genewa":"europa","lizbona":"europa","porto":"europa","ateny":"europa",
+  "kopenhaga":"europa","oslo":"europa","sztokholm":"europa","helsinki":"europa","dublin":"europa",
+  "edinburgh":"europa","manchester":"europa","hamburg":"europa","monachium":"europa",
+  "frankfurt":"europa","kolonia":"europa","bukareszt":"europa","sofia":"europa","belgrad":"europa",
+  "zagrzeb":"europa","praga":"europa","bratysława":"europa","budapest":"europa","wilno":"europa",
+  "ryga":"europa","tallinn":"europa","lwow":"europa","kijow":"europa","walencja":"europa",
+  "sewilla":"europa","malaga":"europa","palma":"europa","neapol":"europa","florencja":"europa",
+  "wenecja":"europa","tuluza":"europa","marsylia":"europa","nicea":"europa","lyon":"europa",
+  "moskwa":"europa","sankt-petersburg":"europa","mińsk":"europa",
+  "dubrownik":"europa","kotor":"europa","santorini":"europa","reykjavik":"europa",
+  // Bliski Wschód (incl. Turkey, Egypt)
+  "istanbul":"bliski-wschod","ankara":"bliski-wschod","dubaj":"bliski-wschod",
+  "abu-dhabi":"bliski-wschod","tel-awiw":"bliski-wschod","jerozolima":"bliski-wschod",
+  "bejrut":"bliski-wschod","amman":"bliski-wschod","rijad":"bliski-wschod",
+  "teheran":"bliski-wschod","bagdad":"bliski-wschod","kair":"bliski-wschod",
+  "kappadocja":"bliski-wschod",
+  // Azja
+  "tbilisi":"azja","erewan":"azja","baku":"azja","taszkent":"azja","ałmaty":"azja","nur-sultan":"azja",
+  "tokio":"azja","osaka":"azja","kioto":"azja","seul":"azja","pekin":"azja","szanghaj":"azja",
+  "kanton":"azja","shenzhen":"azja","hongkong":"azja","taipei":"azja","singapur":"azja",
+  "bangkok":"azja","kuala-lumpur":"azja","dżakarta":"azja","manila":"azja",
+  "ho-chi-minh":"azja","hanoi":"azja","mumbaj":"azja","delhi":"azja","bangalore":"azja",
+  "kolkata":"azja","karachi":"azja","lahore":"azja","dhaka":"azja","kolombo":"azja",
+  "katmandu":"azja","bali":"azja","phuket":"azja","chiang-mai":"azja","maldywy":"azja",
+  "tbilisi-winery":"azja",
+  // Afryka
+  "lagos":"afryka","kinszasa":"afryka","johannesburg":"afryka","kapsztad":"afryka",
+  "nairobi":"afryka","addis-abeba":"afryka","akkra":"afryka","dakar":"afryka",
+  "casablanca":"afryka","tunis":"afryka","algier":"afryka","luanda":"afryka",
+  "dar-es-salaam":"afryka","marrakesz":"afryka",
+  // Ameryki
+  "nowy-jork":"ameryki","los-angeles":"ameryki","chicago":"ameryki","houston":"ameryki",
+  "miami":"ameryki","san-francisco":"ameryki","seattle":"ameryki","las-vegas":"ameryki",
+  "boston":"ameryki","washington":"ameryki","atlanta":"ameryki","phoenix":"ameryki",
+  "denver":"ameryki","minneapolis":"ameryki","portland":"ameryki","toronto":"ameryki",
+  "vancouver":"ameryki","montreal":"ameryki","calgary":"ameryki","ottawa":"ameryki",
+  "meksyk":"ameryki","guadalajara":"ameryki","monterrey":"ameryki","hawana":"ameryki",
+  "sao-paulo":"ameryki","rio-de-janeiro":"ameryki","brasilia":"ameryki","buenos-aires":"ameryki",
+  "cordoba":"ameryki","santiago":"ameryki","bogota":"ameryki","lima":"ameryki",
+  "caracas":"ameryki","quito":"ameryki","montevideo":"ameryki","la-paz":"ameryki",
+  "tulum":"ameryki",
+  // Oceania
+  "sydney":"oceania","melbourne":"oceania","brisbane":"oceania","perth":"oceania",
+  "auckland":"oceania","wellington":"oceania",
+};
+
+export function getCityRegion(slug: string): CityRegion {
+  return SLUG_TO_REGION[slug] ?? "europa";
+}
+
 export function searchCities(query: string, limit = 8): City[] {
   if (!query || query.length < 2) return [];
   const q = query.toLowerCase().trim();
@@ -236,4 +311,167 @@ export function searchCities(query: string, limit = 8): City[] {
 
 export function getCityBySlug(slug: string): City | undefined {
   return CITIES.find((c) => c.slug === slug);
+}
+
+// ── Continent ─────────────────────────────────────────────────────────────────
+const SOUTH_AMERICA_SLUGS = new Set([
+  "sao-paulo","rio-de-janeiro","brasilia","buenos-aires","cordoba",
+  "santiago","bogota","lima","caracas","quito","montevideo","la-paz",
+]);
+
+export function getCityContinent(slug: string): CityContinent {
+  const region = getCityRegion(slug);
+  if (region === "ameryki") {
+    return SOUTH_AMERICA_SLUGS.has(slug) ? "south_america" : "north_america";
+  }
+  const MAP: Record<CityRegion, CityContinent> = {
+    "europa":        "europe",
+    "azja":          "asia",
+    "bliski-wschod": "middle_east",
+    "afryka":        "africa",
+    "ameryki":       "north_america",
+    "oceania":       "oceania",
+  };
+  return MAP[region];
+}
+
+// ── Flight hours from WAW (approximate) ──────────────────────────────────────
+const FLIGHT_HOURS: Record<string, number> = {
+  // Poland — no flight
+  "warszawa":0,"krakow":0.5,"lodz":0.5,"wroclaw":0.5,"poznan":0.5,"gdansk":0.5,
+  "szczecin":0.5,"bydgoszcz":0.5,"lublin":0.5,"katowice":0.5,"bialystok":0.5,
+  "gdynia":0.5,"czestochowa":0.5,"radom":0.5,"sosnowiec":0.5,"torun":0.5,
+  "rzeszow":0.5,"kielce":0.5,"gliwice":0.5,"zabrze":0.5,"olsztyn":0.5,
+  "opole":0.5,"zielona-gora":0.5,"gorzow":0.5,"walbrzych":0.5,"koszalin":0.5,
+  "zakopane":0.5,
+  // Central Europe — 1.5h
+  "praga":1.5,"bratysława":1.5,"budapest":1.5,"wiedeń":1.5,
+  // Germany — 2h
+  "berlin":2,"hamburg":2,"monachium":2,"frankfurt":2,"kolonia":2,
+  // W/N/S Europe — 2.5-3.5h
+  "londyn":2.5,"edinburgh":3,"manchester":2.5,"dublin":2.5,
+  "paryż":2.5,"tuluza":2.5,"marsylia":3,"nicea":3,"lyon":2.5,
+  "amsterdam":2,"bruksela":2,"zurych":2.5,"genewa":2.5,
+  "madryt":3,"barcelona":3,"walencja":3,"sewilla":3.5,"malaga":3.5,"palma":3,
+  "rzym":2.5,"mediolan":2,"neapol":3,"florencja":2.5,"wenecja":2.5,
+  "lizbona":3,"porto":3,
+  "kopenhaga":2,"oslo":2.5,"sztokholm":2.5,"helsinki":2.5,"reykjavik":3.5,
+  // E Europe — 2-3h
+  "ateny":3.5,"santorini":4,
+  "bukareszt":2.5,"sofia":2.5,"belgrad":2.5,"zagrzeb":2,"dubrownik":3,"kotor":3,
+  "wilno":1.5,"ryga":2,"tallinn":2,
+  "lwow":1.5,"kijow":2,
+  "moskwa":3.5,"sankt-petersburg":3.5,"mińsk":2,
+  "tbilisi":4,"erewan":4,"baku":4,
+  // Middle East
+  "istanbul":3.5,"ankara":3.5,"kappadocja":4,
+  "dubaj":5.5,"abu-dhabi":5.5,
+  "tel-awiw":4.5,"jerozolima":4.5,
+  "bejrut":4.5,"amman":4.5,"rijad":5.5,
+  "teheran":5.5,"bagdad":5.5,"kair":4,
+  // Africa
+  "casablanca":3.5,"tunis":3.5,"algier":3.5,"marrakesz":4,
+  "lagos":8,"kinszasa":10,"johannesburg":11,"kapsztad":11,
+  "nairobi":9,"addis-abeba":8,"akkra":7,"dakar":7,"luanda":9,"dar-es-salaam":9,
+  // Asia — South
+  "mumbaj":8,"delhi":8,"bangalore":8.5,"kolkata":9,
+  "karachi":7.5,"lahore":7.5,"dhaka":9,"kolombo":10,"katmandu":8.5,
+  // Asia — Central
+  "taszkent":6,"ałmaty":7,"nur-sultan":7,
+  // Asia — East
+  "tokio":11,"osaka":11,"kioto":11,"seul":11,
+  "pekin":10,"szanghaj":10,"kanton":11,"shenzhen":11,"hongkong":11,"taipei":11,
+  "singapur":12,
+  // Asia — SE
+  "bangkok":10,"kuala-lumpur":11,"dżakarta":12,"manila":12,
+  "ho-chi-minh":11,"hanoi":11,"bali":12,"phuket":11,"chiang-mai":11,
+  "maldywy":10,"tbilisi-winery":4,
+  // Americas — North
+  "nowy-jork":10,"boston":10,"washington":11,"chicago":11,"houston":12,
+  "miami":11,"san-francisco":12,"seattle":12,"las-vegas":12,"atlanta":11,
+  "phoenix":12,"denver":12,"minneapolis":11,"portland":12,
+  "toronto":10,"montreal":10,"ottawa":10,"vancouver":12,"calgary":12,
+  "meksyk":12,"guadalajara":12,"monterrey":12,"hawana":12,"tulum":13,
+  // Americas — South
+  "sao-paulo":14,"rio-de-janeiro":14,"brasilia":14,"buenos-aires":15,
+  "cordoba":15,"santiago":15,"bogota":13,"lima":15,"caracas":13,
+  "quito":14,"montevideo":15,"la-paz":15,
+  // Oceania
+  "sydney":21,"melbourne":21,"brisbane":21,"perth":18,
+  "auckland":23,"wellington":23,
+};
+
+export function getCityFlightHours(slug: string): number {
+  return FLIGHT_HOURS[slug] ?? 12;
+}
+
+// ── Price tier ────────────────────────────────────────────────────────────────
+const PRICE_TIER_MAP: Record<string, "low" | "mid" | "high"> = {
+  // Poland — low
+  "warszawa":"low","krakow":"low","lodz":"low","wroclaw":"low","poznan":"low","gdansk":"low",
+  "szczecin":"low","bydgoszcz":"low","lublin":"low","katowice":"low","bialystok":"low",
+  "gdynia":"low","czestochowa":"low","radom":"low","sosnowiec":"low","torun":"low",
+  "rzeszow":"low","kielce":"low","gliwice":"low","zabrze":"low","olsztyn":"low",
+  "opole":"low","zielona-gora":"low","gorzow":"low","walbrzych":"low","koszalin":"low",
+  "zakopane":"low",
+  // Eastern Europe — low/mid
+  "praga":"mid","bratysława":"low","budapest":"low","bukareszt":"low","sofia":"low",
+  "belgrad":"low","zagrzeb":"low","dubrownik":"mid","kotor":"low",
+  "wilno":"low","ryga":"low","tallinn":"mid",
+  "lwow":"low","kijow":"low","mińsk":"low",
+  "tbilisi":"low","erewan":"low","baku":"low","tbilisi-winery":"low",
+  "moskwa":"mid","sankt-petersburg":"mid",
+  // Central Europe — mid
+  "wiedeń":"mid","berlin":"mid","hamburg":"mid","monachium":"mid","frankfurt":"mid","kolonia":"mid",
+  "amsterdam":"high","bruksela":"mid",
+  // W Europe — mid/high
+  "londyn":"high","edinburgh":"high","manchester":"high","dublin":"high",
+  "paryż":"high","tuluza":"mid","marsylia":"mid","nicea":"mid","lyon":"mid",
+  "zurych":"high","genewa":"high",
+  "madryt":"mid","barcelona":"mid","walencja":"mid","sewilla":"mid","malaga":"mid","palma":"mid",
+  "rzym":"mid","mediolan":"mid","neapol":"mid","florencja":"mid","wenecja":"mid",
+  "lizbona":"mid","porto":"mid",
+  "kopenhaga":"high","oslo":"high","sztokholm":"high","helsinki":"high","reykjavik":"high",
+  "ateny":"mid","santorini":"mid",
+  // Middle East
+  "istanbul":"low","ankara":"low","kappadocja":"low",
+  "dubaj":"high","abu-dhabi":"high",
+  "tel-awiw":"high","jerozolima":"high",
+  "bejrut":"mid","amman":"low","rijad":"mid",
+  "teheran":"low","bagdad":"low","kair":"low",
+  // Africa
+  "casablanca":"low","tunis":"low","algier":"low","marrakesz":"low",
+  "lagos":"low","kinszasa":"low","johannesburg":"mid","kapsztad":"mid",
+  "nairobi":"low","addis-abeba":"low","akkra":"low","dakar":"low","luanda":"low","dar-es-salaam":"low",
+  // Asia — South
+  "mumbaj":"low","delhi":"low","bangalore":"low","kolkata":"low",
+  "karachi":"low","lahore":"low","dhaka":"low","kolombo":"low","katmandu":"low",
+  // Asia — Central
+  "taszkent":"low","ałmaty":"low","nur-sultan":"low",
+  // Asia — East
+  "tokio":"high","osaka":"high","kioto":"high","seul":"mid",
+  "pekin":"mid","szanghaj":"mid","kanton":"mid","shenzhen":"mid",
+  "hongkong":"high","taipei":"mid","singapur":"high",
+  // Asia — SE
+  "bangkok":"low","kuala-lumpur":"low","dżakarta":"low","manila":"low",
+  "ho-chi-minh":"low","hanoi":"low","bali":"low","phuket":"low","chiang-mai":"low",
+  "maldywy":"high",
+  // Americas — North
+  "nowy-jork":"high","boston":"high","washington":"high","chicago":"high",
+  "houston":"mid","miami":"high","san-francisco":"high","seattle":"high",
+  "las-vegas":"mid","atlanta":"mid","phoenix":"mid","denver":"mid",
+  "minneapolis":"mid","portland":"mid",
+  "toronto":"high","montreal":"high","ottawa":"high","vancouver":"high","calgary":"high",
+  "meksyk":"mid","guadalajara":"mid","monterrey":"mid","hawana":"mid","tulum":"mid",
+  // Americas — South
+  "sao-paulo":"mid","rio-de-janeiro":"mid","brasilia":"mid","buenos-aires":"mid",
+  "cordoba":"low","santiago":"mid","bogota":"low","lima":"low",
+  "caracas":"low","quito":"low","montevideo":"mid","la-paz":"low",
+  // Oceania
+  "sydney":"high","melbourne":"high","brisbane":"mid","perth":"mid",
+  "auckland":"high","wellington":"high",
+};
+
+export function getCityPriceTier(slug: string): "low" | "mid" | "high" {
+  return PRICE_TIER_MAP[slug] ?? "mid";
 }

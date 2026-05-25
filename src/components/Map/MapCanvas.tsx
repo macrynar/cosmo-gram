@@ -7,16 +7,18 @@ import {
   Geography,
   ZoomableGroup,
 } from "react-simple-maps";
-import type { PlanetLines, Planet, Point, Intention, Astrocartography } from "@/lib/astrocartography";
-import { PLANET_COLORS, INTENTION_FILTERS, PLANET_EMOJI } from "@/lib/astrocartography";
+import type { PlanetLines, Planet, Point, LineType, Astrocartography } from "@/lib/astrocartography";
+import { PLANET_COLORS, PLANET_EMOJI, PLANET_PL } from "@/lib/astrocartography";
 import type { City } from "@/lib/cityDatabase";
 
 const GEO_URL = "/world-110m.json";
 
+export type ScenarioLine = { planet: Planet; type: LineType };
+
 interface Props {
   astro: Astrocartography | null;
   compareAstro?: Astrocartography | null;
-  intention: Intention | null;
+  scenarioLines: ScenarioLine[] | null;
   showAll: boolean;
   selectedCity: City | null;
   onCityClick?: (city: City) => void;
@@ -63,40 +65,37 @@ interface LineSpec {
 
 function getVisibleLines(
   planets: Record<Planet, PlanetLines>,
-  intention: Intention | null,
+  scenarioLines: ScenarioLine[] | null,
   showAll: boolean,
   color: (p: Planet) => string,
   opacityMod = 1,
 ): LineSpec[] {
   const specs: LineSpec[] = [];
 
-  if (!showAll && !intention) {
-    // Default: show Sun MC only (for free preview)
+  if (!showAll && !scenarioLines) {
     const pl = planets["Sun"];
     return [{ planet: "Sun", type: "MC", data: pl.mc_longitude, color: color("Sun"), opacity: 0.7 * opacityMod }];
   }
 
-  const rules = intention ? INTENTION_FILTERS[intention] : null;
-
-  for (const [p, pl] of Object.entries(planets) as [Planet, PlanetLines][]) {
-    if (rules) {
-      const rule = rules.find((r) => r.planet === p);
-      if (!rule) continue;
-      for (const type of rule.types) {
-        if (type === "MC") specs.push({ planet: p, type, data: pl.mc_longitude, color: color(p), opacity: opacityMod });
-        else if (type === "IC") specs.push({ planet: p, type, data: pl.ic_longitude, color: color(p), opacity: opacityMod });
-        else if (type === "ASC") specs.push({ planet: p, type, data: pl.asc_curve, color: color(p), opacity: opacityMod });
-        else specs.push({ planet: p, type, data: pl.dsc_curve, color: color(p), opacity: opacityMod });
-      }
-    } else {
-      // showAll
-      specs.push({ planet: p, type: "MC",  data: pl.mc_longitude, color: color(p), opacity: 0.5 * opacityMod });
-      specs.push({ planet: p, type: "IC",  data: pl.ic_longitude, color: color(p), opacity: 0.35 * opacityMod });
-      specs.push({ planet: p, type: "ASC", data: pl.asc_curve,    color: color(p), opacity: 0.5 * opacityMod });
-      specs.push({ planet: p, type: "DSC", data: pl.dsc_curve,    color: color(p), opacity: 0.35 * opacityMod });
+  if (!showAll && scenarioLines) {
+    for (const { planet, type } of scenarioLines) {
+      const pl = planets[planet];
+      if (!pl) continue;
+      if (type === "MC")  specs.push({ planet, type, data: pl.mc_longitude, color: color(planet), opacity: opacityMod });
+      else if (type === "IC")  specs.push({ planet, type, data: pl.ic_longitude, color: color(planet), opacity: opacityMod });
+      else if (type === "ASC") specs.push({ planet, type, data: pl.asc_curve,    color: color(planet), opacity: opacityMod });
+      else                     specs.push({ planet, type, data: pl.dsc_curve,    color: color(planet), opacity: opacityMod });
     }
+    return specs;
   }
 
+  // showAll
+  for (const [p, pl] of Object.entries(planets) as [Planet, PlanetLines][]) {
+    specs.push({ planet: p, type: "MC",  data: pl.mc_longitude, color: color(p), opacity: 0.5 * opacityMod });
+    specs.push({ planet: p, type: "IC",  data: pl.ic_longitude, color: color(p), opacity: 0.35 * opacityMod });
+    specs.push({ planet: p, type: "ASC", data: pl.asc_curve,    color: color(p), opacity: 0.5 * opacityMod });
+    specs.push({ planet: p, type: "DSC", data: pl.dsc_curve,    color: color(p), opacity: 0.35 * opacityMod });
+  }
   return specs;
 }
 
@@ -106,7 +105,7 @@ const H = 400;
 export default function MapCanvas({
   astro,
   compareAstro,
-  intention,
+  scenarioLines,
   showAll,
   selectedCity,
   onCityClick,
@@ -119,13 +118,13 @@ export default function MapCanvas({
 
   const userLines = useMemo(() => {
     if (!astro) return [];
-    return getVisibleLines(astro.planets, intention, showAll, (p) => PLANET_COLORS[p]);
-  }, [astro, intention, showAll]);
+    return getVisibleLines(astro.planets, scenarioLines, showAll, (p) => PLANET_COLORS[p]);
+  }, [astro, scenarioLines, showAll]);
 
   const compareLines = useMemo(() => {
     if (!compareAstro) return [];
-    return getVisibleLines(compareAstro.planets, intention, showAll, () => "#c89968", 0.8);
-  }, [compareAstro, intention, showAll]);
+    return getVisibleLines(compareAstro.planets, scenarioLines, showAll, () => "#c89968", 0.8);
+  }, [compareAstro, scenarioLines, showAll]);
 
   const allLines = [...userLines, ...compareLines];
 
@@ -235,26 +234,30 @@ export default function MapCanvas({
         </ZoomableGroup>
       </ComposableMap>
 
-      {/* Legend */}
-      {intention && astro && (
-        <div className="absolute bottom-2 left-2 flex flex-wrap gap-1.5 text-[10px]">
-          {INTENTION_FILTERS[intention].map(({ planet }) => (
+      {/* Planet legend — bottom left */}
+      {astro && (
+        <div className="absolute bottom-2 left-2 flex flex-col gap-1">
+          {/* Planet colors */}
+          {([...new Set(scenarioLines ? scenarioLines.map(l => l.planet) : (showAll ? Object.keys(PLANET_COLORS) as Planet[] : []))] as Planet[]).map((planet) => (
             <span
               key={planet}
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/50 backdrop-blur"
-              style={{ color: PLANET_COLORS[planet] }}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur text-[10px]"
+              style={{ color: PLANET_COLORS[planet as Planet] }}
             >
-              {PLANET_EMOJI[planet]} {planet}
+              {PLANET_EMOJI[planet as Planet]} {PLANET_PL[planet as Planet]}
             </span>
           ))}
-        </div>
-      )}
-
-      {/* Compare legend */}
-      {compareAstro && (
-        <div className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-black/50 backdrop-blur">
-          <span className="w-3 h-0.5 inline-block" style={{ background: "#c89968" }} />
-          <span className="text-amber-400">Porównanie</span>
+          {/* Line type guide */}
+          <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-black/60 backdrop-blur mt-0.5">
+            <span className="flex items-center gap-1">
+              <svg width="16" height="6" className="shrink-0"><line x1="0" y1="3" x2="16" y2="3" stroke="#94a3b8" strokeWidth="1.5"/></svg>
+              <span className="text-[9px] text-slate-400">MC/ASC</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <svg width="16" height="6" className="shrink-0"><line x1="0" y1="3" x2="16" y2="3" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="4 3"/></svg>
+              <span className="text-[9px] text-slate-400">IC/DSC</span>
+            </span>
+          </div>
         </div>
       )}
     </div>

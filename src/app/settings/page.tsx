@@ -48,6 +48,9 @@ export default function SettingsPage() {
     session ? { Authorization: `Bearer ${session.access_token}` } : {}
   , [session]);
 
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
   const loadSub = useCallback(async () => {
     if (!session) return;
     setSubLoading(true);
@@ -59,6 +62,29 @@ export default function SettingsPage() {
       setSubLoading(false);
     }
   }, [session, authHeader]);
+
+  async function handleSync() {
+    if (!session) return;
+    setSyncLoading(true);
+    setSyncMsg(null);
+    try {
+      const res = await fetch("/api/sync-subscription", {
+        method: "POST",
+        headers: authHeader(),
+      });
+      const data = await res.json() as SubStatus & { synced?: boolean };
+      if (data.hasSubscription) {
+        setSub(data);
+        setSyncMsg("Subskrypcja zsynchronizowana.");
+      } else {
+        setSyncMsg("Nie znaleziono aktywnej subskrypcji dla tego konta.");
+      }
+    } catch {
+      setSyncMsg("Błąd synchronizacji. Spróbuj ponownie.");
+    } finally {
+      setSyncLoading(false);
+    }
+  }
 
   useEffect(() => { loadSub(); }, [loadSub]);
 
@@ -271,6 +297,19 @@ export default function SettingsPage() {
                     <CreditCard className="w-4 h-4" />
                     Przejdź na Cosmogram Plus
                   </button>
+                  <div>
+                    <button
+                      onClick={handleSync}
+                      disabled={syncLoading}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-slate-400 text-xs hover:text-slate-200 hover:border-white/20 transition-colors disabled:opacity-40"
+                    >
+                      {syncLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                      Mam już subskrypcję — synchronizuj
+                    </button>
+                    {syncMsg && (
+                      <p className="text-slate-500 text-xs mt-1.5">{syncMsg}</p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

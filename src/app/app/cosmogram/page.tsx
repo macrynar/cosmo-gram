@@ -11,6 +11,7 @@ import HistorySelector, { type HistoryItem } from "@/components/HistorySelector"
 import AddChildModal, { type ChildFormData } from "@/components/children/AddChildModal";
 import ChildCard from "@/components/children/ChildCard";
 import { NatalChart } from "@/lib/astro-types";
+import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
 import { useAuth } from "@/components/AuthContext";
 import { useSubscription } from "@/components/SubscriptionContext";
 import { track } from "@/components/PostHogProvider";
@@ -213,7 +214,10 @@ export default function CosmogramPage() {
         body: JSON.stringify(data),
       });
       if (!chartRes.ok) { const e = await chartRes.json() as { error: string }; throw new Error(e.error ?? "Błąd obliczania kosmogramu"); }
-      const { chart: newChart, promptContext } = await chartRes.json() as { chart: NatalChart; promptContext: string };
+      const { chart: newChart, promptContext, placements, aspects, nodes } = await chartRes.json() as {
+        chart: NatalChart; promptContext: string;
+        placements: ChartPlacement[]; aspects: NatalAspect[]; nodes: ChartNodes;
+      };
       setChart(newChart);
       setChartLoading(false);
       setInterpretLoading(true);
@@ -221,12 +225,27 @@ export default function CosmogramPage() {
       const interpRes = await fetch("/api/interpret", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ promptContext }),
+        body: JSON.stringify({
+          promptContext,
+          placements,
+          aspects,
+          nodes,
+          firstName: data.name.trim() || undefined,
+          grammaticalForm: "impersonal",
+          userId: session?.user?.id,
+        }),
       });
-      if (interpRes.ok) {
-        const { interpretation: text } = await interpRes.json() as { interpretation: string };
-        interpretationText = text;
-        setInterpretation(text);
+      if (interpRes.ok && interpRes.body) {
+        const reader = interpRes.body.getReader();
+        const decoder = new TextDecoder();
+        let acc = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          acc += decoder.decode(value, { stream: true });
+          setInterpretation(acc);
+        }
+        interpretationText = acc;
       }
       track("first_natal_view", { has_time: !!data.time, place: data.place.split(",")[0] });
       if (session) {

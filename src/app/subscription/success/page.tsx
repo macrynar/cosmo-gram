@@ -1,18 +1,39 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Check } from "lucide-react";
+import { Sparkles, Check, Loader2 } from "lucide-react";
 import { track } from "@/components/PostHogProvider";
+import { useAuth } from "@/components/AuthContext";
+import { useSubscription } from "@/components/SubscriptionContext";
 
 export default function SubscriptionSuccessPage() {
   const router = useRouter();
+  const { session } = useAuth();
+  const { refresh } = useSubscription();
+  const [syncing, setSyncing] = useState(true);
 
   useEffect(() => {
     track("trial_started");
-    const t = setTimeout(() => router.push("/app/cosmogram"), 5000);
-    return () => clearTimeout(t);
-  }, [router]);
+
+    async function syncAndRedirect() {
+      if (session) {
+        try {
+          await fetch("/api/sync-subscription", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+          refresh();
+        } catch {
+          // proceed anyway
+        }
+      }
+      setSyncing(false);
+      setTimeout(() => router.push("/app/cosmogram"), 3000);
+    }
+
+    syncAndRedirect();
+  }, [session, router, refresh]);
 
   return (
     <div className="min-h-screen bg-[#03010d] flex items-center justify-center p-4">
@@ -27,8 +48,11 @@ export default function SubscriptionSuccessPage() {
           Twój 7-dniowy trial właśnie się zaczął.
         </p>
         <p className="text-slate-500 text-xs flex items-center justify-center gap-1">
-          <Sparkles className="w-3 h-3" />
-          Za chwilę zostaniesz przekierowany do swojego kosmogramu…
+          {syncing ? (
+            <><Loader2 className="w-3 h-3 animate-spin" /> Aktywuję subskrypcję…</>
+          ) : (
+            <><Sparkles className="w-3 h-3" /> Za chwilę zostaniesz przekierowany…</>
+          )}
         </p>
         <button
           onClick={() => router.push("/app/cosmogram")}

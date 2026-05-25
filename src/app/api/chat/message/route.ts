@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 import { calculateChart } from "@/lib/chart-engine";
 import { hasActiveSubscription } from "@/lib/subscription";
 import type { NatalChart } from "@/lib/astro-types";
+import { deepSeekChat } from "@/lib/deepseek";
 
 const FREE_CHAT_MESSAGES = 3;
 
@@ -42,6 +43,8 @@ function buildTodayLabel(): string {
     timeZone: "Europe/Warsaw",
   }).format(new Date());
 }
+
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
@@ -142,7 +145,7 @@ export async function POST(req: NextRequest) {
 
   const historyMessages = (history ?? []).reverse();
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
     return NextResponse.json({
       reply: "Interpretacja AI chwilowo niedostępna. Spróbuj ponownie za chwilę.",
@@ -159,28 +162,18 @@ export async function POST(req: NextRequest) {
     { role: "user" as const, content: content.trim() },
   ];
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 800,
+  let reply = "";
+  try {
+    reply = await deepSeekChat({
+      apiKey,
       system: systemPrompt,
       messages,
-    }),
-  });
-
-  if (!response.ok) {
-    console.error("Anthropic chat error:", await response.text());
+      maxTokens: 1800,
+    });
+  } catch (error) {
+    console.error("DeepSeek chat error:", error);
     return NextResponse.json({ error: "Błąd AI" }, { status: 502 });
   }
-
-  const data = await response.json() as { content: Array<{ type: string; text: string }> };
-  const reply = data.content?.find(b => b.type === "text")?.text ?? "";
 
   // Save both messages
   await supabaseAdmin.from("messages").insert([

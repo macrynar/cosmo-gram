@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { computeTopTransits } from "@/lib/chart-engine";
 import type { NatalChart } from "@/lib/astro-types";
+import { deepSeekChat } from "@/lib/deepseek";
 
 export type DailyReadingData = {
   headline: string;
@@ -132,9 +133,11 @@ function offlineReading(_todayLabel: string): DailyReadingData {
   };
 }
 
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   const { promptContext, interpretationContext, timezone, grammaticalForm, chartData } = await req.json() as DailyReadingBody;
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.DEEPSEEK_API_KEY;
   const safeTz = timezone || "Europe/Warsaw";
   const todayLabel = buildTodayLabel(safeTz);
   const form = grammaticalForm ?? "impersonal";
@@ -168,43 +171,55 @@ export async function POST(req: NextRequest) {
   try {
     const trimmedInterpretation = (interpretationContext || "").slice(0, 2000);
     const slashFormInstruction = `\nForma gramatyczna: ${form} — ZERO slash-form w outputcie.`;
+    const dailyModel = process.env.DEEPSEEK_DAILY_MODEL || "deepseek-chat";
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 600,
+    let raw = "";
+    try {
+      raw = await deepSeekChat({
+        apiKey,
+        model: dailyModel,
         system: SYSTEM_PROMPT,
+        maxTokens: 1200,
+        responseFormat: "json_object",
         messages: [
           {
             role: "user",
             content: `Data horoskopu: ${todayLabel}\nStrefa czasowa: ${safeTz}${slashFormInstruction}${transitBlock}\n\nDane kosmogramu natury:\n${promptContext}\n\n${trimmedInterpretation ? `Kontekst z interpretacji natury:\n${trimmedInterpretation}\n\n` : ""}Wygeneruj dzienny horoskop. Zwróć TYLKO JSON.`,
           },
         ],
-      }),
-    });
-
-    if (!response.ok) {
-      console.error("Anthropic daily-reading error:", await response.text());
+      });
+      // Retry once on v4-flash (still DeepSeek) to keep daily-reading reliable.
+      if (!raw.trim()) {
+        raw = await deepSeekChat({
+          apiKey,
+          model: "deepseek-v4-flash",
+          system: SYSTEM_PROMPT,
+          maxTokens: 1800,
+          responseFormat: "json_object",
+          messages: [
+            {
+              role: "user",
+              content: `Data horoskopu: ${todayLabel}\nStrefa czasowa: ${safeTz}${slashFormInstruction}${transitBlock}\n\nDane kosmogramu natury:\n${promptContext}\n\n${trimmedInterpretation ? `Kontekst z interpretacji natury:\n${trimmedInterpretation}\n\n` : ""}Wygeneruj dzienny horoskop. Zwróć TYLKO JSON.`,
+            },
+          ],
+        });
+      }
+    } catch (error) {
+      console.error("DeepSeek daily-reading error:", error);
       return NextResponse.json({
         dateLabel: todayLabel,
         dailyReading: JSON.stringify(offlineReading(todayLabel)),
       });
     }
 
-    const data = await response.json() as { content: Array<{ type: string; text: string }> };
-    const raw = data.content?.find((b) => b.type === "text")?.text ?? "";
-
     let reading: DailyReadingData;
     try {
       reading = extractJson(raw);
     } catch {
       console.error("Daily reading JSON parse error:", raw.slice(0, 300));
+      if (raw.trim()) {
+        return NextResponse.json({ dateLabel: todayLabel, dailyReading: raw.trim() });
+      }
       reading = offlineReading(todayLabel);
     }
 

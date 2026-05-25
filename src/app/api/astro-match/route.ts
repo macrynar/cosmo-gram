@@ -3,6 +3,7 @@ import { calculateChart } from "@/lib/chart-engine";
 import { computeSynastryAspects, computeSynastryScore, type SynastryAspect } from "@/lib/synastry-score";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { deepSeekChat } from "@/lib/deepseek";
 
 export type CompatibilityCategory = {
   name: string;
@@ -122,6 +123,8 @@ Zwróć WYŁĄCZNIE poprawny JSON (bez markdown, bez żadnego tekstu poza JSON):
   ]
 }`;
 
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   // Paywall: 1 free match, then subscription required
   try {
@@ -185,7 +188,7 @@ Scores (deterministyczne — NIE zmieniaj liczb w JSON):
 
 Napisz copy synastrii zgodne z tymi scores. Użyj aspektów z listy powyżej. Zwróć TYLKO JSON.`;
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       return NextResponse.json({
         result: mockResult(name1, name2, scores),
@@ -193,36 +196,21 @@ Napisz copy synastrii zgodne z tymi scores. Użyj aspektów z listy powyżej. Zw
       });
     }
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 3500,
+    const matchModel = process.env.DEEPSEEK_MATCH_MODEL || process.env.DEEPSEEK_MODEL || "deepseek-v4-pro";
+    let rawText = "";
+    try {
+      rawText = await deepSeekChat({
+        apiKey,
+        model: matchModel,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userMessage }],
-      }),
-    });
-
-    if (!response.ok) {
-      console.error("Anthropic error:", await response.text());
+        maxTokens: 4500,
+        responseFormat: "json_object",
+      });
+    } catch (error) {
+      console.error("DeepSeek error:", error);
       return NextResponse.json({ error: "AI unavailable" }, { status: 502 });
     }
-
-    const data = await response.json() as {
-      content: Array<{ type: string; text: string }>;
-      stop_reason: string;
-    };
-
-    if (data.stop_reason === "max_tokens") {
-      console.error("Astro-match response truncated by max_tokens");
-    }
-
-    const rawText = data.content?.find(b => b.type === "text")?.text ?? "";
 
     let result: CompatibilityResult;
     try {
@@ -242,8 +230,35 @@ Napisz copy synastrii zgodne z tymi scores. Użyj aspektów z listy powyżej. Zw
         }),
       };
     } catch {
-      console.error("JSON parse error (stop_reason:", data.stop_reason, "), raw:", rawText.slice(0, 500));
-      return NextResponse.json({ error: "Analiza nie powiodła się — spróbuj ponownie." }, { status: 500 });
+      console.error(`JSON parse error in astro-match on model ${matchModel}, raw:`, rawText.slice(0, 500));
+
+      try {
+        const retryRaw = await deepSeekChat({
+          apiKey,
+          model: "deepseek-v4-flash",
+          system: SYSTEM_PROMPT,
+          messages: [{ role: "user", content: userMessage }],
+          maxTokens: 3200,
+          responseFormat: "json_object",
+        });
+        const parsedRetry = extractJson(retryRaw);
+        result = {
+          ...parsedRetry,
+          overallScore: scores.overall,
+          categories: parsedRetry.categories.map((cat) => {
+            const scoreMap: Record<string, number> = {
+              "Komunikacja": scores.communication,
+              "Namiętność": scores.passion,
+              "Wspólne wartości": scores.values,
+              "Wyzwania": scores.challenge,
+            };
+            return { ...cat, score: scoreMap[cat.name] ?? cat.score };
+          }),
+        };
+      } catch {
+        // Never hard-fail user flow when AI response is malformed.
+        result = mockResult(name1, name2, scores);
+      }
     }
 
     return NextResponse.json({
