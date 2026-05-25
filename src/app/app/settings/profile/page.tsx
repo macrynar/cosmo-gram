@@ -1,42 +1,36 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { User, Lock, CreditCard, Check, Loader2, Star, AlertCircle } from "lucide-react";
+import { useState, useCallback } from "react";
+import { User, Lock, CreditCard, Check, Loader2, Star, AlertCircle, RefreshCw, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/components/AuthContext";
+import { useSubscription } from "@/components/SubscriptionContext";
 import PaywallModal from "@/components/PaywallModal";
 import { supabase } from "@/lib/supabase";
 
-type SubStatus = {
-  hasSubscription: boolean;
-  status: string;
-  currentPeriodEnd: string | null;
-};
-
 const STATUS_LABELS: Record<string, string> = {
-  free: "Bezpłatny",
-  trialing: "Trial (7 dni)",
-  active: "Aktywna",
+  free:     "Bezpłatny",
+  trialing: "Trial aktywny",
+  active:   "Aktywna",
   past_due: "Zaległa płatność",
   canceled: "Anulowana",
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  free: "text-slate-400 border-slate-700 bg-slate-900/30",
+  free:     "text-slate-400 border-slate-700 bg-slate-900/30",
   trialing: "text-amber-300 border-amber-700/50 bg-amber-900/20",
-  active: "text-green-300 border-green-700/50 bg-green-900/20",
+  active:   "text-green-300 border-green-700/50 bg-green-900/20",
   past_due: "text-red-300 border-red-700/50 bg-red-900/20",
   canceled: "text-slate-400 border-slate-700 bg-slate-900/30",
 };
 
 export default function SettingsPage() {
   const { session, user } = useAuth();
+  const { isPro, status, currentPeriodEnd, isLoading: subLoading, refresh } = useSubscription();
 
-  // Subscription state
-  const [sub, setSub] = useState<SubStatus | null>(null);
-  const [subLoading, setSubLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Password state
   const [newPassword, setNewPassword] = useState("");
@@ -48,19 +42,12 @@ export default function SettingsPage() {
     session ? { Authorization: `Bearer ${session.access_token}` } : {}
   , [session]);
 
-  const loadSub = useCallback(async () => {
-    if (!session) return;
-    setSubLoading(true);
-    try {
-      const res = await fetch("/api/subscription-status", { headers: authHeader() });
-      const data = await res.json() as SubStatus;
-      setSub(data);
-    } finally {
-      setSubLoading(false);
-    }
-  }, [session, authHeader]);
-
-  useEffect(() => { loadSub(); }, [loadSub]);
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    refresh();
+    await new Promise((r) => setTimeout(r, 2000));
+    setRefreshing(false);
+  }, [refresh]);
 
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -104,7 +91,7 @@ export default function SettingsPage() {
   const isEmailProvider = user?.app_metadata?.provider === "email" ||
     user?.identities?.some(i => i.provider === "email");
 
-  const statusKey = sub?.status ?? "free";
+  const statusKey = status ?? "free";
 
   return (
     <div className="min-h-screen bg-[#03010d] text-white">
@@ -118,11 +105,100 @@ export default function SettingsPage() {
       <main className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 pt-24 pb-20 space-y-6">
 
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white font-brand">
-            Ustawienia
-          </h1>
+          <h1 className="text-2xl font-bold text-white font-brand">Ustawienia</h1>
           <p className="text-slate-500 text-sm mt-1">Konto, hasło i subskrypcja</p>
         </div>
+
+        {/* Subscription — top, most important */}
+        <section className="glass-card rounded-2xl p-6 border border-white/8">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-amber-900/25 flex items-center justify-center">
+                <CreditCard className="w-4 h-4 text-amber-400" />
+              </div>
+              <h2 className="text-white font-semibold">Subskrypcja</h2>
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={subLoading || refreshing}
+              title="Odswierz status z Stripe"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-40"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+            </button>
+          </div>
+
+          {subLoading ? (
+            <div className="flex items-center gap-2 text-slate-500 text-sm">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Sprawdzam status…
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Status badge */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className={`text-xs px-3 py-1 rounded-full border font-medium ${STATUS_COLORS[statusKey] ?? STATUS_COLORS.free}`}>
+                  {STATUS_LABELS[statusKey] ?? statusKey}
+                </span>
+                {isPro && (
+                  <span className="flex items-center gap-1 text-xs text-amber-400/80">
+                    <Sparkles className="w-3 h-3" />
+                    Cosmogram Plus
+                  </span>
+                )}
+              </div>
+
+              {currentPeriodEnd && (
+                <p className="text-slate-500 text-xs">
+                  {statusKey === "trialing" ? "Trial kończy się:" : "Następne odnowienie:"}{" "}
+                  {new Date(currentPeriodEnd).toLocaleDateString("pl-PL")}
+                </p>
+              )}
+
+              {isPro ? (
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2 p-3 rounded-xl bg-green-900/10 border border-green-700/25">
+                    <Check className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
+                    <p className="text-green-300 text-sm">
+                      Masz pełny dostęp do Cosmogram Plus — kosmogram, horoskop dzienny, Cosmo Map, Cosmo Match i Chat bez limitu.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handlePortal}
+                    disabled={portalLoading}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 text-slate-300 text-sm hover:text-white hover:border-white/20 transition-colors disabled:opacity-40"
+                  >
+                    {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                    Zarządzaj subskrypcją (Stripe)
+                  </button>
+                  <p className="text-slate-600 text-xs">
+                    Zmień kartę, anuluj lub pobierz faktury — przez Stripe Customer Portal.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-slate-400 text-sm">
+                    Korzystasz z darmowego planu. Pierwszy Astro Match i 3 wiadomości w chacie gratis.
+                  </p>
+                  <button
+                    onClick={() => setShowPaywall(true)}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-700 to-amber-600 text-white text-sm font-semibold shadow-lg shadow-amber-950/40 hover:scale-[1.01] transition-all"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Przejdź na Cosmogram Plus
+                  </button>
+                  <p className="text-xs text-slate-500">
+                    Jeśli masz już opłaconą subskrypcję, kliknij{" "}
+                    <button onClick={handleRefresh} className="text-amber-500/70 underline hover:text-amber-400 transition-colors">
+                      Odśwież status
+                    </button>
+                    {" "}— synchronizujemy bezpośrednio ze Stripe.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
 
         {/* Account info */}
         <section className="glass-card rounded-2xl p-6 border border-white/8">
@@ -132,7 +208,6 @@ export default function SettingsPage() {
             </div>
             <h2 className="text-white font-semibold">Konto</h2>
           </div>
-
           <div className="space-y-3">
             <div>
               <p className="text-slate-500 text-xs mb-1">Adres e-mail</p>
@@ -206,76 +281,6 @@ export default function SettingsPage() {
             </form>
           </section>
         )}
-
-        {/* Subscription */}
-        <section className="glass-card rounded-2xl p-6 border border-white/8">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-8 h-8 rounded-full bg-amber-900/25 flex items-center justify-center">
-              <CreditCard className="w-4 h-4 text-amber-400" />
-            </div>
-            <h2 className="text-white font-semibold">Subskrypcja</h2>
-          </div>
-
-          {subLoading ? (
-            <div className="flex items-center gap-2 text-slate-500 text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Sprawdzam…
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <span className={`text-xs px-3 py-1 rounded-full border font-medium ${STATUS_COLORS[statusKey] ?? STATUS_COLORS.free}`}>
-                  {STATUS_LABELS[statusKey] ?? statusKey}
-                </span>
-                {statusKey === "active" && (
-                  <span className="text-xs text-slate-500">Cosmogram Plus</span>
-                )}
-                {statusKey === "trialing" && (
-                  <span className="text-xs text-slate-500">7-dniowy trial</span>
-                )}
-              </div>
-
-              {sub?.currentPeriodEnd && (
-                <p className="text-slate-500 text-xs">
-                  {statusKey === "trialing" ? "Trial kończy się:" : "Następne odnowienie:"}{" "}
-                  {new Date(sub.currentPeriodEnd).toLocaleDateString("pl-PL")}
-                </p>
-              )}
-
-              {sub?.hasSubscription ? (
-                <div className="space-y-2">
-                  <p className="text-slate-400 text-sm">
-                    Masz dostęp do wszystkich funkcji Cosmogram Plus.
-                  </p>
-                  <button
-                    onClick={handlePortal}
-                    disabled={portalLoading}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 text-slate-300 text-sm hover:text-white hover:border-white/20 transition-colors disabled:opacity-40"
-                  >
-                    {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                    Zarządzaj subskrypcją
-                  </button>
-                  <p className="text-slate-600 text-xs">
-                    Zmień kartę, anuluj lub pobierz faktury — przez Stripe Customer Portal.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-slate-400 text-sm">
-                    Korzystasz z darmowego planu. Pierwszy Astro Match i 3 wiadomości w chacie gratis.
-                  </p>
-                  <button
-                    onClick={() => setShowPaywall(true)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-700 to-amber-600 text-white text-sm font-semibold shadow-lg shadow-amber-950/40 hover:scale-[1.01] transition-all"
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    Przejdź na Cosmogram Plus
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </section>
 
       </main>
     </div>
