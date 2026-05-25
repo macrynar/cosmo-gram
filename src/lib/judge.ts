@@ -15,7 +15,7 @@ Output STRICTLY jako JSON (żaden inny tekst):
   "specificity": <1-5>,
   "no_jargon": <1-5>,
   "grammar": <1-5>,
-  "reasoning": "<2-3 zdania konkretnego uzasadnienia po polsku>"
+  "reasoning": "<1 krótkie zdanie uzasadnienia po polsku>"
 }`;
 
 export type JudgeScores = {
@@ -55,16 +55,18 @@ ${generatedOutput.slice(0, 3000)}
 
 Oceń. Zwróć tylko JSON.`;
 
-  const raw = await deepSeekChat({
+  const callParams = {
     apiKey,
     system: JUDGE_SYSTEM,
-    messages: [{ role: "user", content: userPrompt }],
-    maxTokens: 1000,
+    messages: [{ role: "user" as const, content: userPrompt }],
+    maxTokens: 2000,
     temperature: 0.2,
-    responseFormat: "json_object",
-  });
+    responseFormat: "json_object" as const,
+  };
 
-  if (!raw) throw new Error("DeepSeek zwrócił pustą odpowiedź");
+  let raw = await deepSeekChat(callParams);
+  if (!raw) raw = await deepSeekChat(callParams); // one retry on empty
+  if (!raw) throw new Error("DeepSeek zwrócił pustą odpowiedź po retry");
 
   let parsed: JudgeScores & { reasoning: string };
   try {
