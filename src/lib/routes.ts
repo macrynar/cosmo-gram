@@ -25,6 +25,7 @@ export const ROUTES = {
     matchNew:              { path: "/app/match/new",              label: "Nowa analiza" },
     library:               { path: "/app/library",                label: "Biblioteka" },
     libraryNew:            { path: "/app/library/new",            label: "Dodaj profil" },
+    map:                   { path: "/app/map",                    label: "Cosmo Map" },
     chat:                  { path: "/app/chat",                   label: "Cosmo Chat" },
     settings:              { path: "/app/settings",               label: "Konto" },
     settingsProfile:       { path: "/app/settings/profile",       label: "Dane" },

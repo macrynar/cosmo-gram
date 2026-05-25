@@ -19,6 +19,7 @@ const PUBLIC_NAV = [
 const APP_NAV = [
   { label: ROUTES.app.cosmogram.navLabel ?? ROUTES.app.cosmogram.label, href: ROUTES.app.cosmogram.path },
   { label: ROUTES.app.horoscope.label,                                  href: ROUTES.app.horoscope.path },
+  { label: ROUTES.app.map.label,                                        href: ROUTES.app.map.path },
   { label: BRAND.match,                                                  href: ROUTES.app.match.path },
   { label: BRAND.chat,                                                   href: ROUTES.app.chat.path },
 ];
