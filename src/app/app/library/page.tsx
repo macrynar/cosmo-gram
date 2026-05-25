@@ -73,14 +73,14 @@ export default function ChildrenPage() {
       if (!chartRes.ok) throw new Error("Błąd obliczania kosmogramu");
       const { chart, promptContext } = await chartRes.json() as { chart: NatalChart; promptContext: string };
 
-      // 2. Generate AI interpretation
+      // 2. Generate AI interpretation (streaming)
       const aiRes = await fetch("/api/ai-child", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: data.name, birthDate: data.date, promptContext }),
       });
       if (!aiRes.ok) throw new Error("Błąd generowania interpretacji");
-      const { interpretation } = await aiRes.json() as { interpretation: string };
+      const interpretation = await aiRes.text();
 
       // 3. Save
       const saveRes = await fetch("/api/save-child", {
@@ -145,7 +145,7 @@ export default function ChildrenPage() {
           body: JSON.stringify({ name: child.name, birthDate: child.birth_date, promptContext }),
         });
         if (!aiRes.ok) throw new Error("ai");
-        const { interpretation } = await aiRes.json() as { interpretation: string };
+        const interpretation = await aiRes.text();
 
         await fetch("/api/update-child", {
           method: "POST",
