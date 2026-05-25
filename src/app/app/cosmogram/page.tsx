@@ -293,7 +293,7 @@ export default function CosmogramPage() {
         body: JSON.stringify({ name: data.name, birthDate: data.date, promptContext }),
       });
       if (!aiRes.ok) throw new Error("Błąd generowania interpretacji");
-      const { interpretation } = await aiRes.json() as { interpretation: string };
+      const interpretation = await aiRes.text();
 
       const saveRes = await fetch("/api/save-child", {
         method: "POST",
@@ -335,7 +335,7 @@ export default function CosmogramPage() {
           body: JSON.stringify({ name: child.name, birthDate: child.birth_date, promptContext }),
         });
         if (!aiRes.ok) throw new Error("ai");
-        const { interpretation } = await aiRes.json() as { interpretation: string };
+        const interpretation = await aiRes.text();
         await fetch("/api/update-child", {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeader },

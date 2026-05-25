@@ -23,6 +23,18 @@ type SavedChild = {
   created_at: string;
 };
 
+async function readStream(res: Response): Promise<string> {
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  let acc = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    acc += decoder.decode(value, { stream: true });
+  }
+  return acc;
+}
+
 export default function ChildrenPage() {
   const { session } = useAuth();
   const { isPro, isLoading: subLoading } = useSubscription();
@@ -73,14 +85,14 @@ export default function ChildrenPage() {
       if (!chartRes.ok) throw new Error("Błąd obliczania kosmogramu");
       const { chart, promptContext } = await chartRes.json() as { chart: NatalChart; promptContext: string };
 
-      // 2. Generate AI interpretation
+      // 2. Generate AI interpretation (streaming)
       const aiRes = await fetch("/api/ai-child", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: data.name, birthDate: data.date, promptContext }),
       });
       if (!aiRes.ok) throw new Error("Błąd generowania interpretacji");
-      const { interpretation } = await aiRes.json() as { interpretation: string };
+      const interpretation = await readStream(aiRes);
 
       // 3. Save
       const saveRes = await fetch("/api/save-child", {
@@ -145,7 +157,7 @@ export default function ChildrenPage() {
           body: JSON.stringify({ name: child.name, birthDate: child.birth_date, promptContext }),
         });
         if (!aiRes.ok) throw new Error("ai");
-        const { interpretation } = await aiRes.json() as { interpretation: string };
+        const interpretation = await readStream(aiRes);
 
         await fetch("/api/update-child", {
           method: "POST",

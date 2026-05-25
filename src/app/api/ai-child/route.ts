@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { CHILD_SYSTEM_PROMPT, getAgeGroup, calcAgeYears } from "@/lib/prompts/child-v1";
-import { validateReading, checkLength, buildRetryInstruction } from "@/lib/reading-validator";
-import { deepSeekChat } from "@/lib/deepseek";
 
+export const runtime = "edge";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
@@ -14,7 +13,7 @@ export async function POST(req: NextRequest) {
 
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "Brak klucza API" }, { status: 500 });
+    return new Response(JSON.stringify({ error: "Brak klucza API" }), { status: 500 });
   }
 
   const ageYears = calcAgeYears(birthDate);
@@ -28,45 +27,69 @@ ${promptContext}
 
 Proszę o pełną interpretację karty urodzeniowej dziecka dla rodzica.`;
 
-  let currentUserMessage = userMessage;
-  let finalText = "";
-  let qualityWarning = false;
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
 
+  let dsResponse: Response;
   try {
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        finalText = await deepSeekChat({
-          apiKey,
-          system: CHILD_SYSTEM_PROMPT,
-          messages: [{ role: "user", content: currentUserMessage }],
-          maxTokens: 4500,
-        });
-      } catch (error) {
-        console.error("DeepSeek API error:", error);
-        return NextResponse.json({ error: "Błąd generowania interpretacji" }, { status: 500 });
-      }
-
-      const { issues } = validateReading(finalText);
-      const { ok: lengthOk } = checkLength(finalText, "child");
-
-      if (issues.length === 0 && lengthOk) break;
-
-      if (attempt < 2) {
-        const retryMsg = buildRetryInstruction([
-          ...issues,
-          ...(!lengthOk ? ["LENGTH_EXCEEDED"] : []),
-        ]);
-        currentUserMessage = `${userMessage}\n\n${retryMsg}`;
-        console.warn(`ai-child attempt ${attempt + 1} failed validation:`, issues);
-      } else {
-        qualityWarning = true;
-        console.error("ai-child: 3 attempts failed validation, returning last version");
-      }
-    }
-
-    return NextResponse.json({ interpretation: finalText, ...(qualityWarning ? { quality_warning: true } : {}) });
+    dsResponse = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: CHILD_SYSTEM_PROMPT },
+          { role: "user", content: userMessage },
+        ],
+        max_tokens: 4500,
+        stream: true,
+      }),
+    });
   } catch (err) {
-    console.error("ai-child error:", err);
-    return NextResponse.json({ error: "Błąd serwera" }, { status: 500 });
+    console.error("ai-child fetch error:", err);
+    return new Response(JSON.stringify({ error: "Błąd generowania interpretacji" }), { status: 500 });
   }
+
+  if (!dsResponse.ok || !dsResponse.body) {
+    console.error("ai-child DeepSeek non-ok:", dsResponse.status);
+    return new Response(JSON.stringify({ error: "Błąd generowania interpretacji" }), { status: 500 });
+  }
+
+  const encoder = new TextEncoder();
+  const dsBody = dsResponse.body;
+
+  const readable = new ReadableStream({
+    async start(controller) {
+      const reader = dsBody.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const data = line.slice(6).trim();
+            if (data === "[DONE]") continue;
+            try {
+              const parsed = JSON.parse(data) as { choices?: Array<{ delta?: { content?: string } }> };
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) controller.enqueue(encoder.encode(content));
+            } catch { /* incomplete chunk */ }
+          }
+        }
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(readable, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
 }
