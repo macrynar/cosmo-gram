@@ -41,14 +41,16 @@ export async function judgeReading(
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) throw new Error("DEEPSEEK_API_KEY missing");
 
-  const userPrompt = `Dane astrologiczne (input do AI):
-${JSON.stringify(rawInput, null, 2)}
+  // Trim chart_data to avoid blowing up the context — only first 500 chars needed for reference
+  const inputSummary = JSON.stringify(rawInput).slice(0, 500);
 
-Deklarowana forma gramatyczna: ${grammaticalForm}
+  const userPrompt = `Dane astrologiczne (skrót): ${inputSummary}
 
-Wygenerowana interpretacja:
+Forma gramatyczna: ${grammaticalForm}
+
+Interpretacja do oceny:
 """
-${generatedOutput.slice(0, 6000)}
+${generatedOutput.slice(0, 3000)}
 """
 
 Oceń. Zwróć tylko JSON.`;
@@ -57,13 +59,20 @@ Oceń. Zwróć tylko JSON.`;
     apiKey,
     system: JUDGE_SYSTEM,
     messages: [{ role: "user", content: userPrompt }],
-    maxTokens: 600,
+    maxTokens: 1000,
     temperature: 0.2,
     responseFormat: "json_object",
   });
 
-  const parsed = JSON.parse(raw) as JudgeScores & { reasoning: string };
-  const { reasoning, ...scores } = parsed;
+  if (!raw) throw new Error("DeepSeek zwrócił pustą odpowiedź");
+
+  let parsed: JudgeScores & { reasoning: string };
+  try {
+    parsed = JSON.parse(raw) as JudgeScores & { reasoning: string };
+  } catch {
+    throw new Error(`JSON parse failed. Raw: ${raw.slice(0, 200)}`);
+  }
+  const { reasoning = "", ...scores } = parsed;
   const overall =
     Math.round(
       ((scores.accuracy + scores.engagement + scores.specificity + scores.no_jargon + scores.grammar) /
