@@ -11,6 +11,7 @@ import CompareMode from "@/components/Map/CompareMode";
 import MobileCityList from "@/components/Map/MobileCityList";
 import PaywallTeaser from "@/components/Map/PaywallTeaser";
 import { useAuth } from "@/components/AuthContext";
+import { useSubscription } from "@/components/SubscriptionContext";
 import { track } from "@/components/PostHogProvider";
 import type { Astrocartography, ActiveLine, Intention, PlanetLines } from "@/lib/astrocartography";
 import { activeLinesForCity } from "@/lib/astrocartography";
@@ -35,8 +36,8 @@ interface LibraryProfile {
 type MobileTab = "map" | "list";
 
 export default function CosmoMapPage() {
-  const { session, user, loading: authLoading } = useAuth();
-  const [isPremium, setIsPremium] = useState<boolean | null>(null);
+  const { session, loading: authLoading } = useAuth();
+  const { isPro: isPremium, isLoading: subLoading } = useSubscription();
 
   const [astro, setAstro] = useState<Astrocartography | null>(null);
   const [compareAstro, setCompareAstro] = useState<Astrocartography | null>(null);
@@ -64,18 +65,9 @@ export default function CosmoMapPage() {
 
   const authHeader: Record<string, string> = session ? { Authorization: `Bearer ${session.access_token}` } : {};
 
-  // Check premium
-  useEffect(() => {
-    if (authLoading || !session) return;
-    fetch("/api/subscription-status", { headers: { Authorization: `Bearer ${session.access_token}` } })
-      .then((r) => r.json())
-      .then((d) => setIsPremium(d.hasSubscription ?? false))
-      .catch(() => setIsPremium(false));
-  }, [authLoading, session]);
-
   // Load user lines
   useEffect(() => {
-    if (!session || isPremium === null) return;
+    if (!session || subLoading) return;
     if (!isPremium) return;
     setMapLoading(true);
     setError("");
@@ -192,7 +184,7 @@ export default function CosmoMapPage() {
     setCenter([0, 20]);
   };
 
-  if (authLoading || isPremium === null) {
+  if (authLoading || subLoading) {
     return (
       <div className="min-h-screen bg-[#03010d] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-amber-600/30 border-t-amber-400 rounded-full animate-spin" />
