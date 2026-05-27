@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, Loader2, Sun, Star, Heart, Briefcase, TrendingUp } from "lucide-react";
+import { Sparkles, Loader2, Sun, Star, Heart, Briefcase, TrendingUp, Moon, Flame, Compass } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -10,11 +10,14 @@ interface Props {
 }
 
 const SECTION_CONFIG = [
-  { icon: Sun,         color: "text-amber-400",  border: "border-amber-800/30",  bg: "bg-amber-900/10"  },
-  { icon: Star,        color: "text-amber-300",  border: "border-amber-800/25",  bg: "bg-amber-900/8"   },
-  { icon: Heart,       color: "text-pink-400",   border: "border-pink-800/30",   bg: "bg-pink-900/10"   },
-  { icon: Briefcase,   color: "text-blue-400",   border: "border-blue-800/30",   bg: "bg-blue-900/10"   },
-  { icon: TrendingUp,  color: "text-green-400",  border: "border-green-800/30",  bg: "bg-green-900/10"  },
+  { icon: Sun,        color: "text-amber-400",   border: "border-amber-800/30",   bg: "bg-amber-900/10"   },
+  { icon: Moon,       color: "text-blue-300",    border: "border-blue-800/25",    bg: "bg-blue-900/10"    },
+  { icon: Star,       color: "text-purple-400",  border: "border-purple-800/30",  bg: "bg-purple-900/10"  },
+  { icon: Heart,      color: "text-pink-400",    border: "border-pink-800/30",    bg: "bg-pink-900/10"    },
+  { icon: Briefcase,  color: "text-cyan-400",    border: "border-cyan-800/30",    bg: "bg-cyan-900/10"    },
+  { icon: Flame,      color: "text-red-400",     border: "border-red-800/30",     bg: "bg-red-900/10"     },
+  { icon: Compass,    color: "text-indigo-400",  border: "border-indigo-800/30",  bg: "bg-indigo-900/10"  },
+  { icon: TrendingUp, color: "text-amber-300",   border: "border-amber-800/25",   bg: "bg-amber-900/8"    },
 ];
 
 interface Section {
@@ -75,7 +78,7 @@ export default function Interpretation({ text, loading }: Props) {
   const SKIP = /workflow|wstępny|sygnatury|krok\s*\d|top\s*\d/i;
   const intro = sections.find((s) => !s.header);
   const named = sections.filter((s) => s.header && !SKIP.test(s.header));
-  const hasMissingSections = named.length > 0 && named.length < 7;
+  const hasMissingSections = named.length > 0 && named.length < 8;
 
   return (
     <div className="glass-card rounded-2xl overflow-hidden">
@@ -102,13 +105,13 @@ export default function Interpretation({ text, loading }: Props) {
 
             {hasMissingSections && (
               <div className="rounded-xl border border-amber-700/40 bg-amber-900/10 px-4 py-3 text-amber-300 text-xs">
-                Wygenerowano {named.length}/7 sekcji interpretacji. Spróbuj wygenerować ponownie, aby uzyskać pełny raport.
+                Wygenerowano {named.length}/8 sekcji interpretacji. Spróbuj wygenerować ponownie, aby uzyskać pełny raport.
               </div>
             )}
 
             {/* Named sections grid */}
             {named.length > 0 && (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {named.map((section, i) => {
                   const cfg = SECTION_CONFIG[i % SECTION_CONFIG.length];
                   const Icon = cfg.icon;
