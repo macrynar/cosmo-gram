@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { CuratedCity } from "@/lib/curatedCities";
 import type { ActiveLine } from "@/lib/astrocartography";
 import { PLANET_LINE_COLORS, PLANET_GLYPHS } from "@/lib/mapColors";
@@ -16,6 +16,37 @@ const FLAG: Record<string, string> = {
   BA: "🇧🇦", UA: "🇺🇦", GE: "🇬🇪", IS: "🇮🇸",
 };
 
+function useWikipediaPhoto(slug: string, nameEn: string, fallbackUrl: string): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const key = `wp_${slug}`;
+    try {
+      const cached = sessionStorage.getItem(key);
+      if (cached) { setUrl(cached); return; }
+    } catch {}
+
+    setUrl(null);
+    const controller = new AbortController();
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(nameEn)}`, {
+      signal: controller.signal,
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        const photo = (data.originalimage?.source ?? data.thumbnail?.source) as string | undefined;
+        const resolved = photo && !photo.includes("Flag_of_") ? photo : (fallbackUrl || null);
+        if (resolved) {
+          try { sessionStorage.setItem(key, resolved); } catch {}
+          setUrl(resolved);
+        }
+      })
+      .catch(() => { if (fallbackUrl) setUrl(fallbackUrl); });
+    return () => controller.abort();
+  }, [slug, nameEn, fallbackUrl]);
+
+  return url;
+}
+
 interface Props {
   city: CuratedCity;
   strongestLine: ActiveLine | null;
@@ -24,6 +55,7 @@ interface Props {
 }
 
 export default function PlaceCard({ city, strongestLine, teaser, onClick }: Props) {
+  const photoUrl = useWikipediaPhoto(city.slug, city.name_en, city.photo_url);
   const [imgError, setImgError] = useState(false);
 
   const lineColor = strongestLine ? PLANET_LINE_COLORS[strongestLine.planet] : "#888";
@@ -38,16 +70,16 @@ export default function PlaceCard({ city, strongestLine, teaser, onClick }: Prop
     >
       {/* Photo */}
       <div className="relative aspect-[3/2] overflow-hidden bg-slate-800">
-        {!imgError ? (
+        {photoUrl && !imgError ? (
           <img
-            src={city.photo_url}
+            src={photoUrl}
             alt={city.name_pl}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl bg-slate-800/80">
-            {FLAG[city.country_code] ?? "🌍"}
+          <div className="w-full h-full bg-gradient-to-br from-slate-800 to-indigo-950 flex items-center justify-center">
+            <span className="text-4xl font-bold text-slate-600 select-none">{city.name_pl[0]}</span>
           </div>
         )}
         {strongestLine && (

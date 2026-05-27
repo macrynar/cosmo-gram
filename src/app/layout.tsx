@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
+import "leaflet/dist/leaflet.css";
 import { AuthProvider } from "@/components/AuthContext";
 import { SubscriptionProvider } from "@/components/SubscriptionContext";
 import { PostHogProvider } from "@/components/PostHogProvider";

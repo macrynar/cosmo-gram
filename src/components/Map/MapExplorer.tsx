@@ -49,6 +49,7 @@ export default function MapExplorer({ astro, cities, intention, onCityClick, bir
 
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
         maxZoom: 18,
+        subdomains: "abcd",
         attribution: "© CartoDB",
       }).addTo(map);
 
@@ -104,8 +105,8 @@ export default function MapExplorer({ astro, cities, intention, onCityClick, bir
   return (
     <div className="flex gap-0 rounded-2xl overflow-hidden border border-slate-700/30 glass-card" style={{ height: 500 }}>
       {/* Map */}
-      <div className="flex-1 relative">
-        <div ref={mapRef} className="w-full h-full" />
+      <div className="flex-1 relative min-h-0">
+        <div ref={mapRef} className="absolute inset-0" />
         {/* Layer toggle */}
         <div className="absolute top-3 right-3 z-[1000] flex gap-2">
           <button

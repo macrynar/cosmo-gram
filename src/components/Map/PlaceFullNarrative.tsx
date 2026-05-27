@@ -38,6 +38,34 @@ interface Props {
   onCityChange?: (city: CuratedCity, lines: ActiveLine[]) => void;
 }
 
+function useWikipediaPhoto(slug: string, nameEn: string, fallbackUrl: string): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    const key = `wp_${slug}`;
+    try {
+      const cached = sessionStorage.getItem(key);
+      if (cached) { setUrl(cached); return; }
+    } catch {}
+    setUrl(null);
+    const controller = new AbortController();
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(nameEn)}`, {
+      signal: controller.signal,
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        const photo = (data.originalimage?.source ?? data.thumbnail?.source) as string | undefined;
+        const resolved = photo && !photo.includes("Flag_of_") ? photo : (fallbackUrl || null);
+        if (resolved) {
+          try { sessionStorage.setItem(key, resolved); } catch {}
+          setUrl(resolved);
+        }
+      })
+      .catch(() => { if (fallbackUrl) setUrl(fallbackUrl); });
+    return () => controller.abort();
+  }, [slug, nameEn, fallbackUrl]);
+  return url;
+}
+
 export default function PlaceFullNarrative({
   city,
   intentionId,
@@ -51,6 +79,7 @@ export default function PlaceFullNarrative({
   const [narrative, setNarrative] = useState<Narrative | null>(null);
   const [loading, setLoading] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const photoUrl = useWikipediaPhoto(city.slug, city.name_en, city.photo_url);
   const drawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -114,16 +143,16 @@ export default function PlaceFullNarrative({
 
         {/* Hero photo */}
         <div className="relative h-56 bg-slate-800 shrink-0">
-          {!imgError ? (
+          {photoUrl && !imgError ? (
             <img
-              src={city.photo_url}
+              src={photoUrl}
               alt={city.name_pl}
               className="w-full h-full object-cover"
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-6xl">
-              {FLAG[city.country_code] ?? "🌍"}
+            <div className="w-full h-full bg-gradient-to-br from-slate-800 to-indigo-950 flex items-center justify-center">
+              <span className="text-6xl font-bold text-slate-600 select-none">{city.name_pl[0]}</span>
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0b0719] to-transparent" />

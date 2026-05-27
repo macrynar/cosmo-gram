@@ -9,21 +9,60 @@ export const maxDuration = 60;
 
 const SYSTEM_PROMPT = `Jesteś ekspertem astrokartografii o głębokiej wiedzy kulturowej. Twoje zadanie: napisać głęboką, evocative interpretację konkretnego miejsca dla konkretnej osoby w kontekście wybranej intencji życiowej.
 
-KRYTYCZNE ZASADY:
-1. NIE WYMYŚLAJ konkretnych wydarzeń, festiwali, lokalnych nazw dzielnic ani szczegółów których nie jesteś PEWIEN. Trzymaj się szeroko-znanych faktów (te które są w cultural_blurb).
-2. ZAWSZE odnoś się do KONKRETNEJ planety + linii. To core wartość.
-3. ZAKAZ: slash-form (oddałeś/aś), żargon astrologiczny bez tłumaczenia (orb, dyspozytor, retrograde, MC w sensie technicznym), generyczne truizmy.
-4. Forma: bezosobowa lub 2. osoba (ty/twój).
-5. Język: polski.
+ŻARGON ASTROLOGICZNY — ABSOLUTNY ZAKAZ używania tych słów i skrótów:
+- Skrótów: IC, MC, AC, DC, ASC, DSC
+- Łaciny: Imum Coeli, Medium Coeli, Ascendens, Descendens
+- Technikaliów: orb, dyspozytor, retrograde, retrogradacja, aspekt, kwadratura, trygon, sekstyl, koniunkcja, opozycja, domifikacja
+
+Zamiast skrótów używaj opisów:
+- IC → "punkt zakorzenienia", "fundament wewnętrzny", "głębia korzeni"
+- MC → "szczyt widoczności", "punkt zawodowy", "gdzie cię widzą"
+- ASC → "jak emanujesz", "twoja pierwsza warstwa", "wschód twojej energii"
+- DSC → "to co przyciągasz", "przestrzeń partnerstwa", "zachód twojej energii"
+
+PRZYKŁAD POPRAWNY: "Twoja linia Księżyca przechodzi blisko Santorini i tu działa w funkcji punktu zakorzenienia — miejsca gdzie wracasz do siebie pod warstwami codzienności."
+PRZYKŁAD ZŁY (ZAKAZANY): "Linia Księżyca IC (Imum Coeli) w aspekcie trygonu do 4. domu." — to jest absolutnie zabronione.
+
+POZOSTAŁE ZASADY:
+1. NIE WYMYŚLAJ konkretnych wydarzeń, festiwali, dzielnic których nie jesteś PEWIEN. Trzymaj się cultural_blurb.
+2. ZAWSZE odnoś się do KONKRETNEJ planety i jej funkcji w opisowym języku.
+3. ZAKAZ slash-form: "oddałeś/aś". Używaj formy "ty/twój".
+4. Język: polski. Forma: 2. osoba (ty/twój).
 
 OUTPUT JSON (tylko ten JSON, bez żadnego innego tekstu):
 {
   "card_teaser": "<≤8 słów, jedna emotional fraza>",
   "why_place": "<2-3 zdania o kulturowej tożsamości miejsca>",
-  "why_for_you": "<4-5 zdań głębokiej astro warstwy: która linia + jak to działa dla tej osoby>",
+  "why_for_you": "<4-5 zdań astro warstwy bez żargonu: która planeta + co to znaczy dla ciebie>",
   "what_youll_feel": "<3-4 zdania behavioral/sensory — co poczujesz, jak to się rozłoży>",
   "similar_slugs": ["slug1", "slug2", "slug3"]
 }`;
+
+const BANNED_TERMS = [
+  /\bIC\b/, /\bMC\b/, /\bAC\b/, /\bDC\b/, /\bASC\b/, /\bDSC\b/,
+  /Imum Coeli/i, /Medium Coeli/i, /Ascendens/i, /Descendens/i,
+  /\borb\b/i, /\bdyspozytor/i, /retrogradacj/i, /\baspekt\b/i,
+  /kwadratura/i, /\btrygon\b/i, /\bsekstyl\b/i, /\bkoniunkcja\b/i, /\bopozycja\b/i,
+];
+
+function findViolations(narrative: Record<string, unknown>): string[] {
+  const text = [
+    narrative.card_teaser,
+    narrative.why_place,
+    narrative.why_for_you,
+    narrative.what_youll_feel,
+  ].join(" ");
+  return BANNED_TERMS.filter((rx) => rx.test(text as string)).map((rx) => rx.source);
+}
+
+function stripBannedTerms(text: string): string {
+  return text
+    .replace(/\b(IC|MC|AC|DC|ASC|DSC)\b/g, "")
+    .replace(/\((Imum|Medium) (Coeli|Heaven)\)/gi, "")
+    .replace(/Imum Coeli|Medium Coeli|Ascendens|Descendens/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
@@ -91,7 +130,7 @@ ${similarCandidates.join("\n")}
 
 Napisz głęboką narrację. JSON tylko.`;
 
-  try {
+  async function callDeepSeek(prompt: string): Promise<Record<string, unknown>> {
     const res = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -99,17 +138,37 @@ Napisz głęboką narrację. JSON tylko.`;
         model: process.env.DEEPSEEK_MODEL ?? "deepseek-chat",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
+          { role: "user", content: prompt },
         ],
-        max_tokens: 1200,
+        max_tokens: 1400,
         temperature: 0.7,
         response_format: { type: "json_object" },
       }),
     });
-
     const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
     const raw = data.choices?.[0]?.message?.content?.trim() ?? "";
-    const narrative = JSON.parse(raw);
+    return JSON.parse(raw) as Record<string, unknown>;
+  }
+
+  try {
+    let narrative = await callDeepSeek(userPrompt);
+
+    // Guardrail: retry with explicit feedback if banned terms found
+    const violations = findViolations(narrative);
+    if (violations.length > 0) {
+      const retryPrompt = `${userPrompt}\n\nUWAGA: poprzednia odpowiedź zawierała zakazane terminy astrologiczne: ${violations.join(", ")}. Wygeneruj ponownie BEZ tych terminów, używając wyłącznie opisowego języka.`;
+      narrative = await callDeepSeek(retryPrompt);
+
+      // Last resort: server-side strip
+      const still = findViolations(narrative);
+      if (still.length > 0) {
+        for (const field of ["why_place", "why_for_you", "what_youll_feel", "card_teaser"] as const) {
+          if (typeof narrative[field] === "string") {
+            narrative[field] = stripBannedTerms(narrative[field] as string);
+          }
+        }
+      }
+    }
 
     // Cache it
     await supabaseAdmin.from("map_place_narratives").upsert({
