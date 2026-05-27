@@ -26,7 +26,10 @@ interface Section {
 }
 
 function parseSections(text: string): Section[] {
-  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  // Discard any preamble (echoed system prompt, intro phrases) before the first heading
+  const firstHeading = text.search(/^#{1,4}\s+/m);
+  const body = firstHeading >= 0 ? text.slice(firstHeading) : text;
+  const lines = body.replace(/\r\n/g, "\n").split("\n");
   const sections: Section[] = [];
   let currentHeader: string | null = null;
   let currentBody: string[] = [];

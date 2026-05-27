@@ -165,10 +165,10 @@ ${JSON.stringify(nodes ?? {}, null, 2)}
 first_name: ${firstName ?? ""}
 grammatical_form: ${form}
 
-Proszę o pełną interpretację zgodnie z instrukcjami.`;
+Napisz pełną interpretację. Zacznij BEZPOŚREDNIO od "## 🌌 1. Rdzeń osobowości" — zero wprowadzenia, zero powtarzania instrukcji.`;
     } else {
       // Legacy fallback: plain text promptContext
-      userContent = `Oto dane kosmogramu:\n\n${promptContext}\n\nfirst_name: ${firstName ?? ""}\ngrammatical_form: ${form}\n\nProszę o interpretację.`;
+      userContent = `Oto dane kosmogramu:\n\n${promptContext}\n\nfirst_name: ${firstName ?? ""}\ngrammatical_form: ${form}\n\nZacznij BEZPOŚREDNIO od "## 🌌 1. Rdzeń osobowości" — zero wprowadzenia.`;
     }
 
     const timeUnknown = (promptContext ?? "").includes("[GODZINA URODZENIA NIEZNANA]") ||
