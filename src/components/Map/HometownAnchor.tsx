@@ -3,7 +3,13 @@
 import { MapPin } from "lucide-react";
 import type { ActiveLine } from "@/lib/astrocartography";
 import { PLANET_EMOJI, PLANET_PL, PLANET_COLORS } from "@/lib/astrocartography";
-import { getLineDescription } from "@/lib/lineDescriptions";
+
+const LINE_SHORT: Record<string, string> = {
+  MC: "Kariera i publiczny wizerunek",
+  IC: "Dom, korzenie i prywatność",
+  ASC: "Osobowość i pierwsze wrażenie",
+  DSC: "Partnerstwa i relacje",
+};
 
 interface Props {
   hometownName: string;
@@ -45,7 +51,7 @@ export default function HometownAnchor({ hometownName, activeLines }: Props) {
                     <span className="text-slate-600 font-normal ml-2">{line.distance_km} km</span>
                   </div>
                   <div className="text-[11px] text-slate-500 leading-snug mt-0.5">
-                    {getLineDescription(line.planet, line.type).short}
+                    {LINE_SHORT[line.type] ?? "Linia planetarna"}
                   </div>
                 </div>
               </div>
