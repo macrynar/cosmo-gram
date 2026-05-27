@@ -39,7 +39,7 @@ function parseSections(text: string): Section[] {
   };
 
   for (const line of lines) {
-    const heading = line.match(/^##\s+(.+)$/);
+    const heading = line.match(/^#{1,4}\s+(.+)$/);
     if (heading) {
       pushCurrent();
       currentHeader = heading[1].trim();
@@ -119,7 +119,7 @@ export default function Interpretation({ text, loading }: Props) {
                   return (
                     <div
                       key={i}
-                      className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4${isLastOdd ? " xl:col-span-2" : ""}`}
+                      className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4${isLastOdd ? " lg:col-span-2" : ""}`}
                     >
                       <div className={`flex items-center gap-2 mb-2 ${cfg.color}`}>
                         <Icon className="w-4 h-4 shrink-0" />

@@ -173,13 +173,16 @@ export default function CosmogramPage() {
   }
 
   async function handleDelete(id: string) {
-    await fetch(`/api/delete-reading?id=${id}`, { method: "DELETE", headers: authHeader });
-    const updated = readings.filter(r => r.id !== id);
-    setReadings(updated);
-    if (id === selectedId) {
-      if (updated.length > 0) { setSelectedId(updated[0].id); displayReading(updated[0]); }
-      else { setSelectedId(null); setChart(null); setInterpretation(""); setShowForm(true); }
-    }
+    const res = await fetch(`/api/delete-reading?id=${id}`, { method: "DELETE", headers: authHeader });
+    if (!res.ok) { setError("Nie udało się usunąć kosmogramu."); return; }
+    setReadings(prev => {
+      const updated = prev.filter(r => r.id !== id);
+      if (id === selectedId) {
+        if (updated.length > 0) { setSelectedId(updated[0].id); displayReading(updated[0]); }
+        else { setSelectedId(null); setChart(null); setInterpretation(""); setShowForm(true); }
+      }
+      return updated;
+    });
   }
 
   async function handleRename(id: string, name: string) {
