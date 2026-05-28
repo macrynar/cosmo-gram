@@ -1,14 +1,18 @@
 import { NextRequest } from "next/server";
 import { CHILD_SYSTEM_PROMPT, getAgeGroup, calcAgeYears } from "@/lib/prompts/child-v1";
+import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
 
 export const runtime = "edge";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
-  const { name, birthDate, promptContext } = await req.json() as {
+  const { name, birthDate, promptContext, placements, aspects, nodes } = await req.json() as {
     name: string;
     birthDate: string;
     promptContext: string;
+    placements?: ChartPlacement[];
+    aspects?: NatalAspect[];
+    nodes?: ChartNodes;
   };
 
   const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -18,14 +22,37 @@ export async function POST(req: NextRequest) {
 
   const ageYears = calcAgeYears(birthDate);
   const ageGroup = getAgeGroup(ageYears);
+  const childName = name || "Dziecko";
 
-  const userMessage = `Imię dziecka: ${name || "nieznane"}
+  let userMessage: string;
+  if (placements && placements.length > 0) {
+    const timeUnknown = placements.every((p) => p.house === null);
+    const timeNote = timeUnknown
+      ? "\n\nUWAGA: Godzina urodzenia nieznana — brak Ascendentu i domów. W sekcji 1 pomiń Ascendent. We wszystkich sekcjach pomiń numery domów."
+      : "";
+    userMessage = `Imię dziecka: ${childName}
+Wiek: ${ageYears} lat (${ageGroup})
+
+placements:
+${JSON.stringify(placements, null, 2)}
+
+major_aspects:
+${JSON.stringify(aspects ?? [], null, 2)}
+
+nodes:
+${JSON.stringify(nodes ?? {}, null, 2)}
+${timeNote}
+
+Napisz pełną interpretację karty urodzeniowej dziecka dla rodzica. Zacznij BEZPOŚREDNIO od "## 🌱 1. Kim jest ${childName}" — zero wprowadzenia, zero powtarzania instrukcji.`;
+  } else {
+    userMessage = `Imię dziecka: ${childName}
 Wiek: ${ageYears} lat (${ageGroup})
 
 Dane kosmogramu:
 ${promptContext}
 
-Proszę o pełną interpretację karty urodzeniowej dziecka dla rodzica.`;
+Napisz pełną interpretację karty urodzeniowej dziecka dla rodzica. Zacznij BEZPOŚREDNIO od "## 🌱 1. Kim jest ${childName}" — zero wprowadzenia.`;
+  }
 
   const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
 
@@ -40,7 +67,7 @@ Proszę o pełną interpretację karty urodzeniowej dziecka dla rodzica.`;
           { role: "system", content: CHILD_SYSTEM_PROMPT },
           { role: "user", content: userMessage },
         ],
-        max_tokens: 4500,
+        max_tokens: 6000,
         stream: true,
       }),
     });

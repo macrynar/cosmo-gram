@@ -288,12 +288,15 @@ export default function CosmogramPage() {
         body: JSON.stringify({ date: data.date, time: data.time, lat: data.lat, lng: data.lng, place: data.place }),
       });
       if (!chartRes.ok) throw new Error("Błąd obliczania kosmogramu");
-      const { chart, promptContext } = await chartRes.json() as { chart: NatalChart; promptContext: string };
+      const { chart, promptContext, placements, aspects, nodes } = await chartRes.json() as {
+        chart: NatalChart; promptContext: string;
+        placements: ChartPlacement[]; aspects: NatalAspect[]; nodes: ChartNodes;
+      };
 
       const aiRes = await fetch("/api/ai-child", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: data.name, birthDate: data.date, promptContext }),
+        body: JSON.stringify({ name: data.name, birthDate: data.date, promptContext, placements, aspects, nodes }),
       });
       if (!aiRes.ok) throw new Error("Błąd generowania interpretacji");
       const interpretation = await aiRes.text();
@@ -331,11 +334,14 @@ export default function CosmogramPage() {
           body: JSON.stringify({ date: bd.date, time: bd.time, lat: bd.lat, lng: bd.lng, place: bd.place }),
         });
         if (!chartRes.ok) throw new Error("chart");
-        const { promptContext } = await chartRes.json() as { promptContext: string };
+        const { promptContext, placements, aspects, nodes } = await chartRes.json() as {
+          promptContext: string;
+          placements: ChartPlacement[]; aspects: NatalAspect[]; nodes: ChartNodes;
+        };
         const aiRes = await fetch("/api/ai-child", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: child.name, birthDate: child.birth_date, promptContext }),
+          body: JSON.stringify({ name: child.name, birthDate: child.birth_date, promptContext, placements, aspects, nodes }),
         });
         if (!aiRes.ok) throw new Error("ai");
         const interpretation = await aiRes.text();

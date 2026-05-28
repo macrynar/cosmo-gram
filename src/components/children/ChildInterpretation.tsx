@@ -25,7 +25,9 @@ interface Section {
 }
 
 function parseSections(text: string): Section[] {
-  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const firstHeading = text.search(/^#{1,4}\s+/m);
+  const body = firstHeading >= 0 ? text.slice(firstHeading) : text;
+  const lines = body.replace(/\r\n/g, "\n").split("\n");
   const sections: Section[] = [];
   let currentHeader: string | null = null;
   let currentBody: string[] = [];
@@ -38,7 +40,7 @@ function parseSections(text: string): Section[] {
   };
 
   for (const line of lines) {
-    const heading = line.match(/^##\s+(.+)$/);
+    const heading = line.match(/^#{1,4}\s+(.+)$/);
     if (heading) {
       pushCurrent();
       currentHeader = heading[1].trim();
