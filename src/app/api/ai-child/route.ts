@@ -67,7 +67,7 @@ Napisz pełną interpretację karty urodzeniowej dziecka dla rodzica. Zacznij BE
           { role: "system", content: CHILD_SYSTEM_PROMPT },
           { role: "user", content: userMessage },
         ],
-        max_tokens: 6000,
+        max_tokens: 4500,
         stream: true,
       }),
     });
