@@ -18,16 +18,17 @@ interface DailyReadingBody {
   timezone?: string;
   grammaticalForm?: "masculine" | "feminine" | "impersonal";
   chartData?: NatalChart;
+  targetDate?: string; // ISO "2026-06-15" — if absent, uses today
 }
 
-function buildTodayLabel(timezone: string): string {
+function buildDateLabel(timezone: string, date: Date): string {
   return new Intl.DateTimeFormat("pl-PL", {
     weekday: "long",
     day: "2-digit",
     month: "long",
     year: "numeric",
     timeZone: timezone,
-  }).format(new Date());
+  }).format(date);
 }
 
 const SYSTEM_PROMPT = `Jesteś astrolożką która pisze dzienny horoskop dla zwykłych ludzi — nie dla astrologów.
@@ -136,10 +137,11 @@ function offlineReading(_todayLabel: string): DailyReadingData {
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
-  const { promptContext, interpretationContext, timezone, grammaticalForm, chartData } = await req.json() as DailyReadingBody;
+  const { promptContext, interpretationContext, timezone, grammaticalForm, chartData, targetDate } = await req.json() as DailyReadingBody;
   const apiKey = process.env.DEEPSEEK_API_KEY;
   const safeTz = timezone || "Europe/Warsaw";
-  const todayLabel = buildTodayLabel(safeTz);
+  const computeDate = targetDate ? new Date(targetDate + "T12:00:00Z") : new Date();
+  const todayLabel = buildDateLabel(safeTz, computeDate);
   const form = grammaticalForm ?? "impersonal";
 
   if (!promptContext) {
@@ -147,17 +149,14 @@ export async function POST(req: NextRequest) {
   }
 
   if (!apiKey) {
-    return NextResponse.json({
-      dateLabel: todayLabel,
-      dailyReading: JSON.stringify(offlineReading(todayLabel)),
-    });
+    return NextResponse.json({ dateLabel: todayLabel, dailyReading: JSON.stringify(offlineReading(todayLabel)) });
   }
 
   // Compute today's transits vs natal chart (Patch D)
   let transitBlock = "";
   try {
     if (chartData?.planets?.length) {
-      const { supporting, challenging } = computeTopTransits(chartData, new Date());
+      const { supporting, challenging } = computeTopTransits(chartData, computeDate);
       transitBlock = `\nTranzyt wspierający: ${supporting
         ? `${supporting.transit_planet} w ${supporting.transit_sign} (${supporting.aspect_type}) do natal ${supporting.natal_planet}, orb ${supporting.orb_degrees.toFixed(1)}°`
         : "brak wyraźnego tranzytu — skup się na fazie Księżyca"}\nTranzyt wymagający: ${challenging
