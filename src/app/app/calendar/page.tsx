@@ -212,6 +212,7 @@ export default function CalendarPage() {
                 readingId={selectedReading.id}
                 promptContext={""}
                 interpretation={selectedReading.interpretation}
+                filter={filter}
                 onClose={() => setSelectedDate(null)}
               />
             )}

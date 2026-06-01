@@ -5,6 +5,7 @@ import * as Astronomy from "astronomy-engine";
 import { longitudeToSign } from "@/lib/astro-types";
 import type { NatalChart } from "@/lib/astro-types";
 import type { DayData, TransitAspect } from "@/lib/chart-engine";
+import type { CalendarFilter } from "@/components/calendar/IntentionFilter";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
 import DailyReading from "@/components/generate/DailyReading";
@@ -130,7 +131,58 @@ function getContextualQuestion(supporting: TransitAspect | null, dayOfYear: numb
 // ── Significance levels ────────────────────────────────────────────────────
 type SigLevel = "exceptional" | "notable" | "minor" | "quiet";
 
-function getSignificance(score: number): {
+const FILTER_BADGE: Record<CalendarFilter, Record<SigLevel, string>> = {
+  all:    { exceptional: "★ Wyjątkowy dzień",         notable: "✦ Wyraźny sygnał",        minor: "Mały sygnał",               quiet: "Spokojny dzień" },
+  love:   { exceptional: "★ Wyjątkowy dzień miłosny", notable: "✦ Sygnał w miłości",       minor: "Delikatny sygnał miłosny",  quiet: "Spokojny dzień miłosny" },
+  career: { exceptional: "★ Wyjątkowy dzień kariery", notable: "✦ Sygnał dla kariery",     minor: "Delikatny sygnał kariery",  quiet: "Spokojny dzień kariery" },
+  peace:  { exceptional: "★ Wyjątkowy dzień spokoju", notable: "✦ Sygnał spokoju",         minor: "Delikatny sygnał spokoju",  quiet: "Spokojny dzień" },
+};
+
+const FILTER_AREA: Record<CalendarFilter, string> = {
+  all: "Twojego kosmogramu", love: "miłości i relacji", career: "kariery i działania", peace: "spokoju i balansu",
+};
+
+function buildDescription(
+  level: SigLevel,
+  filter: CalendarFilter,
+  supporting: TransitAspect | null,
+  challenging: TransitAspect | null,
+): string {
+  if (level === "quiet") {
+    const area = filter !== "all" ? `obszarze ${FILTER_AREA[filter]}` : "Twoim kosmogramie";
+    return `Żaden tranzyt nie aktywuje wyraźnie Twojego kosmogramu w ${area}. Spokojne dni są równie wartościowe — naturalna pauza, dobry moment na ciszę bez zewnętrznego ciśnienia planet.`;
+  }
+
+  const parts: string[] = [];
+  if (supporting) {
+    const text = SUPPORTING_ENABLES[supporting.transit_planet];
+    if (text) parts.push(text.charAt(0).toUpperCase() + text.slice(1) + ".");
+  }
+  if (challenging) {
+    const text = CHALLENGING_WATCH[challenging.transit_planet];
+    if (text) parts.push(text.charAt(0).toUpperCase() + text.slice(1) + ".");
+  }
+  if (parts.length > 0) return parts.join(" ");
+
+  if (level === "exceptional") return `Silne tranzyty aktywują kluczowe planety ${FILTER_AREA[filter]}.`;
+  if (level === "notable")     return `Planety tworzą zauważalne wzorce w obszarze ${FILTER_AREA[filter]}.`;
+  return `Subtelna energia planetarna aktywuje Twój kosmogram.`;
+}
+
+function getEffectiveScore(dayData: DayData | undefined, filter: CalendarFilter): number {
+  if (!dayData) return 0;
+  if (filter === "love")   return dayData.intentionScores.love;
+  if (filter === "career") return dayData.intentionScores.career;
+  if (filter === "peace")  return dayData.intentionScores.peace;
+  return dayData.score;
+}
+
+function getSignificance(
+  score: number,
+  filter: CalendarFilter,
+  supporting: TransitAspect | null,
+  challenging: TransitAspect | null,
+): {
   level: SigLevel;
   badge: string;
   description: string;
@@ -138,38 +190,27 @@ function getSignificance(score: number): {
   border: string;
   badgeClass: string;
 } {
-  if (score >= 8) return {
-    level: "exceptional",
-    badge: "★ Wyjątkowy dzień",
-    description: "Silne tranzyty aktywują kluczowe planety Twojego kosmogramu. Rzadka konfiguracja — warto ją odnotować.",
-    generateLabel: "★ Wygeneruj interpretację — szczególnie wartościowe dziś",
-    border: "border-amber-500/40",
-    badgeClass: "text-amber-200 bg-amber-900/40 border border-amber-500/40",
-  };
-  if (score >= 5) return {
-    level: "notable",
-    badge: "✦ Wyraźny sygnał",
-    description: "Planety tworzą zauważalne wzorce w odniesieniu do Twojego kosmogramu.",
-    generateLabel: "Wygeneruj pogłębioną interpretację AI",
-    border: "border-amber-700/30",
-    badgeClass: "text-amber-300/80 bg-amber-900/20 border border-amber-700/30",
-  };
-  if (score >= 3) return {
-    level: "minor",
-    badge: "Mały sygnał",
-    description: "Subtelna energia planetarna aktywuje Twój kosmogram.",
-    generateLabel: "Wygeneruj interpretację AI",
-    border: "border-white/10",
-    badgeClass: "text-slate-400 bg-white/5 border border-white/10",
-  };
-  return {
-    level: "quiet",
-    badge: "Spokojny dzień",
-    description: "Żaden tranzyt nie aktywuje wyraźnie Twojego kosmogramu. Spokojne dni są równie wartościowe — to naturalna pauza, dobry moment na ciszę i wewnętrzną pracę bez zewnętrznego ciśnienia planet.",
-    generateLabel: "Wygeneruj ogólny horoskop na ten dzień",
-    border: "border-white/8",
-    badgeClass: "text-slate-500 bg-transparent border border-white/10",
-  };
+  const level: SigLevel = score >= 8 ? "exceptional" : score >= 5 ? "notable" : score >= 3 ? "minor" : "quiet";
+  const badge = FILTER_BADGE[filter][level];
+  const description = buildDescription(level, filter, supporting, challenging);
+
+  const border      = level === "exceptional" ? "border-amber-500/40" : level === "notable" ? "border-amber-700/30" : "border-white/10";
+  const badgeClass  = level === "exceptional"
+    ? "text-amber-200 bg-amber-900/40 border border-amber-500/40"
+    : level === "notable"
+    ? "text-amber-300/80 bg-amber-900/20 border border-amber-700/30"
+    : level === "minor"
+    ? "text-slate-400 bg-white/5 border border-white/10"
+    : "text-slate-500 bg-transparent border border-white/10";
+  const generateLabel = level === "exceptional"
+    ? "★ Wygeneruj interpretację — szczególnie wartościowe dziś"
+    : level === "notable"
+    ? "Wygeneruj pogłębioną interpretację AI"
+    : level === "minor"
+    ? "Wygeneruj interpretację AI"
+    : "Wygeneruj ogólny horoskop na ten dzień";
+
+  return { level, badge, description, generateLabel, border, badgeClass };
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -197,18 +238,19 @@ type Props = {
   readingId: string;
   promptContext: string;
   interpretation: string;
+  filter: CalendarFilter;
   onClose: () => void;
 };
 
-export default function DayPanel({ date, dayData, chart, readingId, promptContext, interpretation, onClose }: Props) {
+export default function DayPanel({ date, dayData, chart, readingId, promptContext, interpretation, filter, onClose }: Props) {
   const { session } = useAuth();
-  const score   = dayData?.score ?? 0;
-  const sig     = getSignificance(score);
-  const dateObj = new Date(date + "T12:00:00Z");
+  const effectiveScore = getEffectiveScore(dayData, filter);
+  const dateObj   = new Date(date + "T12:00:00Z");
   const moonSign  = getMoonSign(dateObj);
   const dayOfYear = getDayOfYear(dateObj);
-  const supporting  = (score >= 3 ? dayData?.topSupporting  : null) ?? null;
-  const challenging = (score >= 3 ? dayData?.topChallenging : null) ?? null;
+  const supporting  = (effectiveScore >= 3 ? dayData?.topSupporting  : null) ?? null;
+  const challenging = (effectiveScore >= 3 ? dayData?.topChallenging : null) ?? null;
+  const sig = getSignificance(effectiveScore, filter, supporting, challenging);
   const question = getContextualQuestion(supporting, dayOfYear);
 
   const [readingText, setReadingText] = useState("");
@@ -318,7 +360,7 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
         </p>
 
         {/* ── Transit cards — only for significant days ── */}
-        {score >= 3 && (supporting || challenging) && (
+        {effectiveScore >= 3 && (supporting || challenging) && (
           <div className="space-y-2">
             {supporting && (
               <div className="flex gap-3 p-3.5 rounded-xl bg-emerald-900/15 border border-emerald-800/25">
@@ -347,7 +389,7 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
         <div className="rounded-xl bg-white/4 border border-white/8 p-4">
           <p className="text-[10px] text-slate-600 uppercase tracking-widest font-medium mb-2 flex items-center gap-1.5">
             <Pencil className="w-3 h-3" />
-            {score >= 5
+            {effectiveScore >= 5
               ? "Pytanie refleksyjne — na podstawie dzisiejszej energii"
               : "Pytanie na ten dzień"}
           </p>
@@ -402,7 +444,7 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
               value={note}
               onChange={e => handleNoteChange(e.target.value)}
               placeholder={
-                score >= 5
+                effectiveScore >= 5
                   ? "Co czujesz / co chcesz zapamiętać z tego szczególnego dnia…"
                   : "Twoje przemyślenia, odpowiedź na pytanie…"
               }
