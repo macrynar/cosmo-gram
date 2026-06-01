@@ -21,44 +21,51 @@ function getDayScore(day: DayData, filter: CalendarFilter): number {
   return day.score;
 }
 
-function getDominantIntention(day: DayData): "love" | "career" | "peace" | "none" {
+function getDominantIntention(day: DayData): "love" | "career" | "peace" {
   const { love, career, peace } = day.intentionScores;
-  const max = Math.max(love, career, peace);
-  if (max <= 2) return "none";
-  if (love === max) return "love";
-  if (career === max) return "career";
+  if (love >= career && love >= peace) return "love";
+  if (career >= peace) return "career";
   return "peace";
 }
 
-type DotProps = { day: DayData; filter: CalendarFilter };
-function IntentDot({ day, filter }: DotProps) {
+// Background glow circle — 5 clear intensity levels
+type GlowProps = { day: DayData; filter: CalendarFilter };
+function IntensityGlow({ day, filter }: GlowProps) {
   const score = getDayScore(day, filter);
-  if (score < 3) return <span className="h-1.5 w-1.5" />;
+  if (score < 3) return null;
 
   const isChallenge = day.challengingScore > day.positiveScore + 2;
 
   let color: string;
-  if (filter === "love")   color = "bg-rose-400";
-  else if (filter === "career") color = "bg-amber-400";
-  else if (filter === "peace")  color = "bg-indigo-400";
+  if (filter === "love")        color = "bg-rose-500";
+  else if (filter === "career") color = "bg-amber-500";
+  else if (filter === "peace")  color = "bg-indigo-500";
+  else if (isChallenge)         color = "bg-red-500";
   else {
-    if (isChallenge) color = "bg-red-400";
-    else {
-      const dom = getDominantIntention(day);
-      color = dom === "love" ? "bg-rose-400" : dom === "peace" ? "bg-indigo-400" : "bg-amber-400";
-    }
+    const dom = getDominantIntention(day);
+    color = dom === "love" ? "bg-rose-500" : dom === "peace" ? "bg-indigo-500" : "bg-amber-500";
   }
 
-  const size = score >= 7 ? "w-2 h-2" : "w-1.5 h-1.5";
-  return <span className={`${size} rounded-full ${color} mt-0.5 opacity-80`} />;
-}
+  // 5 size levels — clearly differentiated
+  const size =
+    score >= 9 ? "w-11 h-11" :
+    score >= 7 ? "w-9 h-9"  :
+    score >= 5 ? "w-7 h-7"  :
+    score >= 4 ? "w-5 h-5"  :
+                 "w-3 h-3";
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+  const opacity =
+    score >= 9 ? "opacity-75" :
+    score >= 7 ? "opacity-55" :
+    score >= 5 ? "opacity-40" :
+    score >= 4 ? "opacity-30" :
+                 "opacity-20";
+
+  // Extra ring for top scores
+  const ring = score >= 9 ? `ring-1 ring-offset-0 ${color.replace("bg-", "ring-").replace("500", "400")}/50` : "";
+
   return (
-    <span className="flex items-center gap-1">
-      <span className={`w-2 h-2 rounded-full ${color} inline-block`} />
-      {label}
-    </span>
+    <span className={`absolute inset-0 m-auto rounded-full ${size} ${color} ${opacity} ${ring} pointer-events-none`} />
   );
 }
 
@@ -72,57 +79,66 @@ export default function CalendarGrid({ year, month, days, selectedDate, onSelect
 
   return (
     <div>
+      {/* Weekday headers */}
       <div className="grid grid-cols-7 mb-1">
         {WEEKDAYS.map(d => (
           <div key={d} className="text-center text-xs text-slate-500 py-1">{d}</div>
         ))}
       </div>
 
+      {/* Day cells */}
       <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: rows * 7 }).map((_, idx) => {
           const dayIdx = idx - blanks;
-          if (dayIdx < 0 || dayIdx >= days.length) return <div key={idx} />;
+          if (dayIdx < 0 || dayIdx >= days.length) return <div key={idx} className="h-11" />;
 
           const day = days[dayIdx];
-          const isToday = day.date === today;
+          const isToday    = day.date === today;
           const isSelected = day.date === selectedDate;
+          const hasScore   = getDayScore(day, filter) >= 3;
 
           return (
             <button
               key={day.date}
               onClick={() => onSelect(day.date)}
-              className={`relative flex flex-col items-center justify-center pt-1.5 pb-1 rounded-lg text-sm font-medium transition-all min-h-[44px]
+              className={`relative flex items-center justify-center h-11 rounded-lg text-sm font-medium transition-all select-none
                 ${isSelected
-                  ? "ring-2 ring-amber-400 bg-amber-900/30 text-white"
+                  ? "ring-2 ring-amber-400 text-white"
                   : isToday
-                  ? "border border-amber-500/60 text-amber-200"
-                  : "text-slate-300 hover:bg-white/5"}
+                  ? "border border-amber-500/60 text-amber-100"
+                  : hasScore
+                  ? "text-white hover:ring-1 hover:ring-white/20"
+                  : "text-slate-500 hover:text-slate-300 hover:bg-white/5"}
               `}
             >
-              <span>{dayIdx + 1}</span>
-              <IntentDot day={day} filter={filter} />
+              <IntensityGlow day={day} filter={filter} />
+              <span className="relative z-10">{dayIdx + 1}</span>
             </button>
           );
         })}
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-3 mt-4 flex-wrap justify-center text-[11px] text-slate-500">
-        {filter === "all" ? (
-          <>
-            <LegendDot color="bg-amber-400" label="sprzyja karierze/ogólnie" />
-            <LegendDot color="bg-rose-400" label="sprzyja miłości" />
-            <LegendDot color="bg-indigo-400" label="sprzyja spokojowi" />
-            <LegendDot color="bg-red-400" label="dzień wyzwań" />
-          </>
-        ) : filter === "love" ? (
-          <LegendDot color="bg-rose-400" label="siła tranzytów miłości" />
-        ) : filter === "career" ? (
-          <LegendDot color="bg-amber-400" label="siła tranzytów kariery" />
-        ) : (
-          <LegendDot color="bg-indigo-400" label="siła tranzytów spokoju" />
-        )}
-        <span className="text-slate-600">— większa kropka = silniejszy tranzyt</span>
+      <div className="mt-5 space-y-2">
+        <div className="flex items-center gap-3 flex-wrap justify-center text-[11px] text-slate-500">
+          {filter === "all" ? (
+            <>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 opacity-60 inline-block" />kariera / ogólnie</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 opacity-60 inline-block" />miłość</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-indigo-500 opacity-60 inline-block" />spokój</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500 opacity-60 inline-block" />wyzwanie</span>
+            </>
+          ) : filter === "love" ? (
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 opacity-60 inline-block" />siła tranzytów miłości</span>
+          ) : filter === "career" ? (
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 opacity-60 inline-block" />siła tranzytów kariery</span>
+          ) : (
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-indigo-500 opacity-60 inline-block" />siła tranzytów spokoju</span>
+          )}
+        </div>
+        <p className="text-center text-[11px] text-slate-600">
+          Wielkość kółka = intensywność tranzytu w Twoim kosmogramie · tylko ~5–10 dni w miesiącu jest zaznaczonych
+        </p>
       </div>
     </div>
   );

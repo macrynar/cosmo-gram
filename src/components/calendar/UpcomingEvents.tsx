@@ -6,6 +6,13 @@ import { longitudeToSign } from "@/lib/astro-types";
 import type { NatalChart } from "@/lib/astro-types";
 import { TrendingUp, AlertTriangle } from "lucide-react";
 
+const SHORT_MONTHS = ["sty","lut","mar","kwi","maj","cze","lip","sie","wrz","paź","lis","gru"];
+
+function formatShortDate(dateStr: string): string {
+  const d = new Date(dateStr + "T12:00:00Z");
+  return `${d.getUTCDate()} ${SHORT_MONTHS[d.getUTCMonth()]}`;
+}
+
 type PersonalEvent = {
   daysFromNow: number;
   date: string;
@@ -137,25 +144,31 @@ export default function UpcomingEvents({ chart }: Props) {
   return (
     <div className="glass-card rounded-2xl p-4 border border-white/10">
       <h3 className="text-sm font-medium text-slate-400 mb-4 uppercase tracking-wide">Twoje nadchodzące okna</h3>
-      <ul className="space-y-3.5">
+      <ul className="space-y-4">
         {events.map((e, i) => (
-          <li key={i} className="flex gap-3">
-            <span className="text-amber-400 font-medium text-sm w-14 shrink-0 pt-0.5">
-              {e.daysFromNow <= 0 ? "Dziś" : e.daysFromNow === 1 ? "Jutro" : `Za ${e.daysFromNow} dni`}
-            </span>
+          <li key={i} className="flex gap-4 items-start">
+            {/* Fixed-width date column — never wraps */}
+            <div className="w-16 shrink-0 text-right">
+              <p className="text-amber-400 font-semibold text-sm leading-tight whitespace-nowrap">
+                {e.daysFromNow <= 0 ? "Dziś" : e.daysFromNow === 1 ? "Jutro" : `Za ${e.daysFromNow}d`}
+              </p>
+              <p className="text-slate-600 text-xs mt-0.5">{formatShortDate(e.date)}</p>
+            </div>
+
+            {/* Icon */}
+            <div className="mt-0.5 shrink-0">
+              {e.favorable
+                ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                : <AlertTriangle className="w-3.5 h-3.5 text-amber-500/80" />}
+            </div>
+
+            {/* Content */}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {e.favorable
-                  ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  : <AlertTriangle className="w-3.5 h-3.5 text-amber-400/70 shrink-0" />}
-                <p className="text-sm text-slate-200">
-                  <span className="font-medium text-white">{e.transit_planet}</span>
-                  {" "}
-                  <span className="text-slate-500 text-xs">{e.aspect_label}</span>
-                  {" "}
-                  <span className="text-amber-200">Twojego {e.natal_planet}</span>
-                </p>
-              </div>
+              <p className="text-sm text-slate-200 leading-snug">
+                <span className="font-semibold text-white">{e.transit_planet}</span>
+                <span className="text-slate-500 text-xs mx-1">{e.aspect_label}</span>
+                <span className="text-amber-200">Twojego {e.natal_planet}</span>
+              </p>
               <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{e.meaning}</p>
             </div>
           </li>
