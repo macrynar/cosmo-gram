@@ -8,26 +8,34 @@ import type { DayData, TransitAspect } from "@/lib/chart-engine";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
 import DailyReading from "@/components/generate/DailyReading";
-import { X, Moon, HelpCircle, TrendingUp, AlertTriangle } from "lucide-react";
+import { X, Moon, TrendingUp, AlertTriangle, Pencil } from "lucide-react";
 
-const REFLECTIVE_QUESTIONS = [
-  "Co dziś chcesz wyrazić, a powstrzymujesz?",
-  "Czego naprawdę potrzebujesz dziś od siebie?",
-  "Gdzie marnujesz energię, zamiast ją inwestować?",
-  "Co byś zrobił, gdybyś nie bał się oceny innych?",
-  "Jaką jedną rzecz możesz dziś puścić?",
-  "Kto potrzebuje dziś Twojej uwagi — i czy to Ty?",
-  "Co odkładasz, co mogłoby zmienić coś ważnego?",
-  "Która decyzja czeka na Ciebie dłużej niż powinna?",
-  "Co sprawia Ci radość, a co tylko wydaje się ważne?",
-  "Czego szukasz w zewnętrznym świecie, co masz w sobie?",
-  "Jak wygląda Twoja wersja spokoju — i kiedy ją czułeś?",
-  "Co chciałbyś usłyszeć od kogoś bliskiego?",
-  "Jaką małą odwagę możesz dziś zrobić?",
-  "Czego nauczył Cię ostatni trudny czas?",
-];
+// ── Polish instrumental case for planet names (after "z") ──────────────────
+const PLANET_INSTR: Record<string, string> = {
+  "Słońce":  "Słońcem",
+  "Księżyc": "Księżycem",
+  "Merkury": "Merkurym",
+  "Wenus":   "Wenus",
+  "Mars":    "Marsem",
+  "Jowisz":  "Jowiszem",
+  "Saturn":  "Saturnem",
+  "Uran":    "Uranem",
+  "Neptun":  "Neptunem",
+  "Pluton":  "Plutonem",
+};
+const PLANET_INSTR_ARTICLE: Record<string, string> = { "Wenus": "Twoją" };
 
-// Plain-language planet meanings
+function natalPhrase(planet: string): string {
+  const article = PLANET_INSTR_ARTICLE[planet] ?? "Twoim";
+  return `${article} ${PLANET_INSTR[planet] ?? planet}`;
+}
+
+function transitToText(t: TransitAspect): string {
+  const verb = t.favorable ? "harmonizuje z" : "tworzy napięcie z";
+  return `${t.transit_planet} w ${t.transit_sign} ${verb} ${natalPhrase(t.natal_planet)}`;
+}
+
+// ── What each transit planet enables / warns about ─────────────────────────
 const SUPPORTING_ENABLES: Record<string, string> = {
   "Słońce":   "dobry moment na pewność siebie, widoczność i ważne decyzje",
   "Księżyc":  "sprzyja emocjonalnemu kontaktowi z bliskimi i z samym sobą",
@@ -54,42 +62,134 @@ const CHALLENGING_WATCH: Record<string, string> = {
   "Jowisz":   "nadmierny optymizm może mylić — sprawdzaj realia przed ruchem",
 };
 
-const PLANET_WHAT: Record<string, string> = {
-  "Słońce":   "poczucie celu i siły",
-  "Księżyc":  "emocje i potrzeby",
-  "Merkury":  "komunikację i myślenie",
-  "Wenus":    "relacje i finanse",
-  "Mars":     "energię i działanie",
-  "Jowisz":   "szanse i ekspansję",
-  "Saturn":   "strukturę i obowiązki",
-  "Uran":     "zmiany i przełomy",
-  "Neptun":   "intuicję i wrażliwość",
-  "Pluton":   "transformację",
+// ── Contextual reflective questions linked to transit planet ───────────────
+const TRANSIT_QUESTIONS: Record<string, string[]> = {
+  "Wenus":   [
+    "Co chciałbyś powiedzieć komuś bliskim, a jeszcze tego nie powiedziałeś?",
+    "Co sprawia Ci prawdziwą przyjemność — i kiedy ostatnio to poczułeś?",
+    "Jak chcesz, żeby bliscy Cię dziś doświadczyli?",
+  ],
+  "Mars":    [
+    "Co chcesz zainicjować, a wciąż odkładasz?",
+    "Na jaki jeden konkretny krok masz dziś energię?",
+    "Gdzie zatrzymuje Cię strach przed oceną innych?",
+  ],
+  "Księżyc": [
+    "Co czujesz, a starasz się nie czuć?",
+    "Czego emocjonalnie potrzebujesz dziś od siebie?",
+    "Kto lub co potrzebuje dziś Twojej uwagi — czy to przypadkiem Ty?",
+  ],
+  "Słońce":  [
+    "Gdzie masz poczucie, że nie jesteś sobą — i co za tym stoi?",
+    "Jaka wersja Ciebie chce się dziś wyrazić?",
+    "Co daje Ci dziś poczucie siły i sensu?",
+  ],
+  "Merkury": [
+    "Jaką ważną rozmowę odkładasz?",
+    "Co chciałbyś wyrazić wprost, a zamiast tego owijasz w bawełnę?",
+    "Jaka decyzja domaga się Twojej uwagi — i czemu jej jeszcze nie podjąłeś?",
+  ],
+  "Jowisz":  [
+    "Na jaki odważny ruch jest teraz czas?",
+    "Gdzie w swoim życiu zachowujesz się zbyt ostrożnie?",
+    "Co możesz zaoferować innym z nadwyżki swoich zasobów i energii?",
+  ],
+  "Saturn":  [
+    "Którą ważną rzecz odkładasz, bo wydaje się za trudna?",
+    "Co warto teraz zakończyć, żeby zrobić miejsce na coś nowego?",
+    "Czego nie chcesz widzieć, bo zmusiłoby Cię to do zmiany?",
+  ],
+  "Neptun":  [
+    "Jakie marzenie przestałeś słuchać — i dlaczego?",
+    "Co by się zmieniło, gdybyś zaufał intuicji zamiast logice?",
+    "Gdzie potrzebujesz więcej miękkości wobec siebie?",
+  ],
+  "Pluton":  [
+    "Co w Tobie jest gotowe na zmianę — nawet jeśli to boli?",
+    "Czego się trzymasz, choć wiesz już, że czas to puścić?",
+    "Co kryje się pod sytuacją, którą wciąż omijasz wzrokiem?",
+  ],
 };
 
-function transitToText(t: TransitAspect): string {
-  const verb = t.favorable ? "harmonizuje z" : "napina";
-  const what = PLANET_WHAT[t.natal_planet] ? `(Twoj${t.natal_planet === "Księżyc" ? "a" : "e"} ${PLANET_WHAT[t.natal_planet]})` : "";
-  return `${t.transit_planet} w ${t.transit_sign} ${verb} Twojego ${t.natal_planet} ${what}`;
+const GENERAL_QUESTIONS = [
+  "Czego naprawdę potrzebujesz dziś od siebie?",
+  "Co byś zrobił, gdybyś nie bał się oceny innych?",
+  "Jaką jedną rzecz możesz dziś puścić?",
+  "Gdzie marnujesz energię zamiast ją inwestować?",
+  "Co chciałbyś zapamiętać z tego okresu swojego życia?",
+];
+
+function getContextualQuestion(supporting: TransitAspect | null, dayOfYear: number): string {
+  if (supporting) {
+    const pool = TRANSIT_QUESTIONS[supporting.transit_planet];
+    if (pool) return pool[dayOfYear % pool.length];
+  }
+  return GENERAL_QUESTIONS[dayOfYear % GENERAL_QUESTIONS.length];
 }
 
+// ── Significance levels ────────────────────────────────────────────────────
+type SigLevel = "exceptional" | "notable" | "minor" | "quiet";
+
+function getSignificance(score: number): {
+  level: SigLevel;
+  badge: string;
+  description: string;
+  generateLabel: string;
+  border: string;
+  badgeClass: string;
+} {
+  if (score >= 8) return {
+    level: "exceptional",
+    badge: "★ Wyjątkowy dzień",
+    description: "Silne tranzyty aktywują kluczowe planety Twojego kosmogramu. Rzadka konfiguracja — warto ją odnotować.",
+    generateLabel: "★ Wygeneruj interpretację — szczególnie wartościowe dziś",
+    border: "border-amber-500/40",
+    badgeClass: "text-amber-200 bg-amber-900/40 border border-amber-500/40",
+  };
+  if (score >= 5) return {
+    level: "notable",
+    badge: "✦ Wyraźny sygnał",
+    description: "Planety tworzą zauważalne wzorce w odniesieniu do Twojego kosmogramu.",
+    generateLabel: "Wygeneruj pogłębioną interpretację AI",
+    border: "border-amber-700/30",
+    badgeClass: "text-amber-300/80 bg-amber-900/20 border border-amber-700/30",
+  };
+  if (score >= 3) return {
+    level: "minor",
+    badge: "Mały sygnał",
+    description: "Subtelna energia planetarna aktywuje Twój kosmogram.",
+    generateLabel: "Wygeneruj interpretację AI",
+    border: "border-white/10",
+    badgeClass: "text-slate-400 bg-white/5 border border-white/10",
+  };
+  return {
+    level: "quiet",
+    badge: "Spokojny dzień",
+    description: "Żaden tranzyt nie aktywuje wyraźnie Twojego kosmogramu. Spokojne dni są równie wartościowe — to naturalna pauza, dobry moment na ciszę i wewnętrzną pracę bez zewnętrznego ciśnienia planet.",
+    generateLabel: "Wygeneruj ogólny horoskop na ten dzień",
+    border: "border-white/8",
+    badgeClass: "text-slate-500 bg-transparent border border-white/10",
+  };
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
 function getMoonSign(date: Date): string {
   const geo = Astronomy.GeoVector(Astronomy.Body.Moon, date, false);
   const ecl = Astronomy.Ecliptic(geo);
-  const lon = ((ecl.elon % 360) + 360) % 360;
-  return longitudeToSign(lon).name;
+  return longitudeToSign(((ecl.elon % 360) + 360) % 360).name;
 }
 
 function getDayOfYear(date: Date): number {
-  const start = new Date(date.getFullYear(), 0, 0);
-  return Math.floor((date.getTime() - start.getTime()) / 86400000);
+  return Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000);
 }
 
 function formatDatePL(dateStr: string): string {
-  const d = new Date(dateStr + "T12:00:00Z");
-  return d.toLocaleDateString("pl-PL", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  return new Date(dateStr + "T12:00:00Z").toLocaleDateString("pl-PL", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
 }
 
+// ── Component ──────────────────────────────────────────────────────────────
 type Props = {
   date: string;
   dayData?: DayData;
@@ -102,23 +202,28 @@ type Props = {
 
 export default function DayPanel({ date, dayData, chart, readingId, promptContext, interpretation, onClose }: Props) {
   const { session } = useAuth();
+  const score   = dayData?.score ?? 0;
+  const sig     = getSignificance(score);
   const dateObj = new Date(date + "T12:00:00Z");
-  const moonSign = getMoonSign(dateObj);
-  const question = REFLECTIVE_QUESTIONS[getDayOfYear(dateObj) % REFLECTIVE_QUESTIONS.length];
+  const moonSign  = getMoonSign(dateObj);
+  const dayOfYear = getDayOfYear(dateObj);
+  const supporting  = (score >= 3 ? dayData?.topSupporting  : null) ?? null;
+  const challenging = (score >= 3 ? dayData?.topChallenging : null) ?? null;
+  const question = getContextualQuestion(supporting, dayOfYear);
 
   const [readingText, setReadingText] = useState("");
   const [dateLabel, setDateLabel] = useState(formatDatePL(date));
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState("");
-
   const [note, setNote] = useState("");
   const [noteSaving, setNoteSaving] = useState(false);
   const [noteLoaded, setNoteLoaded] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const authHeader: Record<string, string> = session ? { Authorization: `Bearer ${session.access_token}` } : {};
 
   useEffect(() => {
+    setReadingText("");
+    setGenError("");
     if (!session) return;
     fetch(`/api/calendar-note?date=${date}&reading_id=${readingId}`, { headers: authHeader })
       .then(r => r.json())
@@ -180,17 +285,15 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
     }
   }
 
-  const supporting = dayData?.topSupporting;
-  const challenging = dayData?.topChallenging;
-  const hasTransits = supporting || challenging;
-
   return (
-    <div className="glass-card rounded-2xl border border-amber-700/25 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-white/6">
+    <div className={`glass-card rounded-2xl border overflow-hidden ${sig.border}`}>
+      {/* ── Header ── */}
+      <div className={`flex items-center justify-between px-5 py-4 border-b border-white/6 ${sig.level === "exceptional" ? "bg-amber-900/10" : ""}`}>
         <div>
           <p className="text-xs text-slate-500 uppercase tracking-widest mb-0.5">Wybrany dzień</p>
-          <h3 className="text-base font-semibold text-white capitalize">{formatDatePL(date)}</h3>
+          <h3 className={`text-base font-semibold capitalize ${sig.level === "exceptional" ? "text-amber-100" : "text-white"}`}>
+            {formatDatePL(date)}
+          </h3>
         </div>
         <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors p-1">
           <X className="w-4 h-4" />
@@ -198,27 +301,31 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
       </div>
 
       <div className="p-5 space-y-4">
-        {/* Moon + Question */}
-        <div className="flex flex-col sm:flex-row gap-2.5">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-900/20 border border-indigo-700/30 text-sm shrink-0">
-            <Moon className="w-4 h-4 text-indigo-300 shrink-0" />
-            <span className="text-slate-300">Księżyc w <span className="text-indigo-200 font-medium">{moonSign}</span></span>
-          </div>
-          <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-sm flex-1 min-w-0">
-            <HelpCircle className="w-4 h-4 text-amber-400/60 shrink-0 mt-0.5" />
-            <span className="text-slate-400 italic">{question}</span>
+        {/* ── Significance badge + Moon ── */}
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${sig.badgeClass}`}>
+            {sig.badge}
+          </span>
+          <div className="flex items-center gap-1.5 text-sm text-slate-400">
+            <Moon className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Księżyc w <span className="text-indigo-300 font-medium">{moonSign}</span></span>
           </div>
         </div>
 
-        {/* Transit summary — instant, no AI needed */}
-        {hasTransits && (
+        {/* ── Day description ── */}
+        <p className={`text-sm leading-relaxed ${sig.level === "quiet" ? "text-slate-500" : "text-slate-400"}`}>
+          {sig.description}
+        </p>
+
+        {/* ── Transit cards — only for significant days ── */}
+        {score >= 3 && (supporting || challenging) && (
           <div className="space-y-2">
             {supporting && (
               <div className="flex gap-3 p-3.5 rounded-xl bg-emerald-900/15 border border-emerald-800/25">
                 <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-emerald-400/80 uppercase tracking-wider mb-1">Co sprzyja</p>
-                  <p className="text-sm text-slate-300 leading-relaxed">{transitToText(supporting)}</p>
+                  <p className="text-sm text-slate-200 leading-relaxed">{transitToText(supporting)}</p>
                   <p className="text-xs text-emerald-300/70 mt-1">{SUPPORTING_ENABLES[supporting.transit_planet]}</p>
                 </div>
               </div>
@@ -228,7 +335,7 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
                 <AlertTriangle className="w-4 h-4 text-amber-400/70 shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-amber-400/60 uppercase tracking-wider mb-1">Na co uważać</p>
-                  <p className="text-sm text-slate-300 leading-relaxed">{transitToText(challenging)}</p>
+                  <p className="text-sm text-slate-200 leading-relaxed">{transitToText(challenging)}</p>
                   <p className="text-xs text-amber-300/60 mt-1">{CHALLENGING_WATCH[challenging.transit_planet]}</p>
                 </div>
               </div>
@@ -236,24 +343,38 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
           </div>
         )}
 
-        {!hasTransits && (
-          <p className="text-xs text-slate-600 italic">Brak wyraźnych tranzytów tego dnia — spokojny, neutralny czas.</p>
-        )}
+        {/* ── Reflective question — with clear purpose ── */}
+        <div className="rounded-xl bg-white/4 border border-white/8 p-4">
+          <p className="text-[10px] text-slate-600 uppercase tracking-widest font-medium mb-2 flex items-center gap-1.5">
+            <Pencil className="w-3 h-3" />
+            {score >= 5
+              ? "Pytanie refleksyjne — na podstawie dzisiejszej energii"
+              : "Pytanie na ten dzień"}
+          </p>
+          <p className="text-sm text-slate-300 italic leading-relaxed">&ldquo;{question}&rdquo;</p>
+          <p className="text-[11px] text-slate-600 mt-2.5">
+            Zapisz swoją odpowiedź lub przemyślenia w notatce poniżej ↓
+          </p>
+        </div>
 
-        {/* Divider */}
+        {/* ── Divider ── */}
         <div className="h-px bg-gradient-to-r from-transparent via-white/8 to-transparent" />
 
-        {/* Generate button / result */}
+        {/* ── Generate / Reading ── */}
         {!readingText ? (
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-900/25 border border-amber-700/35 text-amber-200 text-sm font-medium hover:bg-amber-800/35 disabled:opacity-50 transition-all"
+            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all disabled:opacity-50 ${
+              sig.level === "exceptional"
+                ? "bg-amber-700/40 border border-amber-500/40 text-amber-100 hover:bg-amber-600/50"
+                : "bg-amber-900/20 border border-amber-700/30 text-amber-200 hover:bg-amber-800/30"
+            }`}
           >
             {generating
               ? <span className="w-4 h-4 border-2 border-amber-300/25 border-t-amber-300 rounded-full animate-spin" />
               : <CosmoIcon className="w-4 h-4" />}
-            {generating ? "Interpretuję tranzyty…" : "Wygeneruj pełną interpretację AI"}
+            {generating ? "Interpretuję tranzyty…" : sig.generateLabel}
           </button>
         ) : (
           <>
@@ -270,17 +391,21 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
 
         {genError && <p className="text-xs text-red-400">{genError}</p>}
 
-        {/* Note */}
+        {/* ── Note ── */}
         {noteLoaded && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs text-slate-500 uppercase tracking-widest">Notatka</p>
+              <p className="text-xs text-slate-500 uppercase tracking-widest">Twoja notatka</p>
               {noteSaving && <span className="text-[10px] text-slate-600 animate-pulse">Zapisuję…</span>}
             </div>
             <textarea
               value={note}
               onChange={e => handleNoteChange(e.target.value)}
-              placeholder="Twoje przemyślenia na ten dzień…"
+              placeholder={
+                score >= 5
+                  ? "Co czujesz / co chcesz zapamiętać z tego szczególnego dnia…"
+                  : "Twoje przemyślenia, odpowiedź na pytanie…"
+              }
               rows={3}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-slate-300 placeholder-slate-600 focus:outline-none focus:border-amber-700/50 resize-none transition-all"
             />

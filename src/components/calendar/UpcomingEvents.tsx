@@ -8,6 +8,18 @@ import { TrendingUp, AlertTriangle } from "lucide-react";
 
 const SHORT_MONTHS = ["sty","lut","mar","kwi","maj","cze","lip","sie","wrz","paź","lis","gru"];
 
+const PLANET_INSTR: Record<string, string> = {
+  "Słońce": "Słońcem", "Księżyc": "Księżycem", "Merkury": "Merkurym",
+  "Wenus": "Wenus", "Mars": "Marsem", "Jowisz": "Jowiszem",
+  "Saturn": "Saturnem", "Uran": "Uranem", "Neptun": "Neptunem", "Pluton": "Plutonem",
+};
+const PLANET_INSTR_ARTICLE: Record<string, string> = { "Wenus": "Twoją" };
+
+function natalPhrase(planet: string): string {
+  const article = PLANET_INSTR_ARTICLE[planet] ?? "Twoim";
+  return `${article} ${PLANET_INSTR[planet] ?? planet}`;
+}
+
 function formatShortDate(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00Z");
   return `${d.getUTCDate()} ${SHORT_MONTHS[d.getUTCMonth()]}`;
@@ -167,7 +179,7 @@ export default function UpcomingEvents({ chart }: Props) {
               <p className="text-sm text-slate-200 leading-snug">
                 <span className="font-semibold text-white">{e.transit_planet}</span>
                 <span className="text-slate-500 text-xs mx-1">{e.aspect_label}</span>
-                <span className="text-amber-200">Twojego {e.natal_planet}</span>
+                <span className="text-amber-200">{natalPhrase(e.natal_planet)}</span>
               </p>
               <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{e.meaning}</p>
             </div>
