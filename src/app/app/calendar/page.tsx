@@ -57,6 +57,8 @@ export default function CalendarPage() {
     return computeMonthData(selectedReading.chart_data, year, month);
   }, [selectedReading, year, month]);
 
+  const selectedDayData = useMemo(() => days.find(d => d.date === selectedDate) ?? undefined, [days, selectedDate]);
+
   const loadReadings = useCallback(async () => {
     if (!session) return;
     setLoadingHistory(true);
@@ -205,6 +207,7 @@ export default function CalendarPage() {
             {selectedDate && selectedReading && (
               <DayPanel
                 date={selectedDate}
+                dayData={selectedDayData}
                 chart={selectedReading.chart_data}
                 readingId={selectedReading.id}
                 promptContext={""}
