@@ -4,102 +4,57 @@ import { useMemo } from "react";
 import * as Astronomy from "astronomy-engine";
 import { longitudeToSign } from "@/lib/astro-types";
 import type { NatalChart } from "@/lib/astro-types";
+import { TrendingUp, AlertTriangle } from "lucide-react";
 
-type Event = {
+type PersonalEvent = {
   daysFromNow: number;
-  planet: string;
-  newSign: string;
+  date: string;
+  transit_planet: string;
+  transit_sign: string;
+  aspect_label: string;
+  natal_planet: string;
+  favorable: boolean;
   meaning: string;
 };
 
-const TRACKED_PLANETS: Array<{ name: string; body: Astronomy.Body }> = [
-  { name: "Mars",    body: Astronomy.Body.Mars    },
-  { name: "Jowisz", body: Astronomy.Body.Jupiter },
-  { name: "Saturn",  body: Astronomy.Body.Saturn  },
-  { name: "Wenus",   body: Astronomy.Body.Venus   },
-  { name: "Merkury", body: Astronomy.Body.Mercury },
+const TRACKED_PLANETS: Array<{ name: string; body: Astronomy.Body; priority: number }> = [
+  { name: "Jowisz", body: Astronomy.Body.Jupiter, priority: 5 },
+  { name: "Saturn",  body: Astronomy.Body.Saturn,  priority: 5 },
+  { name: "Mars",    body: Astronomy.Body.Mars,    priority: 8 },
+  { name: "Wenus",   body: Astronomy.Body.Venus,   priority: 8 },
+  { name: "Merkury", body: Astronomy.Body.Mercury, priority: 6 },
 ];
 
-// What each planet governs when entering a sign
-const PLANET_INGRESS_MEANING: Record<string, Record<string, string>> = {
-  "Merkury": {
-    "Rak":        "komunikacja staje się bardziej emocjonalna i intuicyjna",
-    "Lew":        "słowa nabierają mocy — czas na odważne rozmowy i prezentacje",
-    "Panna":      "myślenie staje się analityczne — dobry czas na planowanie i korekty",
-    "Waga":       "sprzyja dyplomacji i kompromisowi w rozmowach",
-    "Skorpion":   "komunikacja wchodzi w głębię — rozmowy dotykają sedna",
-    "Strzelec":   "myślenie staje się szersze — czas na wizje i duże plany",
-    "Koziorożec": "komunikacja staje się bardziej konkretna i praktyczna",
-    "Wodnik":     "oryginalne pomysły i niekonwencjonalne myślenie na prowadzeniu",
-    "Ryby":       "intuicja i wrażliwość w komunikacji — słuchaj między wierszami",
-    "Baran":      "decyzje podejmowane szybciej — czas na inicjatywę",
-    "Byk":        "stabilne myślenie, dobry czas na finanse i praktyczne rozmowy",
-    "Bliźnięta":  "przyspieszenie komunikacji, wielotorowe myślenie i nauka",
-  },
-  "Wenus": {
-    "Rak":        "relacje wchodzą w klimat troski i emocjonalnej bliskości",
-    "Lew":        "czas na wyrażanie uczuć głośno — relacje chcą ciepła i afirmacji",
-    "Panna":      "miłość przez dbałość o detale i codzienną służbę drugiemu człowiekowi",
-    "Waga":       "szczyt energii Wenus — partnerstwo, estetyka i harmonia",
-    "Skorpion":   "relacje wchodzą głębiej — czas na autentyczność i intensywność",
-    "Strzelec":   "miłość przez przygodę, wolność i wspólne odkrywanie świata",
-    "Koziorożec": "relacje przez zobowiązanie i budowanie czegoś razem",
-    "Wodnik":     "przyjaźń i wolność w relacjach — niekonwencjonalne podejście",
-    "Ryby":       "romantyzm i współczucie — czas na bezwarunkową miłość",
-    "Baran":      "nowe zainteresowania i odważne gesty w relacjach",
-    "Byk":        "stabilność, zmysłowość i piękno — czas na przyjemności",
-    "Bliźnięta":  "lekkość i intelektualny flirt — relacje przez rozmowę",
-  },
-  "Mars": {
-    "Baran":      "energia na najwyższych obrotach — czas na inicjatywę i nowe starty",
-    "Byk":        "energia powolna, ale wytrwała — skuteczne działanie przez regularność",
-    "Bliźnięta":  "działanie staje się wielotorowe — kilka projektów naraz jest ok",
-    "Rak":        "energia idzie w kierunku domu, rodziny i emocjonalnego bezpieczeństwa",
-    "Lew":        "ekspresja i odwaga — czas na działanie z pasją i pewnością siebie",
-    "Panna":      "skupiona praca i doskonalenie detali — mniej ognia, więcej precyzji",
-    "Waga":       "działanie przez kompromis — decyzje wymagają rozważenia wszystkich stron",
-    "Skorpion":   "intensywna energia i determinacja — czas na głęboki push",
-    "Strzelec":   "działanie przez wizję i optymizm — czas na duże cele",
-    "Koziorożec": "Mars w szczycie — ambicja, struktura i dążenie do celu",
-    "Wodnik":     "działanie na rzecz wspólnoty i zmian systemowych",
-    "Ryby":       "energia ulotna — ważniejsza jest intuicja niż plan",
-  },
-  "Jowisz": {
-    "Baran":      "ekspansja przez odwagę i inicjatywę — okno na nowe projekty",
-    "Byk":        "wzrost przez stabilność i budowanie — dobry czas na finanse i majątek",
-    "Bliźnięta":  "wzrost przez wiedzę, podróże i intelektualną eksplorację",
-    "Rak":        "ekspansja przez rodzinę, emocje i bezpieczeństwo",
-    "Lew":        "Jowisz wchodzi w Lwa — duże możliwości przez pewność siebie i wyraz",
-    "Panna":      "wzrost przez pracę i doskonalenie — szczegóły przynoszą wyniki",
-    "Waga":       "ekspansja przez partnerstwo i współpracę",
-    "Skorpion":   "wzrost przez transformację i głębię — co trudne, staje się wartościowe",
-    "Strzelec":   "Jowisz w domu — ekspansja, przygoda i poszukiwanie sensu",
-    "Koziorożec": "wzrost przez ambicję i cierpliwą pracę na cel",
-    "Wodnik":     "ekspansja przez innowacje i działanie na rzecz innych",
-    "Ryby":       "wzrost przez wrażliwość, sztukę i duchowość",
-  },
-  "Saturn": {
-    "Baran":      "Saturn wymaga struktury i dyscypliny w nowych projektach",
-    "Byk":        "czas na budowanie trwałych fundamentów finansowych",
-    "Bliźnięta":  "Saturn strukturyzuje komunikację — czas na poważne nauki i zobowiązania",
-    "Rak":        "lekcja odpowiedzialności w domu i relacjach rodzinnych",
-    "Lew":        "Saturn w Lwie — czas na poważne podejście do wyrazu i twórczości",
-    "Panna":      "dyscyplina w pracy i rutynach przynosi wymierne efekty",
-    "Waga":       "Saturn w Wadze — czas na odpowiedzialne relacje i zobowiązania",
-    "Skorpion":   "głębia i transformacja wymagają cierpliwości i pracy",
-    "Strzelec":   "strukturyzowanie wizji — czas na realizm w dużych planach",
-    "Koziorożec": "Saturn w domu — szczyt dyscypliny, ambicji i budowania kariery",
-    "Wodnik":     "budowanie trwałych struktur dla wspólnoty i przyszłości",
-    "Ryby":       "czas na poważne podejście do intuicji, duchowości i granic",
-  },
+// Natal planets we care about for personalized events
+const PERSONAL_NATAL = new Set(["Słońce", "Księżyc", "Wenus", "Mars", "Merkury", "Jowisz", "Saturn"]);
+
+const ASPECT_ANGLES: Record<string, number> = {
+  conjunction: 0, sextile: 60, trine: 120, square: 90, opposition: 180,
 };
 
-const PLANET_DEFAULT: Record<string, string> = {
-  "Merkury": "zmiana stylu myślenia i komunikacji",
-  "Wenus":   "zmiana klimatu w relacjach i sferze finansowej",
-  "Mars":    "nowy kierunek energii i działania",
-  "Jowisz":  "nowe okno możliwości i ekspansji",
-  "Saturn":  "nowe lekcje i obszar do zbudowania struktury",
+const ASPECT_LABEL: Record<string, string> = {
+  conjunction: "koniunkcja", sextile: "sekstyl", trine: "trygon",
+  square: "kwadrat", opposition: "opozycja",
+};
+
+const ASPECT_FRIENDLY: Record<string, string> = {
+  conjunction: "spotyka", sextile: "wspiera", trine: "harmonizuje z",
+  square: "napina", opposition: "staje naprzeciw",
+};
+
+const FAVORABLE_ASPECTS = new Set(["sextile", "trine"]);
+const CONJUNCTION_FAVORABLE: Record<string, boolean> = {
+  "Jowisz": true, "Wenus": true, "Merkury": true,
+  "Saturn": false, "Mars": false,
+};
+
+// Plain-language meanings by transit planet × favorable
+const MEANINGS: Record<string, { fav: string; tense: string }> = {
+  "Wenus":   { fav: "dobry moment na relacje, wyrażanie uczuć i decyzje finansowe", tense: "napięcia w relacjach lub finansach wymagają uwagi" },
+  "Mars":    { fav: "energia i napęd — czas na push i realizację planów", tense: "słowa mogą wychodzić ostrzej, świadoma komunikacja" },
+  "Merkury": { fav: "jasne myślenie, dobry czas na ważne rozmowy i decyzje", tense: "łatwo o nieporozumienia — sprawdzaj szczegóły" },
+  "Jowisz":  { fav: "okno na odważniejszy ruch, nowe możliwości i ekspansję", tense: "nadmierny optymizm może mylić — sprawdzaj realia" },
+  "Saturn":  { fav: "dobry czas na zamknięcie zaległości i poważne zobowiązania", tense: "więcej ograniczeń i ciężaru niż zwykle — cierpliwość" },
 };
 
 function getEclipticLon(body: Astronomy.Body, date: Date): number {
@@ -108,51 +63,99 @@ function getEclipticLon(body: Astronomy.Body, date: Date): number {
   return ((ecl.elon % 360) + 360) % 360;
 }
 
-function computeUpcoming(fromDate: Date, days: number): Event[] {
-  const events: Event[] = [];
-  const today = new Date(fromDate);
+// Find days where a transit makes an exact aspect (orb < 1°) to a natal planet
+// by looking for local orb minima (orb shrinks then grows)
+function computePersonalEvents(natalChart: NatalChart, fromDate: Date, lookahead: number): PersonalEvent[] {
+  const events: PersonalEvent[] = [];
+  const seen = new Set<string>(); // one event per transit-aspect-natal combo
 
-  for (const { name, body } of TRACKED_PLANETS) {
-    let prevSign = longitudeToSign(getEclipticLon(body, today)).name;
+  const personalPlanets = natalChart.planets.filter(p => PERSONAL_NATAL.has(p.name));
 
-    for (let d = 1; d <= days; d++) {
-      const date = new Date(today.getTime() + d * 86400000);
-      const sign = longitudeToSign(getEclipticLon(body, date)).name;
-      if (sign !== prevSign) {
-        const meaning =
-          PLANET_INGRESS_MEANING[name]?.[sign] ??
-          `${PLANET_DEFAULT[name] ?? "zmiana energii planetarnej"} (${sign})`;
-        events.push({ daysFromNow: d, planet: name, newSign: sign, meaning });
-        prevSign = sign;
+  for (const { name: tName, body, priority } of TRACKED_PLANETS) {
+    for (const natal of personalPlanets) {
+      for (const [typeName, angle] of Object.entries(ASPECT_ANGLES)) {
+        // Scan forward to find when this aspect is nearest exact (orb minimum)
+        let prevOrb = Infinity;
+
+        for (let d = 0; d <= lookahead; d++) {
+          const date = new Date(fromDate.getTime() + d * 86400000);
+          const tLon = getEclipticLon(body, date);
+          const { name: tSign } = longitudeToSign(tLon);
+
+          let diff = Math.abs(tLon - natal.longitude) % 360;
+          if (diff > 180) diff = 360 - diff;
+          const orb = Math.abs(diff - angle);
+
+          // Local minimum: orb was decreasing, now starts increasing
+          if (orb <= 1.2 && orb > prevOrb && prevOrb <= 1.0) {
+            const key = `${tName}-${typeName}-${natal.name}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+
+              const favorable = typeName === "conjunction"
+                ? (CONJUNCTION_FAVORABLE[tName] ?? true)
+                : FAVORABLE_ASPECTS.has(typeName);
+
+              const meaning = favorable
+                ? (MEANINGS[tName]?.fav ?? "korzystna energia")
+                : (MEANINGS[tName]?.tense ?? "wymagający czas");
+
+              events.push({
+                daysFromNow: d - 1,
+                date: new Date(fromDate.getTime() + (d - 1) * 86400000).toISOString().slice(0, 10),
+                transit_planet: tName,
+                transit_sign: tSign,
+                aspect_label: ASPECT_LABEL[typeName] ?? typeName,
+                natal_planet: natal.name,
+                favorable,
+                meaning,
+              });
+            }
+          }
+
+          // Reset if orb jumped above threshold (planet moved past)
+          if (orb > 3) prevOrb = Infinity;
+          else prevOrb = orb;
+        }
       }
     }
   }
 
-  return events.sort((a, b) => a.daysFromNow - b.daysFromNow).slice(0, 5);
+  // Sort by date, then by planet priority (more important first on same day)
+  return events
+    .sort((a, b) => a.daysFromNow - b.daysFromNow || (TRACKED_PLANETS.find(p => p.name === b.transit_planet)?.priority ?? 0) - (TRACKED_PLANETS.find(p => p.name === a.transit_planet)?.priority ?? 0))
+    .slice(0, 6);
 }
 
 type Props = { chart: NatalChart };
 
-export default function UpcomingEvents({ chart: _ }: Props) {
-  const events = useMemo(() => computeUpcoming(new Date(), 60), []);
+export default function UpcomingEvents({ chart }: Props) {
+  const events = useMemo(() => computePersonalEvents(chart, new Date(), 60), [chart]);
 
   if (events.length === 0) return null;
 
   return (
     <div className="glass-card rounded-2xl p-4 border border-white/10">
-      <h3 className="text-sm font-medium text-slate-400 mb-4 uppercase tracking-wide">Nadchodzące zdarzenia</h3>
+      <h3 className="text-sm font-medium text-slate-400 mb-4 uppercase tracking-wide">Twoje nadchodzące okna</h3>
       <ul className="space-y-3.5">
-        {events.map((e) => (
-          <li key={`${e.planet}-${e.newSign}`} className="flex gap-3">
+        {events.map((e, i) => (
+          <li key={i} className="flex gap-3">
             <span className="text-amber-400 font-medium text-sm w-14 shrink-0 pt-0.5">
-              {e.daysFromNow === 1 ? "Jutro" : `Za ${e.daysFromNow} dni`}
+              {e.daysFromNow <= 0 ? "Dziś" : e.daysFromNow === 1 ? "Jutro" : `Za ${e.daysFromNow} dni`}
             </span>
-            <div className="min-w-0">
-              <p className="text-sm text-slate-200">
-                <span className="font-medium text-white">{e.planet}</span>
-                {" wchodzi w "}
-                <span className="text-amber-200">{e.newSign}</span>
-              </p>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {e.favorable
+                  ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  : <AlertTriangle className="w-3.5 h-3.5 text-amber-400/70 shrink-0" />}
+                <p className="text-sm text-slate-200">
+                  <span className="font-medium text-white">{e.transit_planet}</span>
+                  {" "}
+                  <span className="text-slate-500 text-xs">{e.aspect_label}</span>
+                  {" "}
+                  <span className="text-amber-200">Twojego {e.natal_planet}</span>
+                </p>
+              </div>
               <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{e.meaning}</p>
             </div>
           </li>

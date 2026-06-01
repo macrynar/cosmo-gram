@@ -33,7 +33,7 @@ function getDominantIntention(day: DayData): "love" | "career" | "peace" | "none
 type DotProps = { day: DayData; filter: CalendarFilter };
 function IntentDot({ day, filter }: DotProps) {
   const score = getDayScore(day, filter);
-  if (score <= 2) return <span className="h-1.5 w-1.5" />;
+  if (score < 3) return <span className="h-1.5 w-1.5" />;
 
   const isChallenge = day.challengingScore > day.positiveScore + 2;
 

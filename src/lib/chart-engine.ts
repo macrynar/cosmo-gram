@@ -381,84 +381,86 @@ const LOVE_PLANETS    = new Set(["Wenus", "Księżyc"]);
 const CAREER_PLANETS  = new Set(["Słońce", "Saturn", "Mars", "Jowisz"]);
 const PEACE_PLANETS   = new Set(["Neptun", "Księżyc", "Jowisz"]);
 
+// Only these natal planets make a day "special" — personal placements
+const PERSONAL_NATAL  = new Set(["Słońce", "Księżyc", "Merkury", "Wenus", "Mars"]);
+const SCORE_ORB   = 1.5;  // tight — only near-exact aspects count toward score
+const DISPLAY_ORB = 3.5;  // wider — for DayPanel transit display
+
+const PLANET_PRIORITY: Record<string, number> = {
+  "Słońce": 10, "Księżyc": 10, "Wenus": 8, "Mars": 8, "Merkury": 6,
+  "Jowisz": 5, "Saturn": 5, "Uran": 2, "Neptun": 2, "Pluton": 2,
+};
+
+function makeAspectType(typeName: string, favorable: boolean): string {
+  if (typeName === "conjunction") return favorable ? "spotkanie (harmonia)" : "spotkanie (napięcie)";
+  if (typeName === "sextile")    return "dobre wsparcie";
+  if (typeName === "trine")      return "harmonia";
+  if (typeName === "square")     return "napięcie";
+  return "biegunowość";
+}
+
 export function computeDayScore(natalChart: NatalChart, date: Date): DayData {
   const dateStr = date.toISOString().slice(0, 10);
 
-  const transitLongitudes = PLANET_DEFS.map(({ name, body }) => {
+  const transitPlanets = PLANET_DEFS.map(({ name, body }) => {
     const longitude = getEclipticLongitude(body, date);
     const { name: signName } = longitudeToSign(longitude);
     return { name, longitude, sign: signName };
   });
 
-  const planetPriority: Record<string, number> = {
-    "Słońce": 10, "Księżyc": 10, "Wenus": 8, "Mars": 8, "Merkury": 6,
-    "Jowisz": 5, "Saturn": 5, "Uran": 2, "Neptun": 2, "Pluton": 2,
-  };
-
-  let posRaw = 0, negRaw = 0;
+  let scorePos = 0, scoreNeg = 0;
   let loveRaw = 0, careerRaw = 0, peaceRaw = 0;
-  const allAspects: TransitAspect[] = [];
+  const displayAspects: TransitAspect[] = [];
 
-  for (const transit of transitLongitudes) {
+  for (const transit of transitPlanets) {
     for (const natal of natalChart.planets) {
       let diff = Math.abs(transit.longitude - natal.longitude) % 360;
       if (diff > 180) diff = 360 - diff;
 
       for (const [typeName, angle] of Object.entries(ASPECT_ANGLES_TRANSIT)) {
         const orb = Math.abs(diff - angle);
-        if (orb > 5) continue;
+        if (orb > DISPLAY_ORB) continue;
 
-        let favorable: boolean;
-        if (typeName === "conjunction") {
-          favorable = CONJUNCTION_FAVORABLE[transit.name] ?? true;
-        } else {
-          favorable = FAVORABLE_ASPECTS.has(typeName);
+        const favorable = typeName === "conjunction"
+          ? (CONJUNCTION_FAVORABLE[transit.name] ?? true)
+          : FAVORABLE_ASPECTS.has(typeName);
+
+        // Score: only personal natal + tight orb — makes "notable" days rare
+        if (PERSONAL_NATAL.has(natal.name) && orb <= SCORE_ORB) {
+          const w = (PLANET_PRIORITY[transit.name] ?? 1) * ((SCORE_ORB - orb) / SCORE_ORB);
+          if (favorable) scorePos += w;
+          else scoreNeg += w;
+          if (LOVE_PLANETS.has(transit.name))                    loveRaw   += w;
+          if (CAREER_PLANETS.has(transit.name))                  careerRaw += w;
+          if (PEACE_PLANETS.has(transit.name) && favorable)      peaceRaw  += w;
         }
 
-        const aspect_type = typeName === "conjunction"
-          ? (favorable ? "spotkanie (harmonia)" : "spotkanie (napięcie)")
-          : typeName === "sextile" ? "dobre wsparcie"
-          : typeName === "trine" ? "harmonia"
-          : typeName === "square" ? "napięcie"
-          : "biegunowość";
-
-        const weight = ((planetPriority[transit.name] ?? 1) + (planetPriority[natal.name] ?? 1))
-          * ((5 - orb) / 5);
-
-        if (favorable) posRaw += weight;
-        else negRaw += weight;
-
-        if (LOVE_PLANETS.has(transit.name)) loveRaw += weight;
-        if (CAREER_PLANETS.has(transit.name)) careerRaw += weight;
-        if (PEACE_PLANETS.has(transit.name) && favorable) peaceRaw += weight;
-
-        allAspects.push({
+        displayAspects.push({
           transit_planet: transit.name,
-          transit_sign: transit.sign,
-          aspect_type,
-          natal_planet: natal.name,
-          natal_sign: natal.sign,
-          orb_degrees: orb,
+          transit_sign:   transit.sign,
+          aspect_type:    makeAspectType(typeName, favorable),
+          natal_planet:   natal.name,
+          natal_sign:     natal.sign,
+          orb_degrees:    orb,
           favorable,
         });
       }
     }
   }
 
+  // MAX_SCORE calibrated so a single major exact transit scores ~7-8
+  const MAX_SCORE = 12;
   const norm = (v: number, max: number) => Math.min(10, Math.round((v / max) * 10));
-  const MAX_WEIGHT = 120;
 
-  const score = norm(posRaw + negRaw, MAX_WEIGHT);
-  const positiveScore = norm(posRaw, MAX_WEIGHT / 2);
-  const challengingScore = norm(negRaw, MAX_WEIGHT / 2);
+  const score           = norm(scorePos + scoreNeg, MAX_SCORE);
+  const positiveScore   = norm(scorePos, MAX_SCORE / 2);
+  const challengingScore = norm(scoreNeg, MAX_SCORE / 2);
 
-  const scoreAspect = (a: TransitAspect) => {
-    const p = (planetPriority[a.transit_planet] ?? 1) + (planetPriority[a.natal_planet] ?? 1);
-    return p * ((5 - a.orb_degrees) / 5);
-  };
+  const rankAspect = (a: TransitAspect) =>
+    (PLANET_PRIORITY[a.transit_planet] ?? 1) * ((DISPLAY_ORB - a.orb_degrees) / DISPLAY_ORB);
 
-  const topSupporting = allAspects.filter(a => a.favorable).sort((a, b) => scoreAspect(b) - scoreAspect(a))[0] ?? null;
-  const topChallenging = allAspects.filter(a => !a.favorable).sort((a, b) => scoreAspect(b) - scoreAspect(a))[0] ?? null;
+  const topSupporting  = displayAspects.filter(a =>  a.favorable).sort((a, b) => rankAspect(b) - rankAspect(a))[0] ?? null;
+  const topChallenging = displayAspects.filter(a => !a.favorable).sort((a, b) => rankAspect(b) - rankAspect(a))[0] ?? null;
 
   return {
     date: dateStr,
@@ -466,9 +468,9 @@ export function computeDayScore(natalChart: NatalChart, date: Date): DayData {
     positiveScore,
     challengingScore,
     intentionScores: {
-      love:    norm(loveRaw, MAX_WEIGHT / 3),
-      career:  norm(careerRaw, MAX_WEIGHT / 2),
-      peace:   norm(peaceRaw, MAX_WEIGHT / 4),
+      love:   norm(loveRaw,   MAX_SCORE / 3),
+      career: norm(careerRaw, MAX_SCORE / 2),
+      peace:  norm(peaceRaw,  MAX_SCORE / 4),
     },
     topSupporting,
     topChallenging,
