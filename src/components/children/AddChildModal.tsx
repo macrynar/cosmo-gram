@@ -142,8 +142,9 @@ export default function AddChildModal({ onClose, onSubmit, loading, error: exter
     disabled:opacity-40 [color-scheme:dark] transition`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="flex min-h-full items-center justify-center p-4">
       <div className="relative w-full max-w-md glass-card rounded-2xl p-6 border border-green-900/30">
         <button
           onClick={onClose}
@@ -265,6 +266,7 @@ export default function AddChildModal({ onClose, onSubmit, loading, error: exter
             }
           </button>
         </form>
+      </div>
       </div>
     </div>
   );
