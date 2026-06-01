@@ -14,7 +14,7 @@ export default function SubscriptionSuccessPage() {
   const [syncing, setSyncing] = useState(true);
 
   useEffect(() => {
-    track("trial_started");
+    track("subscription_started");
 
     async function syncAndRedirect() {
       if (session) {
@@ -45,7 +45,7 @@ export default function SubscriptionSuccessPage() {
           Witaj w Cosmogram Plus
         </h1>
         <p className="text-slate-400 text-sm mb-2">
-          Twój 7-dniowy trial właśnie się zaczął.
+          Twoja subskrypcja jest aktywna.
         </p>
         <p className="text-slate-500 text-xs flex items-center justify-center gap-1">
           {syncing ? (

@@ -44,13 +44,13 @@ export default function PaywallTeaser() {
             Filtruj po intencji, szukaj miast, porównuj z bliską osobą.
           </p>
           <div className="text-2xl font-bold text-amber-300 mb-1">19,90 zł<span className="text-base font-normal text-slate-400">/mc</span></div>
-          <p className="text-xs text-amber-500/70 mb-5">7 dni za darmo, anuluj kiedy chcesz</p>
+          <p className="text-xs text-amber-500/70 mb-5">Anuluj kiedy chcesz · bezpieczna płatność Stripe</p>
           <Link
             href={ROUTES.app.settingsSubscription.path}
             onClick={() => track("cosmo_map_paywall_cta_clicked", {})}
             className="block w-full px-5 py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-amber-700 to-amber-600 text-white shadow-lg shadow-amber-950/40 hover:shadow-amber-800/50 hover:scale-[1.02] transition-all duration-200"
           >
-            Wypróbuj 7 dni za darmo
+            Kup Cosmogram Plus
           </Link>
         </div>
       </div>

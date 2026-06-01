@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       allow_promotion_codes: true,
-      subscription_data: { trial_period_days: 7 },
+      subscription_data: {},
       success_url: `${appUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/app/cosmogram`,
       metadata: { user_id: user.id },

@@ -13,7 +13,7 @@ const PLANET_DEFS = [
   { name: "Saturn",  symbol: "♄", body: Astronomy.Body.Saturn  },
   { name: "Uran",    symbol: "♅", body: Astronomy.Body.Uranus  },
   { name: "Neptun",  symbol: "♆", body: Astronomy.Body.Neptune },
-  { name: "Pluton",  symbol: "⯓", body: Astronomy.Body.Pluto   },
+  { name: "Pluton",  symbol: "♇", body: Astronomy.Body.Pluto   },
 ];
 
 function getEclipticLongitude(body: Astronomy.Body, date: Date): number {

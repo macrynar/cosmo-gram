@@ -103,7 +103,7 @@ export default function PricingSection() {
                 lub <span className="text-amber-300 font-medium">199 zł / rok</span>
                 <span className="ml-1.5 text-xs text-slate-500">≈ 16,60 zł/mc · oszczędzasz -17%</span>
               </p>
-              <p className="text-xs text-amber-400/70 mt-1.5">7 dni bezpłatnego trialu · anuluj kiedy chcesz</p>
+              <p className="text-xs text-amber-400/70 mt-1.5">Anuluj kiedy chcesz · bezpieczna płatność Stripe</p>
             </div>
 
             <ul className="space-y-3 mb-7 relative z-10">
@@ -119,7 +119,7 @@ export default function PricingSection() {
               onClick={handlePlusCTA}
               className="inline-flex items-center justify-center w-full px-4 py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-500 text-white hover:from-amber-600 hover:to-amber-400 transition-colors relative z-10"
             >
-              Zacznij trial — 7 dni gratis
+              Kup Cosmogram Plus
             </button>
           </article>
         </div>

@@ -82,7 +82,7 @@ export default function PaywallModal({ onClose, reason }: Props) {
           {reason && (
             <p className="text-slate-400 text-sm mt-1">{reason}</p>
           )}
-          <p className="text-slate-500 text-xs mt-1">7 dni bezpłatnego trialu · anuluj kiedy chcesz</p>
+          <p className="text-slate-500 text-xs mt-1">Anuluj kiedy chcesz · bezpieczna płatność Stripe</p>
         </div>
 
         <ul className="space-y-2 mb-6">
@@ -103,7 +103,7 @@ export default function PaywallModal({ onClose, reason }: Props) {
             {loading === "monthly" ? (
               <Loader2 className="w-4 h-4 animate-spin mx-auto" />
             ) : (
-              "Zacznij trial — 19,90 zł / miesiąc"
+              "Plus miesięczny — 19,90 zł / miesiąc"
             )}
           </button>
 
