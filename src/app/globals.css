@@ -407,6 +407,14 @@
   100% { opacity: 0.32; }
 }
 
+@keyframes pulse-slow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.35); opacity: 1; }
+  50%       { box-shadow: 0 0 0 5px rgba(255,255,255,0);  opacity: 0.8; }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 2.5s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-orbit, .hero-astro-symbol, .hero-sun { animation: none; }
 }

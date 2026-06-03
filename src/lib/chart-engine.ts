@@ -1,6 +1,7 @@
 import * as Astronomy from "astronomy-engine";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const tzLookup = require("tz-lookup") as (lat: number, lng: number) => string;
+import { computeMoonPhaseName } from "@/lib/moonPhases";
 import { longitudeToSign, ZODIAC_SIGNS, type NatalChart, type Planet, type HouseCusp } from "@/lib/astro-types";
 
 const PLANET_DEFS = [
@@ -372,14 +373,16 @@ export type DayData = {
   score: number;              // 0–10 overall intensity
   positiveScore: number;
   challengingScore: number;
-  intentionScores: { love: number; career: number; peace: number };
+  intentionScores: { love: number; career: number; energy: number; mind: number };
   topSupporting: TransitAspect | null;
   topChallenging: TransitAspect | null;
+  moonPhase: import("@/lib/moonPhases").MoonPhaseName | null;
 };
 
 const LOVE_PLANETS    = new Set(["Wenus", "Księżyc"]);
 const CAREER_PLANETS  = new Set(["Słońce", "Saturn", "Mars", "Jowisz"]);
-const PEACE_PLANETS   = new Set(["Neptun", "Księżyc", "Jowisz"]);
+const ENERGY_PLANETS  = new Set(["Mars", "Słońce"]);
+const MIND_PLANETS    = new Set(["Merkury"]);
 
 // Only these natal planets make a day "special" — personal placements
 const PERSONAL_NATAL  = new Set(["Słońce", "Księżyc", "Merkury", "Wenus", "Mars"]);
@@ -409,7 +412,7 @@ export function computeDayScore(natalChart: NatalChart, date: Date): DayData {
   });
 
   let scorePos = 0, scoreNeg = 0;
-  let loveRaw = 0, careerRaw = 0, peaceRaw = 0;
+  let loveRaw = 0, careerRaw = 0, energyRaw = 0, mindRaw = 0;
   const displayAspects: TransitAspect[] = [];
 
   for (const transit of transitPlanets) {
@@ -430,9 +433,10 @@ export function computeDayScore(natalChart: NatalChart, date: Date): DayData {
           const w = (PLANET_PRIORITY[transit.name] ?? 1) * ((SCORE_ORB - orb) / SCORE_ORB);
           if (favorable) scorePos += w;
           else scoreNeg += w;
-          if (LOVE_PLANETS.has(transit.name))                    loveRaw   += w;
-          if (CAREER_PLANETS.has(transit.name))                  careerRaw += w;
-          if (PEACE_PLANETS.has(transit.name) && favorable)      peaceRaw  += w;
+          if (LOVE_PLANETS.has(transit.name))   loveRaw   += w;
+          if (CAREER_PLANETS.has(transit.name)) careerRaw += w;
+          if (ENERGY_PLANETS.has(transit.name)) energyRaw += w;
+          if (MIND_PLANETS.has(transit.name))   mindRaw   += w;
         }
 
         displayAspects.push({
@@ -470,10 +474,12 @@ export function computeDayScore(natalChart: NatalChart, date: Date): DayData {
     intentionScores: {
       love:   norm(loveRaw,   MAX_SCORE / 3),
       career: norm(careerRaw, MAX_SCORE / 2),
-      peace:  norm(peaceRaw,  MAX_SCORE / 4),
+      energy: norm(energyRaw, MAX_SCORE / 3),
+      mind:   norm(mindRaw,   MAX_SCORE / 4),
     },
     topSupporting,
     topChallenging,
+    moonPhase: computeMoonPhaseName(date),
   };
 }
 

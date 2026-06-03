@@ -107,7 +107,7 @@ export default function CalendarPage() {
 
       <Navbar />
 
-      <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-24 pb-20">
+      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-20">
         <div className="mb-8 text-center">
           <h1 className="text-3xl sm:text-4xl font-semibold text-white mb-2 font-brand">
             Cosmo <span className="gradient-text text-glow">Kalendarz</span>
@@ -144,67 +144,106 @@ export default function CalendarPage() {
         )}
 
         {!loadingHistory && readings.length > 0 && (
-          <div className="space-y-5">
-            {/* Reading selector */}
-            <div className="glass-card rounded-2xl px-4 py-3">
-              <HistorySelector
-                items={selectorItems}
-                selectedId={selectedId}
-                onSelect={(id) => { setSelectedId(id); setSelectedDate(null); }}
-                onDelete={async (id) => {
-                  await fetch(`/api/delete-reading?id=${id}`, { method: "DELETE", headers: authHeader });
-                  const updated = readings.filter(r => r.id !== id);
-                  setReadings(updated);
-                  if (id === selectedId) setSelectedId(updated[0]?.id ?? null);
-                }}
-                onRename={async (id, name) => {
-                  await fetch("/api/rename-reading", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json", ...authHeader },
-                    body: JSON.stringify({ id, name }),
-                  });
-                  setReadings(prev => prev.map(r => r.id === id ? { ...r, name } : r));
-                }}
-                onNew={() => router.push(ROUTES.app.cosmogram.path)}
-                newLabel="Nowy kosmogram"
-              />
-            </div>
+          <div className={`${selectedDate ? "lg:flex lg:gap-5 lg:items-start" : ""}`}>
 
-            {/* Filters */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <IntentionFilter active={filter} onChange={(f) => { setFilter(f); setSelectedDate(null); }} />
-            </div>
-
-            {/* Month navigator */}
-            <div className="glass-card rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-4">
-                <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <h2 className="text-base font-semibold text-white">
-                  {MONTH_NAMES[month - 1]} {year}
-                </h2>
-                <button onClick={nextMonth} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+            {/* ── Left column: selector + filters + calendar + upcoming ── */}
+            <div className={`${selectedDate ? "lg:flex-1 lg:min-w-0" : ""} space-y-5`}>
+              {/* Reading selector */}
+              <div className="glass-card rounded-2xl px-4 py-3">
+                <HistorySelector
+                  items={selectorItems}
+                  selectedId={selectedId}
+                  onSelect={(id) => { setSelectedId(id); setSelectedDate(null); }}
+                  onDelete={async (id) => {
+                    await fetch(`/api/delete-reading?id=${id}`, { method: "DELETE", headers: authHeader });
+                    const updated = readings.filter(r => r.id !== id);
+                    setReadings(updated);
+                    if (id === selectedId) setSelectedId(updated[0]?.id ?? null);
+                  }}
+                  onRename={async (id, name) => {
+                    await fetch("/api/rename-reading", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json", ...authHeader },
+                      body: JSON.stringify({ id, name }),
+                    });
+                    setReadings(prev => prev.map(r => r.id === id ? { ...r, name } : r));
+                  }}
+                  onNew={() => router.push(ROUTES.app.cosmogram.path)}
+                  newLabel="Nowy kosmogram"
+                />
               </div>
 
-              {days.length > 0 ? (
-                <CalendarGrid
-                  year={year}
-                  month={month}
-                  days={days}
-                  selectedDate={selectedDate}
-                  onSelect={(date) => setSelectedDate(prev => prev === date ? null : date)}
-                  filter={filter}
-                />
-              ) : (
-                <div className="text-center py-8 text-slate-500 text-sm">Wybierz kosmogram, aby zobaczyć siatkę.</div>
+              {/* Filters */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <IntentionFilter active={filter} onChange={(f) => { setFilter(f); setSelectedDate(null); }} />
+              </div>
+
+              {/* Month navigator */}
+              <div className="glass-card rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <h2 className="text-base font-semibold text-white">
+                    {MONTH_NAMES[month - 1]} {year}
+                  </h2>
+                  <button onClick={nextMonth} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {days.length > 0 ? (
+                  <CalendarGrid
+                    year={year}
+                    month={month}
+                    days={days}
+                    selectedDate={selectedDate}
+                    onSelect={(date) => setSelectedDate(prev => prev === date ? null : date)}
+                    filter={filter}
+                  />
+                ) : (
+                  <div className="text-center py-8 text-slate-500 text-sm">Wybierz kosmogram, aby zobaczyć siatkę.</div>
+                )}
+              </div>
+
+              {/* Upcoming Events */}
+              {selectedReading?.chart_data && (
+                <UpcomingEvents chart={selectedReading.chart_data} />
               )}
             </div>
 
-            {/* Day Panel */}
+            {/* ── Right column: Day Drawer (desktop sticky) ── */}
             {selectedDate && selectedReading && (
+              <div className="hidden lg:block lg:w-[420px] lg:shrink-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+                <DayPanel
+                  date={selectedDate}
+                  dayData={selectedDayData}
+                  chart={selectedReading.chart_data}
+                  readingId={selectedReading.id}
+                  promptContext={""}
+                  interpretation={selectedReading.interpretation}
+                  filter={filter}
+                  onClose={() => setSelectedDate(null)}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Mobile bottom sheet ── */}
+        {selectedDate && selectedReading && (
+          <div className="lg:hidden fixed inset-0 z-50 flex items-end">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setSelectedDate(null)}
+            />
+            {/* Sheet */}
+            <div className="relative w-full max-h-[85vh] overflow-y-auto rounded-t-2xl bg-[#07050f] border-t border-white/10 shadow-2xl">
+              {/* Drag handle visual */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-white/20" />
+              </div>
               <DayPanel
                 date={selectedDate}
                 dayData={selectedDayData}
@@ -215,12 +254,7 @@ export default function CalendarPage() {
                 filter={filter}
                 onClose={() => setSelectedDate(null)}
               />
-            )}
-
-            {/* Upcoming Events */}
-            {selectedReading?.chart_data && (
-              <UpcomingEvents chart={selectedReading.chart_data} />
-            )}
+            </div>
           </div>
         )}
       </main>

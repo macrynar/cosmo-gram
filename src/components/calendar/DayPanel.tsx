@@ -6,6 +6,7 @@ import { longitudeToSign } from "@/lib/astro-types";
 import type { NatalChart } from "@/lib/astro-types";
 import type { DayData, TransitAspect } from "@/lib/chart-engine";
 import type { CalendarFilter } from "@/components/calendar/IntentionFilter";
+import { MOON_PHASE_INFO, getRitualPrompt } from "@/lib/moonPhases";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
 import DailyReading from "@/components/generate/DailyReading";
@@ -132,14 +133,19 @@ function getContextualQuestion(supporting: TransitAspect | null, dayOfYear: numb
 type SigLevel = "exceptional" | "notable" | "minor" | "quiet";
 
 const FILTER_BADGE: Record<CalendarFilter, Record<SigLevel, string>> = {
-  all:    { exceptional: "★ Wyjątkowy dzień",         notable: "✦ Wyraźny sygnał",        minor: "Mały sygnał",               quiet: "Spokojny dzień" },
-  love:   { exceptional: "★ Wyjątkowy dzień miłosny", notable: "✦ Sygnał w miłości",       minor: "Delikatny sygnał miłosny",  quiet: "Spokojny dzień miłosny" },
-  career: { exceptional: "★ Wyjątkowy dzień kariery", notable: "✦ Sygnał dla kariery",     minor: "Delikatny sygnał kariery",  quiet: "Spokojny dzień kariery" },
-  peace:  { exceptional: "★ Wyjątkowy dzień spokoju", notable: "✦ Sygnał spokoju",         minor: "Delikatny sygnał spokoju",  quiet: "Spokojny dzień" },
+  all:    { exceptional: "★ Wyjątkowy dzień",          notable: "✦ Wyraźny sygnał",          minor: "Mały sygnał",                quiet: "Spokojny dzień" },
+  love:   { exceptional: "★ Wyjątkowy dzień miłosny",  notable: "✦ Sygnał w miłości",         minor: "Delikatny sygnał miłosny",   quiet: "Spokojny dzień miłosny" },
+  career: { exceptional: "★ Wyjątkowy dzień kariery",  notable: "✦ Sygnał dla kariery",       minor: "Delikatny sygnał kariery",   quiet: "Spokojny dzień kariery" },
+  energy: { exceptional: "★ Wyjątkowy dzień energii",  notable: "✦ Sygnał energii",           minor: "Delikatny sygnał energii",   quiet: "Spokojny dzień energii" },
+  mind:   { exceptional: "★ Wyjątkowy dzień myślenia", notable: "✦ Sygnał komunikacji",       minor: "Delikatny sygnał myślenia",  quiet: "Spokojny dzień myślenia" },
 };
 
 const FILTER_AREA: Record<CalendarFilter, string> = {
-  all: "Twojego kosmogramu", love: "miłości i relacji", career: "kariery i działania", peace: "spokoju i balansu",
+  all:    "Twojego kosmogramu",
+  love:   "miłości i relacji",
+  career: "kariery i działania",
+  energy: "energii i działania",
+  mind:   "komunikacji i myślenia",
 };
 
 function buildDescription(
@@ -173,7 +179,8 @@ function getEffectiveScore(dayData: DayData | undefined, filter: CalendarFilter)
   if (!dayData) return 0;
   if (filter === "love")   return dayData.intentionScores.love;
   if (filter === "career") return dayData.intentionScores.career;
-  if (filter === "peace")  return dayData.intentionScores.peace;
+  if (filter === "energy") return dayData.intentionScores.energy;
+  if (filter === "mind")   return dayData.intentionScores.mind;
   return dayData.score;
 }
 
@@ -252,6 +259,9 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
   const challenging = (effectiveScore >= 3 ? dayData?.topChallenging : null) ?? null;
   const sig = getSignificance(effectiveScore, filter, supporting, challenging);
   const question = getContextualQuestion(supporting, dayOfYear);
+  const moonPhase = dayData?.moonPhase ?? null;
+  const moonPhaseInfo = moonPhase ? MOON_PHASE_INFO[moonPhase] : null;
+  const ritualPrompt  = moonPhase ? getRitualPrompt(moonPhase, dayOfYear) : null;
 
   const [readingText, setReadingText] = useState("");
   const [dateLabel, setDateLabel] = useState(formatDatePL(date));
@@ -385,19 +395,36 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
           </div>
         )}
 
-        {/* ── Reflective question — with clear purpose ── */}
-        <div className="rounded-xl bg-white/4 border border-white/8 p-4">
-          <p className="text-[10px] text-slate-600 uppercase tracking-widest font-medium mb-2 flex items-center gap-1.5">
-            <Pencil className="w-3 h-3" />
-            {effectiveScore >= 5
-              ? "Pytanie refleksyjne — na podstawie dzisiejszej energii"
-              : "Pytanie na ten dzień"}
-          </p>
-          <p className="text-sm text-slate-300 italic leading-relaxed">&ldquo;{question}&rdquo;</p>
-          <p className="text-[11px] text-slate-600 mt-2.5">
-            Zapisz swoją odpowiedź lub przemyślenia w notatce poniżej ↓
-          </p>
-        </div>
+        {/* ── Moon ritual (replaces question on phase days) ── */}
+        {moonPhaseInfo && ritualPrompt ? (
+          <div className="rounded-xl bg-indigo-950/40 border border-indigo-700/30 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xl">{moonPhaseInfo.symbol}</span>
+              <div>
+                <p className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">
+                  {moonPhaseInfo.label}
+                </p>
+                <p className="text-[11px] text-indigo-400/70">{moonPhaseInfo.purpose}</p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-200 italic leading-relaxed">&ldquo;{ritualPrompt}&rdquo;</p>
+            <p className="text-[11px] text-slate-600 mt-2.5">Zapisz swoją odpowiedź w notatce poniżej ↓</p>
+          </div>
+        ) : (
+          /* ── Regular reflective question ── */
+          <div className="rounded-xl bg-white/4 border border-white/8 p-4">
+            <p className="text-[10px] text-slate-600 uppercase tracking-widest font-medium mb-2 flex items-center gap-1.5">
+              <Pencil className="w-3 h-3" />
+              {effectiveScore >= 5
+                ? "Pytanie refleksyjne — na podstawie dzisiejszej energii"
+                : "Pytanie na ten dzień"}
+            </p>
+            <p className="text-sm text-slate-300 italic leading-relaxed">&ldquo;{question}&rdquo;</p>
+            <p className="text-[11px] text-slate-600 mt-2.5">
+              Zapisz swoją odpowiedź lub przemyślenia w notatce poniżej ↓
+            </p>
+          </div>
+        )}
 
         {/* ── Divider ── */}
         <div className="h-px bg-gradient-to-r from-transparent via-white/8 to-transparent" />
