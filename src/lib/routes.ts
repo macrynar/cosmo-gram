@@ -22,6 +22,7 @@ export const ROUTES = {
     cosmogram:             { path: "/app/cosmogram",              label: "Twój kosmogram",  navLabel: "Kosmogram" },
     calendar:              { path: "/app/calendar",               label: "Kalendarz" },
     diary:                 { path: "/app/dziennik",               label: "Dziennik" },
+    solarReturn:           { path: "/app/solar-return",           label: "Solar Return" },
     horoscope:             { path: "/app/horoscope",              label: "Horoskop" },
     match:                 { path: "/app/match",                  label: "Cosmo Match" },
     matchNew:              { path: "/app/match/new",              label: "Nowa analiza" },

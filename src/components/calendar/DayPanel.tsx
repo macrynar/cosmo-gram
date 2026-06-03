@@ -66,50 +66,93 @@ const CHALLENGING_WATCH: Record<string, string> = {
 
 // ── Contextual reflective questions linked to transit planet ───────────────
 const TRANSIT_QUESTIONS: Record<string, string[]> = {
-  "Wenus":   [
+  "Wenus": [
     "Co chciałbyś powiedzieć komuś bliskim, a jeszcze tego nie powiedziałeś?",
     "Co sprawia Ci prawdziwą przyjemność — i kiedy ostatnio to poczułeś?",
     "Jak chcesz, żeby bliscy Cię dziś doświadczyli?",
+    "Gdzie w związkach chcesz więcej głębokości, a dajesz tylko powierzchowność?",
+    "Co wartościowego masz w swoim życiu, czego nie dostrzegasz na co dzień?",
+    "Jak możesz dziś wyrazić wdzięczność komuś, kto jest dla Ciebie ważny?",
+    "Czego szukasz w relacjach — i czy dajesz to samo, czego oczekujesz?",
   ],
-  "Mars":    [
+  "Mars": [
     "Co chcesz zainicjować, a wciąż odkładasz?",
     "Na jaki jeden konkretny krok masz dziś energię?",
     "Gdzie zatrzymuje Cię strach przed oceną innych?",
+    "Co chcesz osiągnąć w najbliższym tygodniu — i co Cię powstrzymuje?",
+    "Jak reagujesz, gdy ktoś przekracza Twoje granice — i czy to działa?",
+    "Gdzie dziś możesz być odważniejszy niż zwykle?",
+    "Co zrobiłbyś inaczej, gdybyś wiedział, że nie możesz przegrać?",
   ],
   "Księżyc": [
     "Co czujesz, a starasz się nie czuć?",
     "Czego emocjonalnie potrzebujesz dziś od siebie?",
     "Kto lub co potrzebuje dziś Twojej uwagi — czy to przypadkiem Ty?",
+    "Jakie emocje niesiesz ze sobą od ostatnich dni — czy je rozpoznajesz?",
+    "Co przypomina Ci o bezpieczeństwie, gdy świat wydaje się trudny?",
+    "Czego dziś potrzebuje Twoje wewnętrzne dziecko?",
+    "Które relacje odżywiają Cię emocjonalnie, a które wysysają energię?",
   ],
-  "Słońce":  [
+  "Słońce": [
     "Gdzie masz poczucie, że nie jesteś sobą — i co za tym stoi?",
     "Jaka wersja Ciebie chce się dziś wyrazić?",
     "Co daje Ci dziś poczucie siły i sensu?",
+    "Jak wygląda dzień, w którym jesteś w pełni sobą?",
+    "Co w Tobie jest wyjątkowe — i czy pozwalasz innym to widzieć?",
+    "Czego dziś szukasz — uznania, celu czy po prostu spokoju?",
+    "Kiedy ostatnio zrobiłeś coś tylko dla siebie, bez oglądania się na innych?",
   ],
   "Merkury": [
     "Jaką ważną rozmowę odkładasz?",
     "Co chciałbyś wyrazić wprost, a zamiast tego owijasz w bawełnę?",
     "Jaka decyzja domaga się Twojej uwagi — i czemu jej jeszcze nie podjąłeś?",
+    "Czy jest coś, co mówisz innym, ale nie mówisz sobie?",
+    "Jaką informację masz, a nie wiesz jak ją przekazać?",
+    "Co zrozumiałeś ostatnio, co zmieniło Twój sposób myślenia?",
+    "Które przekonanie na swój temat chciałbyś zweryfikować?",
   ],
-  "Jowisz":  [
+  "Jowisz": [
     "Na jaki odważny ruch jest teraz czas?",
     "Gdzie w swoim życiu zachowujesz się zbyt ostrożnie?",
     "Co możesz zaoferować innym z nadwyżki swoich zasobów i energii?",
+    "Jaką możliwość ignorujesz, bo wydaje się zbyt duża?",
+    "W którym kierunku chciałbyś rosnąć w ciągu najbliższego roku?",
+    "Co się wydarzy za 5 lat, jeśli będziesz działał tak jak teraz?",
+    "Co daje Ci poczucie, że życie jest większe niż codzienność?",
   ],
-  "Saturn":  [
+  "Saturn": [
     "Którą ważną rzecz odkładasz, bo wydaje się za trudna?",
     "Co warto teraz zakończyć, żeby zrobić miejsce na coś nowego?",
     "Czego nie chcesz widzieć, bo zmusiłoby Cię to do zmiany?",
+    "Jaką odpowiedzialność unikasz i co Cię to kosztuje?",
+    "Co zbudowałeś w ostatnim roku, z czego jesteś naprawdę dumny?",
+    "Gdzie w życiu brakuje Ci dyscypliny — i dlaczego się jej opierasz?",
+    "Jaka granica jest potrzebna w Twoim życiu, a jeszcze jej nie postawiłeś?",
   ],
-  "Neptun":  [
+  "Uran": [
+    "Co by się zmieniło, gdybyś zrobił coś zupełnie inaczej niż zwykle?",
+    "Które zasady zasługują na kwestionowanie — w Twoim życiu lub wokół Ciebie?",
+    "Gdzie czujesz, że chcesz wyrwać się z schematu?",
+    "Co Cię ogranicza — tradycja, oczekiwania czy własna historia?",
+    "Jaką nieoczekiwaną zmianę mógłbyś przyjąć jako szansę?",
+  ],
+  "Neptun": [
     "Jakie marzenie przestałeś słuchać — i dlaczego?",
     "Co by się zmieniło, gdybyś zaufał intuicji zamiast logice?",
     "Gdzie potrzebujesz więcej miękkości wobec siebie?",
+    "Co wyobrażasz sobie, gdy myślisz o idealnym życiu — i co Cię od niego dzieli?",
+    "Która część Ciebie jest bardziej wrażliwa niż pokazujesz na zewnątrz?",
+    "Co przynosi Ci głęboki spokój — i ile czasu temu poświęcasz?",
+    "Gdzie zatracasz granicę między swoimi a cudzymi potrzebami?",
   ],
-  "Pluton":  [
+  "Pluton": [
     "Co w Tobie jest gotowe na zmianę — nawet jeśli to boli?",
     "Czego się trzymasz, choć wiesz już, że czas to puścić?",
     "Co kryje się pod sytuacją, którą wciąż omijasz wzrokiem?",
+    "Jaką władzę oddajesz innym — świadomie lub nie?",
+    "Co chcesz przekształcić w sobie, zanim skończy się ten rok?",
+    "Gdzie nosisz ciężar, który nie jest Twój?",
+    "Co byś zrobił, gdybyś nie bał się straty?",
   ],
 };
 
