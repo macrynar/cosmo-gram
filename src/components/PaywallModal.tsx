@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { X, Check, Loader2 } from "lucide-react";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
@@ -33,7 +34,6 @@ export default function PaywallModal({ onClose, reason }: Props) {
     track("checkout_initiated", { price_type: priceType });
     setLoading(priceType);
     try {
-      // Always fetch a fresh session to avoid stale token issues
       const { data: { session: freshSession } } = await supabase.auth.getSession();
       const token = freshSession?.access_token ?? session.access_token;
 
@@ -59,76 +59,156 @@ export default function PaywallModal({ onClose, reason }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative glass-card rounded-3xl p-6 sm:p-8 max-w-md w-full border border-amber-700/25 shadow-2xl shadow-black/50">
-        <button
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="absolute inset-0 backdrop-blur-sm"
+          style={{ background: "rgba(5,4,14,0.75)" }}
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
+        />
+
+        <motion.div
+          initial={{ opacity: 0, y: 28, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 16, scale: 0.97 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="relative rounded-3xl p-6 sm:p-8 max-w-md w-full"
+          style={{
+            background: "rgba(5,4,14,0.92)",
+            border: "0.5px solid rgba(212,175,55,0.28)",
+            backdropFilter: "blur(28px)",
+            boxShadow: "0 0 80px rgba(5,4,14,0.9), 0 0 0 0.5px rgba(212,175,55,0.10) inset, 0 0 40px rgba(212,175,55,0.05)",
+          }}
         >
-          <X className="w-5 h-5" />
-        </button>
-
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 mb-4 shadow-lg shadow-amber-950/50">
-            <CosmoIcon className="w-6 h-6 text-white" />
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2 font-brand">
-            Cosmogram Plus
-          </h2>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium mb-2">
-            ✦ Early Access · dla pierwszych 500 subskrybentów
-          </div>
-          {reason && (
-            <p className="text-slate-400 text-sm mt-1">{reason}</p>
-          )}
-          <p className="text-slate-500 text-xs mt-1">Anuluj kiedy chcesz · bezpieczna płatność Stripe</p>
-        </div>
-
-        <ul className="space-y-2 mb-6">
-          {FEATURES.map(f => (
-            <li key={f} className="flex items-start gap-2.5 text-sm text-slate-300">
-              <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-              {f}
-            </li>
-          ))}
-        </ul>
-
-        <div className="space-y-2">
           <button
-            onClick={() => handleCheckout("monthly")}
-            disabled={!!loading}
-            className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-700 to-amber-600 text-white font-semibold text-sm shadow-lg shadow-amber-950/40 hover:scale-[1.01] transition-all disabled:opacity-60"
+            onClick={onClose}
+            className="absolute top-4 right-4 text-slate-600 hover:text-slate-300 transition-colors duration-300"
           >
-            {loading === "monthly" ? (
-              <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-            ) : (
-              "Plus miesięczny — 19,90 zł / miesiąc"
-            )}
+            <X className="w-5 h-5" />
           </button>
 
-          <button
-            onClick={() => handleCheckout("yearly")}
-            disabled={!!loading}
-            className="w-full py-3 rounded-2xl border border-amber-700/40 text-amber-300 text-sm hover:bg-amber-900/15 transition-colors disabled:opacity-60 relative"
-          >
-            {loading === "yearly" ? (
-              <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-            ) : (
-              <>
-                Roczny — 199 zł / rok
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs bg-amber-900/30 text-amber-300 px-2 py-0.5 rounded-full">
-                  ≈ 16,60 zł/mc
+          {/* Header */}
+          <div className="text-center mb-6">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4"
+              style={{
+                background: "linear-gradient(135deg, rgba(212,175,55,0.25) 0%, rgba(197,160,89,0.15) 100%)",
+                border: "0.5px solid rgba(212,175,55,0.45)",
+                boxShadow: "0 0 24px rgba(212,175,55,0.20)",
+              }}
+            >
+              <CosmoIcon className="w-6 h-6 text-[#D4AF37]" />
+            </motion.div>
+
+            <h2
+              className="text-2xl font-bold text-white mb-2"
+              style={{ fontFamily: "var(--font-cormorant), serif" }}
+            >
+              Cosmogram Plus
+            </h2>
+
+            <div
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium mb-2"
+              style={{
+                background: "rgba(212,175,55,0.10)",
+                border: "0.5px solid rgba(212,175,55,0.30)",
+                color: "#F3E5AB",
+              }}
+            >
+              ✦ Early Access · dla pierwszych 500 subskrybentów
+            </div>
+
+            {reason && (
+              <p className="text-slate-400 text-sm mt-1">{reason}</p>
+            )}
+            <p className="text-slate-600 text-xs mt-1">Anuluj kiedy chcesz · bezpieczna płatność Stripe</p>
+          </div>
+
+          <div className="altar-divider mb-5" />
+
+          {/* Features */}
+          <ul className="space-y-2.5 mb-6">
+            {FEATURES.map((f, i) => (
+              <motion.li
+                key={f}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15 + i * 0.06, duration: 0.4 }}
+                className="flex items-start gap-2.5 text-sm text-slate-300"
+              >
+                <span
+                  className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                  style={{ background: "rgba(212,175,55,0.15)", border: "0.5px solid rgba(212,175,55,0.35)" }}
+                >
+                  <Check className="w-2.5 h-2.5" style={{ color: "#D4AF37" }} />
                 </span>
-              </>
-            )}
-          </button>
-        </div>
+                {f}
+              </motion.li>
+            ))}
+          </ul>
 
-        <p className="text-center text-slate-600 text-xs mt-4">
-          Bezpieczna płatność przez Stripe · VAT wliczony
-        </p>
+          {/* Pricing buttons */}
+          <div className="space-y-2.5">
+            <motion.button
+              onClick={() => handleCheckout("monthly")}
+              disabled={!!loading}
+              whileHover={loading ? undefined : {
+                boxShadow: "0 0 24px rgba(212,175,55,0.35), 0 0 48px rgba(212,175,55,0.12)",
+                y: -1,
+              }}
+              whileTap={loading ? undefined : { scale: 0.98 }}
+              className="w-full py-3.5 rounded-2xl text-sm font-semibold tracking-wide transition-all duration-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              style={{
+                background: "linear-gradient(135deg, rgba(212,175,55,0.92) 0%, rgba(197,160,89,0.92) 100%)",
+                color: "#050508",
+                border: "0.5px solid rgba(212,175,55,0.65)",
+              }}
+            >
+              {loading === "monthly"
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : "Plus miesięczny — 19,90 zł / miesiąc"
+              }
+            </motion.button>
+
+            <button
+              onClick={() => handleCheckout("yearly")}
+              disabled={!!loading}
+              className="w-full py-3.5 rounded-2xl text-sm transition-all duration-400 disabled:opacity-50 disabled:cursor-not-allowed relative flex items-center justify-center"
+              style={{
+                background: "rgba(212,175,55,0.06)",
+                border: "0.5px solid rgba(212,175,55,0.28)",
+                color: "#F3E5AB",
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(212,175,55,0.10)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(212,175,55,0.06)"; }}
+            >
+              {loading === "yearly" ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  Roczny — 199 zł / rok
+                  <span
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs px-2 py-0.5 rounded-full"
+                    style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}
+                  >
+                    ≈ 16,60 zł/mc
+                  </span>
+                </>
+              )}
+            </button>
+          </div>
+
+          <p className="text-center text-slate-700 text-xs mt-4">
+            Bezpieczna płatność przez Stripe · VAT wliczony
+          </p>
+        </motion.div>
       </div>
-    </div>
+    </AnimatePresence>
   );
 }

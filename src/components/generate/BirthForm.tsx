@@ -122,9 +122,11 @@ export default function BirthForm({ onSubmit, loading, onDateChange }: Props) {
 
   const isValid = !!date && (timeUnknown || !!time) && !!selected;
 
-  const inputClass = `w-full px-3 py-2.5 rounded-xl bg-[#0a0806] border border-amber-900/35 text-white text-sm
-    focus:outline-none focus:ring-2 focus:ring-amber-600/40 focus:border-amber-600/55
-    [color-scheme:dark] transition`;
+  const inputClass = [
+    "w-full px-3 py-2.5 rounded-xl text-white text-sm [color-scheme:dark]",
+    "focus:outline-none transition-all duration-400",
+    "placeholder:text-slate-600",
+  ].join(" ");
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -213,11 +215,23 @@ export default function BirthForm({ onSubmit, loading, onDateChange }: Props) {
           {selected && !geocoding && <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-400 text-sm">✓</span>}
         </div>
         {dropdownOpen && suggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-amber-900/30 bg-[#0a0807]/98 backdrop-blur shadow-2xl z-50 overflow-hidden">
+          <div
+            className="absolute top-full left-0 right-0 mt-1 rounded-xl shadow-2xl z-50 overflow-hidden"
+            style={{
+              background: "rgba(5,4,14,0.97)",
+              border: "0.5px solid rgba(212,175,55,0.25)",
+              backdropFilter: "blur(20px)",
+            }}
+          >
             {suggestions.map((r, i) => (
-              <button key={i} type="button" onMouseDown={() => handleSelect(r)}
-                className="w-full text-left px-3 py-2.5 text-sm text-slate-300 hover:bg-amber-900/20 hover:text-white transition-colors border-b border-amber-900/15 last:border-0 truncate">
-                <MapPin className="inline w-3 h-3 text-amber-400 mr-1.5 -mt-0.5" />
+              <button
+                key={i} type="button" onMouseDown={() => handleSelect(r)}
+                className="w-full text-left px-3 py-2.5 text-sm text-slate-300 hover:text-[#F3E5AB] transition-all duration-300 truncate last:border-0"
+                style={{ borderBottom: "0.5px solid rgba(212,175,55,0.10)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(212,175,55,0.07)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              >
+                <MapPin className="inline w-3 h-3 mr-1.5 -mt-0.5" style={{ color: "rgba(212,175,55,0.6)" }} />
                 {r.displayName}
               </button>
             ))}
@@ -229,11 +243,17 @@ export default function BirthForm({ onSubmit, loading, onDateChange }: Props) {
       <button
         type="submit"
         disabled={!isValid || loading}
-        className={`w-full sm:w-auto sm:self-end flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap
-          ${isValid && !loading
-            ? "bg-gradient-to-r from-amber-700 to-amber-600 text-white shadow-lg shadow-amber-950/40 hover:shadow-amber-800/50 hover:scale-[1.02] active:scale-[0.99]"
-            : "bg-amber-900/20 text-slate-500 cursor-not-allowed"
-          }`}
+        className="w-full sm:w-auto sm:self-end flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-medium tracking-wide transition-all duration-500 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+        style={isValid && !loading ? {
+          background: "linear-gradient(135deg, rgba(212,175,55,0.90) 0%, rgba(197,160,89,0.90) 100%)",
+          color: "#050508",
+          border: "0.5px solid rgba(212,175,55,0.60)",
+          boxShadow: "0 0 20px rgba(212,175,55,0.20)",
+        } : {
+          background: "rgba(212,175,55,0.08)",
+          color: "rgba(212,175,55,0.35)",
+          border: "0.5px solid rgba(212,175,55,0.15)",
+        }}
       >
         {loading
           ? <><Loader2 className="w-4 h-4 animate-spin" /> Liczę…</>

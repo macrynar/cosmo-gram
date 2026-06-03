@@ -40,18 +40,14 @@ export default function HistorySelector({
   }
 
   function commitRename() {
-    if (editingId && editValue.trim()) {
-      onRename(editingId, editValue.trim());
-    }
+    if (editingId && editValue.trim()) onRename(editingId, editValue.trim());
     setEditingId(null);
   }
 
-  function cancelEdit() {
-    setEditingId(null);
-  }
+  function cancelEdit() { setEditingId(null); }
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-amber-900/30">
+    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin" style={{ scrollbarColor: "rgba(212,175,55,0.25) transparent" }}>
       {items.map((item) => {
         const isSelected = item.id === selectedId;
         const isEditing  = item.id === editingId;
@@ -60,11 +56,28 @@ export default function HistorySelector({
           <div
             key={item.id}
             onClick={() => !isEditing && onSelect(item.id)}
-            className={`group flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm whitespace-nowrap shrink-0 cursor-pointer transition-all ${
-              isSelected
-                ? "bg-amber-900/30 border-amber-600/45 text-white"
-                : "bg-amber-950/10 border-amber-900/25 text-slate-400 hover:text-white hover:border-amber-700/45"
-            }`}
+            className="group flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm whitespace-nowrap shrink-0 cursor-pointer transition-all duration-300"
+            style={isSelected ? {
+              background: "rgba(212,175,55,0.14)",
+              border: "0.5px solid rgba(212,175,55,0.45)",
+              color: "#F3E5AB",
+            } : {
+              background: "rgba(212,175,55,0.04)",
+              border: "0.5px solid rgba(212,175,55,0.15)",
+              color: "#64748b",
+            }}
+            onMouseEnter={e => {
+              if (!isSelected) {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(212,175,55,0.35)";
+                (e.currentTarget as HTMLElement).style.color = "#F3E5AB";
+              }
+            }}
+            onMouseLeave={e => {
+              if (!isSelected) {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(212,175,55,0.15)";
+                (e.currentTarget as HTMLElement).style.color = "#64748b";
+              }
+            }}
           >
             {isEditing ? (
               <>
@@ -95,14 +108,14 @@ export default function HistorySelector({
                 <div className={`flex items-center gap-1 ${isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity`}>
                   <button
                     onClick={(e) => startEdit(item, e)}
-                    className="text-slate-500 hover:text-amber-400 transition-colors p-0.5"
+                    className="text-slate-600 hover:text-amber-400 transition-colors p-0.5"
                     title="Zmień nazwę"
                   >
                     <Pencil className="w-3 h-3" />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
-                    className="text-slate-500 hover:text-red-400 transition-colors p-0.5"
+                    className="text-slate-600 hover:text-red-400 transition-colors p-0.5"
                     title="Usuń"
                   >
                     <Trash2 className="w-3 h-3" />
@@ -116,7 +129,20 @@ export default function HistorySelector({
 
       <button
         onClick={onNew}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed border-amber-900/35 text-slate-500 hover:text-white hover:border-amber-600/50 text-sm whitespace-nowrap shrink-0 transition-all"
+        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm whitespace-nowrap shrink-0 transition-all duration-300"
+        style={{
+          background: "transparent",
+          border: "0.5px dashed rgba(212,175,55,0.22)",
+          color: "#64748b",
+        }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLElement).style.borderColor = "rgba(212,175,55,0.45)";
+          (e.currentTarget as HTMLElement).style.color = "#F3E5AB";
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLElement).style.borderColor = "rgba(212,175,55,0.22)";
+          (e.currentTarget as HTMLElement).style.color = "#64748b";
+        }}
       >
         <Plus className="w-3.5 h-3.5" />
         {newLabel}

@@ -41,7 +41,19 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative border-t border-amber-900/20 bg-[#03010d]">
+    <footer
+      className="relative"
+      style={{
+        background: "rgba(5,4,14,0.95)",
+        borderTop: "0.5px solid rgba(212,175,55,0.14)",
+      }}
+    >
+      {/* Top gradient line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+        style={{ background: "linear-gradient(to right, transparent, rgba(212,175,55,0.28), transparent)" }}
+      />
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
           {/* Logo + tagline */}
@@ -52,7 +64,7 @@ export default function Footer() {
                 alt="Cosmogram"
                 width={132}
                 height={33}
-                className="h-8 w-auto [filter:brightness(0)_invert(1)]"
+                className="h-8 w-auto [filter:brightness(0)_invert(1)] opacity-80 hover:opacity-100 transition-opacity duration-300"
               />
             </Link>
             <p className="text-xs text-slate-600 max-w-[200px] leading-relaxed">
@@ -63,14 +75,17 @@ export default function Footer() {
           {/* Link columns */}
           {COLUMNS.map(col => (
             <div key={col.heading} className="flex flex-col gap-2">
-              <p className="text-[10px] uppercase tracking-widest text-slate-700 font-medium mb-1">
+              <p
+                className="text-[10px] uppercase tracking-widest font-medium mb-1"
+                style={{ color: "rgba(212,175,55,0.40)" }}
+              >
                 {col.heading}
               </p>
               {col.links.map(link => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+                  className="text-sm text-slate-600 transition-colors duration-300 hover:text-slate-300"
                 >
                   {link.label}
                 </Link>
@@ -79,7 +94,8 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="h-px bg-gradient-to-r from-transparent via-amber-900/30 to-transparent mb-6" />
+        {/* Gold divider */}
+        <div className="altar-divider mb-6" />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-700">
           <p>© {year} Cosmogram. Dane astronomiczne: Swiss Ephemeris. AI: Anthropic Claude.</p>

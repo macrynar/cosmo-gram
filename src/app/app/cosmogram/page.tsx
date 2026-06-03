@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Star, Share2, Baby, Plus, RefreshCw } from "lucide-react";
+import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import BirthForm from "@/components/generate/BirthForm";
-import NatalChartSVG from "@/components/generate/NatalChartSVG";
+import NatalChartAltarView from "@/components/generate/NatalChartAltarView";
 import PlanetTable from "@/components/generate/PlanetTable";
 import Interpretation from "@/components/generate/Interpretation";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
@@ -374,9 +375,10 @@ export default function CosmogramPage() {
   const hasResults = chart && !chartLoading;
 
   return (
-    <div className="min-h-screen bg-[#03010d] text-white">
+    <div className="min-h-screen text-white" style={{ background: "#050508" }}>
       <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
-      <div aria-hidden="true" className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] nebula-orb opacity-40 pointer-events-none" />
+      <div aria-hidden="true" className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(88,60,140,0.18) 0%, transparent 70%)", filter: "blur(2px)" }} />
       <Star className="fixed top-[18%] left-[8%] w-2 h-2 text-amber-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "3.5s" }} />
       <Star className="fixed top-[55%] right-[4%] w-2 h-2 text-amber-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "4s" }} />
 
@@ -385,27 +387,33 @@ export default function CosmogramPage() {
       <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-24 pb-20">
 
         {/* ── Tab bar ── */}
-        <div className="flex items-center justify-center gap-1 p-1 rounded-2xl bg-white/4 border border-white/6 w-fit mx-auto mb-8">
+        <div
+          className="flex items-center justify-center gap-1 p-1 rounded-2xl w-fit mx-auto mb-8"
+          style={{ background: "rgba(5,4,14,0.70)", border: "0.5px solid rgba(212,175,55,0.14)" }}
+        >
           <button
             onClick={() => setActiveTab("natal")}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-              activeTab === "natal"
-                ? "bg-amber-600/20 border border-amber-500/30 text-white shadow-sm"
-                : "text-slate-400 hover:text-slate-200 hover:bg-white/4"
-            }`}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
+            style={activeTab === "natal" ? {
+              background: "rgba(212,175,55,0.14)",
+              border: "0.5px solid rgba(212,175,55,0.38)",
+              color: "#F3E5AB",
+            } : { color: "#64748b" }}
           >
             ✨ Twój kosmogram
           </button>
           <button
             ref={childTabRef}
             onClick={() => { setActiveTab("child"); setChildNudge(false); }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-              activeTab === "child"
-                ? "bg-green-600/20 border border-green-500/30 text-white shadow-sm"
-                : childNudge
-                  ? "text-green-300 bg-green-900/20 border border-green-500/40 animate-pulse"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-white/4"
-            }`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300${childNudge && activeTab !== "child" ? " animate-pulse" : ""}`}
+            style={activeTab === "child" ? {
+              background: "rgba(16,185,129,0.12)",
+              border: "0.5px solid rgba(16,185,129,0.30)",
+              color: "#6ee7b7",
+            } : childNudge ? {
+              color: "#6ee7b7",
+              border: "0.5px solid rgba(16,185,129,0.35)",
+            } : { color: "#64748b" }}
           >
             <Baby className="w-3.5 h-3.5" />
             Kosmogram dziecka
@@ -415,16 +423,32 @@ export default function CosmogramPage() {
         {/* ── NATAL TAB ─────────────────────────────────────────────────── */}
         {activeTab === "natal" && (
           <>
-            <div className="mb-8 text-center">
-              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 font-brand">
-                Twój <span className="gradient-text text-glow">Kosmogram Natalny</span>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              className="mb-8 text-center"
+            >
+              <h1
+                className="text-3xl sm:text-4xl font-bold text-white mb-2"
+                style={{ fontFamily: "var(--font-cormorant), serif" }}
+              >
+                Twój{" "}
+                <span style={{
+                  background: "linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #C5A059 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}>
+                  Kosmogram Natalny
+                </span>
               </h1>
               <p className="text-slate-500 text-sm">Obliczenia astronomiczne · Swiss Ephemeris · Interpretacja AI</p>
-            </div>
+            </motion.div>
 
             {/* History selector */}
             {session && !loadingHistory && readings.length > 0 && (
-              <div className="glass-card rounded-2xl px-4 py-3 mb-4">
+              <div className="rounded-2xl px-4 py-3 mb-4" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)", backdropFilter: "blur(18px)" }}>
                 <HistorySelector
                   items={selectorItems}
                   selectedId={selectedId}
@@ -438,8 +462,8 @@ export default function CosmogramPage() {
             )}
 
             {loadingHistory && (
-              <div className="glass-card rounded-2xl p-10 text-center mb-6">
-                <div className="w-8 h-8 border-2 border-amber-600/30 border-t-amber-400 rounded-full animate-spin mx-auto mb-3" />
+              <div className="rounded-2xl p-10 text-center mb-6" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)" }}>
+                <div className="w-8 h-8 rounded-full animate-spin border-t-2 mx-auto mb-3" style={{ borderColor: "transparent", borderTopColor: "#D4AF37" }} />
                 <p className="text-slate-500 text-sm">Wczytuję kosmogramy…</p>
               </div>
             )}
@@ -448,7 +472,10 @@ export default function CosmogramPage() {
             {childNudge && activeTab === "natal" && (
               <div
                 onClick={switchToChildTab}
-                className="mb-4 flex items-start gap-3 p-4 rounded-2xl bg-green-900/20 border border-green-500/30 cursor-pointer hover:bg-green-900/30 transition-colors group"
+                className="mb-4 flex items-start gap-3 p-4 rounded-2xl cursor-pointer transition-all duration-300 group"
+                style={{ background: "rgba(16,185,129,0.08)", border: "0.5px solid rgba(16,185,129,0.25)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(16,185,129,0.12)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(16,185,129,0.08)"; }}
               >
                 <Baby className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
@@ -463,78 +490,54 @@ export default function CosmogramPage() {
 
             {/* Form */}
             {!loadingHistory && showForm && (
-              <div className="glass-card rounded-2xl p-5 mb-8">
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="rounded-2xl p-5 mb-8"
+                style={{ background: "rgba(5,4,14,0.72)", border: "0.5px solid rgba(212,175,55,0.18)", backdropFilter: "blur(24px)" }}
+              >
                 <BirthForm onSubmit={handleFormSubmit} loading={chartLoading} onDateChange={handleDateChange} />
                 {error && (
-                  <div className="mt-3 p-3 rounded-xl bg-red-900/20 border border-red-700/30 text-red-300 text-sm">{error}</div>
+                  <div className="mt-3 p-3 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.08)", border: "0.5px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}>{error}</div>
                 )}
-              </div>
+              </motion.div>
             )}
 
             {chartLoading && (
-              <div className="glass-card rounded-2xl p-16 text-center mb-8">
-                <div className="w-14 h-14 border-2 border-amber-600/30 border-t-amber-400 rounded-full animate-spin mx-auto mb-4" />
+              <div className="rounded-2xl p-16 text-center mb-8" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)" }}>
+                <div className="w-14 h-14 rounded-full animate-spin border-2 mx-auto mb-4" style={{ borderColor: "rgba(212,175,55,0.15)", borderTopColor: "#D4AF37" }} />
                 <p className="text-slate-400 text-sm">Obliczam pozycje planet…</p>
               </div>
             )}
 
             {hasResults && (
               <div className="space-y-6">
-                <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
-                  <span className="px-3 py-1 rounded-full bg-amber-900/15 border border-amber-800/25 text-slate-400">📅 {chart.birthData.date}</span>
-                  <span className="px-3 py-1 rounded-full bg-amber-900/15 border border-amber-800/25 text-slate-400">
-                    🕐 {chart.birthData.timeUnknown ? "godzina nieznana" : chart.birthData.time}
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-amber-900/15 border border-amber-800/25 text-slate-400 max-w-[240px] truncate">
-                    📍 {chart.birthData.place}
-                  </span>
-                  {!chart.birthData.timeUnknown && (
-                    <span className="px-3 py-1 rounded-full bg-amber-900/15 border border-amber-800/25 text-slate-500">🌐 {chart.birthData.timezone}</span>
-                  )}
+                <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-400">
+                  {[
+                    `📅 ${chart.birthData.date}`,
+                    `🕐 ${chart.birthData.timeUnknown ? "godzina nieznana" : chart.birthData.time}`,
+                    `📍 ${chart.birthData.place}`,
+                    ...(!chart.birthData.timeUnknown ? [`🌐 ${chart.birthData.timezone}`] : []),
+                  ].map(label => (
+                    <span key={label} className="px-3 py-1 rounded-full max-w-[240px] truncate" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
+                      {label}
+                    </span>
+                  ))}
                 </div>
                 {chart.birthData.timeUnknown && (
-                  <p className="text-center text-xs text-amber-500/60">Bez godziny urodzenia — wyniki bez Ascendentu, MC i domów.</p>
+                  <p className="text-center text-xs" style={{ color: "rgba(212,175,55,0.55)" }}>Bez godziny urodzenia — wyniki bez Ascendentu, MC i domów.</p>
                 )}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-                  <div className="glass-card rounded-3xl p-4 sm:p-5 flex flex-col">
-                    <NatalChartSVG chart={chart} />
-                    {(() => {
-                      const sun  = chart.planets.find(p => p.name === "Słońce");
-                      const moon = chart.planets.find(p => p.name === "Księżyc");
-                      const el   = getDominantElement(chart);
-                      return (
-                        <div className="flex flex-wrap items-center justify-center gap-2 mt-4 pt-3 border-t border-amber-900/15">
-                          {sun && <span className="px-3 py-1 rounded-full text-xs border border-amber-700/40 text-amber-200/90 bg-amber-900/15">☀️ {sun.sign}</span>}
-                          {moon && <span className="px-3 py-1 rounded-full text-xs border border-slate-700/40 text-slate-300/80 bg-slate-900/20">🌙 {moon.sign}</span>}
-                          <span className={`px-3 py-1 rounded-full text-xs border ${el.color}`}>{el.emoji} Dominuje {el.label}</span>
-                        </div>
-                      );
-                    })()}
-                    {!chart.birthData.timeUnknown && (
-                      <div className="flex flex-wrap justify-center gap-3 text-xs text-slate-500 mt-3 pt-3 border-t border-amber-900/15">
-                        {[
-                          { color: "bg-amber-400/60",  label: "Koniunkcja (0°)" },
-                          { color: "bg-green-400/60",  label: "Trygon (120°)" },
-                          { color: "bg-red-400/60",    label: "Opozycja (180°)" },
-                          { color: "bg-orange-400/60", label: "Kwadrat (90°)" },
-                          { color: "bg-blue-400/60",   label: "Sekstyl (60°)" },
-                        ].map(({ color, label }) => (
-                          <span key={label} className="flex items-center gap-1.5">
-                            <span className={`inline-block w-3 h-1.5 rounded-full ${color}`} />
-                            {label}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="h-full"><PlanetTable chart={chart} /></div>
+                <div className="space-y-6">
+                  <NatalChartAltarView chart={chart} />
+                  <PlanetTable chart={chart} />
                 </div>
                 {(() => {
                   const tags = getPersonalityTags(chart);
                   return tags.length > 0 ? (
                     <div className="flex flex-wrap items-center justify-center gap-2">
                       {tags.map(tag => (
-                        <span key={tag} className="px-3 py-1 rounded-full text-xs border border-amber-700/35 text-amber-200/80 bg-amber-900/15">{tag}</span>
+                        <span key={tag} className="px-3 py-1 rounded-full text-xs" style={{ border: "0.5px solid rgba(212,175,55,0.28)", color: "#F3E5AB", background: "rgba(212,175,55,0.07)" }}>{tag}</span>
                       ))}
                     </div>
                   ) : null;
@@ -544,7 +547,10 @@ export default function CosmogramPage() {
                   <div className="flex justify-center">
                     <button
                       onClick={() => setShowShare(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-amber-700/40 text-amber-300 text-sm hover:bg-amber-900/20 transition-colors"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm transition-all duration-300"
+                      style={{ border: "0.5px solid rgba(212,175,55,0.35)", color: "#F3E5AB" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(212,175,55,0.08)"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                     >
                       <Share2 className="w-4 h-4" />
                       Udostępnij kosmogram
@@ -610,14 +616,14 @@ export default function CosmogramPage() {
             )}
 
             {loadingChildren && (
-              <div className="glass-card rounded-2xl p-10 text-center">
-                <div className="w-8 h-8 border-2 border-green-500/30 border-t-green-500 rounded-full animate-spin mx-auto mb-3" />
+              <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)" }}>
+                <div className="w-8 h-8 rounded-full animate-spin border-2 mx-auto mb-3" style={{ borderColor: "rgba(16,185,129,0.2)", borderTopColor: "#6ee7b7" }} />
                 <p className="text-slate-500 text-sm">Wczytuję karty…</p>
               </div>
             )}
 
             {!loadingChildren && children.length === 0 && (
-              <div className="glass-card rounded-2xl p-12 text-center border border-green-900/20">
+              <div className="rounded-2xl p-12 text-center" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(16,185,129,0.15)" }}>
                 <Baby className="w-12 h-12 text-green-400/30 mx-auto mb-4" />
                 <h3 className="text-white font-semibold mb-2 font-brand">Brak kart dzieci</h3>
                 <p className="text-slate-500 text-sm mb-6 max-w-xs mx-auto">
@@ -654,9 +660,9 @@ export default function CosmogramPage() {
             )}
 
             {!session && (
-              <div className="glass-card rounded-2xl p-10 text-center border border-green-900/20">
+              <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(16,185,129,0.15)" }}>
                 <Baby className="w-10 h-10 text-green-400/40 mx-auto mb-3" />
-                <p className="text-slate-400 text-sm mb-1">Zaloguj sie, zeby dodac karte dziecka</p>
+                <p className="text-slate-400 text-sm mb-1">Zaloguj się, żeby dodać kartę dziecka</p>
                 <p className="text-slate-600 text-xs">Historia kart jest zapisywana w Twoim koncie</p>
               </div>
             )}

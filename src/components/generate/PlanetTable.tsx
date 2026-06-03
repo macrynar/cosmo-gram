@@ -22,7 +22,6 @@ export default function PlanetTable({ chart }: Props) {
   const { planets, houses, ascendant, mc } = chart;
   const ascSign = Math.floor(ascendant / 30);
   const mcSign  = Math.floor(mc / 30);
-  // U+FE0E (VS15) forces text (not emoji) rendering so CSS color applies
   const vs = "︎";
   const SIGNS = ["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"].map(s => s + vs);
   const SIGN_NAMES = ["Baran","Byk","Bliźnięta","Rak","Lew","Panna","Waga","Skorpion","Strzelec","Koziorożec","Wodnik","Ryby"];
@@ -31,14 +30,27 @@ export default function PlanetTable({ chart }: Props) {
   const mcDeg  = Math.floor(((mc % 30) + 30) % 30);
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden">
-      <div className="px-4 py-3 border-b border-amber-900/25">
+    <div
+      className="rounded-2xl overflow-hidden"
+      style={{
+        background: "rgba(5,4,14,0.65)",
+        border: "0.5px solid rgba(212,175,55,0.18)",
+        backdropFilter: "blur(18px)",
+      }}
+    >
+      <div
+        className="px-4 py-3"
+        style={{ borderBottom: "0.5px solid rgba(212,175,55,0.14)" }}
+      >
         <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase">Pozycje Planet</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-xs text-slate-500 uppercase tracking-wider border-b border-amber-900/15">
+            <tr
+              className="text-xs text-slate-600 uppercase tracking-wider"
+              style={{ borderBottom: "0.5px solid rgba(212,175,55,0.10)" }}
+            >
               <th className="text-left px-4 py-2.5">Planeta</th>
               <th className="text-left px-4 py-2.5">Znak</th>
               <th className="text-left px-4 py-2.5">Stopień</th>
@@ -47,44 +59,66 @@ export default function PlanetTable({ chart }: Props) {
           </thead>
           <tbody>
             {/* ASC row */}
-            <tr className="border-b border-amber-900/10 hover:bg-amber-900/10 transition-colors">
+            <tr
+              className="transition-colors duration-200"
+              style={{ borderBottom: "0.5px solid rgba(212,175,55,0.08)" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(212,175,55,0.05)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+            >
               <td className="px-4 py-2.5 font-medium text-slate-300">
                 <span className="mr-2 text-base">⬆</span>Ascendent
               </td>
               <td className="px-4 py-2.5 text-slate-300">
-                <span className="text-amber-400/90">{SIGNS[ascSign]}</span> {SIGN_NAMES[ascSign]}
+                <span style={{ color: "#D4AF37" }}>{SIGNS[ascSign]}</span> {SIGN_NAMES[ascSign]}
               </td>
               <td className="px-4 py-2.5 text-slate-400">{ascDeg}°</td>
-              <td className="px-4 py-2.5 text-slate-500">—</td>
+              <td className="px-4 py-2.5 text-slate-600">—</td>
             </tr>
             {/* MC row */}
-            <tr className="border-b border-amber-900/10 hover:bg-amber-900/10 transition-colors">
-              <td className="px-4 py-2.5 font-medium text-amber-300">
+            <tr
+              className="transition-colors duration-200"
+              style={{ borderBottom: "0.5px solid rgba(212,175,55,0.08)" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(212,175,55,0.05)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+            >
+              <td className="px-4 py-2.5 font-medium" style={{ color: "#F3E5AB" }}>
                 <span className="mr-2 text-base">⬆</span>MC
               </td>
               <td className="px-4 py-2.5 text-slate-300">
-                <span className="text-amber-400/90">{SIGNS[mcSign]}</span> {SIGN_NAMES[mcSign]}
+                <span style={{ color: "#D4AF37" }}>{SIGNS[mcSign]}</span> {SIGN_NAMES[mcSign]}
               </td>
               <td className="px-4 py-2.5 text-slate-400">{mcDeg}°</td>
-              <td className="px-4 py-2.5 text-slate-500">—</td>
+              <td className="px-4 py-2.5 text-slate-600">—</td>
             </tr>
             {planets.map((p) => {
               const color = PLANET_COLORS[p.name] ?? "#a78bfa";
               const house = houseOf(p.longitude, houses);
               return (
-                <tr key={p.name} className="border-b border-amber-900/10 hover:bg-amber-900/10 transition-colors last:border-0">
+                <tr
+                  key={p.name}
+                  className="transition-colors duration-200 last:border-0"
+                  style={{ borderBottom: "0.5px solid rgba(212,175,55,0.08)" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(212,175,55,0.05)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
                   <td className="px-4 py-2.5 font-medium" style={{ color }}>
                     <span className="mr-2 text-base">{p.symbol}</span>{p.name}
                     {p.isRetrograde && <span className="ml-1 text-xs opacity-60">↺</span>}
                   </td>
                   <td className="px-4 py-2.5 text-slate-300">
-                    <span className="text-amber-400/90">{p.signSymbol + vs}</span> {p.sign}
+                    <span style={{ color: "#D4AF37" }}>{p.signSymbol + vs}</span> {p.sign}
                   </td>
                   <td className="px-4 py-2.5 text-slate-400">
                     {p.degree}°{p.minute.toString().padStart(2, "0")}′
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-900/20 border border-amber-800/25 text-slate-400">
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full text-slate-400"
+                      style={{
+                        background: "rgba(212,175,55,0.08)",
+                        border: "0.5px solid rgba(212,175,55,0.18)",
+                      }}
+                    >
                       Dom {house}
                     </span>
                   </td>

@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Sparkles, Loader2, Sun, Star, Heart, Briefcase, TrendingUp, Moon, Flame, Compass } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -10,14 +11,14 @@ interface Props {
 }
 
 const SECTION_CONFIG = [
-  { icon: Sun,        color: "text-amber-400",   border: "border-amber-800/30",   bg: "bg-amber-900/10"   },
-  { icon: Moon,       color: "text-blue-300",    border: "border-blue-800/25",    bg: "bg-blue-900/10"    },
-  { icon: Star,       color: "text-purple-400",  border: "border-purple-800/30",  bg: "bg-purple-900/10"  },
-  { icon: Heart,      color: "text-pink-400",    border: "border-pink-800/30",    bg: "bg-pink-900/10"    },
-  { icon: Briefcase,  color: "text-cyan-400",    border: "border-cyan-800/30",    bg: "bg-cyan-900/10"    },
-  { icon: Flame,      color: "text-red-400",     border: "border-red-800/30",     bg: "bg-red-900/10"     },
-  { icon: Compass,    color: "text-indigo-400",  border: "border-indigo-800/30",  bg: "bg-indigo-900/10"  },
-  { icon: TrendingUp, color: "text-amber-300",   border: "border-amber-800/25",   bg: "bg-amber-900/8"    },
+  { icon: Sun,        color: "#D4AF37",  border: "rgba(212,175,55,0.20)",  bg: "rgba(212,175,55,0.06)"  },
+  { icon: Moon,       color: "#93c5fd",  border: "rgba(147,197,253,0.18)", bg: "rgba(59,130,246,0.06)"  },
+  { icon: Star,       color: "#c4b5fd",  border: "rgba(196,181,253,0.20)", bg: "rgba(124,58,237,0.06)"  },
+  { icon: Heart,      color: "#f9a8d4",  border: "rgba(249,168,212,0.20)", bg: "rgba(236,72,153,0.06)"  },
+  { icon: Briefcase,  color: "#67e8f9",  border: "rgba(103,232,249,0.18)", bg: "rgba(6,182,212,0.06)"   },
+  { icon: Flame,      color: "#fca5a5",  border: "rgba(252,165,165,0.20)", bg: "rgba(239,68,68,0.06)"   },
+  { icon: Compass,    color: "#a5b4fc",  border: "rgba(165,180,252,0.18)", bg: "rgba(99,102,241,0.06)"  },
+  { icon: TrendingUp, color: "#C5A059",  border: "rgba(197,160,89,0.20)",  bg: "rgba(197,160,89,0.06)"  },
 ];
 
 interface Section {
@@ -26,7 +27,6 @@ interface Section {
 }
 
 function parseSections(text: string): Section[] {
-  // Discard any preamble (echoed system prompt, intro phrases) before the first heading
   const firstHeading = text.search(/^#{1,4}\s+/m);
   const body = firstHeading >= 0 ? text.slice(firstHeading) : text;
   const lines = body.replace(/\r\n/g, "\n").split("\n");
@@ -35,10 +35,8 @@ function parseSections(text: string): Section[] {
   let currentBody: string[] = [];
 
   const pushCurrent = () => {
-    const body = currentBody.join("\n").trim();
-    if (currentHeader || body) {
-      sections.push({ header: currentHeader, body });
-    }
+    const b = currentBody.join("\n").trim();
+    if (currentHeader || b) sections.push({ header: currentHeader, body: b });
   };
 
   for (const line of lines) {
@@ -51,7 +49,6 @@ function parseSections(text: string): Section[] {
     }
     currentBody.push(line);
   }
-
   pushCurrent();
   return sections;
 }
@@ -66,7 +63,7 @@ function MarkdownBlock({ content }: { content: string }) {
         ol: ({ children }) => <ol className="list-decimal pl-5 text-slate-300 text-sm space-y-1 mb-3">{children}</ol>,
         li: ({ children }) => <li>{children}</li>,
         strong: ({ children }) => <strong className="text-slate-100 font-semibold">{children}</strong>,
-        hr: () => <hr className="my-3 border-amber-900/20" />,
+        hr: () => <hr className="my-3" style={{ borderColor: "rgba(212,175,55,0.15)" }} />,
       }}
     >
       {content}
@@ -77,42 +74,65 @@ function MarkdownBlock({ content }: { content: string }) {
 export default function Interpretation({ text, loading }: Props) {
   const sections = text ? parseSections(text) : [];
 
-  // Separate intro (no header) from named sections; strip AI workflow leakage
   const SKIP = /workflow|wstępny|sygnatury|krok\s*\d|top\s*\d/i;
   const intro = sections.find((s) => !s.header);
   const named = sections.filter((s) => s.header && !SKIP.test(s.header));
   const hasMissingSections = named.length > 0 && named.length < 8;
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden">
+    <div
+      className="rounded-2xl overflow-hidden"
+      style={{
+        background: "rgba(5,4,14,0.65)",
+        border: "0.5px solid rgba(212,175,55,0.18)",
+        backdropFilter: "blur(18px)",
+      }}
+    >
       {/* Panel header */}
-      <div className="px-5 py-4 border-b border-amber-900/25 flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-amber-400" />
+      <div
+        className="px-5 py-4 flex items-center gap-2"
+        style={{ borderBottom: "0.5px solid rgba(212,175,55,0.14)" }}
+      >
+        <Sparkles className="w-4 h-4" style={{ color: "#D4AF37" }} />
         <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase">Analiza Cosmogram AI</h3>
       </div>
 
       <div className="px-5 py-5">
         {loading ? (
           <div className="flex items-center gap-3 text-slate-400 py-12 justify-center">
-            <Loader2 className="w-5 h-5 animate-spin text-amber-400" />
+            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#D4AF37" }} />
             <span className="text-sm">AI analizuje Twój kosmogram…</span>
           </div>
         ) : text ? (
           <div className="space-y-4">
-            {/* Intro paragraph (if any) */}
             {intro?.body && (
-              <div className="rounded-xl border border-amber-900/25 bg-amber-950/10 p-4">
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="rounded-xl p-4"
+                style={{
+                  background: "rgba(212,175,55,0.06)",
+                  border: "0.5px solid rgba(212,175,55,0.18)",
+                }}
+              >
                 <MarkdownBlock content={intro.body} />
-              </div>
+              </motion.div>
             )}
 
             {hasMissingSections && (
-              <div className="rounded-xl border border-amber-700/40 bg-amber-900/10 px-4 py-3 text-amber-300 text-xs">
+              <div
+                className="rounded-xl px-4 py-3 text-xs"
+                style={{
+                  background: "rgba(212,175,55,0.08)",
+                  border: "0.5px solid rgba(212,175,55,0.30)",
+                  color: "#F3E5AB",
+                }}
+              >
                 Wygenerowano {named.length}/8 sekcji interpretacji. Spróbuj wygenerować ponownie, aby uzyskać pełny raport.
               </div>
             )}
 
-            {/* Named sections grid */}
             {named.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {named.map((section, i) => {
@@ -120,16 +140,23 @@ export default function Interpretation({ text, loading }: Props) {
                   const Icon = cfg.icon;
                   const isLastOdd = named.length % 2 !== 0 && i === named.length - 1;
                   return (
-                    <div
+                    <motion.div
                       key={i}
-                      className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4${isLastOdd ? " lg:col-span-2" : ""}`}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.07, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                      className={`rounded-xl p-4${isLastOdd ? " lg:col-span-2" : ""}`}
+                      style={{
+                        background: cfg.bg,
+                        border: `0.5px solid ${cfg.border}`,
+                      }}
                     >
-                      <div className={`flex items-center gap-2 mb-2 ${cfg.color}`}>
+                      <div className="flex items-center gap-2 mb-2" style={{ color: cfg.color }}>
                         <Icon className="w-4 h-4 shrink-0" />
                         <h4 className="text-sm font-semibold">{section.header}</h4>
                       </div>
                       <MarkdownBlock content={section.body} />
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -138,7 +165,10 @@ export default function Interpretation({ text, loading }: Props) {
         ) : null}
       </div>
 
-      <div className="px-5 pb-4 text-xs text-slate-600 border-t border-amber-900/15 pt-3">
+      <div
+        className="px-5 pb-4 text-xs text-slate-600 pt-3"
+        style={{ borderTop: "0.5px solid rgba(212,175,55,0.10)" }}
+      >
         Obliczenia: astronomy-engine · Domy: Equal House · Interpretacja: Claude AI
       </div>
     </div>
