@@ -306,22 +306,30 @@ export default function NatalChartAltarView({ chart }: Props) {
         </motion.header>
 
         {/* ════════════════════════════════════════════════════
-            DESKTOP  — Triquetra layout
-            ┌──────┬────────────────────────────┐
-            │      │  [Słońce — GÓRA]           │
-            │ ASC  │  [      Chart      ]       │
-            │      │  [Księżyc — DÓŁ]           │
-            └──────┴────────────────────────────┘
+            DESKTOP  — 3-column grid (symmetric)
+            col: [140px]  [1fr]   [140px]
+                 [ASC  ]  [Sun ]  [empty]
+                 [ASC  ]  [Chart] [empty]
+                 [ASC  ]  [Moon]  [empty]
         ════════════════════════════════════════════════════ */}
-        <div className="hidden sm:flex items-center gap-6 lg:gap-10">
-
-          {/* LEFT: Ascendent — spans full height, vertically centered */}
+        <div
+          className="hidden sm:grid"
+          style={{
+            gridTemplateColumns: "140px minmax(0,1fr) 140px",
+            gridTemplateRows: "auto auto auto",
+            columnGap: "24px",
+            rowGap: "20px",
+            alignItems: "center",
+            justifyItems: "center",
+          }}
+        >
+          {/* Col 1, rows 1–3: ASC — vertically centered over full height */}
           {!timeUnknown ? (
             <motion.div
               initial={{ opacity: 0, x: -24 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.28, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              className="flex-shrink-0 self-stretch flex items-center"
+              style={{ gridColumn: 1, gridRow: "1 / 4", display: "flex", alignItems: "center", height: "100%" }}
             >
               <AmuletFlank
                 body="asc"
@@ -333,65 +341,66 @@ export default function NatalChartAltarView({ chart }: Props) {
               />
             </motion.div>
           ) : (
-            <div className="flex-shrink-0 w-24 sm:w-28" />
+            <div style={{ gridColumn: 1, gridRow: "1 / 4" }} />
           )}
 
-          {/* RIGHT column: Sun (top) → Chart (middle) → Moon (bottom) */}
-          <div className="flex-1 min-w-0 flex flex-col items-center gap-5">
+          {/* Col 2, row 1: Słońce — GÓRA */}
+          <motion.div
+            initial={{ opacity: 0, y: -18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.22, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            style={{ gridColumn: 2, gridRow: 1 }}
+          >
+            <AmuletFlank
+              body="sun"
+              sign={sun.sign}
+              degree={sun.degree}
+              focused={focused}
+              onFocus={setFocused}
+              tooltipAlign="center"
+            />
+          </motion.div>
 
-            {/* Słońce — GÓRA */}
+          {/* Col 2, row 2: Chart — ŚRODEK */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.90 }}
+            className="w-full cursor-pointer"
+            animate={{ opacity: chartDimmed ? 0.50 : 1, scale: chartDimmed ? 0.97 : 1 }}
+            transition={{ delay: focused ? 0 : 0.10, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            style={{ gridColumn: 2, gridRow: 2 }}
+            onHoverStart={() => setFocused("chart")}
+            onHoverEnd={() => setFocused(null)}
+          >
             <motion.div
-              initial={{ opacity: 0, y: -18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.22, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              animate={{
+                filter: focused === "chart"
+                  ? "drop-shadow(0 0 28px rgba(212,175,55,0.18))"
+                  : "drop-shadow(0 0 0px transparent)",
+              }}
+              transition={{ duration: 0.4 }}
             >
-              <AmuletFlank
-                body="sun"
-                sign={sun.sign}
-                degree={sun.degree}
-                focused={focused}
-                onFocus={setFocused}
-                tooltipAlign="center"
-              />
+              <NatalChartSVG chart={chart} />
             </motion.div>
+          </motion.div>
 
-            {/* Chart */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.90 }}
-              className="w-full cursor-pointer"
-              animate={{ opacity: chartDimmed ? 0.50 : 1, scale: chartDimmed ? 0.97 : 1 }}
-              transition={{ delay: focused ? 0 : 0.10, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              onHoverStart={() => setFocused("chart")}
-              onHoverEnd={() => setFocused(null)}
-            >
-              <motion.div
-                animate={{
-                  filter: focused === "chart"
-                    ? "drop-shadow(0 0 28px rgba(212,175,55,0.18))"
-                    : "drop-shadow(0 0 0px transparent)",
-                }}
-                transition={{ duration: 0.4 }}
-              >
-                <NatalChartSVG chart={chart} />
-              </motion.div>
-            </motion.div>
+          {/* Col 2, row 3: Księżyc — DÓŁ */}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.22, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            style={{ gridColumn: 2, gridRow: 3 }}
+          >
+            <AmuletFlank
+              body="moon"
+              sign={moon.sign}
+              degree={moon.degree}
+              focused={focused}
+              onFocus={setFocused}
+              tooltipAlign="center"
+            />
+          </motion.div>
 
-            {/* Księżyc — DÓŁ */}
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.22, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <AmuletFlank
-                body="moon"
-                sign={moon.sign}
-                degree={moon.degree}
-                focused={focused}
-                onFocus={setFocused}
-                tooltipAlign="center"
-              />
-            </motion.div>
-          </div>
+          {/* Col 3: pusty balans — symetria względem ASC */}
         </div>
 
         {/* ── MOBILE: Chart → flanks row below ── */}
