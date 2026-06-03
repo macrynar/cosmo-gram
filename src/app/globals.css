@@ -14,6 +14,15 @@
   --color-muted: #94a3b8;
   --color-muted-dark: #475569;
 
+  /* ── Mystic Crystal palette ── */
+  --color-mystic-gold-100: #F3E5AB;
+  --color-mystic-gold-300: #D4AF37;
+  --color-mystic-gold-500: #C5A059;
+  --color-mystic-gold-700: #8B6914;
+  --color-mystic-void:     #050508;
+  --color-mystic-deep:     #0A0B10;
+  --color-mystic-purple:   rgba(88,60,140,0.30);
+
   --font-display: var(--font-cormorant);
   --font-sans: var(--font-montserrat);
 }
@@ -428,4 +437,170 @@
   width: calc(100% - 4rem);
   height: 1px;
   background: linear-gradient(90deg, rgba(139,92,246,0.5), rgba(139,92,246,0.1));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MYSTIC CRYSTAL — design system additions
+   ══════════════════════════════════════════════════════════════ */
+
+/* ─── Enhanced glassmorphism card ─── */
+.mystic-card {
+  background: rgba(0, 0, 0, 0.45);
+  border: 0.5px solid rgba(212, 175, 55, 0.20);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  transition: border-color 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+}
+.mystic-card:hover {
+  border-color: rgba(212, 175, 55, 0.45);
+  box-shadow:
+    0 0 30px rgba(212, 175, 55, 0.14),
+    0 0 60px rgba(212, 175, 55, 0.06);
+}
+
+/* Altar variant — heavier, more opaque */
+.mystic-card-altar {
+  background: rgba(5, 4, 14, 0.78);
+  border: 0.5px solid rgba(212, 175, 55, 0.28);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  box-shadow:
+    0 0 60px rgba(5, 4, 14, 0.8),
+    inset 0 0 80px rgba(88, 60, 140, 0.05);
+  transition: border-color 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+}
+.mystic-card-altar:hover {
+  border-color: rgba(212, 175, 55, 0.52);
+  box-shadow:
+    0 0 40px rgba(212, 175, 55, 0.22),
+    0 0 90px rgba(212, 175, 55, 0.08),
+    inset 0 0 80px rgba(88, 60, 140, 0.06);
+}
+
+/* ─── Mystic button ─── */
+.mystic-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(212, 175, 55, 0.50);
+  background: transparent;
+  color: #D4AF37;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.625rem 1.5rem;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all 0.5s ease-in-out;
+}
+.mystic-btn:hover {
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.80);
+  box-shadow:
+    0 0 20px rgba(212, 175, 55, 0.30),
+    0 0 40px rgba(212, 175, 55, 0.10);
+  transform: translateY(-1px);
+}
+.mystic-btn:active {
+  transform: translateY(0);
+}
+
+/* Filled gold variant */
+.mystic-btn-filled {
+  background: linear-gradient(135deg, #D4AF37 0%, #C5A059 100%);
+  border-color: transparent;
+  color: #050508;
+}
+.mystic-btn-filled:hover {
+  background: linear-gradient(135deg, #F3E5AB 0%, #D4AF37 100%);
+  box-shadow:
+    0 0 25px rgba(212, 175, 55, 0.45),
+    0 0 50px rgba(212, 175, 55, 0.18);
+}
+
+/* ─── Sacred geometry tiled background ─── */
+.sacred-geometry-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'%3E%3Ccircle cx='120' cy='120' r='105' fill='none' stroke='%23D4AF37' stroke-width='0.5'/%3E%3Ccircle cx='120' cy='120' r='70'  fill='none' stroke='%23D4AF37' stroke-width='0.4'/%3E%3Ccircle cx='120' cy='120' r='35'  fill='none' stroke='%23D4AF37' stroke-width='0.4'/%3E%3Ccircle cx='120' cy='120' r='12'  fill='none' stroke='%23D4AF37' stroke-width='0.5'/%3E%3Cpolygon points='120,18 204,168 36,168'   fill='none' stroke='%23D4AF37' stroke-width='0.35'/%3E%3Cpolygon points='120,222 36,72 204,72' fill='none' stroke='%23D4AF37' stroke-width='0.35'/%3E%3Cline x1='120' y1='10' x2='120' y2='230' stroke='%23D4AF37' stroke-width='0.2'/%3E%3Cline x1='10' y1='120' x2='230' y2='120' stroke='%23D4AF37' stroke-width='0.2'/%3E%3C/svg%3E");
+  background-size: 240px 240px;
+  mix-blend-mode: screen;
+}
+
+/* ─── Gold shimmer text ─── */
+@keyframes gold-shimmer {
+  0%   { background-position: 0%   50%; }
+  100% { background-position: 200% 50%; }
+}
+.gradient-text-mystic {
+  background: linear-gradient(120deg, #b9894c 0%, #F3E5AB 35%, #D4AF37 55%, #F3E5AB 75%, #b9894c 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gold-shimmer 5s linear infinite;
+}
+
+/* ─── Breathing glow animation ─── */
+@keyframes glow-breathe {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(212,175,55,0.12), 0 0 30px rgba(212,175,55,0.04);
+    filter: brightness(0.96);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(212,175,55,0.28), 0 0 70px rgba(212,175,55,0.10);
+    filter: brightness(1.04);
+  }
+}
+.animate-glow-breathe {
+  animation: glow-breathe 4s ease-in-out infinite;
+}
+
+/* Slow variant — for background orbs */
+@keyframes glow-breathe-slow {
+  0%, 100% { opacity: 0.50; transform: scale(1);    }
+  50%       { opacity: 0.75; transform: scale(1.06); }
+}
+.animate-glow-breathe-slow {
+  animation: glow-breathe-slow 7s ease-in-out infinite;
+}
+
+/* ─── Page entry animation ─── */
+@keyframes mystic-enter {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.mystic-enter {
+  animation: mystic-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.mystic-enter-delay-1 { animation-delay: 0.10s; }
+.mystic-enter-delay-2 { animation-delay: 0.20s; }
+.mystic-enter-delay-3 { animation-delay: 0.32s; }
+.mystic-enter-delay-4 { animation-delay: 0.45s; }
+
+/* ─── Altar gold divider ─── */
+.altar-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(212,175,55,0.40), transparent);
+}
+
+/* ─── Selection colour ─── */
+::selection {
+  background: rgba(212, 175, 55, 0.22);
+  color: #F3E5AB;
+}
+
+/* ─── Scrollbar (webkit) — subtle gold ─── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.25);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.45);
 }
