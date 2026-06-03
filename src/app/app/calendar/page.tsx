@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Flame } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flame, GitCompare, X, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
@@ -16,6 +16,17 @@ import { computeMonthData, type DayData } from "@/lib/chart-engine";
 import { useStreak } from "@/lib/useStreak";
 import type { NatalChart } from "@/lib/astro-types";
 import { ROUTES } from "@/lib/routes";
+
+function nextBirthdayDaysUntil(birthDate: string): number {
+  const today = new Date();
+  const birth = new Date(birthDate + "T12:00:00Z");
+  const m = birth.getUTCMonth();
+  const d = birth.getUTCDate();
+  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  let candidate = new Date(Date.UTC(today.getUTCFullYear(), m, d));
+  if (candidate < todayUTC) candidate = new Date(Date.UTC(today.getUTCFullYear() + 1, m, d));
+  return Math.round((candidate.getTime() - todayUTC.getTime()) / 86400000);
+}
 
 type SavedReading = {
   id: string;
@@ -49,19 +60,31 @@ export default function CalendarPage() {
 
   const [readings, setReadings] = useState<SavedReading[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [compareId, setCompareId] = useState<string | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [loadError, setLoadError] = useState("");
 
   const authHeader: Record<string, string> = session ? { Authorization: `Bearer ${session.access_token}` } : {};
 
   const selectedReading = useMemo(() => readings.find(r => r.id === selectedId) ?? null, [readings, selectedId]);
+  const compareReading  = useMemo(() => compareMode && compareId ? readings.find(r => r.id === compareId) ?? null : null, [readings, compareId, compareMode]);
 
   const days = useMemo<DayData[]>(() => {
     if (!selectedReading?.chart_data) return [];
     return computeMonthData(selectedReading.chart_data, year, month);
   }, [selectedReading, year, month]);
 
+  const compareDays = useMemo<DayData[] | undefined>(() => {
+    if (!compareReading?.chart_data) return undefined;
+    return computeMonthData(compareReading.chart_data, year, month);
+  }, [compareReading, year, month]);
+
   const selectedDayData = useMemo(() => days.find(d => d.date === selectedDate) ?? undefined, [days, selectedDate]);
+
+  const solarReturnDays = useMemo(() =>
+    selectedReading?.birth_date ? nextBirthdayDaysUntil(selectedReading.birth_date) : null,
+  [selectedReading]);
 
   const loadReadings = useCallback(async () => {
     if (!session) return;
@@ -156,6 +179,30 @@ export default function CalendarPage() {
         )}
 
         {!loadingHistory && readings.length > 0 && (
+          <>
+            {/* Solar Return banner — when birthday is within 14 days */}
+            {solarReturnDays !== null && solarReturnDays <= 14 && (
+              <Link
+                href={`${ROUTES.app.solarReturn.path}${selectedId ? `?reading_id=${selectedId}` : ""}`}
+                className="flex items-center gap-3 glass-card rounded-2xl px-5 py-3.5 mb-5 border border-amber-700/40 bg-gradient-to-r from-amber-950/30 to-transparent hover:border-amber-600/60 transition-colors group"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-amber-200">
+                    {solarReturnDays === 0
+                      ? "Twój Solar Return — Dziś! Nowy rok astrologiczny się zaczyna."
+                      : solarReturnDays === 1
+                      ? "Twój Solar Return jutro — odkryj energię nadchodzącego roku."
+                      : `Twój Solar Return za ${solarReturnDays} dni — odkryj energię nadchodzącego roku.`}
+                  </p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-amber-500 group-hover:text-amber-400 transition-colors shrink-0" />
+              </Link>
+            )}
+          </>
+        )}
+
+        {!loadingHistory && readings.length > 0 && (
           <div className={`${selectedDate ? "lg:flex lg:gap-5 lg:items-start" : ""}`}>
 
             {/* ── Left column: selector + filters + calendar + upcoming ── */}
@@ -183,6 +230,57 @@ export default function CalendarPage() {
                   onNew={() => router.push(ROUTES.app.cosmogram.path)}
                   newLabel="Nowy kosmogram"
                 />
+
+                {/* Compare mode toggle — only when 2+ readings exist */}
+                {readings.length >= 2 && (
+                  <div className="mt-3 pt-3 border-t border-white/8">
+                    {!compareMode ? (
+                      <button
+                        onClick={() => {
+                          setCompareMode(true);
+                          const other = readings.find(r => r.id !== selectedId);
+                          setCompareId(other?.id ?? null);
+                        }}
+                        className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                      >
+                        <GitCompare className="w-3.5 h-3.5" />
+                        Porównaj z innym kosmogramem
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Porównanie z:</p>
+                          <button
+                            onClick={() => { setCompareMode(false); setCompareId(null); }}
+                            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            Zakończ
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {readings.filter(r => r.id !== selectedId).map(r => (
+                            <button
+                              key={r.id}
+                              onClick={() => setCompareId(r.id)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                                compareId === r.id
+                                  ? "bg-violet-700/50 border-violet-500/60 text-violet-200"
+                                  : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
+                              }`}
+                            >
+                              {r.name || r.birth_date}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-[11px] text-slate-600">
+                          Lewa połówka kółka = Twoje tranzyty · prawa = porównanie ·
+                          <span className="text-amber-600/80"> złota obwódka = oboje intensywni</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Filters */}
@@ -198,6 +296,11 @@ export default function CalendarPage() {
                   </button>
                   <h2 className="text-base font-semibold text-white">
                     {MONTH_NAMES[month - 1]} {year}
+                    {compareMode && compareReading && (
+                      <span className="ml-2 text-xs font-normal text-violet-400">
+                        Ty vs {compareReading.name || compareReading.birth_date}
+                      </span>
+                    )}
                   </h2>
                   <button onClick={nextMonth} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
                     <ChevronRight className="w-5 h-5" />
@@ -209,6 +312,7 @@ export default function CalendarPage() {
                     year={year}
                     month={month}
                     days={days}
+                    compareDays={compareDays}
                     selectedDate={selectedDate}
                     onSelect={(date) => setSelectedDate(prev => prev === date ? null : date)}
                     filter={filter}

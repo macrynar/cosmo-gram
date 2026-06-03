@@ -8,6 +8,7 @@ type Props = {
   year: number;
   month: number;
   days: DayData[];
+  compareDays?: DayData[];
   selectedDate: string | null;
   onSelect: (date: string) => void;
   filter: CalendarFilter;
@@ -39,6 +40,47 @@ function getDotColor(day: DayData, filter: CalendarFilter): string {
   if (max === career) return "bg-amber-400";
   if (max === energy) return "bg-orange-400";
   return "bg-teal-400";
+}
+
+// Dual semi-circle for compare mode
+type DualGlowProps = { self: DayData; compare: DayData; filter: CalendarFilter };
+function DualGlow({ self, compare, filter }: DualGlowProps) {
+  const scoreA = getDayScore(self, filter);
+  const scoreB = getDayScore(compare, filter);
+  if (scoreA < 3 && scoreB < 3) return null;
+
+  const bothStrong = scoreA >= 5 && scoreB >= 5;
+
+  const size =
+    Math.max(scoreA, scoreB) >= 9 ? 44 :
+    Math.max(scoreA, scoreB) >= 7 ? 36 :
+    Math.max(scoreA, scoreB) >= 5 ? 28 :
+    Math.max(scoreA, scoreB) >= 4 ? 20 :
+                                     12;
+
+  const colorA = getDotColor(self, filter);
+  const colorB = getDotColor(compare, filter);
+
+  const tailwindToHex: Record<string, string> = {
+    "bg-rose-400": "rgba(251,113,133,0.65)",
+    "bg-amber-400": "rgba(251,191,36,0.65)",
+    "bg-orange-400": "rgba(251,146,60,0.65)",
+    "bg-teal-400": "rgba(45,212,191,0.65)",
+    "bg-red-500": "rgba(239,68,68,0.65)",
+  };
+
+  const hexA = tailwindToHex[colorA] ?? "rgba(251,191,36,0.65)";
+  const hexB = tailwindToHex[colorB] ?? "rgba(167,139,250,0.65)";
+
+  return (
+    <span
+      className={`absolute inset-0 m-auto rounded-full pointer-events-none ${bothStrong ? "ring-1 ring-amber-400/60" : ""}`}
+      style={{
+        width: size, height: size,
+        background: `linear-gradient(to right, ${hexA} 50%, ${hexB} 50%)`,
+      }}
+    />
+  );
 }
 
 // Background glow circle — 5 clear intensity levels
@@ -89,7 +131,7 @@ function MoonPhaseIcon({ phase }: MoonIconProps) {
   return <span className={`${base} overflow-hidden`} style={{ background: gradient }} />;
 }
 
-export default function CalendarGrid({ year, month, days, selectedDate, onSelect, filter }: Props) {
+export default function CalendarGrid({ year, month, days, compareDays, selectedDate, onSelect, filter }: Props) {
   const today = new Date().toISOString().slice(0, 10);
 
   const firstDayJS  = new Date(year, month - 1, 1).getDay();
@@ -112,11 +154,12 @@ export default function CalendarGrid({ year, month, days, selectedDate, onSelect
           const dayIdx = idx - blanks;
           if (dayIdx < 0 || dayIdx >= days.length) return <div key={idx} className="h-11" />;
 
-          const day        = days[dayIdx];
-          const isToday    = day.date === today;
-          const isSelected = day.date === selectedDate;
-          const hasScore   = getDayScore(day, filter) >= 3;
-          const hasMoon    = day.moonPhase !== null;
+          const day         = days[dayIdx];
+          const compareDay  = compareDays?.[dayIdx];
+          const isToday     = day.date === today;
+          const isSelected  = day.date === selectedDate;
+          const hasScore    = getDayScore(day, filter) >= 3;
+          const hasMoon     = day.moonPhase !== null;
 
           return (
             <button
@@ -134,7 +177,11 @@ export default function CalendarGrid({ year, month, days, selectedDate, onSelect
                   : "text-slate-500 hover:text-slate-300 hover:bg-white/5"}
               `}
             >
-              <IntensityGlow day={day} filter={filter} />
+              {compareDay ? (
+                <DualGlow self={day} compare={compareDay} filter={filter} />
+              ) : (
+                <IntensityGlow day={day} filter={filter} />
+              )}
               <span className="relative z-10">{dayIdx + 1}</span>
               {hasMoon && <MoonPhaseIcon phase={day.moonPhase!} />}
             </button>
@@ -144,26 +191,40 @@ export default function CalendarGrid({ year, month, days, selectedDate, onSelect
 
       {/* Legend */}
       <div className="mt-5 space-y-2">
-        <div className="flex items-center gap-3 flex-wrap justify-center text-[11px] text-slate-500">
-          {filter === "all" ? (
-            <>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-400 opacity-60 inline-block" />miłość</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 opacity-60 inline-block" />kariera</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-400 opacity-60 inline-block" />energia</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-teal-400 opacity-60 inline-block" />komunikacja</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500 opacity-60 inline-block" />wyzwanie</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-900 ring-1 ring-white/60 inline-block" />faza Księżyca</span>
-            </>
-          ) : filter === "love" ? (
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-400 opacity-60 inline-block" />siła tranzytów miłości</span>
-          ) : filter === "career" ? (
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 opacity-60 inline-block" />siła tranzytów kariery</span>
-          ) : filter === "energy" ? (
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-400 opacity-60 inline-block" />siła tranzytów energii</span>
-          ) : (
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-teal-400 opacity-60 inline-block" />siła tranzytów komunikacji</span>
-          )}
-        </div>
+        {compareDays ? (
+          <div className="flex items-center gap-3 flex-wrap justify-center text-[11px] text-slate-500">
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-2.5 rounded-l-full inline-block" style={{ background: "rgba(251,191,36,0.65)" }} />
+              <span className="w-3 h-2.5 rounded-r-full inline-block" style={{ background: "rgba(167,139,250,0.65)" }} />
+              <span className="ml-1">lewa = Ty · prawa = porównanie</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full inline-block ring-1 ring-amber-400/60" style={{ background: "linear-gradient(to right, rgba(251,191,36,0.65) 50%, rgba(167,139,250,0.65) 50%)" }} />
+              oboje intensywni
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 flex-wrap justify-center text-[11px] text-slate-500">
+            {filter === "all" ? (
+              <>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-400 opacity-60 inline-block" />miłość</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 opacity-60 inline-block" />kariera</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-400 opacity-60 inline-block" />energia</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-teal-400 opacity-60 inline-block" />komunikacja</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500 opacity-60 inline-block" />wyzwanie</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-900 ring-1 ring-white/60 inline-block" />faza Księżyca</span>
+              </>
+            ) : filter === "love" ? (
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-400 opacity-60 inline-block" />siła tranzytów miłości</span>
+            ) : filter === "career" ? (
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 opacity-60 inline-block" />siła tranzytów kariery</span>
+            ) : filter === "energy" ? (
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-400 opacity-60 inline-block" />siła tranzytów energii</span>
+            ) : (
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-teal-400 opacity-60 inline-block" />siła tranzytów komunikacji</span>
+            )}
+          </div>
+        )}
         <p className="text-center text-[11px] text-slate-600">
           Wielkość kółka = intensywność tranzytu · ~5–10 dni w miesiącu jest zaznaczonych
         </p>
