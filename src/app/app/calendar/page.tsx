@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight, Flame } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
 import IntentionFilter, { type CalendarFilter } from "@/components/calendar/IntentionFilter";
@@ -13,6 +13,7 @@ import DayPanel from "@/components/calendar/DayPanel";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
 import { computeMonthData, type DayData } from "@/lib/chart-engine";
+import { useStreak } from "@/lib/useStreak";
 import type { NatalChart } from "@/lib/astro-types";
 import { ROUTES } from "@/lib/routes";
 
@@ -35,13 +36,16 @@ const MONTH_NAMES = [
 
 export default function CalendarPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { session, loading: authLoading } = useAuth();
+  const { current: streakDays } = useStreak();
 
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const paramDate = searchParams.get("date");
+  const [year,  setYear]  = useState(() => paramDate ? parseInt(paramDate.slice(0, 4))  : now.getFullYear());
+  const [month, setMonth] = useState(() => paramDate ? parseInt(paramDate.slice(5, 7))  : now.getMonth() + 1);
   const [filter, setFilter] = useState<CalendarFilter>("all");
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(paramDate);
 
   const [readings, setReadings] = useState<SavedReading[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -109,9 +113,17 @@ export default function CalendarPage() {
 
       <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-20">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl sm:text-4xl font-semibold text-white mb-2 font-brand">
-            Cosmo <span className="gradient-text text-glow">Kalendarz</span>
-          </h1>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <h1 className="text-3xl sm:text-4xl font-semibold text-white font-brand">
+              Cosmo <span className="gradient-text text-glow">Kalendarz</span>
+            </h1>
+            {streakDays >= 2 && (
+              <Link href={ROUTES.app.diary.path} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-900/30 border border-orange-700/40 text-orange-300 text-xs font-semibold hover:bg-orange-900/50 transition-colors">
+                <Flame className="w-3.5 h-3.5 text-orange-400" />
+                {streakDays}d
+              </Link>
+            )}
+          </div>
           <p className="text-slate-500 text-sm">Wybierz kosmogram i odkryj swoje astrologiczne okna</p>
         </div>
 
