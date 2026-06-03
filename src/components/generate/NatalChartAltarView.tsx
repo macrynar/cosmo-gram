@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { NatalChart } from "@/lib/astro-types";
 import NatalChartSVG from "./NatalChartSVG";
 
-// ─── Astrology data ────────────────────────────────────────────────────────
+// ─── Astrology data ─────────────────────────────────────────────────────────
 
 type Element = "fire" | "earth" | "air" | "water";
 
@@ -33,32 +33,28 @@ const SIGNS: Record<string, SignDef> = {
   "Ryby":       { symbol: "♓", element: "water", color: "#818cf8", glow: "rgba(129,140,248,0.35)",  description: "Woda duszy. Duchowość, empatia i przekraczanie granic.",        keywords: ["duchowość", "empatia", "intuicja"] },
 };
 
+const SIGN_NAMES = [
+  "Baran","Byk","Bliźnięta","Rak","Lew","Panna",
+  "Waga","Skorpion","Strzelec","Koziorożec","Wodnik","Ryby",
+];
+
 const ELEMENT_LABELS: Record<Element, string> = {
   fire: "Ogień", earth: "Ziemia", air: "Powietrze", water: "Woda",
 };
 
-// ─── Sacred geometry SVG ───────────────────────────────────────────────────
+// ─── Sacred geometry ─────────────────────────────────────────────────────────
 
 function SacredGeometry() {
   return (
-    <svg
-      aria-hidden="true"
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      viewBox="0 0 400 400"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      preserveAspectRatio="xMidYMid slice"
-      style={{ opacity: 0.038 }}
-    >
+    <svg aria-hidden="true" className="absolute inset-0 w-full h-full pointer-events-none"
+      viewBox="0 0 400 400" fill="none" preserveAspectRatio="xMidYMid slice" style={{ opacity: 0.038 }}>
       <circle cx="200" cy="200" r="185" stroke="#D4AF37" strokeWidth="0.4" />
       <circle cx="200" cy="200" r="140" stroke="#D4AF37" strokeWidth="0.3" />
       <circle cx="200" cy="200" r="95"  stroke="#D4AF37" strokeWidth="0.3" />
       <circle cx="200" cy="200" r="50"  stroke="#D4AF37" strokeWidth="0.3" />
       <circle cx="200" cy="200" r="16"  stroke="#D4AF37" strokeWidth="0.45" />
-      {/* Hexagram */}
       <polygon points="200,28 352,228 48,228"  stroke="#D4AF37" strokeWidth="0.32" fill="none" />
       <polygon points="200,372 48,172 352,172" stroke="#D4AF37" strokeWidth="0.32" fill="none" />
-      {/* Axes */}
       <line x1="200" y1="14"  x2="200" y2="386" stroke="#D4AF37" strokeWidth="0.18" />
       <line x1="14"  y1="200" x2="386" y2="200" stroke="#D4AF37" strokeWidth="0.18" />
       <line x1="48"  y1="48"  x2="352" y2="352" stroke="#D4AF37" strokeWidth="0.14" />
@@ -67,56 +63,87 @@ function SacredGeometry() {
   );
 }
 
-// ─── Zodiac flank graphic (Sun or Moon side panel) ─────────────────────────
+// ─── Gold divider ─────────────────────────────────────────────────────────────
 
-type FocusTarget = "sun" | "moon" | "chart" | null;
-
-interface FlankProps {
-  body:            "sun" | "moon";
-  sign:            string;
-  degree:          number;
-  focused:         FocusTarget;
-  onFocus:         (t: FocusTarget) => void;
+function GoldDivider() {
+  return (
+    <div className="flex items-center justify-center gap-2.5 my-1">
+      <div className="h-px flex-1 max-w-[80px]"
+        style={{ background: "linear-gradient(to right, transparent, rgba(212,175,55,0.38))" }} />
+      <div className="w-1 h-1 rounded-full" style={{ background: "rgba(212,175,55,0.55)" }} />
+      <div className="h-px flex-1 max-w-[80px]"
+        style={{ background: "linear-gradient(to left, transparent, rgba(212,175,55,0.38))" }} />
+    </div>
+  );
 }
 
-function ZodiacFlankGraphic({ body, sign, degree, focused, onFocus }: FlankProps) {
-  const [tooltipVisible, setTooltipVisible] = useState(false);
+// ─── Zodiac flank graphic ─────────────────────────────────────────────────────
+
+type FocusTarget = "sun" | "moon" | "asc" | "chart" | null;
+type TooltipAlign = "center" | "left-edge" | "right-edge";
+
+interface FlankProps {
+  body:         "sun" | "moon" | "asc";
+  sign:         string;
+  degree:       number;
+  focused:      FocusTarget;
+  onFocus:      (t: FocusTarget) => void;
+  tooltipAlign?: TooltipAlign;
+  compact?:     boolean;
+}
+
+function ZodiacFlankGraphic({
+  body, sign, degree, focused, onFocus,
+  tooltipAlign = "center",
+  compact = false,
+}: FlankProps) {
+  const [tipVisible, setTipVisible] = useState(false);
   const data = SIGNS[sign];
 
-  const isMine    = focused === body;
-  const isOther   = focused !== null && focused !== body;
-  const isSun     = body === "sun";
+  const isMine  = focused === body;
+  const isOther = focused !== null && focused !== body;
+  const isSun   = body === "sun";
+  const isMoon  = body === "moon";
 
-  const bodyGlyph = isSun ? "☉" : "☽";
-  const bodyColor = isSun ? "#f59e0b" : "#94a3b8";
-  const bodyLabel = isSun ? "Słońce" : "Księżyc";
+  const bodyGlyph = isSun ? "☉" : isMoon ? "☽" : "↑";
+  const bodyColor = isSun ? "#f59e0b" : isMoon ? "#94a3b8" : "#d6b07d";
+  const bodyLabel = isSun ? "Słońce" : isMoon ? "Księżyc" : "Ascendent";
   const bodyDesc  = isSun
     ? "Twoje Słońce definiuje tożsamość, wolę i drogę wyrażania siebie w świecie."
-    : "Twój Księżyc kryje emocjonalne sanktuarium i najgłębsze potrzeby duszy.";
+    : isMoon
+    ? "Twój Księżyc kryje emocjonalne sanktuarium i najgłębsze potrzeby duszy."
+    : "Twój Ascendent to maska, którą pokazujesz światu — pierwsze wrażenie i instynktowna reakcja na otoczenie.";
 
   if (!data) return null;
 
+  const circleSize = compact
+    ? "w-20 h-20 sm:w-24 sm:h-24"
+    : "w-24 h-24 sm:w-28 sm:h-28";
+
+  const symbolSize = compact ? "text-3xl sm:text-4xl" : "text-4xl sm:text-5xl";
+
+  const tipClass =
+    tooltipAlign === "left-edge"  ? "absolute bottom-full mb-3 left-0 z-50 w-56 pointer-events-none" :
+    tooltipAlign === "right-edge" ? "absolute bottom-full mb-3 right-0 z-50 w-56 pointer-events-none" :
+    "absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 w-56 pointer-events-none";
+
   return (
     <motion.div
-      className="flex flex-col items-center gap-4 cursor-pointer select-none"
+      className="flex flex-col items-center gap-3 cursor-pointer select-none relative"
       animate={{
-        opacity: isOther ? 0.35 : 1,
-        y:       isMine  ? -8   : 0,
+        opacity: isOther ? 0.32 : 1,
+        y:       isMine  ? -6   : 0,
         scale:   isMine  ? 1.05 : 1,
       }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      onHoverStart={() => { onFocus(body); setTooltipVisible(true); }}
-      onHoverEnd={()   => { onFocus(null); setTooltipVisible(false); }}
+      onHoverStart={() => { onFocus(body); setTipVisible(true); }}
+      onHoverEnd={()   => { onFocus(null); setTipVisible(false); }}
     >
-      {/* Circular frame */}
+      {/* Outer dashed ring */}
       <div className="relative">
-        {/* Outer dashed ring (slow rotation when focused) */}
         <motion.div
           className="absolute rounded-full pointer-events-none"
-          style={{
-            inset: "-10px",
-            border: `0.5px dashed ${data.color}22`,
-          }}
+          style={{ inset: "-10px", border: `0.5px dashed ${data.color}22` }}
           animate={{ rotate: isMine ? 360 : 0 }}
           transition={isMine
             ? { duration: 18, ease: "linear", repeat: Infinity }
@@ -124,13 +151,13 @@ function ZodiacFlankGraphic({ body, sign, degree, focused, onFocus }: FlankProps
           }
         />
 
-        {/* Main circle */}
+        {/* Circle */}
         <motion.div
-          className="w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center relative overflow-hidden"
+          className={`${circleSize} rounded-full flex items-center justify-center relative overflow-hidden`}
           animate={{
             boxShadow: isMine
-              ? `0 0 45px ${data.glow}, 0 0 90px ${data.glow.replace("0.38", "0.14")}`
-              : `0 0 18px ${data.glow.replace("0.38", "0.20")}, 0 0 36px ${data.glow.replace("0.38", "0.06")}`,
+              ? `0 0 45px ${data.glow}, 0 0 90px ${data.glow.replace(/[\d.]+\)$/, "0.14)")}`
+              : `0 0 18px ${data.glow.replace(/[\d.]+\)$/, "0.20)")}, 0 0 36px ${data.glow.replace(/[\d.]+\)$/, "0.06)")}`,
             borderColor: isMine ? `${data.color}70` : `${data.color}30`,
           }}
           transition={{ duration: 0.5 }}
@@ -139,14 +166,14 @@ function ZodiacFlankGraphic({ body, sign, degree, focused, onFocus }: FlankProps
             border: "0.5px solid",
           }}
         >
-          {/* Inset breathing glow */}
+          {/* Breathing glow */}
           <motion.div
             className="absolute inset-0 rounded-full pointer-events-none"
             animate={{
               boxShadow: [
-                `inset 0 0 20px ${data.glow.replace("0.38", "0.12")}`,
-                `inset 0 0 42px ${data.glow.replace("0.38", "0.28")}`,
-                `inset 0 0 20px ${data.glow.replace("0.38", "0.12")}`,
+                `inset 0 0 20px ${data.glow.replace(/[\d.]+\)$/, "0.12)")}`,
+                `inset 0 0 42px ${data.glow.replace(/[\d.]+\)$/, "0.28)")}`,
+                `inset 0 0 20px ${data.glow.replace(/[\d.]+\)$/, "0.12)")}`,
               ],
             }}
             transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
@@ -154,7 +181,7 @@ function ZodiacFlankGraphic({ body, sign, degree, focused, onFocus }: FlankProps
 
           {/* Zodiac symbol */}
           <span
-            className="relative z-10 text-4xl sm:text-5xl leading-none"
+            className={`relative z-10 ${symbolSize} leading-none`}
             style={{
               fontFamily: "serif",
               color: data.color,
@@ -164,14 +191,10 @@ function ZodiacFlankGraphic({ body, sign, degree, focused, onFocus }: FlankProps
             {data.symbol}
           </span>
 
-          {/* Sun / Moon indicator */}
+          {/* Body indicator */}
           <span
-            className="absolute top-2 right-2 text-sm leading-none"
-            style={{
-              fontFamily: "serif",
-              color: bodyColor,
-              filter: `drop-shadow(0 0 6px ${bodyColor}80)`,
-            }}
+            className="absolute top-2 right-2 text-sm leading-none font-medium"
+            style={{ fontFamily: "serif", color: bodyColor, filter: `drop-shadow(0 0 6px ${bodyColor}80)` }}
           >
             {bodyGlyph}
           </span>
@@ -183,10 +206,8 @@ function ZodiacFlankGraphic({ body, sign, degree, focused, onFocus }: FlankProps
         <p className="text-[10px] uppercase tracking-[0.2em] font-medium" style={{ color: bodyColor }}>
           {bodyLabel}
         </p>
-        <p
-          className="text-sm font-medium text-white"
-          style={{ fontFamily: "var(--font-cormorant), serif", letterSpacing: "0.02em" }}
-        >
+        <p className="text-sm font-medium text-white"
+          style={{ fontFamily: "var(--font-cormorant), serif", letterSpacing: "0.02em" }}>
           {sign}
         </p>
         <p className="text-[11px] text-slate-500">
@@ -196,17 +217,16 @@ function ZodiacFlankGraphic({ body, sign, degree, focused, onFocus }: FlankProps
 
       {/* Tooltip */}
       <AnimatePresence>
-        {tooltipVisible && (
+        {tipVisible && (
           <motion.div
             role="tooltip"
             initial={{ opacity: 0, y: 8, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 5, scale: 0.96 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="absolute bottom-full mb-3 z-50 w-56 pointer-events-none left-1/2 -translate-x-1/2"
+            className={tipClass}
           >
-            <div
-              className="rounded-xl px-4 py-3 text-center"
+            <div className="rounded-xl px-4 py-3 text-center"
               style={{
                 background: "rgba(5,4,14,0.94)",
                 border: "0.5px solid rgba(212,175,55,0.30)",
@@ -225,30 +245,21 @@ function ZodiacFlankGraphic({ body, sign, degree, focused, onFocus }: FlankProps
               </p>
               <div className="flex flex-wrap justify-center gap-1">
                 {data.keywords.map(kw => (
-                  <span
-                    key={kw}
-                    className="text-[9px] px-2 py-0.5 rounded-full"
-                    style={{
-                      background: `${data.color}14`,
-                      color: data.color,
-                      border: `0.5px solid ${data.color}30`,
-                    }}
-                  >
+                  <span key={kw} className="text-[9px] px-2 py-0.5 rounded-full"
+                    style={{ background: `${data.color}14`, color: data.color, border: `0.5px solid ${data.color}30` }}>
                     {kw}
                   </span>
                 ))}
               </div>
             </div>
             {/* Arrow */}
-            <div className="flex justify-center">
-              <div
-                className="w-2.5 h-2.5 rotate-45 -mt-[5px]"
+            <div className={`flex ${tooltipAlign === "left-edge" ? "justify-start pl-6" : tooltipAlign === "right-edge" ? "justify-end pr-6" : "justify-center"}`}>
+              <div className="w-2.5 h-2.5 rotate-45 -mt-[5px]"
                 style={{
                   background: "rgba(5,4,14,0.94)",
                   borderRight: "0.5px solid rgba(212,175,55,0.30)",
                   borderBottom: "0.5px solid rgba(212,175,55,0.30)",
-                }}
-              />
+                }} />
             </div>
           </motion.div>
         )}
@@ -257,32 +268,16 @@ function ZodiacFlankGraphic({ body, sign, degree, focused, onFocus }: FlankProps
   );
 }
 
-// ─── Axis badge ───────────────────────────────────────────────────────────
+// ─── Axis label helper ────────────────────────────────────────────────────────
 
 const SIGNS_ABBR = ["Bar","Byk","Bli","Rak","Lew","Pan","Wag","Sko","Str","Koz","Wod","Ryb"];
 
 function axisLabel(lon: number): string {
   const norm = ((lon % 360) + 360) % 360;
-  const idx  = Math.floor(norm / 30);
-  const deg  = Math.floor(norm % 30);
-  return `${deg}° ${SIGNS_ABBR[idx]}`;
+  return `${Math.floor(norm % 30)}° ${SIGNS_ABBR[Math.floor(norm / 30)]}`;
 }
 
-// ─── Gold divider ─────────────────────────────────────────────────────────
-
-function GoldDivider() {
-  return (
-    <div className="flex items-center justify-center gap-2.5 my-1">
-      <div className="h-px flex-1 max-w-[80px]"
-        style={{ background: "linear-gradient(to right, transparent, rgba(212,175,55,0.38))" }} />
-      <div className="w-1 h-1 rounded-full" style={{ background: "rgba(212,175,55,0.55)" }} />
-      <div className="h-px flex-1 max-w-[80px]"
-        style={{ background: "linear-gradient(to left, transparent, rgba(212,175,55,0.38))" }} />
-    </div>
-  );
-}
-
-// ─── Main component ────────────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 interface Props { chart: NatalChart }
 
@@ -291,8 +286,15 @@ export default function NatalChartAltarView({ chart }: Props) {
 
   const sun  = chart.planets.find(p => p.name === "Słońce");
   const moon = chart.planets.find(p => p.name === "Księżyc");
-
   if (!sun || !moon) return <NatalChartSVG chart={chart} />;
+
+  const timeUnknown = chart.birthData.timeUnknown;
+
+  // Ascendent sign
+  const ascNorm      = ((chart.ascendant % 360) + 360) % 360;
+  const ascSignIndex = Math.floor(ascNorm / 30);
+  const ascDegree    = Math.floor(ascNorm % 30);
+  const ascSign      = SIGN_NAMES[ascSignIndex];
 
   const chartDimmed = focused !== null && focused !== "chart";
 
@@ -303,28 +305,17 @@ export default function NatalChartAltarView({ chart }: Props) {
       transition={{ duration: 0.8, ease: "easeOut" }}
       className="relative rounded-3xl overflow-hidden"
       style={{
-        background:
-          "radial-gradient(ellipse at 50% 20%, rgba(22,16,50,0.65) 0%, rgba(5,4,14,0.92) 100%)",
+        background: "radial-gradient(ellipse at 50% 20%, rgba(22,16,50,0.65) 0%, rgba(5,4,14,0.92) 100%)",
         border: "0.5px solid rgba(212,175,55,0.20)",
-        boxShadow:
-          "0 0 100px rgba(5,4,14,0.70), inset 0 0 120px rgba(88,60,140,0.05)",
+        boxShadow: "0 0 100px rgba(5,4,14,0.70), inset 0 0 120px rgba(88,60,140,0.05)",
       }}
     >
-      {/* Sacred geometry backdrop */}
       <SacredGeometry />
 
-      {/* Ambient nebula top-center glow */}
-      <div
-        aria-hidden="true"
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[220px] pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 0%, rgba(88,60,140,0.14) 0%, transparent 70%)",
-          filter: "blur(2px)",
-        }}
-      />
+      {/* Nebula glow */}
+      <div aria-hidden="true" className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[220px] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(88,60,140,0.14) 0%, transparent 70%)", filter: "blur(2px)" }} />
 
-      {/* ── Content ── */}
       <div className="relative z-10 px-6 py-8 sm:px-10 sm:py-10">
 
         {/* Header */}
@@ -334,58 +325,56 @@ export default function NatalChartAltarView({ chart }: Props) {
           transition={{ delay: 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="text-center mb-8"
         >
-          <p
-            className="text-[10px] uppercase tracking-[0.30em] mb-1"
-            style={{ color: "rgba(212,175,55,0.60)" }}
-          >
+          <p className="text-[10px] uppercase tracking-[0.30em] mb-1" style={{ color: "rgba(212,175,55,0.60)" }}>
             Kosmogram Natalny
           </p>
-          <h2
-            className="text-2xl sm:text-3xl font-medium text-white"
-            style={{
-              fontFamily: "var(--font-cormorant), serif",
-              letterSpacing: "0.025em",
-            }}
-          >
+          <h2 className="text-2xl sm:text-3xl font-medium text-white"
+            style={{ fontFamily: "var(--font-cormorant), serif", letterSpacing: "0.025em" }}>
             Altar Nieba
           </h2>
           <GoldDivider />
         </motion.header>
 
-        {/* ── Altar three-column ── */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-6 lg:gap-14">
+        {/* ── DESKTOP: Triquetra layout ─────────────────────────────────────
+            Left column:  ASC  (vertically centered, godzina 9:00)
+            Center:       Chart
+            Right column: Sun (górny) + Moon (dolny)
+        ─────────────────────────────────────────────────────────────────── */}
+        <div className="hidden sm:flex items-center gap-6 lg:gap-10">
 
-          {/* Sun — LEFT */}
-          <motion.div
-            initial={{ opacity: 0, x: -28 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.30, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-            className="relative flex-shrink-0"
-          >
-            <ZodiacFlankGraphic
-              body="sun"
-              sign={sun.sign}
-              degree={sun.degree}
-              focused={focused}
-              onFocus={setFocused}
-            />
-          </motion.div>
+          {/* ASC — LEFT, centered vertically */}
+          {!timeUnknown ? (
+            <motion.div
+              initial={{ opacity: 0, x: -28 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.30, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+              className="flex-shrink-0"
+            >
+              <ZodiacFlankGraphic
+                body="asc"
+                sign={ascSign}
+                degree={ascDegree}
+                focused={focused}
+                onFocus={setFocused}
+                tooltipAlign="left-edge"
+              />
+            </motion.div>
+          ) : (
+            // Placeholder keeps layout balanced when time is unknown
+            <div className="flex-shrink-0 w-24 sm:w-28" />
+          )}
 
           {/* Chart — CENTER */}
           <motion.div
             initial={{ opacity: 0, scale: 0.88 }}
-            className="flex-1 min-w-0 max-w-[360px] sm:max-w-none w-full cursor-pointer"
-            animate={{
-              opacity: chartDimmed ? 0.55 : 1,
-              scale:   chartDimmed ? 0.97 : 1,
-            }}
+            className="flex-1 min-w-0 cursor-pointer"
+            animate={{ opacity: chartDimmed ? 0.55 : 1, scale: chartDimmed ? 0.97 : 1 }}
             transition={{ delay: focused ? 0 : 0.12, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             onHoverStart={() => setFocused("chart")}
-            onHoverEnd={()  => setFocused(null)}
+            onHoverEnd={() => setFocused(null)}
           >
-            {/* Subtle glow ring around chart on focus */}
             <motion.div
-              className="relative rounded-full"
+              className="relative"
               animate={{
                 boxShadow: focused === "chart"
                   ? "0 0 50px rgba(212,175,55,0.18), 0 0 100px rgba(212,175,55,0.06)"
@@ -397,20 +386,56 @@ export default function NatalChartAltarView({ chart }: Props) {
             </motion.div>
           </motion.div>
 
-          {/* Moon — RIGHT */}
+          {/* Sun (top) + Moon (bottom) — RIGHT */}
           <motion.div
             initial={{ opacity: 0, x: 28 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.30, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-            className="relative flex-shrink-0"
+            className="flex-shrink-0 self-stretch flex flex-col justify-between py-8"
           >
+            <ZodiacFlankGraphic
+              body="sun"
+              sign={sun.sign}
+              degree={sun.degree}
+              focused={focused}
+              onFocus={setFocused}
+              tooltipAlign="right-edge"
+            />
             <ZodiacFlankGraphic
               body="moon"
               sign={moon.sign}
               degree={moon.degree}
               focused={focused}
               onFocus={setFocused}
+              tooltipAlign="right-edge"
             />
+          </motion.div>
+        </div>
+
+        {/* ── MOBILE: Chart first, flanks below in a row ── */}
+        <div className="sm:hidden space-y-7">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: chartDimmed ? 0.55 : 1, scale: 1 }}
+            transition={{ delay: 0.12, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <NatalChartSVG chart={chart} />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="flex items-start justify-around gap-2 px-2"
+          >
+            {!timeUnknown && (
+              <ZodiacFlankGraphic body="asc" sign={ascSign} degree={ascDegree}
+                focused={focused} onFocus={setFocused} compact />
+            )}
+            <ZodiacFlankGraphic body="sun" sign={sun.sign} degree={sun.degree}
+              focused={focused} onFocus={setFocused} compact />
+            <ZodiacFlankGraphic body="moon" sign={moon.sign} degree={moon.degree}
+              focused={focused} onFocus={setFocused} compact />
           </motion.div>
         </div>
 
@@ -422,28 +447,21 @@ export default function NatalChartAltarView({ chart }: Props) {
           className="mt-8 flex flex-wrap items-center justify-center gap-3"
         >
           {[
-            { label: "ASC", value: axisLabel(chart.ascendant), color: "#d6b07d" },
-            { label: "MC",  value: axisLabel(chart.mc),        color: "#fbbf24" },
-            { label: "Słońce",  value: `${sun.degree}° ${sun.sign}`,  color: "#f59e0b" },
-            { label: "Księżyc", value: `${moon.degree}° ${moon.sign}`, color: "#94a3b8" },
+            ...(!timeUnknown ? [
+              { label: "ASC", value: axisLabel(chart.ascendant), color: "#d6b07d" },
+              { label: "MC",  value: axisLabel(chart.mc),        color: "#fbbf24" },
+            ] : []),
+            { label: "Słońce",  value: `${sun.degree}° ${sun.sign}`,   color: "#f59e0b" },
+            { label: "Księżyc", value: `${moon.degree}° ${moon.sign}`,  color: "#94a3b8" },
           ].map(({ label, value, color }) => (
-            <div
-              key={label}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
-              style={{
-                background: `${color}10`,
-                border: `0.5px solid ${color}30`,
-              }}
-            >
-              <span className="font-semibold tracking-wider text-[10px]" style={{ color }}>
-                {label}
-              </span>
+            <div key={label} className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
+              style={{ background: `${color}10`, border: `0.5px solid ${color}30` }}>
+              <span className="font-semibold tracking-wider text-[10px]" style={{ color }}>{label}</span>
               <span className="text-slate-400 text-[11px]">{value}</span>
             </div>
           ))}
         </motion.footer>
 
-        {/* Interaction hint */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
