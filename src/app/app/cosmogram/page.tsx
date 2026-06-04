@@ -8,6 +8,7 @@ import BirthForm from "@/components/generate/BirthForm";
 import NatalChartAltarView from "@/components/generate/NatalChartAltarView";
 import PlanetTable from "@/components/generate/PlanetTable";
 import Interpretation from "@/components/generate/Interpretation";
+import KartaZawodnika from "@/components/generate/KartaZawodnika";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
 import AddChildModal, { type ChildFormData } from "@/components/children/AddChildModal";
 import ChildCard from "@/components/children/ChildCard";
@@ -543,6 +544,18 @@ export default function CosmogramPage() {
                   ) : null;
                 })()}
                 <Interpretation text={interpretation} loading={interpretLoading} />
+
+                {/* ── Karta Astrologiczna ── */}
+                {selectedId && !interpretLoading && (() => {
+                  const r = readings.find(x => x.id === selectedId);
+                  return r ? (
+                    <KartaZawodnika
+                      reading={r}
+                      isPremiumUser={isPro}
+                    />
+                  ) : null;
+                })()}
+
                 {!interpretLoading && interpretation && selectedId && (
                   <div className="flex justify-center">
                     <button
