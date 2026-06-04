@@ -25,7 +25,8 @@
 		"react-simple-maps": "^3.0.0",
 		"remark-gfm": "^4.0.1",
 		"stripe": "^22.1.1",
-		"tz-lookup": "^6.1.25"
+		"tz-lookup": "^6.1.25",
+		"zod": "^4.4.3"
 	},
 	"devDependencies": {
 		"@tailwindcss/postcss": "^4",
