@@ -79,6 +79,7 @@ function GoldDivider() {
 
 type FocusTarget = "sun" | "moon" | "asc" | "chart" | null;
 type TooltipAlign = "center" | "left-edge" | "right-edge";
+type TooltipSide  = "above" | "below";
 
 const BODY_ICON = {
   sun:  SunIcon,
@@ -93,12 +94,14 @@ interface FlankProps {
   focused:       FocusTarget;
   onFocus:       (t: FocusTarget) => void;
   tooltipAlign?: TooltipAlign;
+  tooltipSide?:  TooltipSide;
   compact?:      boolean;
 }
 
 function AmuletFlank({
   body, sign, degree, focused, onFocus,
   tooltipAlign = "center",
+  tooltipSide  = "above",
   compact = false,
 }: FlankProps) {
   const [tipVisible, setTipVisible] = useState(false);
@@ -116,10 +119,11 @@ function AmuletFlank({
     ? "Twój Księżyc kryje emocjonalne sanktuarium i najgłębsze potrzeby duszy."
     : "Twój Ascendent to maska, którą pokazujesz światu — pierwsze wrażenie i instynktowna reakcja.";
 
+  const tipVertical = tooltipSide === "below" ? "top-full mt-3" : "bottom-full mb-3";
   const tipClass =
-    tooltipAlign === "left-edge"  ? "absolute bottom-full mb-3 left-0 z-50 w-56 pointer-events-none" :
-    tooltipAlign === "right-edge" ? "absolute bottom-full mb-3 right-0 z-50 w-56 pointer-events-none" :
-    "absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 w-56 pointer-events-none";
+    tooltipAlign === "left-edge"  ? `absolute ${tipVertical} left-0 z-50 w-56 pointer-events-none` :
+    tooltipAlign === "right-edge" ? `absolute ${tipVertical} right-0 z-50 w-56 pointer-events-none` :
+    `absolute ${tipVertical} left-1/2 -translate-x-1/2 z-50 w-56 pointer-events-none`;
 
   const cardW = compact ? "w-20" : "w-24 sm:w-28";
 
@@ -225,14 +229,25 @@ function AmuletFlank({
               </div>
             </div>
             {/* Arrow */}
-            <div className={`flex ${tooltipAlign === "left-edge" ? "justify-start pl-6" : tooltipAlign === "right-edge" ? "justify-end pr-6" : "justify-center"}`}>
-              <div className="w-2.5 h-2.5 rotate-45 -mt-[5px]"
-                style={{
-                  background: "rgba(5,4,14,0.94)",
-                  borderRight: "0.5px solid rgba(212,175,55,0.30)",
-                  borderBottom: "0.5px solid rgba(212,175,55,0.30)",
-                }} />
-            </div>
+            {tooltipSide === "below" ? (
+              <div className={`flex ${tooltipAlign === "left-edge" ? "justify-start pl-6" : tooltipAlign === "right-edge" ? "justify-end pr-6" : "justify-center"} order-first`}>
+                <div className="w-2.5 h-2.5 rotate-45 mb-[-5px]"
+                  style={{
+                    background: "rgba(5,4,14,0.94)",
+                    borderLeft: "0.5px solid rgba(212,175,55,0.30)",
+                    borderTop:  "0.5px solid rgba(212,175,55,0.30)",
+                  }} />
+              </div>
+            ) : (
+              <div className={`flex ${tooltipAlign === "left-edge" ? "justify-start pl-6" : tooltipAlign === "right-edge" ? "justify-end pr-6" : "justify-center"}`}>
+                <div className="w-2.5 h-2.5 rotate-45 -mt-[5px]"
+                  style={{
+                    background:   "rgba(5,4,14,0.94)",
+                    borderRight:  "0.5px solid rgba(212,175,55,0.30)",
+                    borderBottom: "0.5px solid rgba(212,175,55,0.30)",
+                  }} />
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -272,7 +287,7 @@ export default function NatalChartAltarView({ chart }: Props) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      className="relative rounded-3xl overflow-hidden"
+      className="relative rounded-3xl"
       style={{
         background: "radial-gradient(ellipse at 50% 20%, rgba(22,16,50,0.60) 0%, rgba(5,4,14,0.92) 100%)",
         border: "0.5px solid rgba(212,175,55,0.20)",
@@ -336,6 +351,7 @@ export default function NatalChartAltarView({ chart }: Props) {
               focused={focused}
               onFocus={setFocused}
               tooltipAlign="center"
+              tooltipSide="below"
             />
           </motion.div>
 
