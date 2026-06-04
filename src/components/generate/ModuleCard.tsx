@@ -129,25 +129,6 @@ export default function ModuleCard({ module, isPremiumUser, index, onPaywall }: 
           </ReactMarkdown>
         </div>
 
-        {/* Tactics */}
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.22em] font-medium mb-3" style={{ color: "rgba(212,175,55,0.48)" }}>
-            Działania
-          </p>
-          <div className="space-y-2.5">
-            {module.tactics.map((tactic, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <span
-                  className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mt-0.5"
-                  style={{ background: "rgba(212,175,55,0.10)", color: "#D4AF37", border: "0.5px solid rgba(212,175,55,0.28)" }}
-                >
-                  {i + 1}
-                </span>
-                <p className="text-sm text-slate-300 leading-relaxed">{tactic}</p>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* ── Premium lock overlay ── */}
