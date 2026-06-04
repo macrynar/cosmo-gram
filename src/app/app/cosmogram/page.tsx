@@ -7,7 +7,6 @@ import Navbar from "@/components/Navbar";
 import BirthForm from "@/components/generate/BirthForm";
 import NatalChartAltarView from "@/components/generate/NatalChartAltarView";
 import PlanetTable from "@/components/generate/PlanetTable";
-import Interpretation from "@/components/generate/Interpretation";
 import KartaZawodnika from "@/components/generate/KartaZawodnika";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
 import AddChildModal, { type ChildFormData } from "@/components/children/AddChildModal";
@@ -85,7 +84,6 @@ export default function CosmogramPage() {
   const [chart, setChart] = useState<NatalChart | null>(null);
   const [interpretation, setInterpretation] = useState("");
   const [chartLoading, setChartLoading] = useState(false);
-  const [interpretLoading, setInterpretLoading] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
 
@@ -219,39 +217,9 @@ export default function CosmogramPage() {
         body: JSON.stringify(data),
       });
       if (!chartRes.ok) { const e = await chartRes.json() as { error: string }; throw new Error(e.error ?? "Błąd obliczania kosmogramu"); }
-      const { chart: newChart, promptContext, placements, aspects, nodes } = await chartRes.json() as {
-        chart: NatalChart; promptContext: string;
-        placements: ChartPlacement[]; aspects: NatalAspect[]; nodes: ChartNodes;
-      };
+      const { chart: newChart } = await chartRes.json() as { chart: NatalChart };
       setChart(newChart);
       setChartLoading(false);
-      setInterpretLoading(true);
-      let interpretationText = "";
-      const interpRes = await fetch("/api/interpret", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          promptContext,
-          placements,
-          aspects,
-          nodes,
-          firstName: data.name.trim() || undefined,
-          grammaticalForm: "impersonal",
-          userId: session?.user?.id,
-        }),
-      });
-      if (interpRes.ok && interpRes.body) {
-        const reader = interpRes.body.getReader();
-        const decoder = new TextDecoder();
-        let acc = "";
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          acc += decoder.decode(value, { stream: true });
-          setInterpretation(acc);
-        }
-        interpretationText = acc;
-      }
       track("first_natal_view", { has_time: !!data.time, place: data.place.split(",")[0] });
       if (session) {
         const saveRes = await fetch("/api/save-reading", {
@@ -260,13 +228,13 @@ export default function CosmogramPage() {
           body: JSON.stringify({
             name: data.name.trim() || undefined,
             birthDate: data.date, birthTime: data.time, birthPlace: data.place,
-            chart: newChart, interpretation: interpretationText, dailyReading: "",
+            chart: newChart, interpretation: "", dailyReading: "",
           }),
         });
         if (saveRes.ok) {
           const { id } = await saveRes.json() as { id: string };
           const defaultName = data.name.trim() || `${data.place.split(",")[0]} · ${data.date}`;
-          setReadings(prev => [{ id, name: defaultName, birth_date: data.date, birth_time: data.time, birth_place: data.place, chart_data: newChart, interpretation: interpretationText, daily_reading: "", created_at: new Date().toISOString() }, ...prev]);
+          setReadings(prev => [{ id, name: defaultName, birth_date: data.date, birth_time: data.time, birth_place: data.place, chart_data: newChart, interpretation: "", daily_reading: "", created_at: new Date().toISOString() }, ...prev]);
           setSelectedId(id);
         }
       }
@@ -274,8 +242,6 @@ export default function CosmogramPage() {
       setError(err instanceof Error ? err.message : "Nieznany błąd");
       setChartLoading(false);
       setShowForm(true);
-    } finally {
-      setInterpretLoading(false);
     }
   }
 
@@ -543,10 +509,8 @@ export default function CosmogramPage() {
                     </div>
                   ) : null;
                 })()}
-                <Interpretation text={interpretation} loading={interpretLoading} />
-
-                {/* ── Karta Astrologiczna ── */}
-                {selectedId && !interpretLoading && (() => {
+                {/* ── Karta Astrologiczna (zastępuje stary Interpretation) ── */}
+                {selectedId && (() => {
                   const r = readings.find(x => x.id === selectedId);
                   return r ? (
                     <KartaZawodnika
@@ -556,7 +520,7 @@ export default function CosmogramPage() {
                   ) : null;
                 })()}
 
-                {!interpretLoading && interpretation && selectedId && (
+                {selectedId && (
                   <div className="flex justify-center">
                     <button
                       onClick={() => setShowShare(true)}

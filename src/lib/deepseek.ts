@@ -22,7 +22,7 @@ export async function generateModuleWithRetry(
       body: JSON.stringify({
         model:           process.env.DEEPSEEK_MODEL ?? "deepseek-chat",
         temperature:     0.7,
-        max_tokens:      2500,
+        max_tokens:      4096,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemPrompt },
@@ -37,7 +37,9 @@ export async function generateModuleWithRetry(
 
     const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
     const raw  = data.choices?.[0]?.message?.content?.trim() ?? "";
-    const obj  = JSON.parse(raw);
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    const jsonText  = jsonMatch ? jsonMatch[0] : raw;
+    const obj  = JSON.parse(jsonText);
 
     return AstroModuleAIOutputSchema.parse({ ...obj, id: expectedModuleId });
 
