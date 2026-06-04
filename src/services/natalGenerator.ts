@@ -6,11 +6,7 @@ import { AstroModuleSchema, ALL_MODULE_IDS, type AstroModule, type ModuleId } fr
 
 const PROMPT_VERSION = process.env.NATAL_PROMPT_VERSION ?? "v1";
 
-const BATCH_DEFS: Array<{ ids: ModuleId[]; isPremium: boolean }> = [
-  { ids: ["core", "superpowers", "childhood"], isPremium: false },
-  { ids: ["love", "career"],                   isPremium: true  },
-  { ids: ["shadows", "roots", "purpose"],      isPremium: true  },
-];
+const PREMIUM_IDS = new Set<ModuleId>(["love", "career", "shadows", "roots", "purpose"]);
 
 // ─── Cache key ────────────────────────────────────────────────────────────────
 
@@ -81,38 +77,28 @@ export async function generateNatalKarta(ctx: GenerationContext): Promise<AstroM
   }
 
   const systemPrompt = buildSystemPrompt(grammatical_form);
-  const generated: AstroModule[] = [];
 
-  // 3. Sequential batches, parallel within batch
-  for (const batch of BATCH_DEFS) {
-    const batchIds = batch.ids.filter(id => toGenerate.includes(id));
-    if (batchIds.length === 0) continue;
+  // 3. All needed modules in parallel — avoids sequential-batch timeout on Vercel
+  const generated = await Promise.all(
+    toGenerate.map(async (moduleId) => {
+      const confidence = computeConfidenceScore(moduleId, ctx);
+      const userPrompt = buildUserPrompt(ctx, moduleId, confidence);
+      const aiOutput   = await generateModuleWithRetry(systemPrompt, userPrompt, moduleId);
+      const cacheKey   = await computeCacheKey(user_id, chart_id, moduleId, grammatical_form);
 
-    const batchResults = await Promise.all(
-      batchIds.map(async (moduleId) => {
-        const confidence  = computeConfidenceScore(moduleId, ctx);
-        const userPrompt  = buildUserPrompt(ctx, moduleId, confidence);
-        const aiOutput    = await generateModuleWithRetry(systemPrompt, userPrompt, moduleId);
-        const cacheKey    = await computeCacheKey(user_id, chart_id, moduleId, grammatical_form);
+      return AstroModuleSchema.parse({
+        ...aiOutput,
+        confidenceScore: confidence,
+        isPremium:       PREMIUM_IDS.has(moduleId),
+        cacheKey,
+        promptVersion:   PROMPT_VERSION,
+      });
+    })
+  );
 
-        const full = AstroModuleSchema.parse({
-          ...aiOutput,
-          confidenceScore: confidence,
-          isPremium:       batch.isPremium,
-          cacheKey,
-          promptVersion:   PROMPT_VERSION,
-        });
-
-        return full;
-      })
-    );
-
-    // Write cache async (don't block next batch)
-    Promise.all(batchResults.map(m => saveModuleCache(user_id, chart_id, m)))
-      .catch(err => console.error("[karta] cache write error:", err));
-
-    generated.push(...batchResults);
-  }
+  // Write cache async (don't block response)
+  Promise.all(generated.map(m => saveModuleCache(user_id, chart_id, m)))
+    .catch(err => console.error("[karta] cache write error:", err));
 
   // 4. Merge cached + generated in canonical order
   const allById = new Map([...cached, ...generated.map(m => [m.id, m] as [ModuleId, AstroModule])]);
