@@ -27,15 +27,15 @@ type PersonalEvent = {
   peakDate: string;     // exact peak date string
 };
 
+// Only slow planets — fast planets (Venus, Mercury, Sun) transit in 2-3 days and are never "special windows"
 const TRACKED_PLANETS: Array<{ name: string; body: Astronomy.Body; priority: number }> = [
-  { name: "Jowisz", body: Astronomy.Body.Jupiter, priority: 5 },
-  { name: "Saturn",  body: Astronomy.Body.Saturn,  priority: 5 },
-  { name: "Mars",    body: Astronomy.Body.Mars,    priority: 8 },
-  { name: "Wenus",   body: Astronomy.Body.Venus,   priority: 8 },
-  { name: "Merkury", body: Astronomy.Body.Mercury, priority: 6 },
+  { name: "Saturn",  body: Astronomy.Body.Saturn,  priority: 10 },
+  { name: "Jowisz",  body: Astronomy.Body.Jupiter, priority: 10 },
+  { name: "Mars",    body: Astronomy.Body.Mars,    priority: 8  },
+  { name: "Uran",    body: Astronomy.Body.Uranus,  priority: 6  },
 ];
 
-const PERSONAL_NATAL = new Set(["Słońce", "Księżyc", "Wenus", "Mars", "Merkury", "Jowisz", "Saturn"]);
+const PERSONAL_NATAL = new Set(["Słońce", "Księżyc", "Wenus", "Mars", "Merkury"]);
 
 const ASPECT_ANGLES: Record<string, number> = {
   conjunction: 0, sextile: 60, trine: 120, square: 90, opposition: 180,
@@ -53,11 +53,10 @@ const CONJUNCTION_FAVORABLE: Record<string, boolean> = {
 };
 
 const MEANINGS: Record<string, { fav: string; tense: string }> = {
-  "Wenus":   { fav: "dobry moment na relacje, wyrażanie uczuć i decyzje finansowe", tense: "napięcia w relacjach lub finansach wymagają uwagi" },
-  "Mars":    { fav: "energia i napęd — czas na push i realizację planów", tense: "słowa mogą wychodzić ostrzej, świadoma komunikacja" },
-  "Merkury": { fav: "jasne myślenie, dobry czas na ważne rozmowy i decyzje", tense: "łatwo o nieporozumienia — sprawdzaj szczegóły" },
-  "Jowisz":  { fav: "okno na odważniejszy ruch, nowe możliwości i ekspansję", tense: "nadmierny optymizm może mylić — sprawdzaj realia" },
-  "Saturn":  { fav: "dobry czas na zamknięcie zaległości i poważne zobowiązania", tense: "więcej ograniczeń i ciężaru niż zwykle — cierpliwość" },
+  "Mars":   { fav: "energia i napęd — czas na push i realizację planów", tense: "napięcia i konflikty blisko powierzchni — świadoma komunikacja" },
+  "Jowisz": { fav: "rzadkie okno ekspansji — odważniejszy ruch może dużo zmienić", tense: "nadmierny optymizm może mylić — sprawdzaj realia przed decyzją" },
+  "Saturn": { fav: "wyjątkowy moment budowania — decyzje podjęte teraz zostają", tense: "silna lekcja Saturna — czas na stawienie czoła temu, co odkładałeś" },
+  "Uran":   { fav: "przełom lub nieoczekiwana okazja — bądź elastyczny", tense: "nagłe zmiany mogą destabilizować — zachowaj spokój i elastyczność" },
 };
 
 // Polish instrumental declension
@@ -178,7 +177,7 @@ function computePersonalEvents(natalChart: NatalChart, fromDate: Date, lookahead
 
   return events
     .sort((a, b) => a.daysFromNow - b.daysFromNow || (TRACKED_PLANETS.find(p => p.name === b.transit_planet)?.priority ?? 0) - (TRACKED_PLANETS.find(p => p.name === a.transit_planet)?.priority ?? 0))
-    .slice(0, 6);
+    .slice(0, 5);
 }
 
 function durationLabel(e: PersonalEvent): string {

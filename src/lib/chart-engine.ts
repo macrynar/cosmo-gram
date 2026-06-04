@@ -379,19 +379,26 @@ export type DayData = {
   moonPhase: import("@/lib/moonPhases").MoonPhaseName | null;
 };
 
-const LOVE_PLANETS    = new Set(["Wenus", "Księżyc"]);
-const CAREER_PLANETS  = new Set(["Słońce", "Saturn", "Mars", "Jowisz"]);
-const ENERGY_PLANETS  = new Set(["Mars", "Słońce"]);
-const MIND_PLANETS    = new Set(["Merkury"]);
+// Slow transit planets only drive the Power Day score.
+// Fast planets (Sun, Moon, Mercury, Venus) transit in 1-3 days — too frequent to be "special".
+// They are still used for display in DayPanel but don't affect scoring.
+const POWER_TRANSIT_PLANETS = new Set(["Jowisz", "Saturn", "Mars", "Uran", "Neptun", "Pluton"]);
 
-// Only these natal planets make a day "special" — personal placements
+const LOVE_PLANETS    = new Set(["Jowisz", "Neptun"]);
+const CAREER_PLANETS  = new Set(["Saturn", "Mars", "Jowisz"]);
+const ENERGY_PLANETS  = new Set(["Mars", "Uran"]);
+const MIND_PLANETS    = new Set(["Uran"]);
+
+// Only personal natal planets can make a day "special"
 const PERSONAL_NATAL  = new Set(["Słońce", "Księżyc", "Merkury", "Wenus", "Mars"]);
 const SCORE_ORB   = 1.5;  // tight — only near-exact aspects count toward score
 const DISPLAY_ORB = 3.5;  // wider — for DayPanel transit display
 
+// Weight of each transit planet for scoring (slow planets = high weight since they're rare)
 const PLANET_PRIORITY: Record<string, number> = {
-  "Słońce": 10, "Księżyc": 10, "Wenus": 8, "Mars": 8, "Merkury": 6,
-  "Jowisz": 5, "Saturn": 5, "Uran": 2, "Neptun": 2, "Pluton": 2,
+  "Saturn": 10, "Jowisz": 10, "Pluton": 8, "Uran": 7, "Neptun": 6, "Mars": 8,
+  // Fast planets used only for display ranking in DayPanel
+  "Słońce": 4, "Księżyc": 4, "Wenus": 3, "Merkury": 3,
 };
 
 function makeAspectType(typeName: string, favorable: boolean): string {
@@ -428,8 +435,8 @@ export function computeDayScore(natalChart: NatalChart, date: Date): DayData {
           ? (CONJUNCTION_FAVORABLE[transit.name] ?? true)
           : FAVORABLE_ASPECTS.has(typeName);
 
-        // Score: only personal natal + tight orb — makes "notable" days rare
-        if (PERSONAL_NATAL.has(natal.name) && orb <= SCORE_ORB) {
+        // Score: only slow transit planets hitting personal natal planets — makes power days truly rare
+        if (POWER_TRANSIT_PLANETS.has(transit.name) && PERSONAL_NATAL.has(natal.name) && orb <= SCORE_ORB) {
           const w = (PLANET_PRIORITY[transit.name] ?? 1) * ((SCORE_ORB - orb) / SCORE_ORB);
           if (favorable) scorePos += w;
           else scoreNeg += w;
@@ -452,8 +459,9 @@ export function computeDayScore(natalChart: NatalChart, date: Date): DayData {
     }
   }
 
-  // MAX_SCORE calibrated so a single major exact transit scores ~7-8
-  const MAX_SCORE = 12;
+  // MAX_SCORE calibrated: one exact Jupiter/Saturn transit to personal planet = score 10 (Power Day)
+  // Two simultaneous slow transits can both = max. Empty months have score 0.
+  const MAX_SCORE = 10;
   const norm = (v: number, max: number) => Math.min(10, Math.round((v / max) * 10));
 
   const score           = norm(scorePos + scoreNeg, MAX_SCORE);
