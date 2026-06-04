@@ -16,7 +16,6 @@ import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine
 import { useAuth } from "@/components/AuthContext";
 import { useSubscription } from "@/components/SubscriptionContext";
 import { track } from "@/components/PostHogProvider";
-import { getPersonalityTags } from "@/lib/personality-tags";
 import PaywallModal from "@/components/PaywallModal";
 import ShareModal from "@/components/ShareModal";
 
@@ -499,16 +498,6 @@ export default function CosmogramPage() {
                   <NatalChartAltarView chart={chart} />
                   <PlanetTable chart={chart} />
                 </div>
-                {(() => {
-                  const tags = getPersonalityTags(chart);
-                  return tags.length > 0 ? (
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                      {tags.map(tag => (
-                        <span key={tag} className="px-3 py-1 rounded-full text-xs" style={{ border: "0.5px solid rgba(212,175,55,0.28)", color: "#F3E5AB", background: "rgba(212,175,55,0.07)" }}>{tag}</span>
-                      ))}
-                    </div>
-                  ) : null;
-                })()}
                 {/* ── Karta Astrologiczna (zastępuje stary Interpretation) ── */}
                 {selectedId && (() => {
                   const r = readings.find(x => x.id === selectedId);

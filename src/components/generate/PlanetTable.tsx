@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { NatalChart, PLANET_COLORS } from "@/lib/astro-types";
 
 interface Props {
@@ -19,6 +21,7 @@ function houseOf(lon: number, houses: NatalChart["houses"]): number {
 }
 
 export default function PlanetTable({ chart }: Props) {
+  const [open, setOpen] = useState(false);
   const { planets, houses, ascendant, mc } = chart;
   const ascSign = Math.floor(ascendant / 30);
   const mcSign  = Math.floor(mc / 30);
@@ -38,13 +41,18 @@ export default function PlanetTable({ chart }: Props) {
         backdropFilter: "blur(18px)",
       }}
     >
-      <div
-        className="px-4 py-3"
-        style={{ borderBottom: "0.5px solid rgba(212,175,55,0.14)" }}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-4 py-3"
+        style={{ borderBottom: open ? "0.5px solid rgba(212,175,55,0.14)" : "none" }}
       >
         <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase">Pozycje Planet</h3>
-      </div>
-      <div className="overflow-x-auto">
+        <ChevronDown
+          className="w-4 h-4 text-slate-500 transition-transform duration-300"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+        />
+      </button>
+      {open && <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr
@@ -127,7 +135,7 @@ export default function PlanetTable({ chart }: Props) {
             })}
           </tbody>
         </table>
-      </div>
+      </div>}
     </div>
   );
 }
