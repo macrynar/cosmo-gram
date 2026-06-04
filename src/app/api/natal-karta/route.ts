@@ -6,12 +6,20 @@ import type { GenerationContext } from "@/lib/moduleSpecs";
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
+  // Prereq: DeepSeek key
+  if (!process.env.DEEPSEEK_API_KEY) {
+    return NextResponse.json({ error: "Config error", detail: "DEEPSEEK_API_KEY not set on server" }, { status: 503 });
+  }
+
   // Auth
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!token) return NextResponse.json({ error: "Unauthorized", detail: "No Bearer token" }, { status: 401 });
 
   const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
-  if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (authErr || !user) {
+    console.error("[natal-karta] auth error:", authErr?.message);
+    return NextResponse.json({ error: "Unauthorized", detail: authErr?.message ?? "Invalid token" }, { status: 401 });
+  }
 
   const body = await req.json() as {
     chart_id:             string;

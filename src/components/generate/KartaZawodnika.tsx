@@ -73,7 +73,10 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
           locationPrecisionKm: 10,
         }),
       });
-      if (!kartaRes.ok) throw new Error("Błąd generowania karty — spróbuj ponownie.");
+      if (!kartaRes.ok) {
+        const body = await kartaRes.json().catch(() => ({})) as { error?: string; detail?: string };
+        throw new Error(body.detail ?? body.error ?? `HTTP ${kartaRes.status} — błąd serwera`);
+      }
 
       const { modules: mods } = await kartaRes.json() as { modules: AstroModule[] };
       setModules(mods);
@@ -128,10 +131,6 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
             Tożsamość · Supermoce · Korzenie · Miłość · Kariera · Cienie · Misja
           </p>
 
-          {error && (
-            <p className="text-red-400/80 text-xs mb-4">{error}</p>
-          )}
-
           <motion.button
             onClick={handleGenerate}
             whileHover={{ boxShadow: "0 0 32px rgba(212,175,55,0.32), 0 0 64px rgba(212,175,55,0.10)", y: -1 }}
@@ -163,9 +162,11 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
         </div>
       )}
 
-      {/* ── Error retry (after generated failed) ── */}
+      {/* ── Error (single, shown below CTA) ── */}
       {error && !loading && !generated && (
-        <p className="text-center text-xs text-red-400/70">{error}</p>
+        <div className="p-3 rounded-xl text-xs text-center" style={{ background: "rgba(239,68,68,0.07)", border: "0.5px solid rgba(239,68,68,0.20)", color: "#fca5a5" }}>
+          {error}
+        </div>
       )}
 
       {/* ── Module grid ── */}
