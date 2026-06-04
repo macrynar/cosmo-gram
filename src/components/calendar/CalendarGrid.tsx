@@ -24,110 +24,40 @@ function getDayScore(day: DayData, filter: CalendarFilter): number {
   return day.score;
 }
 
-function getDotColor(day: DayData, filter: CalendarFilter): string {
-  const isChallenge = day.challengingScore > day.positiveScore + 2;
+type PowerStyle = {
+  bg: string;
+  glow: string;
+  dot: string;
+};
 
-  if (filter === "love")   return "bg-rose-400";
-  if (filter === "career") return "bg-amber-400";
-  if (filter === "energy") return "bg-orange-400";
-  if (filter === "mind")   return "bg-teal-400";
+const COLOR_MAP: Record<string, PowerStyle> = {
+  love:    { bg: "rgba(251,113,133,0.20)", glow: "0 0 18px rgba(251,113,133,0.50)", dot: "rgba(251,113,133,0.65)" },
+  career:  { bg: "rgba(212,175,55,0.20)",  glow: "0 0 18px rgba(212,175,55,0.45)",  dot: "rgba(212,175,55,0.65)"  },
+  energy:  { bg: "rgba(251,146,60,0.20)",  glow: "0 0 18px rgba(251,146,60,0.45)",  dot: "rgba(251,146,60,0.65)"  },
+  mind:    { bg: "rgba(45,212,191,0.20)",  glow: "0 0 18px rgba(45,212,191,0.40)",  dot: "rgba(45,212,191,0.65)"  },
+  warning: { bg: "rgba(239,68,68,0.18)",   glow: "0 0 18px rgba(239,68,68,0.40)",   dot: "rgba(239,68,68,0.65)"   },
+};
 
-  if (isChallenge) return "bg-red-500";
-  // "all" filter — pick dominant intention color
+function getDominantKey(day: DayData, filter: CalendarFilter): string {
+  if (filter !== "all") return filter;
+  if (day.challengingScore > day.positiveScore + 2) return "warning";
   const { love, career, energy, mind } = day.intentionScores;
   const max = Math.max(love, career, energy, mind);
-  if (max === love)   return "bg-rose-400";
-  if (max === career) return "bg-amber-400";
-  if (max === energy) return "bg-orange-400";
-  return "bg-teal-400";
+  if (max === love)   return "love";
+  if (max === career) return "career";
+  if (max === energy) return "energy";
+  return "mind";
 }
 
-// Dual semi-circle for compare mode
-type DualGlowProps = { self: DayData; compare: DayData; filter: CalendarFilter };
-function DualGlow({ self, compare, filter }: DualGlowProps) {
-  const scoreA = getDayScore(self, filter);
-  const scoreB = getDayScore(compare, filter);
-  if (scoreA < 3 && scoreB < 3) return null;
-
-  const bothStrong = scoreA >= 5 && scoreB >= 5;
-
-  const size =
-    Math.max(scoreA, scoreB) >= 9 ? 44 :
-    Math.max(scoreA, scoreB) >= 7 ? 36 :
-    Math.max(scoreA, scoreB) >= 5 ? 28 :
-    Math.max(scoreA, scoreB) >= 4 ? 20 :
-                                     12;
-
-  const colorA = getDotColor(self, filter);
-  const colorB = getDotColor(compare, filter);
-
-  const tailwindToHex: Record<string, string> = {
-    "bg-rose-400": "rgba(251,113,133,0.65)",
-    "bg-amber-400": "rgba(251,191,36,0.65)",
-    "bg-orange-400": "rgba(251,146,60,0.65)",
-    "bg-teal-400": "rgba(45,212,191,0.65)",
-    "bg-red-500": "rgba(239,68,68,0.65)",
-  };
-
-  const hexA = tailwindToHex[colorA] ?? "rgba(251,191,36,0.65)";
-  const hexB = tailwindToHex[colorB] ?? "rgba(167,139,250,0.65)";
-
-  return (
-    <span
-      className={`absolute inset-0 m-auto rounded-full pointer-events-none ${bothStrong ? "ring-1 ring-amber-400/60" : ""}`}
-      style={{
-        width: size, height: size,
-        background: `linear-gradient(to right, ${hexA} 50%, ${hexB} 50%)`,
-      }}
-    />
-  );
-}
-
-// Background glow circle — 5 clear intensity levels
-type GlowProps = { day: DayData; filter: CalendarFilter };
-function IntensityGlow({ day, filter }: GlowProps) {
-  const score = getDayScore(day, filter);
-  if (score < 3) return null;
-
-  const color = getDotColor(day, filter);
-
-  const size =
-    score >= 9 ? "w-11 h-11" :
-    score >= 7 ? "w-9 h-9"   :
-    score >= 5 ? "w-7 h-7"   :
-    score >= 4 ? "w-5 h-5"   :
-                 "w-3 h-3";
-
-  const opacity =
-    score >= 9 ? "opacity-75" :
-    score >= 7 ? "opacity-55" :
-    score >= 5 ? "opacity-40" :
-    score >= 4 ? "opacity-30" :
-                 "opacity-20";
-
-  const ring = score >= 9
-    ? `ring-1 ring-offset-0 ${color.replace("bg-", "ring-").replace("400", "300").replace("500", "400")}/50`
-    : "";
-
-  return (
-    <span className={`absolute inset-0 m-auto rounded-full ${size} ${color} ${opacity} ${ring} pointer-events-none`} />
-  );
-}
-
-// Moon phase visual markers — replaces the intensity dot on phase days
+// Moon phase visual markers
 type MoonIconProps = { phase: MoonPhaseName };
 function MoonPhaseIcon({ phase }: MoonIconProps) {
-  const base = "absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full pointer-events-none";
-  if (phase === "new_moon") {
-    return <span className={`${base} bg-slate-900 ring-1 ring-white/60`} />;
-  }
-  if (phase === "full_moon") {
-    return <span className={`${base} bg-white/90`} />;
-  }
-  // first_quarter: right half lit, last_quarter: left half lit
+  const base = "absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full pointer-events-none";
+  if (phase === "new_moon")  return <span className={`${base} bg-slate-900 ring-1 ring-white/50`} />;
+  if (phase === "full_moon") return <span className={`${base} bg-white/80`} />;
   const gradient = phase === "first_quarter"
-    ? "linear-gradient(to right, #0f0c1a 50%, rgba(255,255,255,0.85) 50%)"
-    : "linear-gradient(to left, #0f0c1a 50%, rgba(255,255,255,0.85) 50%)";
+    ? "linear-gradient(to right, #0f0c1a 50%, rgba(255,255,255,0.80) 50%)"
+    : "linear-gradient(to left, #0f0c1a 50%, rgba(255,255,255,0.80) 50%)";
   return <span className={`${base} overflow-hidden`} style={{ background: gradient }} />;
 }
 
@@ -144,7 +74,7 @@ export default function CalendarGrid({ year, month, days, compareDays, selectedD
       {/* Weekday headers */}
       <div className="grid grid-cols-7 mb-1">
         {WEEKDAYS.map(d => (
-          <div key={d} className="text-center text-xs text-slate-500 py-1">{d}</div>
+          <div key={d} className="text-center text-xs py-1" style={{ color: "rgba(100,116,139,0.6)" }}>{d}</div>
         ))}
       </div>
 
@@ -156,32 +86,94 @@ export default function CalendarGrid({ year, month, days, compareDays, selectedD
 
           const day         = days[dayIdx];
           const compareDay  = compareDays?.[dayIdx];
+          const score       = getDayScore(day, filter);
+          const compareScore = compareDay ? getDayScore(compareDay, filter) : 0;
           const isToday     = day.date === today;
           const isSelected  = day.date === selectedDate;
-          const hasScore    = getDayScore(day, filter) >= 3;
+          const isPower     = score >= 7;
+          const isSignal    = score >= 3 && score < 7;
           const hasMoon     = day.moonPhase !== null;
+
+          const domKey  = getDominantKey(day, filter);
+          const colors  = COLOR_MAP[domKey] ?? COLOR_MAP.career;
+
+          // Compare mode: split circle
+          const compareKey    = compareDay ? getDominantKey(compareDay, filter) : domKey;
+          const compareColors = COLOR_MAP[compareKey] ?? COLOR_MAP.career;
+          const comparePower  = compareScore >= 7;
+          const compareSignal = compareScore >= 3 && compareScore < 7;
 
           return (
             <button
               key={day.date}
               onClick={() => onSelect(day.date)}
-              className={`relative flex items-center justify-center h-11 rounded-lg text-sm font-medium transition-all select-none
-                ${isSelected
-                  ? "ring-2 ring-amber-400 text-white"
-                  : isToday
-                  ? "ring-2 ring-white text-white animate-pulse-slow font-bold"
-                  : hasScore
-                  ? "text-white hover:ring-1 hover:ring-white/20"
-                  : hasMoon
-                  ? "text-slate-300 hover:ring-1 hover:ring-white/15"
-                  : "text-slate-500 hover:text-slate-300 hover:bg-white/5"}
-              `}
+              className="relative flex items-center justify-center h-11 rounded-lg text-sm font-medium transition-all select-none"
+              style={{
+                // Power day: filled glow circle
+                ...(isPower && !isSelected ? {
+                  background: colors.bg,
+                  boxShadow: colors.glow,
+                  border: `0.5px solid ${colors.dot}`,
+                  color: "#ffffff",
+                } : isSignal && !isSelected ? {
+                  background: "transparent",
+                  border: "0.5px solid rgba(255,255,255,0.10)",
+                  color: "rgba(203,213,225,0.80)",
+                } : {
+                  background: "transparent",
+                  border: "0.5px solid rgba(255,255,255,0.07)",
+                  color: "rgba(100,116,139,0.70)",
+                }),
+                // Selected overrides
+                ...(isSelected ? {
+                  background: "transparent",
+                  border: "2px solid rgba(212,175,55,0.85)",
+                  boxShadow: "0 0 12px rgba(212,175,55,0.25)",
+                  color: "#D4AF37",
+                } : {}),
+                // Today overrides (when not selected)
+                ...(isToday && !isSelected ? {
+                  border: "1.5px solid rgba(255,255,255,0.55)",
+                  color: "#ffffff",
+                  fontWeight: 700,
+                } : {}),
+              }}
             >
-              {compareDay ? (
-                <DualGlow self={day} compare={compareDay} filter={filter} />
-              ) : (
-                <IntensityGlow day={day} filter={filter} />
+              {/* Compare mode split glow */}
+              {compareDay && (isPower || comparePower) && (
+                <span
+                  className="absolute inset-0 m-auto rounded-full pointer-events-none"
+                  style={{
+                    width: 36, height: 36,
+                    background: `linear-gradient(to right, ${colors.dot} 50%, ${compareColors.dot} 50%)`,
+                    opacity: 0.45,
+                  }}
+                />
               )}
+
+              {/* Signal dot (small, non-power days with some activity) */}
+              {isSignal && !isPower && !compareDay && (
+                <span
+                  className="absolute pointer-events-none rounded-full"
+                  style={{
+                    width: 5, height: 5,
+                    bottom: 6,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    background: colors.dot,
+                    opacity: 0.55,
+                  }}
+                />
+              )}
+
+              {/* Compare signal dots */}
+              {compareDay && (isSignal || compareSignal) && !isPower && !comparePower && (
+                <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-0.5 pointer-events-none">
+                  {isSignal    && <span className="w-1 h-1 rounded-full" style={{ background: colors.dot, opacity: 0.55 }} />}
+                  {compareSignal && <span className="w-1 h-1 rounded-full" style={{ background: compareColors.dot, opacity: 0.55 }} />}
+                </span>
+              )}
+
               <span className="relative z-10">{dayIdx + 1}</span>
               {hasMoon && <MoonPhaseIcon phase={day.moonPhase!} />}
             </button>
@@ -189,45 +181,20 @@ export default function CalendarGrid({ year, month, days, compareDays, selectedD
         })}
       </div>
 
-      {/* Legend */}
-      <div className="mt-5 space-y-2">
-        {compareDays ? (
-          <div className="flex items-center gap-3 flex-wrap justify-center text-[11px] text-slate-500">
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-2.5 rounded-l-full inline-block" style={{ background: "rgba(251,191,36,0.65)" }} />
-              <span className="w-3 h-2.5 rounded-r-full inline-block" style={{ background: "rgba(167,139,250,0.65)" }} />
-              <span className="ml-1">lewa = Ty · prawa = porównanie</span>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full inline-block ring-1 ring-amber-400/60" style={{ background: "linear-gradient(to right, rgba(251,191,36,0.65) 50%, rgba(167,139,250,0.65) 50%)" }} />
-              oboje intensywni
-            </span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 flex-wrap justify-center text-[11px] text-slate-500">
-            {filter === "all" ? (
-              <>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-400 opacity-60 inline-block" />miłość</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 opacity-60 inline-block" />kariera</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-400 opacity-60 inline-block" />energia</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-teal-400 opacity-60 inline-block" />komunikacja</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500 opacity-60 inline-block" />wyzwanie</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-900 ring-1 ring-white/60 inline-block" />faza Księżyca</span>
-              </>
-            ) : filter === "love" ? (
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-400 opacity-60 inline-block" />siła tranzytów miłości</span>
-            ) : filter === "career" ? (
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 opacity-60 inline-block" />siła tranzytów kariery</span>
-            ) : filter === "energy" ? (
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-400 opacity-60 inline-block" />siła tranzytów energii</span>
-            ) : (
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-teal-400 opacity-60 inline-block" />siła tranzytów komunikacji</span>
-            )}
-          </div>
-        )}
-        <p className="text-center text-[11px] text-slate-600">
-          Wielkość kółka = intensywność tranzytu · ~5–10 dni w miesiącu jest zaznaczonych
-        </p>
+      {/* Minimal legend */}
+      <div className="mt-4 flex items-center justify-center gap-4 text-[11px]" style={{ color: "rgba(100,116,139,0.55)" }}>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3.5 h-3.5 rounded-sm inline-block" style={{ background: "rgba(212,175,55,0.20)", border: "0.5px solid rgba(212,175,55,0.50)" }} />
+          Dzień mocy
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "rgba(203,213,225,0.40)" }} />
+          Sygnał
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full inline-block bg-slate-900 ring-1 ring-white/50" />
+          Faza Księżyca
+        </span>
       </div>
     </div>
   );

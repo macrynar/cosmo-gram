@@ -10,7 +10,8 @@ import { MOON_PHASE_INFO, getRitualPrompt } from "@/lib/moonPhases";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
 import DailyReading from "@/components/generate/DailyReading";
-import { X, Moon, TrendingUp, AlertTriangle, Pencil } from "lucide-react";
+import { motion } from "framer-motion";
+import { X, Moon, TrendingUp, AlertTriangle, Pencil, Flame } from "lucide-react";
 
 // ── Polish instrumental case for planet names (after "z") ──────────────────
 const PLANET_INSTR: Record<string, string> = {
@@ -438,6 +439,24 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
           </div>
         )}
 
+        {/* ── Streak indicator ── */}
+        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl"
+          style={{ background: "rgba(212,175,55,0.05)", border: "0.5px solid rgba(212,175,55,0.12)" }}
+        >
+          <Flame className="w-4 h-4 shrink-0" style={{ color: note.length > 0 ? "#D4AF37" : "rgba(100,116,139,0.5)" }} />
+          <div className="min-w-0">
+            {note.length > 0 ? (
+              <p className="text-xs font-medium" style={{ color: "#D4AF37" }}>
+                Dziennik aktywny — kontynuuj serię jutro
+              </p>
+            ) : (
+              <p className="text-xs" style={{ color: "rgba(100,116,139,0.7)" }}>
+                Zacznij serię — zapisz refleksję na ten dzień
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* ── Moon ritual (replaces question on phase days) ── */}
         {moonPhaseInfo && ritualPrompt ? (
           <div className="rounded-xl bg-indigo-950/40 border border-indigo-700/30 p-4">
@@ -455,15 +474,15 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
           </div>
         ) : (
           /* ── Regular reflective question ── */
-          <div className="rounded-xl bg-white/4 border border-white/8 p-4">
-            <p className="text-[10px] text-slate-600 uppercase tracking-widest font-medium mb-2 flex items-center gap-1.5">
+          <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.08)" }}>
+            <p className="text-[10px] uppercase tracking-widest font-medium mb-2 flex items-center gap-1.5" style={{ color: "rgba(100,116,139,0.7)" }}>
               <Pencil className="w-3 h-3" />
               {effectiveScore >= 5
                 ? "Pytanie refleksyjne — na podstawie dzisiejszej energii"
                 : "Pytanie na ten dzień"}
             </p>
-            <p className="text-sm text-slate-300 italic leading-relaxed">&ldquo;{question}&rdquo;</p>
-            <p className="text-[11px] text-slate-600 mt-2.5">
+            <p className="text-sm italic leading-relaxed" style={{ color: "rgba(203,213,225,0.85)" }}>&ldquo;{question}&rdquo;</p>
+            <p className="text-[11px] mt-2.5" style={{ color: "rgba(100,116,139,0.55)" }}>
               Zapisz swoją odpowiedź lub przemyślenia w notatce poniżej ↓
             </p>
           </div>
@@ -474,20 +493,34 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
 
         {/* ── Generate / Reading ── */}
         {!readingText ? (
-          <button
+          <motion.button
             onClick={handleGenerate}
             disabled={generating}
-            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all disabled:opacity-50 ${
-              sig.level === "exceptional"
-                ? "bg-amber-700/40 border border-amber-500/40 text-amber-100 hover:bg-amber-600/50"
-                : "bg-amber-900/20 border border-amber-700/30 text-amber-200 hover:bg-amber-800/30"
-            }`}
+            whileHover={{ boxShadow: "0 0 24px rgba(212,175,55,0.20)", y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            className="relative w-full overflow-hidden flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+            style={{
+              background: "rgba(5,4,14,0.90)",
+              border: `0.5px solid ${sig.level === "exceptional" ? "rgba(212,175,55,0.70)" : "rgba(212,175,55,0.45)"}`,
+              color: sig.level === "exceptional" ? "#F3E5AB" : "#D4AF37",
+            }}
           >
-            {generating
-              ? <span className="w-4 h-4 border-2 border-amber-300/25 border-t-amber-300 rounded-full animate-spin" />
-              : <CosmoIcon className="w-4 h-4" />}
-            {generating ? "Interpretuję tranzyty…" : sig.generateLabel}
-          </button>
+            {/* Shimmer sweep */}
+            {!generating && (
+              <motion.span
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: "linear-gradient(105deg, transparent 35%, rgba(212,175,55,0.10) 50%, transparent 65%)" }}
+                animate={{ x: ["-120%", "120%"] }}
+                transition={{ duration: 2.8, repeat: Infinity, ease: "linear", repeatDelay: 0.8 }}
+              />
+            )}
+            <span className="relative flex items-center gap-2">
+              {generating
+                ? <span className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(212,175,55,0.25)", borderTopColor: "#D4AF37" }} />
+                : <CosmoIcon className="w-4 h-4" />}
+              {generating ? "Interpretuję tranzyty…" : sig.generateLabel}
+            </span>
+          </motion.button>
         ) : (
           <>
             <DailyReading text={readingText} loading={generating} dateLabel={dateLabel} />
