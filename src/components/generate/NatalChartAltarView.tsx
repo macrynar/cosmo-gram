@@ -306,45 +306,23 @@ export default function NatalChartAltarView({ chart }: Props) {
         </motion.header>
 
         {/* ════════════════════════════════════════════════════
-            DESKTOP  — 3-column grid (symmetric)
+            DESKTOP  — 3-column grid (symmetric cross)
             col: [140px]  [1fr]   [140px]
-                 [ASC  ]  [Sun ]  [empty]
-                 [ASC  ]  [Chart] [empty]
-                 [ASC  ]  [Moon]  [empty]
+            row1: [empty]  [Sun]   [empty]
+            row2: [ASC  ]  [Chart] [Moon ]
         ════════════════════════════════════════════════════ */}
         <div
           className="hidden sm:grid"
           style={{
             gridTemplateColumns: "140px minmax(0,1fr) 140px",
-            gridTemplateRows: "auto auto auto",
+            gridTemplateRows: "auto auto",
             columnGap: "24px",
             rowGap: "20px",
             alignItems: "center",
             justifyItems: "center",
           }}
         >
-          {/* Col 1, rows 1–3: ASC — vertically centered over full height */}
-          {!timeUnknown ? (
-            <motion.div
-              initial={{ opacity: 0, x: -24 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.28, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              style={{ gridColumn: 1, gridRow: "1 / 4", display: "flex", alignItems: "center", height: "100%" }}
-            >
-              <AmuletFlank
-                body="asc"
-                sign={ascSign}
-                degree={ascDegree}
-                focused={focused}
-                onFocus={setFocused}
-                tooltipAlign="left-edge"
-              />
-            </motion.div>
-          ) : (
-            <div style={{ gridColumn: 1, gridRow: "1 / 4" }} />
-          )}
-
-          {/* Col 2, row 1: Słońce — GÓRA */}
+          {/* Col 2, row 1: Słońce — GÓRA (center) */}
           <motion.div
             initial={{ opacity: 0, y: -18 }}
             animate={{ opacity: 1, y: 0 }}
@@ -360,6 +338,27 @@ export default function NatalChartAltarView({ chart }: Props) {
               tooltipAlign="center"
             />
           </motion.div>
+
+          {/* Col 1, row 2: ASC — LEWO */}
+          {!timeUnknown ? (
+            <motion.div
+              initial={{ opacity: 0, x: -24 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.28, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              style={{ gridColumn: 1, gridRow: 2 }}
+            >
+              <AmuletFlank
+                body="asc"
+                sign={ascSign}
+                degree={ascDegree}
+                focused={focused}
+                onFocus={setFocused}
+                tooltipAlign="left-edge"
+              />
+            </motion.div>
+          ) : (
+            <div style={{ gridColumn: 1, gridRow: 2 }} />
+          )}
 
           {/* Col 2, row 2: Chart — ŚRODEK */}
           <motion.div
@@ -383,12 +382,12 @@ export default function NatalChartAltarView({ chart }: Props) {
             </motion.div>
           </motion.div>
 
-          {/* Col 2, row 3: Księżyc — DÓŁ */}
+          {/* Col 3, row 2: Księżyc — PRAWO (symetria z ASC) */}
           <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.22, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            style={{ gridColumn: 2, gridRow: 3 }}
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.28, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            style={{ gridColumn: 3, gridRow: 2 }}
           >
             <AmuletFlank
               body="moon"
@@ -396,11 +395,9 @@ export default function NatalChartAltarView({ chart }: Props) {
               degree={moon.degree}
               focused={focused}
               onFocus={setFocused}
-              tooltipAlign="center"
+              tooltipAlign="right-edge"
             />
           </motion.div>
-
-          {/* Col 3: pusty balans — symetria względem ASC */}
         </div>
 
         {/* ── MOBILE: Chart → flanks row below ── */}
