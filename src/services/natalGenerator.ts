@@ -4,7 +4,7 @@ import { buildSystemPrompt, buildUserPrompt, type GenerationContext } from "@/li
 import { computeConfidenceScore } from "@/lib/confidence";
 import { AstroModuleSchema, ALL_MODULE_IDS, type AstroModule, type ModuleId } from "@/lib/schemas/astroModule";
 
-const PROMPT_VERSION = process.env.NATAL_PROMPT_VERSION ?? "v1";
+const PROMPT_VERSION = process.env.NATAL_PROMPT_VERSION ?? "v2";
 
 const PREMIUM_IDS = new Set<ModuleId>(["love", "career", "shadows", "roots", "purpose"]);
 
@@ -60,6 +60,14 @@ async function saveModuleCache(userId: string, chartId: string, module: AstroMod
     },
     { onConflict: "cache_key" }
   );
+}
+
+// ─── Load-only (no generation) ───────────────────────────────────────────────
+
+export async function getExistingKarta(userId: string, chartId: string): Promise<AstroModule[] | null> {
+  const cached = await loadCachedModules(userId, chartId);
+  if (cached.size === 0) return null;
+  return ALL_MODULE_IDS.map(id => cached.get(id)!).filter(Boolean);
 }
 
 // ─── Main generator ───────────────────────────────────────────────────────────

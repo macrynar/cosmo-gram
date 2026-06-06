@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -26,9 +26,33 @@ interface Props {
 export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
   const [modules,      setModules]      = useState<AstroModule[]>([]);
   const [loading,      setLoading]      = useState(false);
+  const [cacheLoading, setCacheLoading] = useState(true);
   const [error,        setError]        = useState<string | null>(null);
   const [generated,    setGenerated]    = useState(false);
   const [showPaywall,  setShowPaywall]  = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function tryLoadCache() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || cancelled) return;
+        const res = await fetch(`/api/natal-karta?chart_id=${reading.id}`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok || cancelled) return;
+        const { modules: mods } = await res.json() as { modules: AstroModule[] };
+        if (mods && mods.length > 0 && !cancelled) {
+          setModules(mods);
+          setGenerated(true);
+        }
+      } finally {
+        if (!cancelled) setCacheLoading(false);
+      }
+    }
+    tryLoadCache();
+    return () => { cancelled = true; };
+  }, [reading.id]);
 
   async function handleGenerate() {
     setLoading(true);
@@ -91,8 +115,15 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
   return (
     <div className="space-y-5">
 
+      {/* ── Cache loading spinner ── */}
+      {cacheLoading && !generated && !loading && (
+        <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)" }}>
+          <div className="w-8 h-8 rounded-full animate-spin border-t-2 mx-auto" style={{ borderColor: "transparent", borderTopColor: "#D4AF37" }} />
+        </div>
+      )}
+
       {/* ── Entry CTA ── */}
-      {!generated && !loading && (
+      {!generated && !loading && !cacheLoading && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

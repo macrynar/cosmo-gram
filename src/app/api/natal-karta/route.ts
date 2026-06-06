@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
-import { generateNatalKarta } from "@/services/natalGenerator";
+import { generateNatalKarta, getExistingKarta } from "@/services/natalGenerator";
 import type { GenerationContext } from "@/lib/moduleSpecs";
 
 export const maxDuration = 120;
+
+export async function GET(req: NextRequest) {
+  const token = req.headers.get("authorization")?.replace("Bearer ", "");
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
+  if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const chartId = new URL(req.url).searchParams.get("chart_id");
+  if (!chartId) return NextResponse.json({ error: "chart_id required" }, { status: 400 });
+
+  const modules = await getExistingKarta(user.id, chartId);
+  return NextResponse.json({ modules: modules ?? [] });
+}
 
 export async function POST(req: NextRequest) {
   // Prereq: DeepSeek key
