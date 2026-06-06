@@ -23,6 +23,21 @@ interface Props {
   isPremiumUser: boolean;
 }
 
+const LS_KEY = (id: string) => `karta_v2_${id}`;
+
+function saveLocal(readingId: string, mods: AstroModule[]) {
+  try { localStorage.setItem(LS_KEY(readingId), JSON.stringify(mods)); } catch {}
+}
+
+function loadLocal(readingId: string): AstroModule[] | null {
+  try {
+    const raw = localStorage.getItem(LS_KEY(readingId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AstroModule[];
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+  } catch { return null; }
+}
+
 export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
   const [modules,      setModules]      = useState<AstroModule[]>([]);
   const [loading,      setLoading]      = useState(false);
@@ -32,8 +47,18 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
   const [showPaywall,  setShowPaywall]  = useState(false);
 
   useEffect(() => {
+    // 1. Check localStorage first (instant, no network)
+    const local = loadLocal(reading.id);
+    if (local) {
+      setModules(local);
+      setGenerated(true);
+      setCacheLoading(false);
+      return;
+    }
+
+    // 2. Fallback: check server cache
     let cancelled = false;
-    async function tryLoadCache() {
+    async function tryLoadServer() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session || cancelled) return;
@@ -45,12 +70,13 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
         if (mods && mods.length > 0 && !cancelled) {
           setModules(mods);
           setGenerated(true);
+          saveLocal(reading.id, mods);
         }
       } finally {
         if (!cancelled) setCacheLoading(false);
       }
     }
-    tryLoadCache();
+    tryLoadServer();
     return () => { cancelled = true; };
   }, [reading.id]);
 
@@ -105,6 +131,7 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
       const { modules: mods } = await kartaRes.json() as { modules: AstroModule[] };
       setModules(mods);
       setGenerated(true);
+      saveLocal(reading.id, mods);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Nieznany błąd");
     } finally {
