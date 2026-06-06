@@ -7,8 +7,10 @@ import { CosmoIcon } from "@/components/CosmoIcon";
 import NatalChartAltarView from "@/components/generate/NatalChartAltarView";
 import PlanetTable from "@/components/generate/PlanetTable";
 import Interpretation from "@/components/generate/Interpretation";
+import ModuleCard from "@/components/generate/ModuleCard";
 import { getPersonalityTags } from "@/lib/personality-tags";
 import type { NatalChart } from "@/lib/astro-types";
+import type { AstroModule } from "@/lib/schemas/astroModule";
 
 const ELEMENTS: Record<string, string> = {
   "Baran": "Ogień", "Lew": "Ogień", "Strzelec": "Ogień",
@@ -37,11 +39,13 @@ type Props = {
   birthPlace: string;
   chart: NatalChart;
   interpretation: string;
+  kartaModules: AstroModule[];
 };
 
-export default function ShareReadingClient({ name, birthDate, birthTime, birthPlace, chart, interpretation }: Props) {
+export default function ShareReadingClient({ name, birthDate, birthTime, birthPlace, chart, interpretation, kartaModules }: Props) {
   const el   = getDominantElement(chart);
   const tags = getPersonalityTags(chart);
+  const hasModules = kartaModules.length > 0;
 
   return (
     <div className="min-h-screen text-white" style={{ background: "#050508" }}>
@@ -51,7 +55,7 @@ export default function ShareReadingClient({ name, birthDate, birthTime, birthPl
       <Star className="fixed top-[18%] left-[8%] w-2 h-2 text-amber-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "3.5s" }} />
       <Star className="fixed top-[55%] right-[4%] w-2 h-2 text-amber-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "4s" }} />
 
-      {/* Top bar — logo only */}
+      {/* Top bar */}
       <header className="relative z-10 flex items-center justify-center px-6 py-4 border-b border-white/5">
         <Link href="/" aria-label="Cosmogram">
           <Image
@@ -66,6 +70,7 @@ export default function ShareReadingClient({ name, birthDate, birthTime, birthPl
       </header>
 
       <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-10 pb-36 space-y-6">
+
         {/* Heading */}
         <div className="text-center">
           <p className="text-[10px] uppercase tracking-[0.30em] mb-2" style={{ color: "rgba(212,175,55,0.60)" }}>
@@ -92,7 +97,7 @@ export default function ShareReadingClient({ name, birthDate, birthTime, birthPl
           </div>
         </div>
 
-        {/* Dark crystal altar view */}
+        {/* Altar view */}
         <NatalChartAltarView chart={chart} />
 
         {/* Dominant element */}
@@ -116,7 +121,32 @@ export default function ShareReadingClient({ name, birthDate, birthTime, birthPl
           </div>
         )}
 
-        <Interpretation text={interpretation} loading={false} />
+        {/* Karta Astrologiczna modules — all unlocked on share page */}
+        {hasModules && (
+          <div className="space-y-5">
+            <div className="text-center">
+              <p className="text-[10px] uppercase tracking-[0.28em]" style={{ color: "rgba(212,175,55,0.45)" }}>
+                Karta Astrologiczna · {kartaModules.length} modułów
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {kartaModules.map((mod, i) => (
+                <ModuleCard
+                  key={mod.id}
+                  module={mod}
+                  isPremiumUser={true}
+                  index={i}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Fallback: legacy interpretation text if no modules */}
+        {!hasModules && interpretation && (
+          <Interpretation text={interpretation} loading={false} />
+        )}
+
       </main>
 
       {/* Sticky CTA */}
@@ -128,7 +158,7 @@ export default function ShareReadingClient({ name, birthDate, birthTime, birthPl
           </p>
           <Link
             href="/generate"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-white text-sm font-semibold transition-all shadow-lg whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all shadow-lg whitespace-nowrap"
             style={{
               background: "linear-gradient(135deg, rgba(212,175,55,0.92), rgba(197,160,89,0.92))",
               color: "#050508",

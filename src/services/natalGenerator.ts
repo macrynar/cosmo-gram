@@ -70,6 +70,24 @@ export async function getExistingKarta(userId: string, chartId: string): Promise
   return ALL_MODULE_IDS.map(id => cached.get(id)!).filter(Boolean);
 }
 
+// Read modules by chart_id only — for public share pages (no user auth)
+export async function getKartaByChartId(chartId: string): Promise<AstroModule[]> {
+  const { data } = await supabaseAdmin
+    .from("natal_modules_cache")
+    .select("module_id, module_data")
+    .eq("chart_id", chartId)
+    .eq("prompt_version", PROMPT_VERSION);
+
+  const map = new Map<ModuleId, AstroModule>();
+  for (const row of data ?? []) {
+    try {
+      const parsed = AstroModuleSchema.parse(row.module_data);
+      map.set(parsed.id, parsed);
+    } catch { /* skip malformed */ }
+  }
+  return ALL_MODULE_IDS.map(id => map.get(id)!).filter(Boolean);
+}
+
 // ─── Main generator ───────────────────────────────────────────────────────────
 
 export async function generateNatalKarta(ctx: GenerationContext): Promise<AstroModule[]> {
@@ -104,8 +122,8 @@ export async function generateNatalKarta(ctx: GenerationContext): Promise<AstroM
     })
   );
 
-  // Write cache async (don't block response)
-  Promise.all(generated.map(m => saveModuleCache(user_id, chart_id, m)))
+  // Write cache — awaited so Vercel Lambda doesn't terminate before writes complete
+  await Promise.all(generated.map(m => saveModuleCache(user_id, chart_id, m)))
     .catch(err => console.error("[karta] cache write error:", err));
 
   // 4. Merge cached + generated in canonical order

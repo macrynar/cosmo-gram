@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import type { NatalChart } from "@/lib/astro-types";
+import { getKartaByChartId } from "@/services/natalGenerator";
 import ShareReadingClient from "./ShareReadingClient";
 
 type Props = { params: Promise<{ id: string }> };
@@ -31,11 +32,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ShareReadingPage({ params }: Props) {
   const { id } = await params;
 
-  const { data } = await supabaseAdmin
-    .from("readings")
-    .select("name, birth_date, birth_time, birth_place, chart_data, interpretation")
-    .eq("id", id)
-    .single();
+  const [{ data }, modules] = await Promise.all([
+    supabaseAdmin
+      .from("readings")
+      .select("name, birth_date, birth_time, birth_place, chart_data, interpretation")
+      .eq("id", id)
+      .single(),
+    getKartaByChartId(id),
+  ]);
 
   if (!data) notFound();
 
@@ -47,6 +51,7 @@ export default async function ShareReadingPage({ params }: Props) {
       birthPlace={data.birth_place}
       chart={data.chart_data as NatalChart}
       interpretation={data.interpretation}
+      kartaModules={modules}
     />
   );
 }
