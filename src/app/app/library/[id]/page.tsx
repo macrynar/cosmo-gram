@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import ChildInterpretation from "@/components/children/ChildInterpretation";
-import NatalChartSVG from "@/components/generate/NatalChartSVG";
+import NatalChartAltarView from "@/components/generate/NatalChartAltarView";
 import PlanetTable from "@/components/generate/PlanetTable";
 import { useAuth } from "@/components/AuthContext";
 import { calcAgeYears } from "@/lib/prompts/child-v1";
@@ -70,22 +70,13 @@ export default function ChildPage() {
   const ageYears = child ? calcAgeYears(child.birth_date) : 0;
   const city = child?.birth_place.split(",")[0] ?? "";
 
-  const sun  = child?.chart_data.planets.find(p => p.name === "Słońce");
-  const moon = child?.chart_data.planets.find(p => p.name === "Księżyc");
-
-  const ascSign = child?.chart_data.ascendant != null
-    ? (() => {
-        const idx = Math.floor(child.chart_data.ascendant / 30);
-        const signs = ["Baran","Byk","Bliźnięta","Rak","Lew","Panna","Waga","Skorpion","Strzelec","Koziorożec","Wodnik","Ryby"];
-        return signs[idx];
-      })()
-    : null;
-
   return (
-    <div className="min-h-screen bg-[#03010d] text-white">
+    <div className="min-h-screen text-white" style={{ background: "#050508" }}>
       <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
-      <div aria-hidden="true" className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] opacity-20 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, #064d2a 0%, transparent 70%)" }} />
-      <Star className="fixed top-[18%] left-[6%] w-2 h-2 text-green-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "3.6s" }} />
+      <div aria-hidden="true" className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(88,60,140,0.18) 0%, transparent 70%)", filter: "blur(2px)" }} />
+      <Star className="fixed top-[18%] left-[6%] w-2 h-2 text-amber-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "3.6s" }} />
+      <Star className="fixed top-[55%] right-[5%] w-2 h-2 text-amber-400/40 animate-pulse pointer-events-none" style={{ animationDuration: "4.2s" }} />
 
       <Navbar />
 
@@ -101,14 +92,14 @@ export default function ChildPage() {
         </div>
 
         {loading && (
-          <div className="glass-card rounded-2xl p-10 text-center">
-            <div className="w-8 h-8 border-2 border-green-500/30 border-t-green-500 rounded-full animate-spin mx-auto mb-3" />
+          <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)" }}>
+            <div className="w-8 h-8 rounded-full animate-spin border-t-2 mx-auto mb-3" style={{ borderColor: "transparent", borderTopColor: "#D4AF37" }} />
             <p className="text-slate-500 text-sm">Wczytuję…</p>
           </div>
         )}
 
         {error && (
-          <div className="glass-card rounded-2xl p-8 text-center border border-red-700/20">
+          <div className="rounded-2xl p-8 text-center" style={{ background: "rgba(239,68,68,0.06)", border: "0.5px solid rgba(239,68,68,0.25)" }}>
             <p className="text-red-400 text-sm">{error}</p>
           </div>
         )}
@@ -116,13 +107,15 @@ export default function ChildPage() {
         {child && !loading && (
           <div className="space-y-6">
             {/* Header */}
-            <div className="glass-card rounded-2xl p-6 border border-green-900/20">
+            <div className="rounded-2xl p-6" style={{ background: "rgba(5,4,14,0.72)", border: "0.5px solid rgba(212,175,55,0.18)", backdropFilter: "blur(24px)" }}>
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-600/30 to-emerald-600/30 border border-green-700/30 flex items-center justify-center flex-shrink-0">
-                  <Baby className="w-6 h-6 text-green-400" />
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(212,175,55,0.10)", border: "0.5px solid rgba(212,175,55,0.28)" }}>
+                  <Baby className="w-6 h-6" style={{ color: "#D4AF37" }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-2xl font-bold text-white mb-1 font-brand">
+                  <h1 className="text-2xl font-bold text-white mb-1"
+                    style={{ fontFamily: "var(--font-cormorant), serif" }}>
                     {child.name}
                   </h1>
                   <p className="text-slate-500 text-sm">
@@ -132,61 +125,27 @@ export default function ChildPage() {
                   </p>
                 </div>
               </div>
-
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-              <div className="glass-card rounded-3xl p-4 sm:p-5 flex flex-col">
-                <NatalChartSVG chart={child.chart_data} />
+            {/* Chart — dark crystal altar view */}
+            <NatalChartAltarView chart={child.chart_data} />
 
-                {/* Sun / Moon / Asc / element — below the chart */}
-                <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-green-900/15">
-                  {sun && (
-                    <span className="text-xs px-3 py-1 rounded-full border border-amber-700/40 text-amber-300/80 bg-amber-900/10">
-                      ☉ {sun.sign}
-                    </span>
-                  )}
-                  {moon && (
-                    <span className="text-xs px-3 py-1 rounded-full border border-blue-700/40 text-blue-300/80 bg-blue-900/10">
-                      ☽ {moon.sign}
-                    </span>
-                  )}
-                  {ascSign && (
-                    <span className="text-xs px-3 py-1 rounded-full border border-green-700/40 text-green-300/80 bg-green-900/10">
-                      Asc {ascSign}
-                    </span>
-                  )}
-                  {(() => {
-                    const el = getDominantElement(child.chart_data);
-                    return (
-                      <span className={`text-xs px-3 py-1 rounded-full border ${el.color}`}>
-                        {el.emoji} Dominuje {el.label}
-                      </span>
-                    );
-                  })()}
-                </div>
-
-                {!child.chart_data.birthData?.timeUnknown && (
-                  <div className="flex flex-wrap justify-center gap-3 text-xs text-slate-500 mt-3 pt-3 border-t border-green-900/15">
-                    {[
-                      { color: "bg-amber-400/60", label: "Koniunkcja (0°)" },
-                      { color: "bg-green-400/60",  label: "Trygon (120°)" },
-                      { color: "bg-red-400/60",    label: "Opozycja (180°)" },
-                      { color: "bg-orange-400/60", label: "Kwadrat (90°)" },
-                      { color: "bg-blue-400/60",   label: "Sekstyl (60°)" },
-                    ].map(({ color, label }) => (
-                      <span key={label} className="flex items-center gap-1.5">
-                        <span className={`inline-block w-3 h-1.5 rounded-full ${color}`} />
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="h-full"><PlanetTable chart={child.chart_data} /></div>
+            {/* Dominant element badge */}
+            <div className="flex justify-center">
+              {(() => {
+                const el = getDominantElement(child.chart_data);
+                return (
+                  <span className={`text-xs px-3 py-1 rounded-full border ${el.color}`}>
+                    {el.emoji} Dominuje {el.label}
+                  </span>
+                );
+              })()}
             </div>
 
-            {/* Personality tags — above the interpretation */}
+            {/* Planet table */}
+            <PlanetTable chart={child.chart_data} />
+
+            {/* Personality tags */}
             {(() => {
               const tags = getPersonalityTags(child.chart_data);
               return tags.length > 0 ? (
