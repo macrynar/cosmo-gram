@@ -19,18 +19,25 @@ export default function AuthCallback() {
             headers: { Authorization: `Bearer ${data.session.access_token}` },
           }).catch(() => {});
         }
-        router.replace("/app/cosmogram");
+        const hasPending = localStorage.getItem("cosmogram_pending_chart");
+        router.replace(hasPending ? "/app/cosmogram?autostart=true" : "/app/cosmogram");
       });
       return;
     }
 
     // Fallback: magic-link / implicit flow — SDK already has the session
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") router.replace("/app/cosmogram");
+      if (event === "SIGNED_IN") {
+        const hasPending = localStorage.getItem("cosmogram_pending_chart");
+        router.replace(hasPending ? "/app/cosmogram?autostart=true" : "/app/cosmogram");
+      }
     });
 
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) router.replace("/app/cosmogram");
+      if (data.session) {
+        const hasPending = localStorage.getItem("cosmogram_pending_chart");
+        router.replace(hasPending ? "/app/cosmogram?autostart=true" : "/app/cosmogram");
+      }
     });
 
     return () => subscription.unsubscribe();

@@ -86,6 +86,30 @@ export default function CosmogramPage() {
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
 
+  // ── Auto-start (from signup flow) ───────────────────────────────────────
+  const autoStartRef = useRef(false);
+
+  useEffect(() => {
+    if (authLoading || !session || loadingHistory || autoStartRef.current) return;
+    if (!window.location.search.includes("autostart=true")) return;
+
+    const raw = localStorage.getItem("cosmogram_pending_chart");
+    if (!raw) return;
+
+    try {
+      const pending = JSON.parse(raw) as {
+        name: string; date: string; time: string; timeUnknown: boolean;
+        place: string; lat: number; lng: number;
+      };
+      localStorage.removeItem("cosmogram_pending_chart");
+      autoStartRef.current = true;
+      handleFormSubmit(pending);
+    } catch {
+      // ignore corrupt data
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, session, loadingHistory]);
+
   // ── Children state ───────────────────────────────────────────────────────
   const [children, setChildren] = useState<SavedChild[]>([]);
   const [loadingChildren, setLoadingChildren] = useState(false);
@@ -111,7 +135,7 @@ export default function CosmogramPage() {
         displayReading(data[0]);
         setShowForm(false);
       } else if (data.length === 0) {
-        setShowForm(true);
+        if (!autoStartRef.current) setShowForm(true);
       }
     } finally {
       setLoadingHistory(false);
