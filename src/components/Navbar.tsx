@@ -10,11 +10,12 @@ import { useAuth } from "@/components/AuthContext";
 import { ROUTES, BRAND } from "@/lib/routes";
 
 const PUBLIC_NAV = [
-  { label: ROUTES.public.cosmogram.label,      href: ROUTES.public.cosmogram.path },
-  { label: ROUTES.public.dailyHoroscope.label, href: ROUTES.public.dailyHoroscope.path },
-  { label: BRAND.match,                        href: ROUTES.public.match.path },
-  { label: ROUTES.public.blog.label,           href: ROUTES.public.blog.path },
-  { label: ROUTES.public.pricing.label,        href: ROUTES.public.pricing.path },
+  { label: ROUTES.public.cosmogram.label,   href: ROUTES.public.cosmogram.path },
+  { label: ROUTES.public.calendar.label,    href: ROUTES.public.calendar.path },
+  { label: BRAND.match,                     href: ROUTES.public.match.path },
+  { label: BRAND.chat,                      href: ROUTES.public.chatPublic.path },
+  { label: ROUTES.public.blog.label,        href: ROUTES.public.blog.path },
+  { label: ROUTES.public.pricing.label,     href: ROUTES.public.pricing.path },
 ];
 
 const APP_NAV = [
@@ -71,8 +72,10 @@ export default function Navbar() {
 
   useEffect(() => { setMenuOpen(false); }, [pathname]);
 
-  const isActive = (href: string) =>
-    pathname === href || (href !== "/" && pathname.startsWith(href));
+  const isActive = (href: string) => {
+    if (href.startsWith("/#")) return false;
+    return pathname === href || (href !== "/" && pathname.startsWith(href));
+  };
 
   const [c1, c2] = getAvatarColor(user?.email);
 
