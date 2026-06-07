@@ -11,7 +11,14 @@ export default function AuthCallback() {
     const code = new URLSearchParams(window.location.search).get("code");
 
     if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(() => {
+      supabase.auth.exchangeCodeForSession(code).then(async ({ data }) => {
+        // Fire welcome email for new users (idempotent — API skips if already sent)
+        if (data.session) {
+          fetch("/api/email/welcome", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${data.session.access_token}` },
+          }).catch(() => {});
+        }
         router.replace("/app/cosmogram");
       });
       return;

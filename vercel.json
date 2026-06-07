@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/cron/daily-horoscope",
+      "schedule": "0 6 * * *"
+    }
+  ],
   "redirects": [
     { "source": "/generate",           "destination": "/app/cosmogram",        "permanent": true },
     { "source": "/astro-match",        "destination": "/app/match",            "permanent": true },

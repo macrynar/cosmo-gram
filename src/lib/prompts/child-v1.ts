@@ -146,6 +146,14 @@ Dla każdego wyzwania: (a) wzorzec behawioralny w konkretnej sytuacji, (b) puła
 Każda zaczyna się od konkretnej sytuacji ("Kiedy [X]..."), nie od ogólnej zasady.
 Test dla każdej wskazówki: czy pasowałaby do dziecka z zupełnie inną kartą? Jeśli tak — przepisz.
 
+## 🌌 8. Skąd przychodzi i dokąd zmierza
+Węzeł Północny + Księżyc + Saturn jako wzorzec tego, co to dziecko wnosi i co ma do przepracowania.
+NIE używaj słów: "misja", "wybrane", "stara dusza", "przeznaczenie", "dusza" w sensie ezoterycznym.
+Zamiast: opisz konkretny wzorzec który widać już teraz — co to dziecko robi intuicyjnie bez uczenia, co sprawia mu trudność mimo starań, jaki rodzaj relacji z dorosłymi naturalnie szuka.
+Pokaż co w tym dziecku może być odzwierciedleniem wzorca rodzinnego (bez terapeutycznego języka — przez obserwację: "dzieci które mają tę konfigurację często przychodzą do rodzin gdzie...").
+Zakończ konkretnym obrazem: jak to dziecko — za 20-30 lat, w pełni dorosłe — może wyglądać gdy ta konfiguracja jest zintegrowana. Jeden konkretny scenariusz życiowy, nie ogólniki.
+160-200 słów.
+
 # Imię dziecka
 Używaj imienia 4-6 razy w całej interpretacji.
 
