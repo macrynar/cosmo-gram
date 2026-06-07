@@ -25,5 +25,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!user) return null;
 
-  return <>{children}</>;
+  return (
+    <div className="app-bottom-safe">
+      {children}
+    </div>
+  );
 }

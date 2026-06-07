@@ -42,6 +42,22 @@
     font-family: var(--font-montserrat), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* PWA mobile feel */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overscroll-behavior: none;
+  }
+
+  /* Ensure safe-area padding is available */
+  :root {
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* ─── PWA bottom nav safe area ─── */
+@media (max-width: 767px) {
+  .app-bottom-safe {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
   }
 }
 

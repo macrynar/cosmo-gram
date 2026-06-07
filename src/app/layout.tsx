@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Montserrat, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { AuthProvider } from "@/components/AuthContext";
+import BottomNav from "@/components/BottomNav";
 import { SubscriptionProvider } from "@/components/SubscriptionContext";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import ChatFAB from "@/components/ChatFAB";
@@ -20,6 +21,15 @@ const cormorant = Cormorant_Garamond({
   display: "swap",
   weight: ["400", "500", "600", "700"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#050508",
+};
 
 export const metadata: Metadata = {
   title: "Cosmo-gram — Twoja astrologia z prawdziwym głosem",
@@ -55,6 +65,7 @@ export default function RootLayout({
             <SubscriptionProvider>
               {children}
               <ChatFAB />
+              <BottomNav />
             </SubscriptionProvider>
           </AuthProvider>
         </PostHogProvider>

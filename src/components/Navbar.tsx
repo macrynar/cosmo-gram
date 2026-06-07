@@ -239,33 +239,48 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile: avatar + hamburger */}
+          {/* Mobile: avatar + hamburger (hamburger hidden on /app/* — bottom nav handles navigation) */}
           <div className="md:hidden flex items-center gap-2">
-            {!loading && user && (
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-[#050508] shadow-[0_0_10px_rgba(212,175,55,0.3)]"
+            {!loading && user && isApp ? (
+              // App pages: avatar taps to settings, no hamburger
+              <Link
+                href={ROUTES.app.settings.path}
+                aria-label="Konto"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-[#050508] shadow-[0_0_10px_rgba(212,175,55,0.3)] active:scale-95 transition-transform duration-100"
                 style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
               >
                 {getInitials(user.email)}
-              </div>
-            )}
-            <button
-              className="p-2 text-slate-400 hover:text-[#F3E5AB] transition-colors duration-300"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Toggle menu"
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={menuOpen ? "close" : "open"}
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.18 }}
+              </Link>
+            ) : (
+              // Public pages: avatar (display) + hamburger menu
+              <>
+                {!loading && user && (
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-[#050508] shadow-[0_0_10px_rgba(212,175,55,0.3)]"
+                    style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
+                  >
+                    {getInitials(user.email)}
+                  </div>
+                )}
+                <button
+                  className="p-2 text-slate-400 hover:text-[#F3E5AB] transition-colors duration-300"
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  aria-label="Toggle menu"
                 >
-                  {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                </motion.div>
-              </AnimatePresence>
-            </button>
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                      key={menuOpen ? "close" : "open"}
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={{ duration: 0.18 }}
+                    >
+                      {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                    </motion.div>
+                  </AnimatePresence>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
