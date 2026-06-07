@@ -2,9 +2,9 @@ export const ROUTES = {
   public: {
     home:           { path: "/",                label: "Strona główna" },
     cosmogram:      { path: "/cosmogram",       label: "Kosmogram" },
-    calendar:       { path: "/#kalendarz",      label: "Kalendarz" },
+    calendar:       { path: "/calendar",        label: "Kalendarz" },
     match:          { path: "/match",           label: "Cosmo Match" },
-    chatPublic:     { path: "/#chat",           label: "Cosmo Chat" },
+    chatPublic:     { path: "/cosmo-chat",      label: "Cosmo Chat" },
     dailyHoroscope: { path: "/daily-horoscope", label: "Horoskop dzienny" },
     forKids:        { path: "/for-kids",        label: "Kosmogram dziecka" },
     pricing:        { path: "/pricing",         label: "Cennik" },

@@ -1,82 +1,199 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Star, Baby, Sparkles, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ROUTES } from "@/lib/routes";
 
 export const metadata: Metadata = {
-  title: "Kosmogram - czym jest i jak go interpretowac - Cosmogram",
-  description: "Kosmogram natalny to mapa nieba z chwili Twoich urodzin. Odkryj, co mowi o Twoim charakterze, relacjach i potencjale - znacznie wiecej niz znak zodiaku.",
-  alternates: { canonical: "https://cosmogram.pl/cosmogram" },
-  openGraph: {
-    title: "Kosmogram - czym jest i jak go interpretowac",
-    description: "Mapa nieba z chwili Twoich urodzin - czym jest kosmogram i dlaczego jest dokladniejszy niz horoskop ze znaku.",
-    url: "https://cosmogram.pl/cosmogram",
-    images: [{ url: "https://cosmogram.pl/og-default.png", width: 1200, height: 630 }],
-  },
+  title: "Kosmogram — mapa urodzeniowa i kosmogram dziecka — Cosmogram",
+  description: "Pełna interpretacja AI Twojego wykresu urodzeniowego: osobowość, relacje, kariera, talenty. Dostępny też kosmogram dziecka — temperament i potrzeby emocjonalne.",
+  alternates: { canonical: "https://www.cosmo-gram.com/cosmogram" },
 };
+
+const ASPECTS = [
+  { emoji: "☀️", label: "Słońce", desc: "Twoja tożsamość i cel życiowy" },
+  { emoji: "🌙", label: "Księżyc", desc: "Emocje, intuicja, wzorce z dzieciństwa" },
+  { emoji: "⬆️", label: "Ascendent", desc: "Maska i pierwsze wrażenie" },
+  { emoji: "♀️", label: "Wenus", desc: "Miłość, piękno, wartości" },
+  { emoji: "♂️", label: "Mars", desc: "Energia, ambicja, seksualność" },
+  { emoji: "♃", label: "Jowisz", desc: "Szczęście, ekspansja, filozofia" },
+];
 
 const SECTIONS = [
   {
-    heading: "Czym jest kosmogram?",
-    body: "Kosmogram natalny (zwany tez mapa urodzenia lub natal chart) to zapis polozenia planet, Slonca i Ksiezyca w chwili Twoich narodzin. Inaczej niz popularny horoskop ze znaku, kosmogram uwzglednia dokladny czas i miejsce urodzenia - dlatego dwa bliznieta z roznych miast maja inne kosmogramy.",
+    num: "01",
+    title: "Kosmogram natalny",
+    icon: Star,
+    color: "#D4AF37",
+    desc: "Pełna interpretacja wykresu urodzeniowego — obliczona na podstawie precyzyjnych danych astronomicznych Swiss Ephemeris. Dostajesz nie horoskop ze znaku, ale mapę wszystkich planet w Twoim układzie.",
+    bullets: [
+      "Osobowość i rdzeń tożsamości",
+      "Wzorce emocjonalne i relacyjne",
+      "Kariera i talenty — gdzie błyszczycie",
+      "Wyzwania i ukryte zasoby",
+      "Komunikacja i styl wyrażania siebie",
+      "Finanse i podejście do materialności",
+      "Ścieżka rozwoju duchowego",
+    ],
   },
   {
-    heading: "Co mozesz odczytac z kosmogramu?",
-    body: "Kosmogram opisuje Twoj temperament, wzorce emocjonalne, styl relacji, talenty i obszary, w ktorych napotykasz wyzwania. To nie przepowiednia - to mapa potencjalu, z ktorym przyszedles na swiat.",
-  },
-  {
-    heading: "Dlaczego AI robi to lepiej?",
-    body: "Tradycyjna interpretacja kosmogramu zajmuje astrologowi kilka godzin. Cosmogram analizuje wszystkie planety, domy, aspekty i konfiguracje jednoczesnie, generujac spojnia, spersonalizowana interpretacje w kilkanascie sekund.",
-  },
-  {
-    heading: "Jak wygenerowac swoj kosmogram?",
-    body: "Wystarczaja data, czas i miejsce urodzenia. Im dokladniejszy czas, tym pelniejsza analiza. Jesli nie znasz godziny, generujemy uproszczony kosmogram bez systemu domow - nadal bardzo wartosciowy.",
+    num: "02",
+    title: "Kosmogram dziecka",
+    icon: Baby,
+    color: "#6ee7b7",
+    desc: "Interpretacja skupiona na tym, czego potrzebuje dziecko — nie na tym, kim będzie. Pomaga rodzicom rozumieć emocje, temperament i sposób uczenia się malucha zamiast szukać odpowiedzi po omacku.",
+    bullets: [
+      "Temperament i naturalne skłonności",
+      "Potrzeby emocjonalne i styl przywiązania",
+      "Jak dziecko uczy się najlepiej",
+      "Potencjalne obszary napięć",
+      "Wskazówki dla rodzica — konkretne i praktyczne",
+    ],
   },
 ];
 
 export default function CosmogramPage() {
   return (
-    <div className="min-h-screen bg-[#03010d] text-white">
+    <div className="min-h-screen text-white" style={{ background: "#050508" }}>
+      <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
+      <div
+        aria-hidden="true"
+        className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(88,60,140,0.15) 0%, transparent 70%)" }}
+      />
       <Navbar />
 
-      <main className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 pt-28 pb-24">
-        <div className="text-center mb-12">
-          <p className="text-slate-500 text-xs tracking-widest uppercase mb-3">Kosmogram natalny</p>
-          <h1 className="text-4xl sm:text-5xl font-bold text-white font-brand mb-4">
-            Czytaj z gwiazd,<br />
-            <span className="bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent">
-              nie ze znaku
+      <main className="relative z-10">
+        {/* Hero */}
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 pt-32 pb-16 text-center">
+          <div
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium mb-6"
+            style={{ color: "#D4AF37", background: "rgba(212,175,55,0.08)", border: "0.5px solid rgba(212,175,55,0.25)" }}
+          >
+            <Star className="w-3 h-3" />
+            Kosmogram
+          </div>
+
+          <h1
+            className="text-4xl sm:text-6xl font-semibold text-white leading-tight mb-5"
+            style={{ fontFamily: "var(--font-cormorant), serif" }}
+          >
+            Twoja mapa nieba
+            <br />
+            <span style={{
+              background: "linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #C5A059 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}>
+              z chwili urodzenia.
             </span>
           </h1>
-          <p className="text-slate-400 text-lg max-w-xl mx-auto">
-            Kosmogram natalny to Twoja osobista mapa nieba — dokladniejsza i glebsza niz popularny horoskop ze znaku zodiaku.
-          </p>
-          <Link
-            href={ROUTES.public.signup.path}
-            className="inline-flex items-center gap-2 mt-8 px-7 py-3.5 rounded-full bg-gradient-to-r from-amber-600 to-amber-500 text-white font-semibold hover:from-amber-500 hover:to-amber-400 transition-all shadow-lg shadow-amber-950/40"
-          >
-            Wygeneruj swoj kosmogram — bezplatnie
-          </Link>
-        </div>
 
-        <div className="space-y-8">
+          <p className="text-slate-400 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed mb-10">
+            Kosmogram natalny to nie horoskop pod znak Barana. To precyzyjna mapa wszystkich planet w momencie Twoich narodzin — interpretowana przez AI z głęboką wiedzą astrologiczną, po polsku.
+          </p>
+
+          <Link
+            href="/signup"
+            className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full text-sm font-semibold text-[#050508] transition-all duration-300 hover:shadow-[0_0_40px_rgba(212,175,55,0.4)] hover:scale-[1.02]"
+            style={{ background: "linear-gradient(135deg, #D4AF37, #C5A059)" }}
+          >
+            <Sparkles className="w-4 h-4" />
+            Wygeneruj swój kosmogram
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+
+          <p className="mt-3 text-xs text-slate-600">Bezpłatnie · Gotowy w kilkanaście sekund</p>
+        </section>
+
+        {/* Planet grid */}
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-20">
+          <p className="text-center text-xs uppercase tracking-[0.2em] text-slate-600 mb-6">Co analizuje Twój kosmogram</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {ASPECTS.map(a => (
+              <div
+                key={a.label}
+                className="flex items-center gap-3 px-4 py-3.5 rounded-xl"
+                style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.12)" }}
+              >
+                <span className="text-xl shrink-0">{a.emoji}</span>
+                <div>
+                  <p className="text-sm font-medium text-white">{a.label}</p>
+                  <p className="text-xs text-slate-600 leading-tight">{a.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Feature sections */}
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-20 space-y-6">
           {SECTIONS.map(s => (
-            <div key={s.heading} className="glass-card rounded-2xl p-6 border border-amber-900/20">
-              <h2 className="text-lg font-semibold text-amber-200 mb-2">{s.heading}</h2>
-              <p className="text-slate-400 leading-relaxed">{s.body}</p>
+            <div
+              key={s.num}
+              className="rounded-2xl p-7 sm:p-10"
+              style={{ background: "rgba(5,4,14,0.70)", border: `0.5px solid ${s.color}30`, backdropFilter: "blur(24px)" }}
+            >
+              <div className="flex items-center gap-4 mb-5">
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: `${s.color}15`, border: `0.5px solid ${s.color}35` }}
+                >
+                  <s.icon className="w-5 h-5" style={{ color: s.color }} strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="text-xs font-mono" style={{ color: s.color, opacity: 0.6 }}>{s.num}</p>
+                  <h2
+                    className="text-2xl sm:text-3xl font-semibold text-white"
+                    style={{ fontFamily: "var(--font-cormorant), serif" }}
+                  >
+                    {s.title}
+                  </h2>
+                </div>
+              </div>
+
+              <div className="h-px mb-6" style={{ background: `linear-gradient(to right, transparent, ${s.color}20, transparent)` }} />
+
+              <p className="text-slate-400 text-base leading-relaxed mb-6">{s.desc}</p>
+
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {s.bullets.map(b => (
+                  <li key={b} className="flex items-center gap-2.5 text-sm text-slate-300">
+                    <span className="w-1 h-1 rounded-full shrink-0" style={{ background: s.color }} />
+                    {b}
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
-        </div>
+        </section>
 
-        <div className="mt-12 text-center">
-          <Link
-            href={ROUTES.public.signup.path}
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-gradient-to-r from-amber-600 to-amber-500 text-white font-semibold hover:from-amber-500 hover:to-amber-400 transition-all shadow-lg shadow-amber-950/40"
+        {/* Bottom CTA */}
+        <section className="max-w-2xl mx-auto px-4 sm:px-6 pb-28 text-center">
+          <div
+            className="rounded-2xl p-10"
+            style={{ background: "rgba(212,175,55,0.05)", border: "0.5px solid rgba(212,175,55,0.20)" }}
           >
-            Sprawdz swoj kosmogram teraz
-          </Link>
-        </div>
+            <h2
+              className="text-3xl sm:text-4xl font-semibold text-white mb-4"
+              style={{ fontFamily: "var(--font-cormorant), serif" }}
+            >
+              Gotowy zobaczyć swój kosmogram?
+            </h2>
+            <p className="text-slate-400 mb-8">
+              Potrzebujesz tylko daty, godziny i miejsca urodzenia. Interpretacja gotowa w kilkanaście sekund.
+            </p>
+            <Link
+              href="/signup"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold text-[#050508] transition-all duration-300 hover:scale-[1.02]"
+              style={{ background: "linear-gradient(135deg, #D4AF37, #C5A059)" }}
+            >
+              Zacznij za darmo
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </section>
       </main>
 
       <Footer />
