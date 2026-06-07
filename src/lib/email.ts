@@ -3,7 +3,7 @@ import { render } from "@react-email/components";
 import WelcomeEmail from "@/emails/WelcomeEmail";
 import DailyHoroscopeEmail from "@/emails/DailyHoroscopeEmail";
 
-const FROM     = process.env.RESEND_FROM     ?? "Cosmogram <horoskop@cosmo-gram.com>";
+const FROM     = process.env.RESEND_FROM     ?? "Cosmogram <hello@cosmo-gram.com>";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.cosmo-gram.com";
 
 function getResend() {
