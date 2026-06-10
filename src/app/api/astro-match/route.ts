@@ -188,27 +188,22 @@ Scores (deterministyczne — NIE zmieniaj liczb w JSON):
 
 Napisz copy synastrii zgodne z tymi scores. Użyj aspektów z listy powyżej. Zwróć TYLKO JSON.`;
 
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    if (!apiKey) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json({
         result: mockResult(name1, name2, scores),
         charts: { person1: r1.chart, person2: r2.chart },
       });
     }
 
-    const matchModel = process.env.DEEPSEEK_MATCH_MODEL || process.env.DEEPSEEK_MODEL || "deepseek-v4-pro";
     let rawText = "";
     try {
       rawText = await deepSeekChat({
-        apiKey,
-        model: matchModel,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userMessage }],
         maxTokens: 4500,
-        responseFormat: "json_object",
       });
     } catch (error) {
-      console.error("DeepSeek error:", error);
+      console.error("AI match error:", error);
       return NextResponse.json({ error: "AI unavailable" }, { status: 502 });
     }
 
@@ -230,35 +225,8 @@ Napisz copy synastrii zgodne z tymi scores. Użyj aspektów z listy powyżej. Zw
         }),
       };
     } catch {
-      console.error(`JSON parse error in astro-match on model ${matchModel}, raw:`, rawText.slice(0, 500));
-
-      try {
-        const retryRaw = await deepSeekChat({
-          apiKey,
-          model: "deepseek-v4-flash",
-          system: SYSTEM_PROMPT,
-          messages: [{ role: "user", content: userMessage }],
-          maxTokens: 3200,
-          responseFormat: "json_object",
-        });
-        const parsedRetry = extractJson(retryRaw);
-        result = {
-          ...parsedRetry,
-          overallScore: scores.overall,
-          categories: parsedRetry.categories.map((cat) => {
-            const scoreMap: Record<string, number> = {
-              "Komunikacja": scores.communication,
-              "Namiętność": scores.passion,
-              "Wspólne wartości": scores.values,
-              "Wyzwania": scores.challenge,
-            };
-            return { ...cat, score: scoreMap[cat.name] ?? cat.score };
-          }),
-        };
-      } catch {
-        // Never hard-fail user flow when AI response is malformed.
-        result = mockResult(name1, name2, scores);
-      }
+      console.error("JSON parse error in astro-match, raw:", rawText.slice(0, 500));
+      result = mockResult(name1, name2, scores);
     }
 
     return NextResponse.json({

@@ -64,23 +64,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Brak danych" }, { status: 400 });
   }
 
-  // Paywall: check message quota for free users
+  // Paywall: check message quota
   try {
     const isPaid = await hasActiveSubscription(user.id);
-    if (!isPaid) {
-      const { data: userConvs } = await supabaseAdmin
-        .from("conversations")
-        .select("id")
-        .eq("user_id", user.id);
-      const convIds = (userConvs ?? []).map(c => c.id);
-      if (convIds.length > 0) {
+    const { data: userConvs } = await supabaseAdmin
+      .from("conversations")
+      .select("id")
+      .eq("user_id", user.id);
+    const convIds = (userConvs ?? []).map(c => c.id);
+
+    if (convIds.length > 0) {
+      if (!isPaid) {
         const { count } = await supabaseAdmin
           .from("messages")
           .select("*", { count: "exact", head: true })
           .in("conversation_id", convIds)
           .eq("role", "user");
-        if (false && (count ?? 0) >= FREE_CHAT_MESSAGES) {
+        if ((count ?? 0) >= FREE_CHAT_MESSAGES) {
           return NextResponse.json({ error: "PAYWALL" }, { status: 402 });
+        }
+      } else {
+        // Premium: 150 messages/month
+        const monthStart = new Date();
+        monthStart.setDate(1);
+        monthStart.setHours(0, 0, 0, 0);
+        const { count } = await supabaseAdmin
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .in("conversation_id", convIds)
+          .eq("role", "user")
+          .gte("created_at", monthStart.toISOString());
+        if ((count ?? 0) >= 150) {
+          return NextResponse.json({ error: "MONTHLY_LIMIT" }, { status: 402 });
         }
       }
     }
@@ -145,8 +160,7 @@ export async function POST(req: NextRequest) {
 
   const historyMessages = (history ?? []).reverse();
 
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({
       reply: "Interpretacja AI chwilowo niedostępna. Spróbuj ponownie za chwilę.",
     });
@@ -165,13 +179,12 @@ export async function POST(req: NextRequest) {
   let reply = "";
   try {
     reply = await deepSeekChat({
-      apiKey,
       system: systemPrompt,
       messages,
       maxTokens: 1800,
     });
   } catch (error) {
-    console.error("DeepSeek chat error:", error);
+    console.error("AI chat error:", error);
     return NextResponse.json({ error: "Błąd AI" }, { status: 502 });
   }
 

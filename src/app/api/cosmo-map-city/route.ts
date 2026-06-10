@@ -112,21 +112,17 @@ Dominująca: ${PLANET_PL[topLine.planet]} — ${LINE_PL_SHORT[topLine.type]}, ${
 
 Zwróć JSON. Pierwsze zdanie main_prose MUSI być rozpoznawalnie o ${city_name_pl} — nie może brzmieć jak interpretacja innego miasta.`;
 
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "AI not configured" }, { status: 500 });
+  if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: "AI not configured" }, { status: 500 });
 
   let text = "";
   try {
     text = await deepSeekChat({
-      apiKey,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
       maxTokens: 900,
-      temperature: 0.8,
-      responseFormat: "json_object",
     });
   } catch (error) {
-    console.error("DeepSeek cosmo-map-city error:", error);
+    console.error("AI cosmo-map-city error:", error);
     return NextResponse.json({ error: "AI error" }, { status: 500 });
   }
 

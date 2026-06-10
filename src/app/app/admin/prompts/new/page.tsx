@@ -34,7 +34,7 @@ export default function PromptNew() {
     version: "",
     system_prompt: "",
     user_prompt_template: "",
-    config: '{"model":"deepseek-chat","temperature":0.7,"max_tokens":4000,"few_shot_count":0}',
+    config: '{"model":"claude-haiku-4-5-20251001","temperature":0.7,"max_tokens":4000,"few_shot_count":0}',
     status: "draft",
     rollout_pct: 0,
     notes: "",

@@ -39,8 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No golden charts for this prompt" }, { status: 404 });
   }
 
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "AI not configured" }, { status: 500 });
+  if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: "AI not configured" }, { status: 500 });
 
   const results: Array<{
     chart_id: string;
@@ -54,7 +53,6 @@ export async function POST(req: NextRequest) {
   for (const chart of charts) {
     try {
       const output = await deepSeekChat({
-        apiKey,
         system: version.system_prompt as string,
         messages: [
           {

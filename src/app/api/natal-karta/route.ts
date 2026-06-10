@@ -20,9 +20,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // Prereq: DeepSeek key
-  if (!process.env.DEEPSEEK_API_KEY) {
-    return NextResponse.json({ error: "Config error", detail: "DEEPSEEK_API_KEY not set on server" }, { status: 503 });
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: "Config error", detail: "ANTHROPIC_API_KEY not set on server" }, { status: 503 });
   }
 
   // Auth

@@ -38,8 +38,7 @@ export async function judgeReading(
   generatedOutput: string,
   grammaticalForm: string
 ): Promise<JudgeResult> {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) throw new Error("DEEPSEEK_API_KEY missing");
+  if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY missing");
 
   // Trim chart_data to avoid blowing up the context — only first 500 chars needed for reference
   const inputSummary = JSON.stringify(rawInput).slice(0, 500);
@@ -56,17 +55,15 @@ ${generatedOutput.slice(0, 3000)}
 Oceń. Zwróć tylko JSON.`;
 
   const callParams = {
-    apiKey,
     system: JUDGE_SYSTEM,
     messages: [{ role: "user" as const, content: userPrompt }],
     maxTokens: 2000,
     temperature: 0.2,
-    responseFormat: "json_object" as const,
   };
 
   let raw = await deepSeekChat(callParams);
   if (!raw) raw = await deepSeekChat(callParams); // one retry on empty
-  if (!raw) throw new Error("DeepSeek zwrócił pustą odpowiedź po retry");
+  if (!raw) throw new Error("AI zwrócił pustą odpowiedź po retry");
 
   let parsed: JudgeScores & { reasoning: string };
   try {
@@ -86,6 +83,6 @@ Oceń. Zwróć tylko JSON.`;
     scores,
     reasoning,
     overall,
-    judge_model: process.env.DEEPSEEK_MODEL ?? "deepseek-chat",
+    judge_model: "claude-haiku-4-5-20251001",
   };
 }

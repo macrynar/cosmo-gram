@@ -98,8 +98,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ narrative: cached.narrative, cached: true });
   }
 
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: "Brak klucza AI" }, { status: 500 });
   }
 
@@ -130,34 +129,24 @@ ${similarCandidates.join("\n")}
 
 Napisz głęboką narrację. JSON tylko.`;
 
-  async function callDeepSeek(prompt: string): Promise<Record<string, unknown>> {
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: process.env.DEEPSEEK_MODEL ?? "deepseek-chat",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: prompt },
-        ],
-        max_tokens: 1400,
-        temperature: 0.7,
-        response_format: { type: "json_object" },
-      }),
+  async function callAI(prompt: string): Promise<Record<string, unknown>> {
+    const { deepSeekChat } = await import("@/lib/deepseek");
+    const raw = await deepSeekChat({
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: prompt }],
+      maxTokens: 1400,
     });
-    const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-    const raw = data.choices?.[0]?.message?.content?.trim() ?? "";
     return JSON.parse(raw) as Record<string, unknown>;
   }
 
   try {
-    let narrative = await callDeepSeek(userPrompt);
+    let narrative = await callAI(userPrompt);
 
     // Guardrail: retry with explicit feedback if banned terms found
     const violations = findViolations(narrative);
     if (violations.length > 0) {
       const retryPrompt = `${userPrompt}\n\nUWAGA: poprzednia odpowiedź zawierała zakazane terminy astrologiczne: ${violations.join(", ")}. Wygeneruj ponownie BEZ tych terminów, używając wyłącznie opisowego języka.`;
-      narrative = await callDeepSeek(retryPrompt);
+      narrative = await callAI(retryPrompt);
 
       // Last resort: server-side strip
       const still = findViolations(narrative);

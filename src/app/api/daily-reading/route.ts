@@ -138,7 +138,7 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const { promptContext, interpretationContext, timezone, grammaticalForm, chartData, targetDate } = await req.json() as DailyReadingBody;
-  const apiKey = process.env.DEEPSEEK_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   const safeTz = timezone || "Europe/Warsaw";
   const computeDate = targetDate ? new Date(targetDate + "T12:00:00Z") : new Date();
   const todayLabel = buildDateLabel(safeTz, computeDate);
@@ -170,16 +170,12 @@ export async function POST(req: NextRequest) {
   try {
     const trimmedInterpretation = (interpretationContext || "").slice(0, 2000);
     const slashFormInstruction = `\nForma gramatyczna: ${form} — ZERO slash-form w outputcie.`;
-    const dailyModel = process.env.DEEPSEEK_DAILY_MODEL || "deepseek-chat";
 
     let raw = "";
     try {
       raw = await deepSeekChat({
-        apiKey,
-        model: dailyModel,
         system: SYSTEM_PROMPT,
         maxTokens: 1200,
-        responseFormat: "json_object",
         messages: [
           {
             role: "user",
@@ -187,24 +183,8 @@ export async function POST(req: NextRequest) {
           },
         ],
       });
-      // Retry once on v4-flash (still DeepSeek) to keep daily-reading reliable.
-      if (!raw.trim()) {
-        raw = await deepSeekChat({
-          apiKey,
-          model: "deepseek-v4-flash",
-          system: SYSTEM_PROMPT,
-          maxTokens: 1800,
-          responseFormat: "json_object",
-          messages: [
-            {
-              role: "user",
-              content: `Data horoskopu: ${todayLabel}\nStrefa czasowa: ${safeTz}${slashFormInstruction}${transitBlock}\n\nDane kosmogramu natury:\n${promptContext}\n\n${trimmedInterpretation ? `Kontekst z interpretacji natury:\n${trimmedInterpretation}\n\n` : ""}Wygeneruj dzienny horoskop. Zwróć TYLKO JSON.`,
-            },
-          ],
-        });
-      }
     } catch (error) {
-      console.error("DeepSeek daily-reading error:", error);
+      console.error("AI daily-reading error:", error);
       return NextResponse.json({
         dateLabel: todayLabel,
         dailyReading: JSON.stringify(offlineReading(todayLabel)),

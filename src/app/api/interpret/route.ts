@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
 
   const { promptContext, grammaticalForm, userId, firstName, placements, aspects, nodes } = body;
 
-  const apiKey = process.env.DEEPSEEK_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
 
   if (!apiKey) {
     return NextResponse.json({
@@ -180,37 +180,38 @@ Napisz pełną interpretację. Zacznij BEZPOŚREDNIO od "## 🌌 1. Rdzeń osobo
 
     const finalSystem = SYSTEM_PROMPT + timeUnknownNote;
 
-    const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
-    let dsResponse: Response;
+    let anthropicResponse: Response;
     try {
-      dsResponse = await fetch("https://api.deepseek.com/chat/completions", {
+      anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
         body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: finalSystem },
-            { role: "user", content: userContent },
-          ],
+          model: "claude-haiku-4-5-20251001",
           max_tokens: 8000,
           stream: true,
+          system: finalSystem,
+          messages: [{ role: "user", content: userContent }],
         }),
       });
     } catch (err) {
-      console.error("DeepSeek fetch error:", err);
+      console.error("Anthropic fetch error:", err);
       return streamText(generateOfflineInterpretation(promptContext ?? ""));
     }
 
-    if (!dsResponse.ok || !dsResponse.body) {
-      console.error("DeepSeek non-ok:", dsResponse.status, await dsResponse.text().catch(() => ""));
+    if (!anthropicResponse.ok || !anthropicResponse.body) {
+      console.error("Anthropic non-ok:", anthropicResponse.status, await anthropicResponse.text().catch(() => ""));
       return streamText(generateOfflineInterpretation(promptContext ?? ""));
     }
 
     const encoder = new TextEncoder();
-    const dsBody = dsResponse.body;
+    const anthropicBody = anthropicResponse.body;
     const readable = new ReadableStream({
       async start(controller) {
-        const reader = dsBody.getReader();
+        const reader = anthropicBody.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
         try {
@@ -223,11 +224,16 @@ Napisz pełną interpretację. Zacznij BEZPOŚREDNIO od "## 🌌 1. Rdzeń osobo
             for (const line of lines) {
               if (!line.startsWith("data: ")) continue;
               const data = line.slice(6).trim();
-              if (data === "[DONE]") continue;
+              if (!data || data === "[DONE]") continue;
               try {
-                const parsed = JSON.parse(data) as { choices?: Array<{ delta?: { content?: string } }> };
-                const content = parsed.choices?.[0]?.delta?.content;
-                if (content) controller.enqueue(encoder.encode(content));
+                const parsed = JSON.parse(data) as {
+                  type?: string;
+                  delta?: { type?: string; text?: string };
+                };
+                if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
+                  const text = parsed.delta.text;
+                  if (text) controller.enqueue(encoder.encode(text));
+                }
               } catch { /* incomplete chunk buffered */ }
             }
           }
@@ -261,5 +267,5 @@ function streamText(text: string): Response {
 function generateOfflineInterpretation(context: string): string {
   const sunMatch = context.match(/Słońce [\d°']+\s+([\w]+)/);
   const sun = sunMatch?.[1] ?? "nieznanego znaku";
-  return `## Twój Kosmogram\n\nInterpretacja AI jest chwilowo niedostępna — spróbuj ponownie za chwilę.\n\n### Słońce w znaku ${sun}\nTwoje słońce w znaku ${sun} nadaje Ci charakterystyczną energię życiową.\n\n*Dodaj \`DEEPSEEK_API_KEY\` do \`.env.local\` żeby aktywować pełną interpretację.*`;
+  return `## Twój Kosmogram\n\nInterpretacja AI jest chwilowo niedostępna — spróbuj ponownie za chwilę.\n\n### Słońce w znaku ${sun}\nTwoje słońce w znaku ${sun} nadaje Ci charakterystyczną energię życiową.\n\n*Dodaj \`ANTHROPIC_API_KEY\` do \`.env.local\` żeby aktywować pełną interpretację.*`;
 }

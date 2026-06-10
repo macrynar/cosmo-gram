@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     nodes?: ChartNodes;
   };
 
-  const apiKey = process.env.DEEPSEEK_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return new Response(JSON.stringify({ error: "Brak klucza API" }), { status: 500 });
   }
@@ -54,21 +54,21 @@ ${promptContext}
 Napisz pełną interpretację karty urodzeniowej dziecka dla rodzica. Zacznij BEZPOŚREDNIO od "## 🌱 1. Kim jest ${childName}" — zero wprowadzenia.`;
   }
 
-  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
-
-  let dsResponse: Response;
+  let anthropicResponse: Response;
   try {
-    dsResponse = await fetch("https://api.deepseek.com/chat/completions", {
+    anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
       body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: CHILD_SYSTEM_PROMPT },
-          { role: "user", content: userMessage },
-        ],
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 4500,
         stream: true,
+        system: CHILD_SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userMessage }],
       }),
     });
   } catch (err) {
@@ -76,17 +76,17 @@ Napisz pełną interpretację karty urodzeniowej dziecka dla rodzica. Zacznij BE
     return new Response(JSON.stringify({ error: "Błąd generowania interpretacji" }), { status: 500 });
   }
 
-  if (!dsResponse.ok || !dsResponse.body) {
-    console.error("ai-child DeepSeek non-ok:", dsResponse.status);
+  if (!anthropicResponse.ok || !anthropicResponse.body) {
+    console.error("ai-child Anthropic non-ok:", anthropicResponse.status);
     return new Response(JSON.stringify({ error: "Błąd generowania interpretacji" }), { status: 500 });
   }
 
   const encoder = new TextEncoder();
-  const dsBody = dsResponse.body;
+  const body = anthropicResponse.body;
 
   const readable = new ReadableStream({
     async start(controller) {
-      const reader = dsBody.getReader();
+      const reader = body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
       try {
@@ -99,11 +99,16 @@ Napisz pełną interpretację karty urodzeniowej dziecka dla rodzica. Zacznij BE
           for (const line of lines) {
             if (!line.startsWith("data: ")) continue;
             const data = line.slice(6).trim();
-            if (data === "[DONE]") continue;
+            if (!data || data === "[DONE]") continue;
             try {
-              const parsed = JSON.parse(data) as { choices?: Array<{ delta?: { content?: string } }> };
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) controller.enqueue(encoder.encode(content));
+              const parsed = JSON.parse(data) as {
+                type?: string;
+                delta?: { type?: string; text?: string };
+              };
+              if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
+                const text = parsed.delta.text;
+                if (text) controller.enqueue(encoder.encode(text));
+              }
             } catch { /* incomplete chunk */ }
           }
         }

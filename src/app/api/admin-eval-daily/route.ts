@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as { limit?: number };
   const limit = Math.min(body.limit ?? 50, 100);
 
-  const judgeModel = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+  const judgeModel = "claude-haiku-4-5-20251001";
 
   // Fetch already-evaluated reading IDs to exclude
   const { data: alreadyEvaluated, error: evalFetchError } = await supabaseAdmin
