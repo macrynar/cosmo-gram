@@ -24,6 +24,7 @@ const FEATURES = [
 export default function PaywallModal({ onClose, reason }: Props) {
   const { session } = useAuth();
   const [loading, setLoading] = useState<"monthly" | "yearly" | null>(null);
+  const [withdrawalConsent, setWithdrawalConsent] = useState(false);
 
   useEffect(() => {
     track("paywall_shown", { reason: reason ?? "generic" });
@@ -153,11 +154,35 @@ export default function PaywallModal({ onClose, reason }: Props) {
             ))}
           </ul>
 
+          {/* Withdrawal consent — art. 38 ustawy o prawach konsumenta */}
+          <label className="flex items-start gap-3 mb-4 cursor-pointer group">
+            <div className="relative mt-0.5 shrink-0">
+              <input
+                type="checkbox"
+                checked={withdrawalConsent}
+                onChange={e => setWithdrawalConsent(e.target.checked)}
+                className="sr-only"
+              />
+              <div
+                className="w-4 h-4 rounded transition-all duration-200 flex items-center justify-center"
+                style={{
+                  background: withdrawalConsent ? "rgba(212,175,55,0.85)" : "transparent",
+                  border: withdrawalConsent ? "0.5px solid #D4AF37" : "0.5px solid rgba(255,255,255,0.20)",
+                }}
+              >
+                {withdrawalConsent && <Check className="w-2.5 h-2.5 text-[#050508]" />}
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed group-hover:text-slate-400 transition-colors">
+              Wyrażam zgodę na natychmiastowe rozpoczęcie świadczenia usługi cyfrowej i przyjmuję do wiadomości, że tracę prawo odstąpienia od umowy z chwilą pełnego wykonania usługi.
+            </p>
+          </label>
+
           {/* Pricing buttons */}
           <div className="space-y-2.5">
             <motion.button
               onClick={() => handleCheckout("monthly")}
-              disabled={!!loading}
+              disabled={!!loading || !withdrawalConsent}
               whileHover={loading ? undefined : {
                 boxShadow: "0 0 24px rgba(212,175,55,0.35), 0 0 48px rgba(212,175,55,0.12)",
                 y: -1,
@@ -178,7 +203,7 @@ export default function PaywallModal({ onClose, reason }: Props) {
 
             <button
               onClick={() => handleCheckout("yearly")}
-              disabled={!!loading}
+              disabled={!!loading || !withdrawalConsent}
               className="w-full py-3.5 rounded-2xl text-sm transition-all duration-400 disabled:opacity-50 disabled:cursor-not-allowed relative flex items-center justify-center"
               style={{
                 background: "rgba(212,175,55,0.06)",

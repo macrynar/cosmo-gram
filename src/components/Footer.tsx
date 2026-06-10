@@ -97,9 +97,16 @@ export default function Footer() {
         {/* Gold divider */}
         <div className="altar-divider mb-6" />
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-700">
-          <p>© {year} Cosmogram. Dane astronomiczne: Swiss Ephemeris. AI: Anthropic Claude.</p>
-          <p>Stworzone z ❤️ w Polsce.</p>
+        <p className="text-xs text-slate-700 mb-4 leading-relaxed text-center sm:text-left">
+          Treści mają charakter refleksyjno-rozrywkowy i nie stanowią porady medycznej, psychologicznej, prawnej ani finansowej.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-700">
+          <div className="space-y-0.5">
+            <p>© {year} UXIS Maciej Rynarzewski · NIP: 5423081327</p>
+            <p>ul. Kołłątaja 32/12, 15-774 Białystok · <a href="mailto:hello@cosmo-gram.com" className="hover:text-slate-500 transition-colors">hello@cosmo-gram.com</a></p>
+          </div>
+          <p>Swiss Ephemeris · Anthropic Claude</p>
         </div>
       </div>
     </footer>
