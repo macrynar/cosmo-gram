@@ -69,6 +69,34 @@ const slide = {
   exit:   { opacity: 0, x: -20 },
 };
 
+function ConsentCheckbox({ checked, onChange, label, required }: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <label className="flex items-start gap-2.5 cursor-pointer group">
+      <div className="relative mt-0.5 shrink-0">
+        <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="sr-only" />
+        <div
+          className="w-4 h-4 rounded transition-all duration-200 flex items-center justify-center"
+          style={{
+            background: checked ? "rgba(212,175,55,0.85)" : "transparent",
+            border: checked ? "0.5px solid #D4AF37" : "0.5px solid rgba(255,255,255,0.20)",
+          }}
+        >
+          {checked && <Check className="w-2.5 h-2.5 text-[#050508]" />}
+        </div>
+      </div>
+      <p className="text-[11px] leading-relaxed group-hover:text-slate-400 transition-colors" style={{ color: "rgba(255,255,255,0.38)" }}>
+        {required && <span className="text-red-400 mr-0.5">*</span>}
+        {label}
+      </p>
+    </label>
+  );
+}
+
 function SignupWizard() {
   const router          = useRouter();
   const searchParams    = useSearchParams();
@@ -92,10 +120,12 @@ function SignupWizard() {
   const geoResultRef = useRef<GeoResult | null>(null);
 
   // Step 2
-  const [email,      setEmail]      = useState("");
-  const [password,   setPassword]   = useState("");
-  const [s2Error,    setS2Error]    = useState("");
-  const [s2Loading,  setS2Loading]  = useState<"email" | "google" | null>(null);
+  const [email,            setEmail]            = useState("");
+  const [password,         setPassword]         = useState("");
+  const [termsAccepted,    setTermsAccepted]    = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [s2Error,          setS2Error]          = useState("");
+  const [s2Loading,        setS2Loading]        = useState<"email" | "google" | null>(null);
 
   const redirectTo = searchParams.get("redirect") || ROUTES.app.today.path;
 
@@ -164,8 +194,17 @@ function SignupWizard() {
     setStep(2);
   }
 
+  function saveConsentLocally() {
+    localStorage.setItem("cosmo_terms_accepted", JSON.stringify({
+      accepted: true, marketing: marketingConsent, at: new Date().toISOString(), v: "2026-06-10",
+    }));
+  }
+
   async function handleEmailSignup(e: React.FormEvent) {
-    e.preventDefault(); setS2Error(""); setS2Loading("email");
+    e.preventDefault();
+    if (!termsAccepted) { setS2Error("Akceptacja regulaminu jest wymagana"); return; }
+    setS2Error(""); setS2Loading("email");
+    saveConsentLocally();
     const { error } = await supabase.auth.signUp({
       email, password,
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
@@ -175,7 +214,9 @@ function SignupWizard() {
   }
 
   async function handleGoogle() {
+    if (!termsAccepted) { setS2Error("Akceptacja regulaminu jest wymagana"); return; }
     setS2Loading("google"); setS2Error("");
+    saveConsentLocally();
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -356,6 +397,11 @@ function SignupWizard() {
                   }
                 </motion.button>
 
+                <p className="mt-4 text-center text-[11px] leading-relaxed" style={{ color: "rgba(255,255,255,0.22)" }}>
+                  Twoje dane urodzenia służą wyłącznie do obliczenia kosmogramu i nie są nigdzie publikowane.{" "}
+                  <Link href="/privacy" className="underline underline-offset-2 hover:opacity-80">Polityka Prywatności</Link>
+                </p>
+
                 <p className="mt-5 text-center text-xs text-slate-600">
                   Masz już konto?{" "}
                   <Link href={ROUTES.public.login.path}
@@ -411,8 +457,30 @@ function SignupWizard() {
                   )}
                 </div>
 
+                {/* Checkboxy zgód */}
+                <div className="space-y-3 mb-4">
+                  <ConsentCheckbox
+                    checked={termsAccepted}
+                    onChange={setTermsAccepted}
+                    required
+                    label={
+                      <>
+                        Akceptuję{" "}
+                        <Link href="/terms" target="_blank" className="underline underline-offset-2" style={{ color: "rgba(212,175,55,0.75)" }}>Regulamin</Link>
+                        {" "}i potwierdzam zapoznanie się z{" "}
+                        <Link href="/privacy" target="_blank" className="underline underline-offset-2" style={{ color: "rgba(212,175,55,0.75)" }}>Polityką Prywatności</Link>.
+                      </>
+                    }
+                  />
+                  <ConsentCheckbox
+                    checked={marketingConsent}
+                    onChange={setMarketingConsent}
+                    label="Chcę otrzymywać e-maile o nowościach i ofertach Cosmogram. Wypiszesz się jednym kliknięciem."
+                  />
+                </div>
+
                 {/* Google */}
-                <button onClick={handleGoogle} disabled={s2Loading !== null}
+                <button onClick={handleGoogle} disabled={s2Loading !== null || !termsAccepted}
                   className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl text-sm font-medium text-slate-300 mb-4 transition-all hover:bg-white/5 active:scale-[0.99] disabled:opacity-50"
                   style={{ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.10)" }}>
                   {s2Loading === "google" ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />}
@@ -442,7 +510,7 @@ function SignupWizard() {
 
                   <motion.button
                     type="submit"
-                    disabled={s2Loading !== null || !email || password.length < 8}
+                    disabled={s2Loading !== null || !email || password.length < 8 || !termsAccepted}
                     whileHover={{ y: -1, boxShadow: "0 0 28px rgba(212,175,55,0.30)" }}
                     whileTap={{ scale: 0.98 }}
                     className="w-full py-3.5 rounded-2xl text-sm font-semibold tracking-wide flex items-center justify-center gap-2 disabled:opacity-40 transition-all duration-300"
@@ -453,9 +521,18 @@ function SignupWizard() {
                       : "Stwórz konto →"
                     }
                   </motion.button>
+
+                  <p className="text-center text-[11px] leading-relaxed" style={{ color: "rgba(255,255,255,0.22)" }}>
+                    Cosmogram to przestrzeń refleksji i samopoznania — treści nie są poradą medyczną, psychologiczną, prawną ani finansową.
+                  </p>
                 </form>
 
-                <p className="mt-5 text-center text-xs text-slate-600">
+                <p className="mt-1 text-center text-[10px] leading-relaxed" style={{ color: "rgba(255,255,255,0.16)" }}>
+                  Administratorem danych jest UXIS Maciej Rynarzewski. Dane przetwarzamy, aby świadczyć usługę Cosmogram.{" "}
+                  <Link href="/privacy" target="_blank" className="underline underline-offset-2">Szczegóły i Twoje prawa</Link>.
+                </p>
+
+                <p className="mt-4 text-center text-xs text-slate-600">
                   Masz już konto?{" "}
                   <Link href={ROUTES.public.login.path}
                     className="transition-colors" style={{ color: "rgba(212,175,55,0.60)" }}>

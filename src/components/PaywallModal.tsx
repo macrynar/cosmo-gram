@@ -174,7 +174,7 @@ export default function PaywallModal({ onClose, reason }: Props) {
               </div>
             </div>
             <p className="text-xs text-slate-500 leading-relaxed group-hover:text-slate-400 transition-colors">
-              Wyrażam zgodę na natychmiastowe rozpoczęcie świadczenia usługi cyfrowej i przyjmuję do wiadomości, że tracę prawo odstąpienia od umowy z chwilą pełnego wykonania usługi.
+              Chcę natychmiastowego dostępu do treści cyfrowych i przyjmuję do wiadomości, że tracę przez to prawo odstąpienia od umowy w ciągu 14 dni.
             </p>
           </label>
 

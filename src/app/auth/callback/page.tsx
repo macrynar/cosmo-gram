@@ -1,51 +1,186 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Check, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+
+type ConsentState = "loading" | "needs_terms" | "done";
 
 export default function AuthCallback() {
   const router = useRouter();
+  const [state, setState]               = useState<ConsentState>("loading");
+  const [termsAccepted, setTermsAccepted]       = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [saving, setSaving]             = useState(false);
+  const [session, setSession]           = useState<{ access_token: string } | null>(null);
+  const [redirectTarget, setRedirectTarget]     = useState("/app/cosmogram");
 
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get("code");
+    async function handleCallback() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      const redirect = params.get("redirect") ?? "/app/cosmogram";
+      setRedirectTarget(redirect);
 
-    if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(async ({ data }) => {
-        // Fire welcome email for new users (idempotent — API skips if already sent)
+      let sess: { access_token: string } | null = null;
+
+      if (code) {
+        const { data } = await supabase.auth.exchangeCodeForSession(code);
         if (data.session) {
+          sess = data.session;
           fetch("/api/email/welcome", {
             method: "POST",
             headers: { Authorization: `Bearer ${data.session.access_token}` },
           }).catch(() => {});
         }
-        const hasPending = localStorage.getItem("cosmogram_pending_chart");
-        router.replace(hasPending ? "/app/cosmogram?autostart=true" : "/app/cosmogram");
-      });
-      return;
+      } else {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) sess = data.session;
+      }
+
+      if (!sess) {
+        router.replace("/login");
+        return;
+      }
+
+      setSession(sess);
+
+      // Check if terms were already accepted (from signup wizard or previous visit)
+      const stored = localStorage.getItem("cosmo_terms_accepted");
+      const hasPending = localStorage.getItem("cosmogram_pending_chart");
+
+      if (stored) {
+        // Already accepted — save consent to DB and proceed
+        try {
+          const parsed = JSON.parse(stored) as { marketing?: boolean };
+          await fetch("/api/save-consent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${sess.access_token}` },
+            body: JSON.stringify({ terms: true, marketing: parsed.marketing ?? false }),
+          });
+        } catch {}
+        router.replace(hasPending ? "/app/cosmogram?autostart=true" : redirect);
+      } else {
+        // New user via Google OAuth on login page — show terms gate
+        setState("needs_terms");
+      }
     }
 
-    // Fallback: magic-link / implicit flow — SDK already has the session
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") {
-        const hasPending = localStorage.getItem("cosmogram_pending_chart");
-        router.replace(hasPending ? "/app/cosmogram?autostart=true" : "/app/cosmogram");
-      }
-    });
+    handleCallback();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        const hasPending = localStorage.getItem("cosmogram_pending_chart");
-        router.replace(hasPending ? "/app/cosmogram?autostart=true" : "/app/cosmogram");
-      }
-    });
+  async function acceptTerms() {
+    if (!termsAccepted || !session) return;
+    setSaving(true);
+    localStorage.setItem("cosmo_terms_accepted", JSON.stringify({
+      accepted: true, marketing: marketingConsent, at: new Date().toISOString(), v: "2026-06-10",
+    }));
+    try {
+      await fetch("/api/save-consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ terms: true, marketing: marketingConsent }),
+      });
+    } catch {}
+    const hasPending = localStorage.getItem("cosmogram_pending_chart");
+    router.replace(hasPending ? "/app/cosmogram?autostart=true" : redirectTarget);
+  }
 
-    return () => subscription.unsubscribe();
-  }, [router]);
+  if (state === "loading") {
+    return (
+      <div className="min-h-screen bg-[#03010d] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-amber-600/30 border-t-amber-400 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#03010d] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-amber-600/30 border-t-amber-400 rounded-full animate-spin" />
+    <div className="min-h-screen flex items-center justify-center px-4"
+      style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(22,16,50,0.72) 0%, #050508 100%)" }}>
+      <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
+
+      <div className="relative z-10 w-full max-w-[400px]">
+        <div className="rounded-3xl p-7 sm:p-8"
+          style={{ background: "rgba(5,4,14,0.88)", border: "0.5px solid rgba(212,175,55,0.20)", backdropFilter: "blur(28px)" }}>
+
+          <p className="text-[10px] uppercase tracking-[0.28em] mb-3" style={{ color: "rgba(212,175,55,0.50)" }}>
+            Ostatni krok
+          </p>
+          <h2 className="text-2xl font-medium text-white mb-1"
+            style={{ fontFamily: "var(--font-cormorant), serif" }}>
+            Zanim wejdziesz do Cosmogram
+          </h2>
+          <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+            Potrzebujemy Twojej zgody zgodnie z wymogami RODO.
+          </p>
+
+          <div className="space-y-3 mb-6">
+            <ConsentCheckbox
+              checked={termsAccepted}
+              onChange={setTermsAccepted}
+              required
+              label={
+                <>
+                  Akceptuję{" "}
+                  <Link href="/terms" target="_blank" className="underline underline-offset-2" style={{ color: "rgba(212,175,55,0.75)" }}>Regulamin</Link>
+                  {" "}i potwierdzam zapoznanie się z{" "}
+                  <Link href="/privacy" target="_blank" className="underline underline-offset-2" style={{ color: "rgba(212,175,55,0.75)" }}>Polityką Prywatności</Link>.
+                </>
+              }
+            />
+            <ConsentCheckbox
+              checked={marketingConsent}
+              onChange={setMarketingConsent}
+              label="Chcę otrzymywać e-maile o nowościach i ofertach Cosmogram. Wypiszesz się jednym kliknięciem."
+            />
+          </div>
+
+          <button
+            onClick={acceptTerms}
+            disabled={!termsAccepted || saving}
+            className="w-full py-3.5 rounded-2xl text-sm font-semibold tracking-wide flex items-center justify-center gap-2 disabled:opacity-40 transition-all duration-300"
+            style={{ background: "linear-gradient(135deg, #D4AF37, #C5A059)", color: "#050508" }}
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Wejdź do Cosmogram →"}
+          </button>
+
+          <p className="mt-3 text-center text-[10px] leading-relaxed" style={{ color: "rgba(255,255,255,0.16)" }}>
+            Administratorem danych jest UXIS Maciej Rynarzewski.{" "}
+            <Link href="/privacy" target="_blank" className="underline underline-offset-2">Szczegóły i Twoje prawa</Link>.
+          </p>
+        </div>
+      </div>
     </div>
+  );
+}
+
+function ConsentCheckbox({ checked, onChange, label, required }: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <label className="flex items-start gap-2.5 cursor-pointer group">
+      <div className="relative mt-0.5 shrink-0">
+        <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="sr-only" />
+        <div
+          className="w-4 h-4 rounded transition-all duration-200 flex items-center justify-center"
+          style={{
+            background: checked ? "rgba(212,175,55,0.85)" : "transparent",
+            border: checked ? "0.5px solid #D4AF37" : "0.5px solid rgba(255,255,255,0.20)",
+          }}
+        >
+          {checked && <Check className="w-2.5 h-2.5 text-[#050508]" />}
+        </div>
+      </div>
+      <p className="text-[11px] leading-relaxed group-hover:text-slate-400 transition-colors" style={{ color: "rgba(255,255,255,0.38)" }}>
+        {required && <span className="text-red-400 mr-0.5">*</span>}
+        {label}
+      </p>
+    </label>
   );
 }

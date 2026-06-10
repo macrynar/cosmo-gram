@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
 export async function DELETE(req: NextRequest) {
@@ -11,6 +12,23 @@ export async function DELETE(req: NextRequest) {
 
   const uid = user.id;
 
+  // Cancel Stripe subscription if active
+  if (process.env.STRIPE_SECRET_KEY) {
+    try {
+      const { data: sub } = await supabaseAdmin
+        .from("subscriptions")
+        .select("stripe_subscription_id")
+        .eq("user_id", uid)
+        .maybeSingle();
+      if (sub?.stripe_subscription_id) {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        await stripe.subscriptions.cancel(sub.stripe_subscription_id as string);
+      }
+    } catch (err) {
+      console.error("delete-account: Stripe cancel failed (non-fatal)", err);
+    }
+  }
+
   // Delete all user data from every table
   await Promise.allSettled([
     supabaseAdmin.from("messages").delete().eq("user_id", uid),
@@ -20,6 +38,7 @@ export async function DELETE(req: NextRequest) {
     supabaseAdmin.from("readings").delete().eq("user_id", uid),
     supabaseAdmin.from("calendar_notes").delete().eq("user_id", uid),
     supabaseAdmin.from("user_preferences").delete().eq("user_id", uid),
+    supabaseAdmin.from("user_consents").delete().eq("user_id", uid),
     supabaseAdmin.from("subscriptions").delete().eq("user_id", uid),
   ]);
 
