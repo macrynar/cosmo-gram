@@ -10,6 +10,7 @@ import PaywallModal from "@/components/astro-match/PaywallModal";
 import ShareModal from "@/components/ShareModal";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
 import { useAuth } from "@/components/AuthContext";
+import { useSubscription } from "@/components/SubscriptionContext";
 import { track } from "@/components/PostHogProvider";
 import type { CompatibilityResult } from "@/app/api/astro-match/route";
 
@@ -23,6 +24,7 @@ type SavedMatch = {
 
 export default function AstroMatchPage() {
   const { session } = useAuth();
+  const { isPro } = useSubscription();
 
   const [matches, setMatches]           = useState<SavedMatch[]>([]);
   const [selectedId, setSelectedId]     = useState<string | null>(null);
@@ -31,7 +33,8 @@ export default function AstroMatchPage() {
 
   const [person1, setPerson1]   = useState<PersonData | null>(null);
   const [person2, setPerson2]   = useState<PersonData | null>(null);
-  const [result, setResult]     = useState<CompatibilityResult | null>(null);
+  const [result, setResult]         = useState<CompatibilityResult | null>(null);
+  const [resultIsPremium, setResultIsPremium] = useState(false);
   const [resultNames, setResultNames] = useState({ p1: "", p2: "" });
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
@@ -78,6 +81,7 @@ export default function AstroMatchPage() {
 
   function displayMatch(m: SavedMatch) {
     setResult(m.compatibility_data);
+    setResultIsPremium(isPro);
     setResultNames({ p1: m.person1_name, p2: m.person2_name });
   }
 
@@ -116,7 +120,6 @@ export default function AstroMatchPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!person1 || !person2) return;
-    if (session && matches.length >= 1) { setShowPaywall(true); return; }
 
     setLoading(true); setError(""); setResult(null);
     try {
@@ -127,11 +130,15 @@ export default function AstroMatchPage() {
       });
       if (!res.ok) {
         const e = await res.json() as { error: string };
-        if (e.error === "PAYWALL") { setShowPaywall(true); return; }
+        if (e.error === "MONTHLY_LIMIT") {
+          setError("Osiągnięto limit 10 analiz w tym miesiącu. Limit odnawia się 1. dnia miesiąca.");
+          return;
+        }
         throw new Error(e.error ?? "Błąd analizy");
       }
-      const { result: matchResult } = await res.json() as { result: CompatibilityResult };
+      const { result: matchResult, isPaidUser } = await res.json() as { result: CompatibilityResult; isPaidUser: boolean };
       setResult(matchResult);
+      setResultIsPremium(isPaidUser);
       setResultNames({ p1: person1.name || "Osoba 1", p2: person2.name || "Osoba 2" });
       track("first_match", { score: matchResult.overallScore });
       setShowForm(false);
@@ -252,7 +259,13 @@ export default function AstroMatchPage() {
         {/* Result */}
         {result && !showForm && (
           <>
-            <CompatibilityResultView result={result} person1Name={resultNames.p1} person2Name={resultNames.p2} />
+            <CompatibilityResultView
+              result={result}
+              person1Name={resultNames.p1}
+              person2Name={resultNames.p2}
+              isPremiumUser={resultIsPremium}
+              onPaywall={() => setShowPaywall(true)}
+            />
             {selectedId && (
               <div className="flex justify-center mt-5">
                 <button
@@ -352,7 +365,12 @@ export default function AstroMatchPage() {
 
               {!session && (
                 <p className="mt-3 text-xs text-slate-600">
-                  Pierwszy match bezpłatny · Zaloguj się żeby zapisać historię
+                  Match bezpłatny · Zaloguj się żeby zapisać historię
+                </p>
+              )}
+              {session && !isPro && (
+                <p className="mt-3 text-xs text-slate-600">
+                  Wynik score + pierwsza sekcja bezpłatnie · Pełna analiza w planie Plus
                 </p>
               )}
             </div>

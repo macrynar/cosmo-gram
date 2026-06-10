@@ -126,20 +126,26 @@ Zwróć WYŁĄCZNIE poprawny JSON (bez markdown, bez żadnego tekstu poza JSON):
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
-  // Paywall: 1 free match, then subscription required
+  // Paywall: premium — max 10 matches/month; free — unlimited but partial results
+  let isPaidUser = false;
   try {
     const authHeader = req.headers.get("Authorization");
     if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user } } = await supabaseAdmin.auth.getUser(token);
       if (user) {
-        const isPaid = await hasActiveSubscription(user.id);
-        if (!isPaid) {
+        isPaidUser = await hasActiveSubscription(user.id);
+        if (isPaidUser) {
+          const monthStart = new Date();
+          monthStart.setDate(1);
+          monthStart.setHours(0, 0, 0, 0);
           const { count } = await supabaseAdmin
             .from("matches")
             .select("*", { count: "exact", head: true })
-            .eq("user_id", user.id);
-          if ((count ?? 0) >= 1) {
-            return NextResponse.json({ error: "PAYWALL" }, { status: 402 });
+            .eq("user_id", user.id)
+            .gte("created_at", monthStart.toISOString());
+          if ((count ?? 0) >= 10) {
+            return NextResponse.json({ error: "MONTHLY_LIMIT" }, { status: 402 });
           }
         }
       }
@@ -231,6 +237,7 @@ Napisz copy synastrii zgodne z tymi scores. Użyj aspektów z listy powyżej. Zw
 
     return NextResponse.json({
       result,
+      isPaidUser,
       charts: { person1: r1.chart, person2: r2.chart },
     });
   } catch (err) {
