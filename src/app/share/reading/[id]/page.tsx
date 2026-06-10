@@ -35,7 +35,7 @@ export default async function ShareReadingPage({ params }: Props) {
   const [{ data }, modules] = await Promise.all([
     supabaseAdmin
       .from("readings")
-      .select("name, birth_date, birth_time, birth_place, chart_data, interpretation")
+      .select("name, birth_date, birth_place, chart_data, interpretation")
       .eq("id", id)
       .single(),
     getKartaByChartId(id),
@@ -47,7 +47,6 @@ export default async function ShareReadingPage({ params }: Props) {
     <ShareReadingClient
       name={data.name}
       birthDate={data.birth_date}
-      birthTime={data.birth_time}
       birthPlace={data.birth_place}
       chart={data.chart_data as NatalChart}
       interpretation={data.interpretation}

@@ -35,14 +35,13 @@ function getDominantElement(c: NatalChart) {
 type Props = {
   name: string;
   birthDate: string;
-  birthTime: string;
   birthPlace: string;
   chart: NatalChart;
   interpretation: string;
   kartaModules: AstroModule[];
 };
 
-export default function ShareReadingClient({ name, birthDate, birthTime, birthPlace, chart, interpretation, kartaModules }: Props) {
+export default function ShareReadingClient({ name, birthDate, birthPlace, chart, interpretation, kartaModules }: Props) {
   const el   = getDominantElement(chart);
   const tags = getPersonalityTags(chart);
   const hasModules = kartaModules.length > 0;
@@ -86,11 +85,6 @@ export default function ShareReadingClient({ name, birthDate, birthTime, birthPl
             <span className="px-3 py-1 rounded-full text-slate-400" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
               📅 {birthDate}
             </span>
-            {birthTime && !chart.birthData?.timeUnknown && (
-              <span className="px-3 py-1 rounded-full text-slate-400" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
-                🕐 {birthTime}
-              </span>
-            )}
             <span className="px-3 py-1 rounded-full text-slate-400 max-w-[240px] truncate" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
               📍 {birthPlace}
             </span>

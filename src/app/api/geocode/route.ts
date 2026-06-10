@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const query = req.nextUrl.searchParams.get("q");
   if (!query) return NextResponse.json({ error: "No query" }, { status: 400 });
+  if (query.length < 2 || query.length > 100) {
+    return NextResponse.json({ error: "Invalid query length" }, { status: 400 });
+  }
 
   try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`;

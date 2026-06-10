@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { calculateChart } from "@/lib/chart-engine";
 import { computeSynastryAspects, computeSynastryScore, type SynastryAspect } from "@/lib/synastry-score";
 import { hasActiveSubscription } from "@/lib/subscription";
@@ -152,12 +153,25 @@ export async function POST(req: NextRequest) {
     }
   } catch { /* paywall check failed gracefully — allow request */ }
 
-  const body = await req.json() as {
-    person1: { date: string; time: string; place: string; lat: number; lng: number; name: string };
-    person2: { date: string; time: string; place: string; lat: number; lng: number; name: string };
-  };
+  const PersonSchema = z.object({
+    name:  z.string().max(50).default(""),
+    date:  z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(s => {
+      const y = parseInt(s.slice(0, 4)); return y >= 1900 && y <= new Date().getFullYear();
+    }, "Rok poza zakresem 1900–teraz"),
+    time:  z.string().max(5).default(""),
+    place: z.string().max(100).default(""),
+    lat:   z.number().min(-90).max(90),
+    lng:   z.number().min(-180).max(180),
+  });
+  const BodySchema = z.object({ person1: PersonSchema, person2: PersonSchema });
 
-  const { person1, person2 } = body;
+  let parsed: z.infer<typeof BodySchema>;
+  try {
+    parsed = BodySchema.parse(await req.json());
+  } catch {
+    return NextResponse.json({ error: "Nieprawidłowe dane wejściowe" }, { status: 400 });
+  }
+  const { person1, person2 } = parsed;
 
   try {
     const [r1, r2] = [calculateChart(person1), calculateChart(person2)];
