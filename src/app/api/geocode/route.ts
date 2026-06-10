@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 export async function GET(req: NextRequest) {
   const query = req.nextUrl.searchParams.get("q");
@@ -6,6 +7,10 @@ export async function GET(req: NextRequest) {
   if (query.length < 2 || query.length > 100) {
     return NextResponse.json({ error: "Invalid query length" }, { status: 400 });
   }
+
+  const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "unknown";
+  const rateLimitRes = await checkRateLimit("geo", ip);
+  if (rateLimitRes) return rateLimitRes;
 
   try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`;

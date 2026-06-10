@@ -4,6 +4,7 @@ import { generateNatalKarta, getExistingKarta } from "@/services/natalGenerator"
 import { hasActiveSubscription } from "@/lib/subscription";
 import type { GenerationContext } from "@/lib/moduleSpecs";
 import { FREE_MODULE_IDS } from "@/lib/moduleSpecs";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 export const maxDuration = 120;
 
@@ -53,6 +54,9 @@ export async function POST(req: NextRequest) {
   if (!body.chart_id || !body.natal_data) {
     return NextResponse.json({ error: "chart_id and natal_data are required" }, { status: 400 });
   }
+
+  const rateLimitRes = await checkRateLimit("ai", user.id);
+  if (rateLimitRes) return rateLimitRes;
 
   try {
     const isPaid = await hasActiveSubscription(user.id).catch(() => false);

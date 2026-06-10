@@ -4,6 +4,7 @@ import { calculateChart } from "@/lib/chart-engine";
 import { hasActiveSubscription } from "@/lib/subscription";
 import type { NatalChart } from "@/lib/astro-types";
 import { deepSeekChat } from "@/lib/deepseek";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 const FREE_CHAT_MESSAGES = 3;
 
@@ -63,6 +64,10 @@ export async function POST(req: NextRequest) {
   if (!conversationId || !content?.trim()) {
     return NextResponse.json({ error: "Brak danych" }, { status: 400 });
   }
+
+  const rateLimitRes = await checkRateLimit("chat", user.id);
+  if (rateLimitRes) return rateLimitRes;
+
   if (content.trim().length > 2000) {
     return NextResponse.json({ error: "Wiadomość zbyt długa (max 2000 znaków)" }, { status: 400 });
   }

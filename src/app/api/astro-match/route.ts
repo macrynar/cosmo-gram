@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { calculateChart } from "@/lib/chart-engine";
+import { checkRateLimit } from "@/lib/rateLimiter";
 import { computeSynastryAspects, computeSynastryScore, type SynastryAspect } from "@/lib/synastry-score";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
@@ -128,6 +129,14 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   // Paywall: premium — max 10 matches/month; free — unlimited but partial results
+  // Rate limit by user ID (authenticated) or IP (anonymous)
+  const authHeaderForRL = req.headers.get("Authorization");
+  const rlIdentifier = authHeaderForRL
+    ? authHeaderForRL.replace("Bearer ", "").slice(0, 32)
+    : (req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "anon");
+  const rateLimitRes = await checkRateLimit("ai", rlIdentifier);
+  if (rateLimitRes) return rateLimitRes;
+
   let isPaidUser = false;
   try {
     const authHeader = req.headers.get("Authorization");
