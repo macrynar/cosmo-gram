@@ -235,8 +235,13 @@ Napisz copy synastrii zgodne z tymi scores. Użyj aspektów z listy powyżej. Zw
       result = mockResult(name1, name2, scores);
     }
 
+    // Strip premium categories server-side — UI blur is not a security boundary
+    const safeResult: CompatibilityResult = isPaidUser
+      ? result
+      : { overallScore: result.overallScore, summary: result.summary, categories: [] };
+
     return NextResponse.json({
-      result,
+      result: safeResult,
       isPaidUser,
       charts: { person1: r1.chart, person2: r2.chart },
     });

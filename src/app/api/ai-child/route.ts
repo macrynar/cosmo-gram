@@ -1,11 +1,22 @@
 import { NextRequest } from "next/server";
 import { CHILD_SYSTEM_PROMPT, getAgeGroup, calcAgeYears } from "@/lib/prompts/child-v1";
 import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
+import { supabaseAdmin } from "@/lib/supabase-server";
 
 export const runtime = "edge";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
+  }
+  const token = authHeader.replace("Bearer ", "");
+  const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
+  if (authErr || !user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
+  }
+
   const { name, birthDate, promptContext, placements, aspects, nodes } = await req.json() as {
     name: string;
     birthDate: string;

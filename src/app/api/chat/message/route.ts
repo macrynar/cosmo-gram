@@ -63,6 +63,9 @@ export async function POST(req: NextRequest) {
   if (!conversationId || !content?.trim()) {
     return NextResponse.json({ error: "Brak danych" }, { status: 400 });
   }
+  if (content.trim().length > 2000) {
+    return NextResponse.json({ error: "Wiadomość zbyt długa (max 2000 znaków)" }, { status: 400 });
+  }
 
   // Paywall: check message quota
   try {
@@ -122,6 +125,7 @@ export async function POST(req: NextRequest) {
         .from("children")
         .select("chart_data, name")
         .eq("id", chartContextId)
+        .eq("user_id", user.id)
         .single();
       if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
     } else if (chartContextId && chartContextType === "natal") {
@@ -129,6 +133,7 @@ export async function POST(req: NextRequest) {
         .from("readings")
         .select("chart_data, name")
         .eq("id", chartContextId)
+        .eq("user_id", user.id)
         .single();
       if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
     } else {
