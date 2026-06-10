@@ -111,18 +111,22 @@ export async function generateNatalKarta(
   // 3. All needed modules in parallel — avoids sequential-batch timeout on Vercel
   const generated = await Promise.all(
     toGenerate.map(async (moduleId) => {
+      console.log(`[karta] generating module: ${moduleId}`);
       const confidence = computeConfidenceScore(moduleId, ctx);
       const userPrompt = buildUserPrompt(ctx, moduleId, confidence);
       const aiOutput   = await generateModuleWithRetry(systemPrompt, userPrompt, moduleId);
+      console.log(`[karta] module ${moduleId} AI output received, validating schema`);
       const cacheKey   = await computeCacheKey(user_id, chart_id, moduleId, grammatical_form);
 
-      return AstroModuleSchema.parse({
+      const parsed = AstroModuleSchema.parse({
         ...aiOutput,
         confidenceScore: confidence,
         isPremium:       PREMIUM_IDS.has(moduleId),
         cacheKey,
         promptVersion:   PROMPT_VERSION,
       });
+      console.log(`[karta] module ${moduleId} schema valid`);
+      return parsed;
     })
   );
 

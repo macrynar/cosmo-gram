@@ -35,8 +35,9 @@ export async function generateModuleWithRetry(
     return AstroModuleAIOutputSchema.parse({ ...obj, id: expectedModuleId });
 
   } catch (err) {
+    const errDetail = err instanceof Error ? err.message : JSON.stringify(err);
     if (attempt < MAX_RETRIES) {
-      console.warn(`[karta] module ${expectedModuleId} attempt ${attempt + 1} failed:`, err);
+      console.warn(`[karta] module ${expectedModuleId} attempt ${attempt + 1} failed:`, errDetail);
 
       let retryPrompt = userPrompt;
       if (err instanceof z.ZodError) {
@@ -48,7 +49,9 @@ export async function generateModuleWithRetry(
       return generateModuleWithRetry(systemPrompt, retryPrompt, expectedModuleId, attempt + 1);
     }
 
-    throw new Error(`Module ${expectedModuleId} failed after ${MAX_RETRIES} retries: ${err}`);
+    const finalMsg = `Module ${expectedModuleId} failed after ${MAX_RETRIES} retries: ${errDetail}`;
+    console.error(`[karta] ${finalMsg}`);
+    throw new Error(finalMsg);
   }
 }
 

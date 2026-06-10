@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized", detail: authErr?.message ?? "Invalid token" }, { status: 401 });
   }
 
-  const body = await req.json() as {
+  let body: {
     chart_id:             string;
     natal_data:           GenerationContext["natal_data"];
     grammatical_form?:    GenerationContext["grammatical_form"];
@@ -44,6 +44,11 @@ export async function POST(req: NextRequest) {
     birthYear?:           number;
     locationPrecisionKm?: number;
   };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
 
   if (!body.chart_id || !body.natal_data) {
     return NextResponse.json({ error: "chart_id and natal_data are required" }, { status: 400 });
@@ -67,7 +72,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ modules });
 
   } catch (err) {
+    const detail = err instanceof Error
+      ? err.message
+      : (typeof err === "object" && err !== null)
+        ? JSON.stringify(err)
+        : String(err);
     console.error("[natal-karta] generation error:", err);
-    return NextResponse.json({ error: "Generation failed", detail: String(err) }, { status: 500 });
+    return NextResponse.json({ error: "Generation failed", detail }, { status: 500 });
   }
 }
