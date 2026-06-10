@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { generateNatalKarta, getExistingKarta } from "@/services/natalGenerator";
+import { hasActiveSubscription } from "@/lib/subscription";
 import type { GenerationContext } from "@/lib/moduleSpecs";
+import { FREE_MODULE_IDS } from "@/lib/moduleSpecs";
 
 export const maxDuration = 120;
 
@@ -48,6 +50,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const isPaid = await hasActiveSubscription(user.id).catch(() => false);
+    const onlyModuleIds = isPaid ? undefined : FREE_MODULE_IDS;
+
     const ctx: GenerationContext = {
       user_id:             user.id,
       chart_id:            body.chart_id,
@@ -58,7 +63,7 @@ export async function POST(req: NextRequest) {
       locationPrecisionKm: body.locationPrecisionKm ?? 10,
     };
 
-    const modules = await generateNatalKarta(ctx);
+    const modules = await generateNatalKarta(ctx, onlyModuleIds);
     return NextResponse.json({ modules });
 
   } catch (err) {

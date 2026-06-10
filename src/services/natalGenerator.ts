@@ -90,16 +90,20 @@ export async function getKartaByChartId(chartId: string): Promise<AstroModule[]>
 
 // ─── Main generator ───────────────────────────────────────────────────────────
 
-export async function generateNatalKarta(ctx: GenerationContext): Promise<AstroModule[]> {
+export async function generateNatalKarta(
+  ctx: GenerationContext,
+  onlyModuleIds?: ModuleId[]
+): Promise<AstroModule[]> {
   const { user_id, chart_id, grammatical_form } = ctx;
+  const targetIds = onlyModuleIds ?? ALL_MODULE_IDS;
 
   // 1. Load cached modules
   const cached = await loadCachedModules(user_id, chart_id);
 
   // 2. Which need generation?
-  const toGenerate = ALL_MODULE_IDS.filter(id => !cached.has(id));
+  const toGenerate = targetIds.filter(id => !cached.has(id));
   if (toGenerate.length === 0) {
-    return ALL_MODULE_IDS.map(id => cached.get(id)!);
+    return targetIds.map(id => cached.get(id)!).filter(Boolean);
   }
 
   const systemPrompt = buildSystemPrompt(grammatical_form);
@@ -128,5 +132,5 @@ export async function generateNatalKarta(ctx: GenerationContext): Promise<AstroM
 
   // 4. Merge cached + generated in canonical order
   const allById = new Map([...cached, ...generated.map(m => [m.id, m] as [ModuleId, AstroModule])]);
-  return ALL_MODULE_IDS.map(id => allById.get(id)!).filter(Boolean);
+  return targetIds.map(id => allById.get(id)!).filter(Boolean);
 }

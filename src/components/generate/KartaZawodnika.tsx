@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import ModuleCard from "./ModuleCard";
+import LockedModulePlaceholder from "./LockedModulePlaceholder";
 import PaywallModal from "@/components/PaywallModal";
 import type { AstroModule } from "@/lib/schemas/astroModule";
 import type { NatalChart } from "@/lib/astro-types";
 import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
+import { PREMIUM_MODULE_IDS, MODULE_SPECS } from "@/lib/moduleSpecs";
 
 type ReadingMeta = {
   id:           string;
@@ -45,6 +47,7 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
   const [error,        setError]        = useState<string | null>(null);
   const [generated,    setGenerated]    = useState(false);
   const [showPaywall,  setShowPaywall]  = useState(false);
+  const upgradeTriggeredRef = useRef(false);
 
   useEffect(() => {
     // 1. Check localStorage first (instant, no network)
@@ -80,6 +83,24 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
     return () => { cancelled = true; };
   }, [reading.id]);
 
+  // Auto-trigger full generation after upgrade (free→premium)
+  useEffect(() => {
+    if (
+      isPremiumUser &&
+      generated &&
+      !loading &&
+      modules.length > 0 &&
+      modules.length < 8 &&
+      !upgradeTriggeredRef.current
+    ) {
+      upgradeTriggeredRef.current = true;
+      // Clear local cache so fresh 8-module result is stored
+      try { localStorage.removeItem(LS_KEY(reading.id)); } catch {}
+      handleGenerate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPremiumUser, generated, modules.length]);
+
   async function handleGenerate() {
     setLoading(true);
     setError(null);
@@ -89,7 +110,6 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
 
       const bd = reading.chart_data.birthData;
 
-      // 1. Get placements / aspects / nodes
       const chartRes = await fetch("/api/chart", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
@@ -110,7 +130,6 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
         nodes:      ChartNodes;
       };
 
-      // 2. Generate / load from cache
       const kartaRes = await fetch("/api/natal-karta", {
         method:  "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
@@ -138,6 +157,12 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
       setLoading(false);
     }
   }
+
+  // Locked module IDs not yet generated (shown as placeholders for free users)
+  const generatedIds = new Set(modules.map(m => m.id));
+  const lockedPlaceholders = !isPremiumUser
+    ? PREMIUM_MODULE_IDS.filter(id => !generatedIds.has(id))
+    : [];
 
   return (
     <div className="space-y-5">
@@ -182,12 +207,20 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
           >
             Karta Astrologiczna
           </h3>
-          <p className="text-slate-500 text-sm mb-1 max-w-sm mx-auto">
-            8 głębokich modułów interpretacji Twojego kosmogramu.
-          </p>
-          <p className="text-slate-600 text-xs mb-7 max-w-xs mx-auto">
-            Tożsamość · Supermoce · Korzenie · Miłość · Kariera · Cienie · Misja
-          </p>
+          {isPremiumUser ? (
+            <p className="text-slate-500 text-sm mb-7 max-w-sm mx-auto">
+              8 głębokich modułów interpretacji Twojego kosmogramu.
+            </p>
+          ) : (
+            <>
+              <p className="text-slate-500 text-sm mb-1 max-w-sm mx-auto">
+                3 moduły dostępne bezpłatnie · 5 odblokowanych w planie Plus
+              </p>
+              <p className="text-slate-600 text-xs mb-7 max-w-xs mx-auto">
+                Tożsamość · Supermoce · Korzenie
+              </p>
+            </>
+          )}
 
           <motion.button
             onClick={handleGenerate}
@@ -200,7 +233,7 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
               border:     "0.5px solid rgba(212,175,55,0.65)",
             }}
           >
-            Generuj Kartę Astrologiczną
+            {isPremiumUser ? "Generuj Kartę Astrologiczną" : "Generuj 3 moduły"}
           </motion.button>
         </motion.div>
       )}
@@ -216,11 +249,13 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
             style={{ borderColor: "rgba(212,175,55,0.12)", borderTopColor: "#D4AF37" }}
           />
           <p className="text-slate-400 text-sm mb-1">Generuję Twoją Kartę Astrologiczną…</p>
-          <p className="text-slate-600 text-xs">8 modułów · 3 batche · może zająć 20–40 s</p>
+          <p className="text-slate-600 text-xs">
+            {isPremiumUser ? "8 modułów · może zająć 20–40 s" : "3 moduły · może zająć 10–20 s"}
+          </p>
         </div>
       )}
 
-      {/* ── Error (single, shown below CTA) ── */}
+      {/* ── Error ── */}
       {error && !loading && !generated && (
         <div className="p-3 rounded-xl text-xs text-center" style={{ background: "rgba(239,68,68,0.07)", border: "0.5px solid rgba(239,68,68,0.20)", color: "#fca5a5" }}>
           {error}
@@ -237,11 +272,12 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
               className="text-center mb-2"
             >
               <p className="text-[10px] uppercase tracking-[0.28em]" style={{ color: "rgba(212,175,55,0.45)" }}>
-                Karta Astrologiczna · {modules.length} modułów
+                Karta Astrologiczna · {modules.length} {isPremiumUser ? "modułów" : `z 8 modułów`}
               </p>
             </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Generated modules */}
               {modules.map((mod, i) => (
                 <ModuleCard
                   key={mod.id}
@@ -251,7 +287,42 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
                   onPaywall={() => setShowPaywall(true)}
                 />
               ))}
+
+              {/* Locked placeholders for free users */}
+              {lockedPlaceholders.map((id, i) => (
+                <LockedModulePlaceholder
+                  key={id}
+                  title={MODULE_SPECS[id].title_pl}
+                  index={modules.length + i}
+                  onPaywall={() => setShowPaywall(true)}
+                />
+              ))}
             </div>
+
+            {/* Upgrade nudge for free users */}
+            {!isPremiumUser && lockedPlaceholders.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="rounded-2xl p-5 text-center"
+                style={{ background: "rgba(212,175,55,0.05)", border: "0.5px solid rgba(212,175,55,0.18)" }}
+              >
+                <p className="text-sm text-slate-400 mb-3">
+                  Odblokuj <span style={{ color: "#D4AF37" }}>5 pozostałych modułów</span> — Miłość, Karierę, Cienie, Korzenie i Misję życia.
+                </p>
+                <button
+                  onClick={() => setShowPaywall(true)}
+                  className="px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(212,175,55,0.85), rgba(197,160,89,0.85))",
+                    color: "#050508",
+                  }}
+                >
+                  Przejdź na Plus →
+                </button>
+              </motion.div>
+            )}
           </>
         )}
       </AnimatePresence>

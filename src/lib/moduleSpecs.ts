@@ -1,4 +1,7 @@
 import type { ModuleId } from "./schemas/astroModule";
+
+export const FREE_MODULE_IDS:    ModuleId[] = ["core", "superpowers", "childhood"];
+export const PREMIUM_MODULE_IDS: ModuleId[] = ["love", "career", "shadows", "roots", "purpose"];
 import type { ChartPlacement, NatalAspect, ChartNodes } from "./chart-engine";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
