@@ -5,6 +5,7 @@
 import { getTransitsForDate } from "./transits";
 import type { Transit, AspectType } from "./transits";
 import type { NatalChart } from "@/lib/astro-types";
+import { WINDOW_MIN_SCORE, POWER_WINDOWS_PER_MONTH } from "./calendarLimits";
 
 export type WindowCategory = "miłość" | "kariera" | "energia" | "komunikacja" | "transformacja" | "intuicja";
 export type WindowCharacter = "wspierające" | "wymagające";
@@ -28,7 +29,6 @@ export type TransitWindow = {
 
 // Only outer/slow planets generate meaningful multi-day windows
 const WINDOW_PLANETS = new Set(["Jowisz", "Saturn", "Uran", "Neptun", "Pluton", "Mars"]);
-const MIN_SCORE = 15;
 
 function windowCategory(transitPlanet: string, natalPoint: string): WindowCategory {
   if (transitPlanet === "Wenus" || natalPoint === "Wenus") return "miłość";
@@ -66,7 +66,7 @@ export function getWindowsForMonth(
     const dateStr = date.toISOString().slice(0, 10);
 
     const dayTransits = getTransitsForDate(natalChart, date).filter(
-      t => WINDOW_PLANETS.has(t.transitPlanet) && t.score >= MIN_SCORE
+      t => WINDOW_PLANETS.has(t.transitPlanet) && t.score >= WINDOW_MIN_SCORE
     );
 
     const seenKeys = new Set<WindowKey>();
@@ -156,14 +156,14 @@ export function getWindowsForMonth(
   return closed.sort((a, b) => b.score - a.score);
 }
 
-// Top-5 windows by score — their peak dates are "Dni Mocy"
+// Top-N windows by score — their peak dates are "Dni Mocy" (★ in grid)
 export function getPowerWindows(
   natalChart: NatalChart,
   year:       number,
   month:      number,
 ): TransitWindow[] {
   return getWindowsForMonth(natalChart, year, month)
-    .slice(0, 5);
+    .slice(0, POWER_WINDOWS_PER_MONTH);
 }
 
 // Map from date string → windows that include that date (for CalendarGrid)

@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 import { X, Moon, TrendingUp, AlertTriangle, Pencil, Lock } from "lucide-react";
 import {
   SIGN_LOCATIVE, ASPECT_LABEL_PL,
-  natalInstrumental, transitPhrase,
+  natalInstrumental, formatTransit,
 } from "@/lib/i18n/astro";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -28,16 +28,20 @@ function getDayOfYear(date: Date): number {
   return Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000);
 }
 
+function capitalize(s: string): string {
+  return s.length > 0 ? s[0].toUpperCase() + s.slice(1) : s;
+}
+
 function formatDatePL(dateStr: string): string {
-  return new Date(dateStr + "T12:00:00Z").toLocaleDateString("pl-PL", {
+  return capitalize(new Date(dateStr + "T12:00:00Z").toLocaleDateString("pl-PL", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
-  });
+  }));
 }
 
 function formatDateShortPL(dateStr: string): string {
-  return new Date(dateStr + "T12:00:00Z").toLocaleDateString("pl-PL", {
+  return capitalize(new Date(dateStr + "T12:00:00Z").toLocaleDateString("pl-PL", {
     weekday: "long", day: "numeric", month: "long",
-  });
+  }));
 }
 
 // ── Structured personal horoscope (from daily_personal_horoscopes table) ─────
@@ -350,7 +354,7 @@ export default function DayPanel({
         {/* ── 2. Window context (if in window, not peak) ── */}
         {activeWindow && !isPeak && (
           <p className="text-sm text-slate-400 leading-snug">
-            {transitPhrase(activeWindow)}
+            {formatTransit(activeWindow)}
             {" — "}
             <span className="text-slate-500 text-xs">
               dzień {Math.round(
@@ -514,7 +518,7 @@ export default function DayPanel({
         <div className="h-px bg-gradient-to-r from-transparent via-white/8 to-transparent" />
 
         {/* ── Refleksja ── */}
-        {hasContent && !moonPhaseInfo && (
+        {activeWindow && !moonPhaseInfo && (
           <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.08)" }}>
             <p className="text-[10px] uppercase tracking-widest font-medium mb-2 flex items-center gap-1.5" style={{ color: "rgba(100,116,139,0.7)" }}>
               <Pencil className="w-3 h-3" />

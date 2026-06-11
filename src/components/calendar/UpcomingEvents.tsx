@@ -5,7 +5,8 @@ import * as Astronomy from "astronomy-engine";
 import { longitudeToSign } from "@/lib/astro-types";
 import type { NatalChart } from "@/lib/astro-types";
 import { TrendingUp, AlertTriangle } from "lucide-react";
-import { transitPhrase } from "@/lib/i18n/astro";
+import { formatTransit } from "@/lib/i18n/astro";
+import { getWindowDescription } from "@/lib/astro/windowDescriptions";
 
 const SHORT_MONTHS = ["sty","lut","mar","kwi","maj","cze","lip","sie","wrz","paź","lis","gru"];
 
@@ -45,12 +46,6 @@ const ASPECT_ANGLES: Record<string, number> = {
 const FAVORABLE_ASPECTS    = new Set(["sextile", "trine"]);
 const CONJUNCTION_FAVORABLE: Record<string, boolean> = { "Jowisz": true, "Wenus": true, "Merkury": true, "Saturn": false, "Mars": false };
 
-const MEANINGS: Record<string, { fav: string; tense: string }> = {
-  "Mars":   { fav: "energia i napęd — czas na push i realizację planów", tense: "napięcia i konflikty blisko powierzchni — świadoma komunikacja" },
-  "Jowisz": { fav: "rzadkie okno ekspansji — odważny ruch może dużo zmienić", tense: "nadmierny optymizm może mylić — sprawdzaj realia przed decyzją" },
-  "Saturn": { fav: "wyjątkowy moment budowania — decyzje podjęte teraz zostają", tense: "silna lekcja Saturna — czas stawić czoło temu, co odkładasz" },
-  "Uran":   { fav: "przełom lub nieoczekiwana okazja — bądź elastyczny", tense: "nagłe zmiany mogą destabilizować — zachowaj spokój i elastyczność" },
-};
 
 function getEclipticLon(body: Astronomy.Body, date: Date): number {
   const geo = Astronomy.GeoVector(body, date, false);
@@ -117,7 +112,7 @@ function computeEvents(chart: NatalChart, fromDate: Date, lookahead: number): Pe
                 natalPlanet:   natal.name,
                 natalSign:     natal.sign,
                 favorable,
-                meaning: favorable ? (MEANINGS[tName]?.fav ?? "") : (MEANINGS[tName]?.tense ?? ""),
+                meaning: getWindowDescription(tName, typeName, natal.name, `upcoming_${natal.name}`),
                 windowDays,
                 daysLeft,
               });
@@ -178,7 +173,7 @@ export default function UpcomingEvents({ chart, onDaySelect }: Props) {
               {/* Content */}
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-slate-200 leading-snug group-hover:text-white transition-colors">
-                  {transitPhrase({ transitPlanet: e.transitPlanet, transitSign: e.transitSign, aspectType: e.aspectType, natalPoint: e.natalPlanet, natalSign: e.natalSign })}
+                  {formatTransit({ transitPlanet: e.transitPlanet, transitSign: e.transitSign, aspectType: e.aspectType, natalPoint: e.natalPlanet, natalSign: e.natalSign })}
                 </p>
                 <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{e.meaning}</p>
                 <p className="text-[11px] text-slate-600 mt-1">{durationLabel(e)}</p>

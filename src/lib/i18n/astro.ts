@@ -81,7 +81,7 @@ export const ASPECT_LABEL_PL: Record<string, string> = {
 
 // ONE canonical transit phrase used everywhere:
 // "Mars w Byku · opozycja do Twojej Wenus w Skorpionie"
-export function transitPhrase(t: {
+export function formatTransit(t: {
   transitPlanet: string;
   transitSign:   string;
   aspectType:    string;
@@ -91,3 +91,6 @@ export function transitPhrase(t: {
   const aspect = ASPECT_LABEL_PL[t.aspectType] ?? t.aspectType;
   return `${t.transitPlanet} ${inSign(t.transitSign)} · ${aspect} do ${natalGenitive(t.natalPoint)} ${inSign(t.natalSign)}`;
 }
+
+/** @deprecated use formatTransit */
+export const transitPhrase = formatTransit;
