@@ -4,6 +4,7 @@ import { hasActiveSubscription } from "@/lib/subscription";
 import { getTransitsForDate } from "@/lib/astro/transits";
 import { aiComplete, AiDisabledError } from "@/lib/deepseek";
 import { ASPECT_LABEL_PL, inSign, PLANET_GENITIVE } from "@/lib/i18n/astro";
+import { containsForeignScript, endsWithSentence } from "@/lib/text-validation";
 import type { NatalChart } from "@/lib/astro-types";
 import { z } from "zod";
 
@@ -69,12 +70,23 @@ export async function POST(req: NextRequest) {
   const context = `Dzień: ${dateStr}\nAktywne tranzyty:\n${transitLines}`;
 
   try {
-    const content = await aiComplete({
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: `Opisz energię tego dnia:\n\n${context}` }],
-      maxTokens: 300,
-      task: "day-interpretation",
-    });
+    const userMsg = `Opisz energię tego dnia:\n\n${context}`;
+    let content = "";
+    const models = ["claude-haiku-4-5-20251001", "claude-haiku-4-5-20251001", "claude-sonnet-4-6"];
+    for (const model of models) {
+      const candidate = await aiComplete({
+        model,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userMsg }],
+        maxTokens: 400,
+        task: "day-interpretation",
+      });
+      if (!containsForeignScript(candidate) && endsWithSentence(candidate)) {
+        content = candidate;
+        break;
+      }
+    }
+    if (!content) return NextResponse.json({ error: "Błąd jakości AI" }, { status: 500 });
 
     await supabaseAdmin.from("day_interpretations").upsert({
       user_id:      user.id,
