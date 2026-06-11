@@ -1,0 +1,123 @@
+import { test, expect } from "@playwright/test";
+
+// ─── Flow D: login → dzienny horoskop ────────────────────────────────────────
+
+test.describe("Flow D — horoskop dzienny", () => {
+
+  test("publiczna strona /daily-horoscope ładuje się", async ({ page }) => {
+    const res = await page.goto("/daily-horoscope");
+    expect(res?.status()).toBeLessThan(400);
+    await expect(page).toHaveTitle(/horoskop|Cosmo/i);
+  });
+
+  test("publiczna strona /daily-horoscope zawiera znaki zodiaku", async ({ page }) => {
+    await page.goto("/daily-horoscope");
+    await page.waitForLoadState("networkidle");
+
+    // At least one zodiac sign should appear
+    const zodiacSigns = ["Baran", "Byk", "Bliźnięta", "Rak", "Lew", "Panna",
+                         "Waga", "Skorpion", "Strzelec", "Koziorożec", "Wodnik", "Ryby"];
+    const content = await page.content();
+    const hasSign = zodiacSigns.some(sign => content.includes(sign));
+    expect(hasSign).toBe(true);
+  });
+
+  test("/api/health zwraca 200 i status ok", async ({ request }) => {
+    const res = await request.get("/api/health");
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe("ok");
+    expect(typeof body.ts).toBe("string");
+  });
+
+  test("strona /login renderuje formularz", async ({ page }) => {
+    await page.goto("/login");
+    await expect(page.locator('input[type="email"]')).toBeVisible();
+    await expect(page.locator('input[type="password"]')).toBeVisible();
+    await expect(page.locator('button[type="submit"]')).toBeVisible();
+  });
+
+  test("nieprawidłowe dane logowania → komunikat błędu", async ({ page }) => {
+    await page.goto("/login");
+    await page.locator('input[type="email"]').fill("nieistniejacy@test.invalid");
+    await page.locator('input[type="password"]').fill("wrongpassword123");
+    await page.locator('button[type="submit"]').click();
+
+    // Should show error message, not redirect
+    await page.waitForTimeout(2000);
+    const url = page.url();
+    expect(url).toContain("/login");
+  });
+
+  // ─── Auth-dependent tests ─────────────────────────────────────────────────
+  test("zalogowany user widzi personalny horoskop w /app/horoscope", async ({ page }) => {
+    const email    = process.env.TEST_USER_EMAIL;
+    const password = process.env.TEST_USER_PASSWORD;
+    test.skip(!email || !password, "Wymaga TEST_USER_EMAIL i TEST_USER_PASSWORD");
+
+    await page.goto("/login");
+    await page.locator('input[type="email"]').fill(email!);
+    await page.locator('input[type="password"]').fill(password!);
+    await page.locator('button[type="submit"]').click();
+    await page.waitForURL(/\/app\//);
+
+    await page.goto("/app/horoscope");
+    await page.waitForLoadState("networkidle");
+
+    // Should see horoscope content — not an empty page
+    const horoscopeContent = page.locator(
+      '[class*="horoscope"], [class*="Horoscope"], h1, h2'
+    ).first();
+    await expect(horoscopeContent).toBeVisible();
+  });
+
+  test("toggle email horoskopu zapisuje preferencję", async ({ page }) => {
+    const email    = process.env.TEST_USER_EMAIL;
+    const password = process.env.TEST_USER_PASSWORD;
+    test.skip(!email || !password, "Wymaga TEST_USER_EMAIL i TEST_USER_PASSWORD");
+
+    await page.goto("/login");
+    await page.locator('input[type="email"]').fill(email!);
+    await page.locator('input[type="password"]').fill(password!);
+    await page.locator('button[type="submit"]').click();
+    await page.waitForURL(/\/app\//);
+
+    await page.goto("/app/settings");
+    await page.waitForLoadState("networkidle");
+
+    // Find the horoscope email toggle
+    const toggle = page.locator(
+      'input[type="checkbox"][id*="horoscope"], input[type="checkbox"][id*="email"]'
+    ).first();
+
+    if (await toggle.isVisible()) {
+      const wasBefore = await toggle.isChecked();
+      await toggle.click();
+
+      // Wait for save
+      await page.waitForTimeout(1000);
+
+      // Reload and verify state persisted
+      await page.reload();
+      await page.waitForLoadState("networkidle");
+
+      const afterReload = page.locator(
+        'input[type="checkbox"][id*="horoscope"], input[type="checkbox"][id*="email"]'
+      ).first();
+
+      // State should have changed
+      const isNow = await afterReload.isChecked();
+      expect(isNow).toBe(!wasBefore);
+
+      // Restore original state
+      await afterReload.click();
+    }
+  });
+
+  test("chat: /api/chat/message wymaga autoryzacji", async ({ request }) => {
+    const res = await request.post("/api/chat/message", {
+      data: { conversationId: "test", content: "Cześć" },
+    });
+    expect(res.status()).toBe(401);
+  });
+});
