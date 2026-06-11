@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -15,7 +16,7 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       // Supabase
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://eu.i.posthog.com https://eu-assets.i.posthog.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://eu.i.posthog.com https://eu-assets.i.posthog.com https://*.ingest.sentry.io",
       // Stripe JS
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
       "frame-src https://js.stripe.com",
@@ -54,9 +55,25 @@ const nextConfig: NextConfig = {
         source: "/ingest/:path*",
         destination: "https://eu.i.posthog.com/:path*",
       },
+      // Sentry tunnel — avoids ad-blocker interference
+      {
+        source: "/monitoring/:path*",
+        destination: "https://o0.ingest.sentry.io/:path*",
+      },
     ];
   },
   skipTrailingSlashRedirect: true,
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // DSN only needed at build time for source maps upload
+  silent: true,
+  // Don't upload source maps in CI without SENTRY_AUTH_TOKEN
+  disableLogger: true,
+  widenClientFileUpload: false,
+  // Tunnel via /monitoring to bypass ad-blockers
+  tunnelRoute: "/monitoring",
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+});
