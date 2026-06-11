@@ -9,11 +9,11 @@ import HistorySelector, { type HistoryItem } from "@/components/HistorySelector"
 import CalendarGrid from "@/components/calendar/CalendarGrid";
 import UpcomingEvents from "@/components/calendar/UpcomingEvents";
 import DayPanel from "@/components/calendar/DayPanel";
+import MonthSummary from "@/components/calendar/MonthSummary";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
 import { computeMonthData } from "@/lib/chart-engine";
-import { getPowerDays, type PowerDay } from "@/lib/astro/powerDays";
-import { getDayClass } from "@/lib/astro/dayClasses";
+import { getPowerWindows, buildWindowDateMap, type TransitWindow } from "@/lib/astro/windows";
 import { useStreak } from "@/lib/useStreak";
 import { supabase } from "@/lib/supabase";
 import type { NatalChart } from "@/lib/astro-types";
@@ -59,18 +59,21 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(() => paramDate ? parseInt(paramDate.slice(5, 7))  : now.getMonth() + 1);
   const [selectedDate, setSelectedDate] = useState<string | null>(paramDate);
 
-  const [readings, setReadings]         = useState<SavedReading[]>([]);
-  const [selectedId, setSelectedId]     = useState<string | null>(null);
-  const [compareId, setCompareId]       = useState<string | null>(null);
-  const [compareMode, setCompareMode]   = useState(false);
+  const [readings, setReadings]             = useState<SavedReading[]>([]);
+  const [selectedId, setSelectedId]         = useState<string | null>(null);
+  const [compareId, setCompareId]           = useState<string | null>(null);
+  const [compareMode, setCompareMode]       = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [loadError, setLoadError]       = useState("");
-  const [isPremium, setIsPremium]       = useState(false);
+  const [loadError, setLoadError]           = useState("");
+  const [isPremium, setIsPremium]           = useState(false);
 
   const authHeader: Record<string, string> = session ? { Authorization: `Bearer ${session.access_token}` } : {};
 
   const selectedReading = useMemo(() => readings.find(r => r.id === selectedId) ?? null, [readings, selectedId]);
-  const compareReading  = useMemo(() => compareMode && compareId ? readings.find(r => r.id === compareId) ?? null : null, [readings, compareId, compareMode]);
+  const compareReading  = useMemo(
+    () => compareMode && compareId ? readings.find(r => r.id === compareId) ?? null : null,
+    [readings, compareId, compareMode]
+  );
 
   const days = useMemo(
     () => selectedReading?.chart_data ? computeMonthData(selectedReading.chart_data, year, month) : [],
@@ -82,20 +85,27 @@ export default function CalendarPage() {
     [compareReading, year, month]
   );
 
-  // Power day map — premium only (Map<date, PowerDay>)
-  const powerDayMap = useMemo<Map<string, PowerDay>>(() => {
-    if (!isPremium || !selectedReading?.chart_data) return new Map();
-    return new Map(getPowerDays(selectedReading.chart_data, year, month).map(d => [d.date, d]));
+  // Windows model — replaces powerDayMap (premium only)
+  const powerWindows = useMemo<TransitWindow[]>(() => {
+    if (!isPremium || !selectedReading?.chart_data) return [];
+    return getPowerWindows(selectedReading.chart_data, year, month);
   }, [isPremium, selectedReading, year, month]);
+
+  const windowDateMap = useMemo(
+    () => buildWindowDateMap(powerWindows),
+    [powerWindows]
+  );
+
+  // Active window for selected date (the highest-score window containing it)
+  const selectedActiveWindow = useMemo<TransitWindow | undefined>(() => {
+    if (!selectedDate || !isPremium) return undefined;
+    const ws = windowDateMap.get(selectedDate);
+    return ws?.[0]; // already sorted by score desc from getPowerWindows
+  }, [selectedDate, windowDateMap, isPremium]);
 
   const selectedDayData = useMemo(
     () => days.find(d => d.date === selectedDate) ?? undefined,
     [days, selectedDate]
-  );
-
-  const selectedDayClass = useMemo(
-    () => selectedDayData ? getDayClass(selectedDayData, powerDayMap, isPremium) : "normal",
-    [selectedDayData, powerDayMap, isPremium]
   );
 
   const solarReturnDays = useMemo(
@@ -157,9 +167,8 @@ export default function CalendarPage() {
         dayData={selectedDayData}
         chart={selectedReading.chart_data}
         readingId={selectedReading.id}
-        dayClass={selectedDayClass}
-        powerDay={powerDayMap.get(selectedDate)}
         isPremium={isPremium}
+        activeWindow={selectedActiveWindow}
         onClose={() => setSelectedDate(null)}
       />
     );
@@ -216,7 +225,6 @@ export default function CalendarPage() {
 
         {!loadingHistory && readings.length > 0 && (
           <>
-            {/* Solar Return banner */}
             {solarReturnDays !== null && solarReturnDays <= 14 && (
               <Link
                 href={`${ROUTES.app.solarReturn.path}${selectedId ? `?reading_id=${selectedId}` : ""}`}
@@ -299,7 +307,22 @@ export default function CalendarPage() {
                 )}
               </div>
 
-              {/* Month navigator */}
+              {/* Month summary card — above grid */}
+              {selectedReading?.chart_data && (
+                <MonthSummary
+                  year={year}
+                  month={month}
+                  isPremium={isPremium}
+                  onWindowClick={(peakDate) => {
+                    const d = new Date(peakDate + "T12:00:00Z");
+                    setYear(d.getUTCFullYear());
+                    setMonth(d.getUTCMonth() + 1);
+                    setSelectedDate(peakDate);
+                  }}
+                />
+              )}
+
+              {/* Month navigator + grid */}
               <div className="glass-card rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-4">
                   <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
@@ -327,7 +350,8 @@ export default function CalendarPage() {
                     selectedDate={selectedDate}
                     onSelect={(date) => setSelectedDate(prev => prev === date ? null : date)}
                     isPremium={isPremium}
-                    powerDayMap={powerDayMap}
+                    powerWindows={powerWindows}
+                    windowDateMap={windowDateMap}
                   />
                 ) : (
                   <div className="text-center py-8 text-slate-500 text-sm">Wybierz kosmogram, aby zobaczyć siatkę.</div>
@@ -339,7 +363,6 @@ export default function CalendarPage() {
                 <UpcomingEvents
                   chart={selectedReading.chart_data}
                   onDaySelect={(date) => {
-                    // Navigate to the month containing the peak date, then select it
                     const d = new Date(date + "T12:00:00Z");
                     setYear(d.getUTCFullYear());
                     setMonth(d.getUTCMonth() + 1);

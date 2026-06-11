@@ -119,6 +119,7 @@ export async function aiComplete({
   messages,
   maxTokens,
   temperature,
+  model: modelOverride,
   task = "chat",
 }: AiCompleteParams): Promise<string> {
   if (process.env.AI_DISABLED === "true") throw new AiDisabledError();
@@ -129,7 +130,7 @@ export async function aiComplete({
     );
   }
 
-  const model = "claude-haiku-4-5-20251001";
+  const model = modelOverride ?? "claude-haiku-4-5-20251001";
   const t0    = Date.now();
 
   try {

@@ -5,7 +5,7 @@ import * as Astronomy from "astronomy-engine";
 import { longitudeToSign } from "@/lib/astro-types";
 import type { NatalChart } from "@/lib/astro-types";
 import { TrendingUp, AlertTriangle } from "lucide-react";
-import { SIGN_LOCATIVE, ASPECT_LABEL_PL, natalInstrumental } from "@/lib/i18n/astro";
+import { transitPhrase } from "@/lib/i18n/astro";
 
 const SHORT_MONTHS = ["sty","lut","mar","kwi","maj","cze","lip","sie","wrz","paź","lis","gru"];
 
@@ -20,8 +20,9 @@ type PersonalEvent = {
   peakDate:    string;
   transitPlanet: string;
   transitSign:   string;
-  aspectLabel:   string;
+  aspectType:    string;   // English key for transitPhrase
   natalPlanet:   string;
+  natalSign:     string;
   favorable:     boolean;
   meaning:       string;
   windowDays:    number;
@@ -112,8 +113,9 @@ function computeEvents(chart: NatalChart, fromDate: Date, lookahead: number): Pe
                 peakDate:     new Date(fromDate.getTime() + peakIdx * 86400000).toISOString().slice(0, 10),
                 transitPlanet: tName,
                 transitSign:   tSign,
-                aspectLabel:   ASPECT_LABEL_PL[typeName] ?? typeName,
+                aspectType:    typeName,
                 natalPlanet:   natal.name,
+                natalSign:     natal.sign,
                 favorable,
                 meaning: favorable ? (MEANINGS[tName]?.fav ?? "") : (MEANINGS[tName]?.tense ?? ""),
                 windowDays,
@@ -176,10 +178,7 @@ export default function UpcomingEvents({ chart, onDaySelect }: Props) {
               {/* Content */}
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-slate-200 leading-snug group-hover:text-white transition-colors">
-                  <span className="font-semibold text-white">{e.transitPlanet}</span>
-                  {" "}<span className="text-slate-400 text-xs">{e.aspectLabel}</span>{" "}
-                  <span className="text-amber-200">{natalInstrumental(e.natalPlanet)}</span>
-                  {" "}<span className="text-slate-500 text-xs">{`w ${SIGN_LOCATIVE[e.transitSign] ?? e.transitSign}`}</span>
+                  {transitPhrase({ transitPlanet: e.transitPlanet, transitSign: e.transitSign, aspectType: e.aspectType, natalPoint: e.natalPlanet, natalSign: e.natalSign })}
                 </p>
                 <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{e.meaning}</p>
                 <p className="text-[11px] text-slate-600 mt-1">{durationLabel(e)}</p>

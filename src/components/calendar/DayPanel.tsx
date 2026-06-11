@@ -4,22 +4,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as Astronomy from "astronomy-engine";
 import { longitudeToSign } from "@/lib/astro-types";
 import type { NatalChart } from "@/lib/astro-types";
-import type { DayData, TransitAspect } from "@/lib/chart-engine";
-import type { PowerDay } from "@/lib/astro/powerDays";
-import type { DayClass } from "@/lib/astro/dayClasses";
+import type { DayData } from "@/lib/chart-engine";
+import type { TransitWindow } from "@/lib/astro/windows";
 import { MOON_PHASE_INFO, getRitualPrompt } from "@/lib/moonPhases";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
-import DailyReading from "@/components/generate/DailyReading";
 import { motion } from "framer-motion";
-import { X, Moon, TrendingUp, AlertTriangle, Pencil, Lock, Zap } from "lucide-react";
+import { X, Moon, TrendingUp, AlertTriangle, Pencil, Lock } from "lucide-react";
 import {
-  SIGN_LOCATIVE, ASPECT_LABEL_PL, PLANET_GENITIVE,
-  natalInstrumental, inSign,
+  SIGN_LOCATIVE, ASPECT_LABEL_PL,
+  natalInstrumental, transitPhrase,
 } from "@/lib/i18n/astro";
-import type { Transit } from "@/lib/astro/transits";
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function getMoonSign(date: Date): string {
   const geo = Astronomy.GeoVector(Astronomy.Body.Moon, date, false);
@@ -37,20 +34,23 @@ function formatDatePL(dateStr: string): string {
   });
 }
 
-// Declension-aware transit sentence: "Jowisz w Byku trygon do natalnego Saturna w Koziorożcu"
-function transitHeadline(t: Transit): string {
-  const aspect = ASPECT_LABEL_PL[t.aspectType] ?? t.aspectType;
-  const natalSign = SIGN_LOCATIVE[t.natalSign] ?? t.natalSign;
-  return `${t.transitPlanet} ${inSign(t.transitSign)} — ${aspect} do natalnego ${PLANET_GENITIVE[t.natalPoint] ?? t.natalPoint} w ${natalSign}`;
+function formatDateShortPL(dateStr: string): string {
+  return new Date(dateStr + "T12:00:00Z").toLocaleDateString("pl-PL", {
+    weekday: "long", day: "numeric", month: "long",
+  });
 }
 
-// Older DayData transit → text (for sprzyja/uważaj sections)
-function transitToText(t: TransitAspect): string {
-  const verb = t.favorable ? "harmonizuje z" : "tworzy napięcie z";
-  return `${t.transit_planet} ${inSign(t.transit_sign)} ${verb} ${natalInstrumental(t.natal_planet)}`;
-}
+// ── Structured personal horoscope (from daily_personal_horoscopes table) ─────
 
-// ── Static text maps (replaces AI for non-significant days) ──────────────────
+type PersonalHoroscope = {
+  headline:   string;
+  main:       string;
+  reflection: string;
+  weather?:   { intensity: number; element: string; character: string };
+  cached:     boolean;
+};
+
+// ── Static text pools ─────────────────────────────────────────────────────────
 
 const SUPPORTING_ENABLES: Record<string, string> = {
   "Słońce":   "dobry moment na pewność siebie i ważne decyzje",
@@ -99,98 +99,127 @@ const NORMAL_SENTENCES = [
   "Spokojny dzień. Dobry na zadania, które wymagają skupienia bez zewnętrznego bodźca.",
 ];
 
-function getReflectionQuestion(transit: TransitAspect | null, dayOfYear: number): string {
-  if (transit) {
-    const pool = TRANSIT_QUESTIONS[transit.transit_planet];
-    if (pool) return pool[dayOfYear % pool.length];
-  }
-  return "Czego naprawdę potrzebujesz dziś od siebie?";
-}
-
 // ── Props ────────────────────────────────────────────────────────────────────
 
 type Props = {
-  date:       string;
-  dayData?:   DayData;
-  chart:      NatalChart;
-  readingId:  string;
-  dayClass:   DayClass;
-  powerDay?:  PowerDay;
-  isPremium:  boolean;
-  onClose:    () => void;
+  date:         string;
+  dayData?:     DayData;
+  chart:        NatalChart;
+  readingId:    string;
+  isPremium:    boolean;
+  // Window this day belongs to (if any), for "peak" status
+  activeWindow?: TransitWindow;
+  onClose:      () => void;
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function DayPanel({
-  date, dayData, chart, readingId, dayClass, powerDay, isPremium, onClose,
+  date, dayData, chart, readingId, isPremium, activeWindow, onClose,
 }: Props) {
   const { session } = useAuth();
-  const dateObj   = new Date(date + "T12:00:00Z");
-  const moonSign  = getMoonSign(dateObj);
-  const dayOfYear = getDayOfYear(dateObj);
-  const moonPhase = dayData?.moonPhase ?? null;
-  const moonPhaseInfo = moonPhase ? MOON_PHASE_INFO[moonPhase] : null;
-  const ritualPrompt  = moonPhase ? getRitualPrompt(moonPhase, dayOfYear) : null;
+  const today      = new Date().toISOString().slice(0, 10);
+  const isToday    = date === today;
+  const isPeak     = !!activeWindow && activeWindow.peak === date;
+
+  const dateObj    = new Date(date + "T12:00:00Z");
+  const moonSign   = getMoonSign(dateObj);
+  const dayOfYear  = getDayOfYear(dateObj);
+  const moonPhase  = dayData?.moonPhase ?? null;
+  const moonPhaseInfo  = moonPhase ? MOON_PHASE_INFO[moonPhase] : null;
+  const ritualPrompt   = moonPhase ? getRitualPrompt(moonPhase, dayOfYear) : null;
 
   const supporting  = (dayData?.score ?? 0) >= 3 ? (dayData?.topSupporting  ?? null) : null;
   const challenging = (dayData?.score ?? 0) >= 3 ? (dayData?.topChallenging ?? null) : null;
-  const question    = getReflectionQuestion(supporting, dayOfYear);
 
-  const authHeader: Record<string, string> = session ? { Authorization: `Bearer ${session.access_token}` } : {};
+  const authHeader: Record<string, string> = session
+    ? { Authorization: `Bearer ${session.access_token}` }
+    : {};
 
   // ── State ──
-  const [note, setNote]               = useState("");
-  const [noteSaving, setNoteSaving]   = useState(false);
-  const [noteLoaded, setNoteLoaded]   = useState(false);
+  const [note, setNote]             = useState("");
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [noteLoaded, setNoteLoaded] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // State for "significant" day on-demand interpretation
+  // Today: personal horoscope (headline/main/reflection)
+  const [horoscope, setHoroscope]       = useState<PersonalHoroscope | null>(null);
+  const [horoLoading, setHoroLoading]   = useState(false);  // on-demand generation
+  const [horoChecking, setHoroChecking] = useState(false);  // checking cache on mount
+  const [horoError, setHoroError]       = useState("");
+
+  // Other days (peak): cached reading (just main text)
+  const [peakText, setPeakText]         = useState<string | null>(null);
+  const [peakChecking, setPeakChecking] = useState(false);
+  const [peakLoading, setPeakLoading]   = useState(false);
+  const [peakError, setPeakError]       = useState("");
+
+  // Significant days (on-demand interpretation)
   const [sigContent, setSigContent]   = useState<string | null>(null);
+  const [sigChecking, setSigChecking] = useState(false);
   const [sigLoading, setSigLoading]   = useState(false);
   const [sigError, setSigError]       = useState("");
 
-  // State for legacy daily-reading (power/exceptional days on-demand fallback)
-  const [readingText, setReadingText] = useState("");
-  const [generating, setGenerating]   = useState(false);
-  const [genError, setGenError]       = useState("");
+  const isSignificant = !isPeak && (dayData?.score ?? 0) >= 5;
 
-  // ── Load note + check cache ──
+  // ── Load on mount ──
   useEffect(() => {
-    setReadingText(""); setGenError(""); setSigContent(null); setSigError("");
+    setHoroscope(null); setHoroError(""); setHoroChecking(false);
+    setPeakText(null);  setPeakError("");  setPeakChecking(false);
+    setSigContent(null); setSigError(""); setSigChecking(false);
+    setNote(""); setNoteLoaded(false);
+
     if (!session) return;
 
+    // Always load note
     fetch(`/api/calendar-note?date=${date}&reading_id=${readingId}`, { headers: authHeader })
       .then(r => r.json())
       .then(({ note_text }) => { setNote(note_text ?? ""); setNoteLoaded(true); })
       .catch(() => setNoteLoaded(true));
 
-    // For significant days: check cache silently
-    if (isPremium && dayClass === "significant") {
+    if (!isPremium) return;
+
+    if (isToday) {
+      // Today: load personal horoscope
+      setHoroChecking(true);
+      fetch(`/api/daily-personal-horoscope?date=${date}`, { headers: authHeader })
+        .then(async r => {
+          if (r.ok) setHoroscope(await r.json());
+        })
+        .catch(() => {})
+        .finally(() => setHoroChecking(false));
+    } else if (isPeak) {
+      // Peak day: load cached reading
+      setPeakChecking(true);
+      fetch(`/api/daily-personal-horoscope?date=${date}`, { headers: authHeader })
+        .then(async r => {
+          if (r.ok) { const d = await r.json(); setPeakText(d.main ?? null); }
+        })
+        .catch(() => {})
+        .finally(() => setPeakChecking(false));
+    } else if (isSignificant) {
+      // Significant day: check interpretation cache silently
+      setSigChecking(true);
       fetch("/api/day-interpretation", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({ date }),
       }).then(async r => {
-        if (r.ok) {
-          const { content } = await r.json() as { content: string };
-          setSigContent(content);
-        }
-      }).catch(() => {});
-    }
-
-    // For power/exceptional: check daily_personal_horoscopes cache
-    if (isPremium && (dayClass === "power" || dayClass === "exceptional")) {
-      fetch(`/api/daily-personal-horoscope?date=${date}`, { headers: authHeader })
-        .then(async r => { if (r.ok) { const d = await r.json(); setReadingText(d.main ?? ""); } })
-        .catch(() => {});
+        if (r.ok) { const { content } = await r.json() as { content: string }; setSigContent(content); }
+      }).catch(() => {})
+      .finally(() => setSigChecking(false));
     }
 
     import("posthog-js").then(({ default: ph }) =>
-      ph?.capture("calendar_day_opened", { date, day_class: dayClass })
+      ph?.capture("calendar_day_opened", {
+        date,
+        is_today: isToday,
+        is_peak: isPeak,
+        score: dayData?.score ?? 0,
+      })
     );
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, readingId, session, dayClass, isPremium]);
+  }, [date, readingId, session, isPremium]);
 
   const saveNote = useCallback((text: string) => {
     if (!session) return;
@@ -209,14 +238,35 @@ export default function DayPanel({
     debounceRef.current = setTimeout(() => saveNote(text), 400);
   }
 
-  // On-demand for "significant" class
+  // On-demand: today's horoscope (cron hasn't run yet)
+  async function handleHoroGenerate() {
+    if (!session) return;
+    setHoroLoading(true); setHoroError("");
+    try {
+      const res = await fetch(`/api/daily-personal-horoscope?date=${date}`, { headers: authHeader });
+      if (res.ok) setHoroscope(await res.json());
+      else { const b = await res.json().catch(() => ({})); setHoroError(b.error ?? "Błąd"); }
+    } finally { setHoroLoading(false); }
+  }
+
+  // On-demand: peak day reading (cron hasn't run yet)
+  async function handlePeakGenerate() {
+    if (!session) return;
+    setPeakLoading(true); setPeakError("");
+    try {
+      const res = await fetch(`/api/daily-personal-horoscope?date=${date}`, { headers: authHeader });
+      if (res.ok) { const d = await res.json(); setPeakText(d.main ?? ""); }
+      else { const b = await res.json().catch(() => ({})); setPeakError(b.error ?? "Błąd"); }
+    } finally { setPeakLoading(false); }
+  }
+
+  // On-demand: significant day interpretation
   async function handleSigGenerate() {
     if (!session || sigLoading) return;
-    setSigLoading(true);
-    setSigError("");
+    setSigLoading(true); setSigError("");
     try {
       import("posthog-js").then(({ default: ph }) =>
-        ph?.capture("day_interpretation_generated", { date, day_class: dayClass })
+        ph?.capture("day_reading_generated", { date, is_peak: isPeak })
       );
       const res = await fetch("/api/day-interpretation", {
         method: "POST",
@@ -228,78 +278,65 @@ export default function DayPanel({
       setSigContent(content);
     } catch (e) {
       setSigError(e instanceof Error ? e.message : "Nieznany błąd");
-    } finally {
-      setSigLoading(false);
-    }
+    } finally { setSigLoading(false); }
   }
 
-  // On-demand fallback for power/exceptional (cron hasn't run yet)
-  async function handlePowerGenerate() {
-    if (!session) return;
-    setGenerating(true);
-    setGenError("");
-    try {
-      const birth = chart.birthData;
-      const chartRes = await fetch("/api/chart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: birth.date, time: birth.time, place: birth.place, lat: birth.lat, lng: birth.lng, timeUnknown: birth.timeUnknown }),
-      });
-      if (!chartRes.ok) throw new Error("Błąd kosmogramu");
-      const { promptContext } = await chartRes.json() as { promptContext: string };
-      const res = await fetch("/api/daily-reading", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ promptContext, interpretationContext: "", timezone: birth.timezone, chartData: chart, targetDate: date }),
-      });
-      if (!res.ok) throw new Error("Błąd generowania");
-      const { dailyReading } = await res.json() as { dailyReading: string };
-      setReadingText(dailyReading);
-    } catch (e) {
-      setGenError(e instanceof Error ? e.message : "Nieznany błąd");
-    } finally {
-      setGenerating(false);
+  // ── Helpers ──
+  const question = (() => {
+    const planet = supporting?.transit_planet ?? activeWindow?.transitPlanet ?? null;
+    if (planet) {
+      const pool = TRANSIT_QUESTIONS[planet];
+      if (pool) return pool[dayOfYear % pool.length];
     }
-  }
+    return "Czego naprawdę potrzebujesz dziś od siebie?";
+  })();
 
-  // ── Headline (deterministic) ──
-  const headline = powerDay
-    ? transitHeadline(powerDay.topTransit)
-    : supporting
-    ? `${supporting.transit_planet} aktywuje Twojego ${supporting.natal_planet}`
-    : null;
-
-  // ── Normal day sentence ──
   const normalSentence = NORMAL_SENTENCES[dayOfYear % NORMAL_SENTENCES.length];
+  const hasContent = (dayData?.score ?? 0) >= 3 || isPeak;
 
-  // ── Border color by class ──
-  const borderCls =
-    dayClass === "exceptional" ? "border-amber-500/50" :
-    dayClass === "power"       ? "border-amber-700/40" :
-    dayClass === "significant" ? "border-white/12" :
-                                 "border-white/8";
+  // ── Border color ──
+  const borderCls = isPeak
+    ? "border-amber-700/40"
+    : (dayData?.score ?? 0) >= 5
+    ? "border-white/12"
+    : "border-white/8";
+
+  // ── Spinner component ──
+  function Spinner() {
+    return (
+      <div className="flex items-center justify-center py-6">
+        <span className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(212,175,55,0.25)", borderTopColor: "#D4AF37" }} />
+      </div>
+    );
+  }
 
   return (
     <div className={`glass-card rounded-2xl border overflow-hidden ${borderCls}`}>
 
-      {/* ── 1. Header meta ── */}
-      <div className={`flex items-center justify-between px-5 py-4 border-b border-white/6 ${dayClass === "exceptional" ? "bg-amber-900/10" : ""}`}>
+      {/* ── 1. Header ── */}
+      <div className={`flex items-center justify-between px-5 py-4 border-b border-white/6 ${isPeak ? "bg-amber-900/8" : ""}`}>
         <div>
-          <p className="text-xs text-slate-500 uppercase tracking-widest mb-0.5">Wybrany dzień</p>
-          <h3 className={`text-base font-semibold capitalize ${dayClass === "exceptional" ? "text-amber-100" : "text-white"}`}>
-            {formatDatePL(date)}
+          <p className="text-xs text-slate-500 uppercase tracking-widest mb-0.5">
+            {isToday ? "Dzisiaj" : "Wybrany dzień"}
+          </p>
+          <h3 className={`text-base font-semibold capitalize ${isPeak ? "text-amber-100" : "text-white"}`}>
+            {isToday ? formatDateShortPL(date) : formatDatePL(date)}
           </h3>
           <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-            {/* Day class chip — only for exceptional */}
-            {dayClass === "exceptional" && (
+            {isPeak && (
               <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold text-amber-200 bg-amber-900/40 border border-amber-500/40">
-                ★ Wyjątkowy dzień
+                ★ Dzień Mocy
               </span>
             )}
-            {/* Moon sign */}
+            {activeWindow && !isPeak && (
+              <span className="px-2 py-0.5 rounded-full text-[11px] text-amber-300/70 bg-amber-900/20 border border-amber-700/30">
+                Okno: {activeWindow.transitPlanet} → {activeWindow.natalPoint}
+              </span>
+            )}
             <span className="flex items-center gap-1 text-xs text-slate-400">
               <Moon className="w-3 h-3 text-indigo-400" />
-              Księżyc w <span className="text-indigo-300 font-medium ml-0.5">{SIGN_LOCATIVE[moonSign] ?? moonSign}</span>
+              Księżyc w{" "}
+              <span className="text-indigo-300 font-medium ml-0.5">{SIGN_LOCATIVE[moonSign] ?? moonSign}</span>
             </span>
           </div>
         </div>
@@ -310,27 +347,35 @@ export default function DayPanel({
 
       <div className="p-5 space-y-4">
 
-        {/* ── 2. Headline — one sentence from dominant transit ── */}
-        {headline && (dayClass === "power" || dayClass === "exceptional" || dayClass === "significant") && (
-          <p className={`text-sm font-medium leading-snug ${dayClass === "exceptional" ? "text-amber-200" : "text-slate-200"}`}>
-            {headline}
+        {/* ── 2. Window context (if in window, not peak) ── */}
+        {activeWindow && !isPeak && (
+          <p className="text-sm text-slate-400 leading-snug">
+            {transitPhrase(activeWindow)}
+            {" — "}
+            <span className="text-slate-500 text-xs">
+              dzień {Math.round(
+                (new Date(date + "T12:00:00Z").getTime() - new Date(activeWindow.start + "T12:00:00Z").getTime()) / 86_400_000
+              ) + 1} z {activeWindow.lengthDays}, peak{" "}
+              {date < activeWindow.peak
+                ? `za ${Math.round((new Date(activeWindow.peak + "T12:00:00Z").getTime() - new Date(date + "T12:00:00Z").getTime()) / 86_400_000)} dni`
+                : "już za nami"}
+            </span>
           </p>
         )}
 
-        {/* ── 3a. Normal day: static sentence ── */}
-        {dayClass === "normal" && (
-          <p className="text-sm text-slate-500 leading-relaxed">{normalSentence}</p>
-        )}
-
-        {/* ── 3b. Sprzyja / Uważaj — only for significant, power, exceptional ── */}
-        {(dayClass === "significant" || dayClass === "power" || dayClass === "exceptional") && (supporting || challenging) && (
+        {/* ── 3. Sprzyja / Uważaj ── */}
+        {hasContent && (supporting || challenging) && (
           <div className="space-y-2">
             {supporting && (
               <div className="flex gap-3 p-3.5 rounded-xl bg-emerald-900/15 border border-emerald-800/25">
                 <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-emerald-400/80 uppercase tracking-wider mb-1">Co sprzyja</p>
-                  <p className="text-sm text-slate-200 leading-snug">{transitToText(supporting)}</p>
+                  <p className="text-sm text-slate-200 leading-snug">
+                    {supporting.transit_planet} w {SIGN_LOCATIVE[supporting.transit_sign] ?? supporting.transit_sign}
+                    {" — harmonizuje z "}
+                    {natalInstrumental(supporting.natal_planet)}
+                  </p>
                   <p className="text-xs text-emerald-300/70 mt-1">{SUPPORTING_ENABLES[supporting.transit_planet]}</p>
                 </div>
               </div>
@@ -340,7 +385,11 @@ export default function DayPanel({
                 <AlertTriangle className="w-4 h-4 text-amber-400/70 shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-amber-400/60 uppercase tracking-wider mb-1">Na co uważać</p>
-                  <p className="text-sm text-slate-200 leading-snug">{transitToText(challenging)}</p>
+                  <p className="text-sm text-slate-200 leading-snug">
+                    {challenging.transit_planet} w {SIGN_LOCATIVE[challenging.transit_sign] ?? challenging.transit_sign}
+                    {" — tworzy napięcie z "}
+                    {natalInstrumental(challenging.natal_planet)}
+                  </p>
                   <p className="text-xs text-amber-300/60 mt-1">{CHALLENGING_WATCH[challenging.transit_planet]}</p>
                 </div>
               </div>
@@ -348,7 +397,12 @@ export default function DayPanel({
           </div>
         )}
 
-        {/* ── Moon ritual (replaces sections on phase days) ── */}
+        {/* Normal day info */}
+        {!hasContent && !moonPhaseInfo && (
+          <p className="text-sm text-slate-500 leading-relaxed">{normalSentence}</p>
+        )}
+
+        {/* ── Moon ritual ── */}
         {moonPhaseInfo && ritualPrompt && (
           <div className="rounded-xl bg-indigo-950/40 border border-indigo-700/30 p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -362,91 +416,113 @@ export default function DayPanel({
           </div>
         )}
 
-        {/* ── 4. Personalna interpretacja ── */}
-
-        {/* 4a. Power / Exceptional — premium, from cron or on-demand */}
-        {isPremium && (dayClass === "power" || dayClass === "exceptional") && (
-          <>
-            {readingText ? (
-              <>
-                <DailyReading text={readingText} loading={generating} dateLabel={formatDatePL(date)} />
-                <button onClick={handlePowerGenerate} disabled={generating} className="text-xs text-slate-600 hover:text-slate-400 transition-colors flex items-center gap-1">
-                  <CosmoIcon className="w-3 h-3" /> Generuj ponownie
-                </button>
-              </>
-            ) : (
+        {/* ── 4. Personalna treść ── */}
+        {isPremium && isToday && (
+          /* Today: personal horoscope with headline/main/reflection */
+          horoChecking ? <Spinner /> :
+          horoscope ? (
+            <div className="space-y-3">
+              <h4 className="text-base font-semibold text-amber-100 leading-snug" style={{ fontFamily: "Georgia, serif" }}>
+                {horoscope.headline}
+              </h4>
+              {horoscope.main.split("\n\n").filter(Boolean).map((p, i) => (
+                <p key={i} className="text-sm text-slate-300 leading-relaxed">{p}</p>
+              ))}
+              {horoscope.reflection && (
+                <div className="rounded-xl p-3.5" style={{ background: "rgba(212,175,55,0.05)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
+                  <p className="text-xs uppercase tracking-widest text-amber-500/50 mb-1.5">Refleksja</p>
+                  <p className="text-sm text-slate-300 italic leading-relaxed">{horoscope.reflection}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-slate-500">{horoError || "Horoskop na dziś nie jest jeszcze gotowy."}</p>
               <motion.button
-                onClick={handlePowerGenerate}
-                disabled={generating}
-                whileHover={{ y: -1 }}
-                whileTap={{ scale: 0.98 }}
+                onClick={handleHoroGenerate}
+                disabled={horoLoading}
+                whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
                 style={{ background: "rgba(5,4,14,0.90)", border: "0.5px solid rgba(212,175,55,0.55)", color: "#D4AF37" }}
               >
-                {generating
-                  ? <><span className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(212,175,55,0.25)", borderTopColor: "#D4AF37" }} />Interpretuję…</>
-                  : <><CosmoIcon className="w-4 h-4" />{dayClass === "exceptional" ? "★ Wygeneruj interpretację" : "Odczytaj ten dzień"}</>}
+                {horoLoading
+                  ? <><span className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(212,175,55,0.25)", borderTopColor: "#D4AF37" }} />Generuję…</>
+                  : <><CosmoIcon className="w-4 h-4" />Wygeneruj horoskop</>}
               </motion.button>
-            )}
-            {genError && <p className="text-xs text-red-400">{genError}</p>}
-          </>
+            </div>
+          )
         )}
 
-        {/* 4b. Significant — premium on-demand, cached after first generation */}
-        {isPremium && dayClass === "significant" && (
-          <>
-            {sigContent ? (
-              <p className="text-sm text-slate-300 leading-relaxed">{sigContent}</p>
-            ) : (
-              <>
-                <motion.button
-                  onClick={handleSigGenerate}
-                  disabled={sigLoading}
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
-                  style={{ background: "rgba(5,4,14,0.90)", border: "0.5px solid rgba(212,175,55,0.35)", color: "rgba(212,175,55,0.85)" }}
-                >
-                  {sigLoading
-                    ? <><span className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(212,175,55,0.25)", borderTopColor: "#D4AF37" }} />Odczytuję…</>
-                    : <><CosmoIcon className="w-4 h-4" />Odczytaj ten dzień</>}
-                </motion.button>
-                {sigError && <p className="text-xs text-red-400">{sigError}</p>}
-              </>
-            )}
-          </>
+        {isPremium && !isToday && isPeak && (
+          /* Peak day: odczyt dnia (NOT called "horoskop") */
+          peakChecking ? <Spinner /> :
+          peakText ? (
+            <p className="text-sm text-slate-300 leading-relaxed">{peakText}</p>
+          ) : (
+            <div className="space-y-2">
+              {peakError && <p className="text-xs text-red-400">{peakError}</p>}
+              <motion.button
+                onClick={handlePeakGenerate}
+                disabled={peakLoading}
+                whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+                style={{ background: "rgba(5,4,14,0.90)", border: "0.5px solid rgba(212,175,55,0.55)", color: "#D4AF37" }}
+              >
+                {peakLoading
+                  ? <><span className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(212,175,55,0.25)", borderTopColor: "#D4AF37" }} />Odczytuję…</>
+                  : <><CosmoIcon className="w-4 h-4" />Odczytaj ten dzień</>}
+              </motion.button>
+            </div>
+          )
         )}
 
-        {/* 4c. Free user — lock */}
-        {!isPremium && (dayClass === "power" || dayClass === "exceptional" || dayClass === "significant") && (
+        {isPremium && !isToday && !isPeak && isSignificant && (
+          /* Significant day: on-demand interpretation, cached after first */
+          sigChecking ? <Spinner /> :
+          sigContent ? (
+            <p className="text-sm text-slate-300 leading-relaxed">{sigContent}</p>
+          ) : (
+            <>
+              <motion.button
+                onClick={handleSigGenerate}
+                disabled={sigLoading}
+                whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
+                style={{ background: "rgba(5,4,14,0.90)", border: "0.5px solid rgba(212,175,55,0.35)", color: "rgba(212,175,55,0.85)" }}
+              >
+                {sigLoading
+                  ? <><span className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(212,175,55,0.25)", borderTopColor: "#D4AF37" }} />Odczytuję…</>
+                  : <><CosmoIcon className="w-4 h-4" />Odczytaj ten dzień</>}
+              </motion.button>
+              {sigError && <p className="text-xs text-red-400">{sigError}</p>}
+            </>
+          )
+        )}
+
+        {/* Free user lock */}
+        {!isPremium && (isPeak || isSignificant) && (
           <div className="flex items-center gap-3 p-3.5 rounded-xl" style={{ background: "rgba(212,175,55,0.04)", border: "0.5px solid rgba(212,175,55,0.14)" }}>
             <Lock className="w-4 h-4 text-amber-500/40 shrink-0" />
             <p className="text-sm text-slate-500">
-              Personalny odczyt dni — dostępny w <a href="/pricing" className="text-amber-400 hover:text-amber-300 transition-colors">Premium</a>.
+              Personalny odczyt dni — dostępny w{" "}
+              <a href="/pricing" className="text-amber-400 hover:text-amber-300 transition-colors">Premium</a>.
             </p>
           </div>
-        )}
-
-        {/* ── Power Day "Dzień Mocy" explain widget (Zap button) ── */}
-        {isPremium && dayClass === "power" && powerDay && (
-          <PowerDayWidget date={date} transitLabel={transitHeadline(powerDay.topTransit)} session={session} />
         )}
 
         {/* ── Divider ── */}
         <div className="h-px bg-gradient-to-r from-transparent via-white/8 to-transparent" />
 
-        {/* ── 5. Refleksja + notatka — only for class 1/2/4, not normal ── */}
-        {dayClass !== "normal" && (
-          !moonPhaseInfo || !ritualPrompt ? (
-            <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.08)" }}>
-              <p className="text-[10px] uppercase tracking-widest font-medium mb-2 flex items-center gap-1.5" style={{ color: "rgba(100,116,139,0.7)" }}>
-                <Pencil className="w-3 h-3" />
-                Pytanie na ten dzień
-              </p>
-              <p className="text-sm italic leading-relaxed" style={{ color: "rgba(203,213,225,0.85)" }}>&ldquo;{question}&rdquo;</p>
-              <p className="text-[11px] mt-2" style={{ color: "rgba(100,116,139,0.55)" }}>Zapisz odpowiedź w notatce poniżej ↓</p>
-            </div>
-          ) : null
+        {/* ── Refleksja ── */}
+        {hasContent && !moonPhaseInfo && (
+          <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.08)" }}>
+            <p className="text-[10px] uppercase tracking-widest font-medium mb-2 flex items-center gap-1.5" style={{ color: "rgba(100,116,139,0.7)" }}>
+              <Pencil className="w-3 h-3" />
+              Pytanie na ten dzień
+            </p>
+            <p className="text-sm italic leading-relaxed" style={{ color: "rgba(203,213,225,0.85)" }}>&ldquo;{question}&rdquo;</p>
+            <p className="text-[11px] mt-2" style={{ color: "rgba(100,116,139,0.55)" }}>Zapisz odpowiedź w notatce poniżej ↓</p>
+          </div>
         )}
 
         {/* ── Notatka ── */}
@@ -459,7 +535,7 @@ export default function DayPanel({
             <textarea
               value={note}
               onChange={e => handleNoteChange(e.target.value)}
-              placeholder={dayClass !== "normal" ? "Odpowiedź na pytanie, refleksja, plan…" : "Notatka na ten dzień…"}
+              placeholder={hasContent ? "Odpowiedź na pytanie, refleksja, plan…" : "Notatka na ten dzień…"}
               rows={3}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-slate-300 placeholder-slate-600 focus:outline-none focus:border-amber-700/50 resize-none transition-all"
             />
@@ -467,67 +543,6 @@ export default function DayPanel({
         )}
 
       </div>
-    </div>
-  );
-}
-
-// ── PowerDayWidget (sub-component, wyjaśnienie Dnia Mocy) ─────────────────────
-
-function PowerDayWidget({ date, transitLabel, session }: {
-  date: string;
-  transitLabel: string;
-  session: { access_token: string } | null;
-}) {
-  const [content, setContent]   = useState<string | null>(null);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState("");
-  const authHeader: Record<string, string> = session ? { Authorization: `Bearer ${session.access_token}` } : {};
-
-  async function fetch_() {
-    if (loading) return;
-    setLoading(true);
-    setError("");
-    try {
-      import("posthog-js").then(({ default: ph }) => ph?.capture("power_day_clicked", { date }));
-      const res = await fetch("/api/power-day-explanation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ date }),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Błąd");
-      const { content: c } = await res.json() as { content: string };
-      setContent(c);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Nieznany błąd");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(212,175,55,0.06)", border: "0.5px solid rgba(212,175,55,0.30)" }}>
-      <div className="flex items-center gap-2">
-        <Zap className="w-4 h-4 text-amber-400 shrink-0" />
-        <p className="text-xs font-semibold text-amber-300 uppercase tracking-wider">Dzień Mocy</p>
-      </div>
-      <p className="text-xs text-slate-400 leading-snug">{transitLabel}</p>
-      {content ? (
-        <p className="text-sm text-slate-200 leading-relaxed">{content}</p>
-      ) : (
-        <>
-          <button
-            onClick={fetch_}
-            disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-50"
-            style={{ background: "rgba(212,175,55,0.12)", border: "0.5px solid rgba(212,175,55,0.40)", color: "#F3E5AB" }}
-          >
-            {loading
-              ? <><span className="w-3 h-3 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(212,175,55,0.3)", borderTopColor: "#D4AF37" }} />Analizuję…</>
-              : <><Zap className="w-3 h-3" />Co ten dzień oznacza dla Ciebie?</>}
-          </button>
-          {error && <p className="text-xs text-red-400">{error}</p>}
-        </>
-      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits";
 import { aiComplete, AiDisabledError } from "@/lib/deepseek";
 import { PersonalHoroscopeAIOutputSchema } from "@/lib/schemas/personalHoroscope";
 import { sendDailyHoroscopeEmail } from "@/lib/email";
+import { containsForeignScript, endsWithSentence } from "@/lib/text-validation";
 import type { NatalChart } from "@/lib/astro-types";
 
 // Vercel Cron calls this at 03:00 UTC — before the morning email cron
@@ -95,16 +96,40 @@ export async function GET(req: NextRequest) {
       const weather  = getDayWeather(transits);
       const context  = buildContext(transits, weather, today);
 
-      const raw = await aiComplete({
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: `Horoskop na ${today}:\n\n${context}` }],
-        maxTokens: 1200,
-        task: "personal-horoscope-batch",
-      });
+      const userMsg = `Horoskop na ${today}:\n\n${context}`;
+      let validated: ReturnType<typeof PersonalHoroscopeAIOutputSchema.parse> | null = null;
 
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      const obj = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
-      const validated = PersonalHoroscopeAIOutputSchema.parse(obj);
+      // Try haiku x2, then sonnet fallback
+      const models = ["claude-haiku-4-5-20251001", "claude-haiku-4-5-20251001", "claude-sonnet-4-6"];
+      for (const model of models) {
+        const raw = await aiComplete({
+          model,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: "user", content: userMsg }],
+          maxTokens: 1600,
+          task: "personal-horoscope-batch",
+        });
+
+        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+        const obj = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+        const candidate = PersonalHoroscopeAIOutputSchema.parse(obj);
+
+        // Validate: no foreign scripts, sentences end properly
+        const textToCheck = `${candidate.headline} ${candidate.main} ${candidate.reflection}`;
+        if (containsForeignScript(textToCheck)) {
+          void supabaseAdmin.from("ai_call_logs").insert({ task: "personal-horoscope-batch", model, status: "retry", error_msg: "script_glitch" });
+          continue;
+        }
+        if (!endsWithSentence(candidate.main) || !endsWithSentence(candidate.reflection)) {
+          void supabaseAdmin.from("ai_call_logs").insert({ task: "personal-horoscope-batch", model, status: "retry", error_msg: "truncated" });
+          continue;
+        }
+
+        validated = candidate;
+        break;
+      }
+
+      if (!validated) throw new Error("All retries failed validation");
 
       await supabaseAdmin.from("daily_personal_horoscopes").upsert({
         user_id:           userId,

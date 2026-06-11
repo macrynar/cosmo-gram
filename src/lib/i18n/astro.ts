@@ -57,6 +57,14 @@ export function natalInstrumental(planet: string): string {
   return `${article} ${PLANET_INSTRUMENTAL[planet] ?? planet}`;
 }
 
+// Genitive possessive: "Twojego Słońca", "Twojej Wenus"
+const GENITIVE_ARTICLE: Record<string, string> = { "Wenus": "Twojej" };
+
+export function natalGenitive(planet: string): string {
+  const article = GENITIVE_ARTICLE[planet] ?? "Twojego";
+  return `${article} ${PLANET_GENITIVE[planet] ?? planet}`;
+}
+
 // "w [znaku]" — shortcut for the most common pattern
 export function inSign(sign: string): string {
   return `w ${SIGN_LOCATIVE[sign] ?? sign}`;
@@ -70,3 +78,16 @@ export const ASPECT_LABEL_PL: Record<string, string> = {
   trine:       "trygon",
   sextile:     "sekstyl",
 };
+
+// ONE canonical transit phrase used everywhere:
+// "Mars w Byku · opozycja do Twojej Wenus w Skorpionie"
+export function transitPhrase(t: {
+  transitPlanet: string;
+  transitSign:   string;
+  aspectType:    string;
+  natalPoint:    string;
+  natalSign:     string;
+}): string {
+  const aspect = ASPECT_LABEL_PL[t.aspectType] ?? t.aspectType;
+  return `${t.transitPlanet} ${inSign(t.transitSign)} · ${aspect} do ${natalGenitive(t.natalPoint)} ${inSign(t.natalSign)}`;
+}
