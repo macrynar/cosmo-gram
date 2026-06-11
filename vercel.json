@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/daily-horoscope",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/daily-personal-horoscope",
+      "schedule": "0 3 * * *"
     }
   ],
   "redirects": [
