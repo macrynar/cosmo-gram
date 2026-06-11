@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { AstroModuleAIOutputSchema, type AstroModuleAIOutput } from "./schemas/astroModule";
+import { supabaseAdmin } from "./supabase-server";
 import path from "path";
 import fs from "fs";
 
@@ -18,6 +19,19 @@ function getClient(): Anthropic {
   return new Anthropic({ apiKey });
 }
 
+async function logAiCall(entry: {
+  task: string;
+  model: string;
+  input_tokens?: number;
+  output_tokens?: number;
+  latency_ms?: number;
+  status: "ok" | "error" | "retry";
+  error_msg?: string;
+}) {
+  // Fire-and-forget — never let logging break the main call
+  void supabaseAdmin.from("ai_call_logs").insert(entry);
+}
+
 // ─── generateModuleWithRetry (Claude Sonnet 4.6 — natal modules) ─────────────
 
 export async function generateModuleWithRetry(
@@ -31,25 +45,38 @@ export async function generateModuleWithRetry(
     return AstroModuleAIOutputSchema.parse({ ...(fixture as object), id: expectedModuleId });
   }
 
+  const model = "claude-sonnet-4-6";
+  const t0    = Date.now();
+
   try {
     const response = await getClient().messages.create({
-      model:      "claude-sonnet-4-6",
+      model,
       max_tokens: 4096,
       system:     systemPrompt,
       messages:   [{ role: "user", content: userPrompt }],
     });
+
+    const latency_ms    = Date.now() - t0;
+    const input_tokens  = response.usage?.input_tokens;
+    const output_tokens = response.usage?.output_tokens;
 
     const raw       = (response.content[0] as Anthropic.TextBlock).text?.trim() ?? "";
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     const jsonText  = jsonMatch ? jsonMatch[0] : raw;
     const obj       = JSON.parse(jsonText);
 
-    return AstroModuleAIOutputSchema.parse({ ...obj, id: expectedModuleId });
+    const result = AstroModuleAIOutputSchema.parse({ ...obj, id: expectedModuleId });
+
+    logAiCall({ task: `natal-module:${expectedModuleId}`, model, input_tokens, output_tokens, latency_ms, status: "ok" });
+    return result;
 
   } catch (err) {
-    const errDetail = err instanceof Error ? err.message : JSON.stringify(err);
+    const latency_ms = Date.now() - t0;
+    const errDetail  = err instanceof Error ? err.message : JSON.stringify(err);
+
     if (attempt < MAX_RETRIES) {
       console.warn(`[karta] module ${expectedModuleId} attempt ${attempt + 1} failed:`, errDetail);
+      logAiCall({ task: `natal-module:${expectedModuleId}`, model, latency_ms, status: "retry", error_msg: errDetail.slice(0, 500) });
 
       let retryPrompt = userPrompt;
       if (err instanceof z.ZodError) {
@@ -63,6 +90,7 @@ export async function generateModuleWithRetry(
 
     const finalMsg = `Module ${expectedModuleId} failed after ${MAX_RETRIES} retries: ${errDetail}`;
     console.error(`[karta] ${finalMsg}`);
+    logAiCall({ task: `natal-module:${expectedModuleId}`, model, latency_ms, status: "error", error_msg: finalMsg.slice(0, 500) });
     throw new Error(finalMsg);
   }
 }
@@ -77,6 +105,7 @@ type DeepSeekChatParams = {
   maxTokens?: number;
   temperature?: number;
   model?: string;
+  task?: string;
   responseFormat?: "json_object";
 };
 
@@ -85,6 +114,7 @@ export async function deepSeekChat({
   messages,
   maxTokens,
   temperature,
+  task = "chat",
 }: DeepSeekChatParams): Promise<string> {
   if (process.env.AI_MOCK === "true") {
     return fs.readFileSync(
@@ -93,13 +123,30 @@ export async function deepSeekChat({
     );
   }
 
-  const response = await getClient().messages.create({
-    model:      "claude-haiku-4-5-20251001",
-    max_tokens: maxTokens ?? 1024,
-    ...(typeof temperature === "number" ? {} : {}),
-    ...(system ? { system } : {}),
-    messages: messages.map(m => ({ role: m.role, content: m.content })),
-  });
+  const model = "claude-haiku-4-5-20251001";
+  const t0    = Date.now();
 
-  return (response.content[0] as Anthropic.TextBlock).text?.trim() ?? "";
+  try {
+    const response = await getClient().messages.create({
+      model,
+      max_tokens: maxTokens ?? 1024,
+      ...(typeof temperature === "number" ? {} : {}),
+      ...(system ? { system } : {}),
+      messages: messages.map(m => ({ role: m.role, content: m.content })),
+    });
+
+    const latency_ms    = Date.now() - t0;
+    const input_tokens  = response.usage?.input_tokens;
+    const output_tokens = response.usage?.output_tokens;
+
+    logAiCall({ task, model, input_tokens, output_tokens, latency_ms, status: "ok" });
+
+    return (response.content[0] as Anthropic.TextBlock).text?.trim() ?? "";
+
+  } catch (err) {
+    const latency_ms = Date.now() - t0;
+    const errDetail  = err instanceof Error ? err.message : JSON.stringify(err);
+    logAiCall({ task, model, latency_ms, status: "error", error_msg: errDetail.slice(0, 500) });
+    throw err;
+  }
 }
