@@ -76,6 +76,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ modules });
 
   } catch (err) {
+    if ((err as Error)?.name === "AiDisabledError") {
+      return NextResponse.json({ error: "AI tymczasowo niedostępne. Spróbuj za chwilę." }, { status: 503 });
+    }
     const detail = err instanceof Error
       ? err.message
       : (typeof err === "object" && err !== null)

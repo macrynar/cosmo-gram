@@ -34,12 +34,17 @@ async function logAiCall(entry: {
 
 // ─── generateModuleWithRetry (Claude Sonnet 4.6 — natal modules) ─────────────
 
+export class AiDisabledError extends Error {
+  constructor() { super("AI_DISABLED"); this.name = "AiDisabledError"; }
+}
+
 export async function generateModuleWithRetry(
   systemPrompt:     string,
   userPrompt:       string,
   expectedModuleId: string,
   attempt           = 0
 ): Promise<AstroModuleAIOutput> {
+  if (process.env.AI_DISABLED === "true") throw new AiDisabledError();
   if (process.env.AI_MOCK === "true") {
     const fixture = loadAiFixture(`modules/${expectedModuleId}.json`);
     return AstroModuleAIOutputSchema.parse({ ...(fixture as object), id: expectedModuleId });
@@ -116,6 +121,7 @@ export async function deepSeekChat({
   temperature,
   task = "chat",
 }: DeepSeekChatParams): Promise<string> {
+  if (process.env.AI_DISABLED === "true") throw new AiDisabledError();
   if (process.env.AI_MOCK === "true") {
     return fs.readFileSync(
       path.join(process.cwd(), "tests", "fixtures", "ai", "chat-response.txt"),

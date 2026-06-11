@@ -194,6 +194,9 @@ export async function POST(req: NextRequest) {
       maxTokens: 1800,
     });
   } catch (error) {
+    if ((error as Error)?.name === "AiDisabledError") {
+      return NextResponse.json({ error: "AI tymczasowo niedostępne. Spróbuj za chwilę." }, { status: 503 });
+    }
     console.error("AI chat error:", error);
     return NextResponse.json({ error: "Błąd AI" }, { status: 502 });
   }
