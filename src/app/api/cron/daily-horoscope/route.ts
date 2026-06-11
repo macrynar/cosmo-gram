@@ -63,5 +63,11 @@ export async function GET(req: NextRequest) {
   const failed = results.filter(r => r.status === "rejected").length;
   console.log(`[cron/daily-horoscope] sent=${sent} failed=${failed} date=${today}`);
 
+  await supabaseAdmin.from("cron_runs").insert({
+    name: "daily-horoscope",
+    status: failed === 0 ? "ok" : sent > 0 ? "partial" : "error",
+    metadata: { sent, failed, date: today },
+  });
+
   return NextResponse.json({ sent, failed });
 }
