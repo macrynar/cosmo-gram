@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { requireAdmin } from "@/lib/adminGuard";
 import { judgeReading } from "@/lib/judge";
-import { deepSeekChat } from "@/lib/deepseek";
+import { aiComplete } from "@/lib/deepseek";
 
 export const maxDuration = 300;
 
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
   for (const chart of charts) {
     try {
-      const output = await deepSeekChat({
+      const output = await aiComplete({
         system: version.system_prompt as string,
         messages: [
           {

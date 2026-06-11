@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { getTransitsForDate } from "@/lib/astro/transits";
-import { deepSeekChat, AiDisabledError } from "@/lib/deepseek";
+import { aiComplete, AiDisabledError } from "@/lib/deepseek";
 import type { NatalChart } from "@/lib/astro-types";
 import { z } from "zod";
 
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 Tranzyt: ${topTransit.transitPlanet} w ${topTransit.transitSign} ${topTransit.aspectType} do natalnego ${topTransit.natalPoint} w ${topTransit.natalSign} (orb ${topTransit.orbDegrees}°, ${topTransit.applying ? "aplikacyjny" : "separacyjny"}, ${topTransit.favorable ? "sprzyjający" : "napięciowy"})`;
 
   try {
-    const content = await deepSeekChat({
+    const content = await aiComplete({
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: `Wyjaśnij dlaczego ${dateStr} jest Dniem Mocy:\n\n${context}` }],
       maxTokens: 400,

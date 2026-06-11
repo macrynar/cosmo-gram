@@ -2,7 +2,7 @@
 title: Cosmogram — Project Status
 type: project-status
 owner: Mac
-last_updated: 2026-06-10
+last_updated: 2026-06-11
 ---
 
 # Cosmogram — dokument statusu projektu
@@ -38,7 +38,8 @@ Aplikacja AI + astrologia dla rynku polskiego. Pozycjonowanie: „symboliczne lu
 ### AI
 | Model / Provider | Zastosowanie |
 |---|---|
-| DeepSeek (`deepseek-chat`) | Wszystkie generatywne endpointy: kosmogram, dziennik, match, chat |
+| Claude Haiku 4.5 (`claude-haiku-4-5-20251001`) | Szybkie endpointy: interprertacja dnia, wyjaśnienie Dnia Mocy, dzienny horoskop batch |
+| Claude Sonnet 4.6 (`claude-sonnet-4-6`) | Jakościowe generowanie: kosmogram, dziecięcy kosmogram, match, chat |
 | Fallback offline | Każdy endpoint AI ma fallback przy pustym/błędnym output modelu |
 
 ### Astrologia
@@ -114,10 +115,18 @@ www.cosmo-gram.com
 - Funkcja premium (paywall)
 
 ### ✅ Kalendarz astrologiczny
-- Widok miesięczny z zaznaczonymi Dni Mocy (5 na miesiąc)
-- Obliczenia tranzytów planet przez `astronomy-engine`
-- Tylko „wolne" planety (Jowisz, Saturn, Uran, Neptun, Pluton) decydują o Dniach Mocy
-- Notatki dzienne (calendar notes) zapisywane w Supabase
+- 4-poziomowy system klas dni: normal / significant / power / exceptional
+- Intensywność wizualna 1–5 (złoty gradient na komórkach)
+- Osobiste Dni Mocy dla userów premium: `getPowerDays()` → top 5 wg score tranzytowego
+- Wyjątkowe dni (exceptional): podzbiór power days z tight orb do Słońce/Księżyc/ASC/MC
+- CalendarGrid: ring-only dla power, ring+fill dla exceptional, ★ gwiazdka, glify fazy księżyca
+- DayPanel: ścisły porządek sekcji, zdania z deklinacją PL, bez powtórzeń
+- Interpretacja premium on-demand: Haiku (~300 tokenów), cache w `day_interpretations`
+- Horoskop osobisty dla power/exceptional: cron Sonnet batch 03:00 UTC, fallback on-demand
+- Email z nagłówkiem horoskopu (headline) zamiast znaku zodiaku — dla userów premium
+- Free users: upsell banner w siatce + lock card w DayPanel
+- UpcomingEvents: max 3 okna, klik → nawigacja do dnia szczytu, deklaratywna deklinacja PL
+- Notatki dzienne (`calendar_notes`) zapisywane w Supabase
 
 ### ✅ Cosmo Match
 - Formularz dla 2 osób z wyborem z zapisanych kosmogramów lub wpisem ręcznym
@@ -187,6 +196,10 @@ Główne tabele:
 | `calendar_notes` | Notatki w kalendarzu |
 | `subscriptions` | Status subskrypcji Stripe |
 | `ai_prompts` | Wersjonowane prompty AI (panel admin) |
+| `daily_personal_horoscopes` | Personalne horokospy dzienne dla premium (cron + on-demand) |
+| `day_interpretations` | Interpretacje dni „significant" — cache per (user_id, date) |
+| `cron_runs` | Log przebiegów cronów |
+| `ai_call_logs` | Log wywołań AI z modelem, tokenami, taskiem |
 
 RLS włączony na wszystkich tabelach userów. Supabase Auth obsługuje OAuth (Google) i email/password.
 
@@ -201,8 +214,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
 # AI
-DEEPSEEK_API_KEY=
-DEEPSEEK_MODEL=deepseek-chat        # opcjonalnie
+ANTHROPIC_API_KEY=
 
 # Płatności
 STRIPE_SECRET_KEY=
@@ -288,6 +300,29 @@ NEXT_PUBLIC_POSTHOG_HOST=
 ---
 
 ## Release log
+
+### [2026-06-11] P1-1: Silnik tranzytów + przebudowa kalendarza
+
+**Zakres P1-1 (tranzytowy silnik retencji):**
+- `src/lib/astro/transits.ts` — nowy silnik tranzytów: oblicza aktywne aspekty transit→natal z orb, aplikacja/separacja, `DayData.score`, `topSupporting/topChallenging`, `powerDayMap`
+- `src/lib/astro/powerDays.ts` + `getPowerDays()` — top 5 Dni Mocy w miesiącu dla premium
+- `src/lib/astro/dayClasses.ts` — 4-klasowy system: exceptional / power / significant / normal
+- `src/lib/i18n/astro.ts` — deklinacje PL: SIGN_LOCATIVE, PLANET_GENITIVE, PLANET_INSTRUMENTAL, `natalInstrumental()`, `inSign()`
+- `aiComplete` — rename `deepSeekChat` → `aiComplete` we wszystkich 12 plikach (nazwa legacy, zawsze był Claude)
+- `day_interpretations` — nowa tabela Supabase, migration `20260611_day_interpretations.sql`
+- `/api/day-interpretation` — POST, on-demand interpretacja dnia Haiku (300 tokenów, cache)
+- `/api/cron/daily-personal-horoscope` — cron Sonnet batch 03:00 UTC, email z `headline` w temacie
+- CalendarGrid — pełny rewrite: intensity textures, ring styles, ★ exceptional, glify księżyca, upsell banner dla free
+- DayPanel — pełny rewrite: strict section order, deklinacja PL, cache interpretacji, lock dla free
+- UpcomingEvents — rewrite: brak dzwonków, max 3, klik → nawigacja do dnia
+- Kalendarz page — usunięto filtry (CalendarFilter/IntentionFilter), dodano `powerDayMap`, `selectedDayClass`
+- Email: `sendDailyHoroscopeEmail` przekazuje `headline` dla premium userów
+
+**Do zrobienia po release:**
+- Uruchomić migrację `20260611_day_interpretations.sql` na produkcji Supabase
+- Zweryfikować cron `daily-personal-horoscope` w Vercel Dashboard
+
+---
 
 ### [2026-06-10] Kompletny relaunch UX + email + PWA
 **Zmiany w core natal:**

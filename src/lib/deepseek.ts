@@ -100,10 +100,10 @@ export async function generateModuleWithRetry(
   }
 }
 
-// ─── deepSeekChat (Claude Haiku 4.5 — all other AI calls) ────────────────────
+// ─── aiComplete (Claude Haiku 4.5 — all other AI calls) ────────────────────
 // apiKey param kept for backward compat — ignored; reads ANTHROPIC_API_KEY from env
 
-type DeepSeekChatParams = {
+type AiCompleteParams = {
   apiKey?: string;
   system?: string;
   messages: Array<{ role: "user" | "assistant"; content: string }>;
@@ -114,13 +114,13 @@ type DeepSeekChatParams = {
   responseFormat?: "json_object";
 };
 
-export async function deepSeekChat({
+export async function aiComplete({
   system,
   messages,
   maxTokens,
   temperature,
   task = "chat",
-}: DeepSeekChatParams): Promise<string> {
+}: AiCompleteParams): Promise<string> {
   if (process.env.AI_DISABLED === "true") throw new AiDisabledError();
   if (process.env.AI_MOCK === "true") {
     return fs.readFileSync(

@@ -21,18 +21,22 @@ export async function sendWelcomeEmail(email: string): Promise<void> {
 }
 
 export async function sendDailyHoroscopeEmail(
-  email:    string,
-  sunSign:  string,
-  date:     string,
-  unsubId:  string,
+  email:     string,
+  sunSign:   string,
+  date:      string,
+  unsubId:   string,
+  headline?: string,
 ): Promise<void> {
   const html = await render(
-    DailyHoroscopeEmail({ sunSign, date, appUrl: BASE_URL, unsubId })
+    DailyHoroscopeEmail({ sunSign, date, appUrl: BASE_URL, unsubId, headline })
   );
+  const subject = headline
+    ? `✦ ${headline.slice(0, 60)}${headline.length > 60 ? "…" : ""}`
+    : `✦ Twój horoskop na ${date} — ${sunSign}`;
   await getResend().emails.send({
     from:    FROM,
     to:      email,
-    subject: `✦ Twój horoskop na ${date} — ${sunSign}`,
+    subject,
     html,
     headers: {
       "List-Unsubscribe": `<${BASE_URL}/api/email/unsubscribe?id=${unsubId}>`,

@@ -5,10 +5,11 @@ import {
 import * as React from "react";
 
 type Props = {
-  sunSign:  string;
-  date:     string;
-  appUrl:   string;
-  unsubId:  string;
+  sunSign:   string;
+  date:      string;
+  appUrl:    string;
+  unsubId:   string;
+  headline?: string;  // personal horoscope headline for premium users
 };
 
 const SIGN_EMOJI: Record<string, string> = {
@@ -17,7 +18,7 @@ const SIGN_EMOJI: Record<string, string> = {
   "Strzelec": "♐", "Koziorożec": "♑", "Wodnik": "♒", "Ryby": "♓",
 };
 
-export default function DailyHoroscopeEmail({ sunSign, date, appUrl, unsubId }: Props) {
+export default function DailyHoroscopeEmail({ sunSign, date, appUrl, unsubId, headline }: Props) {
   const emoji = SIGN_EMOJI[sunSign] ?? "✦";
 
   return (
@@ -57,17 +58,19 @@ export default function DailyHoroscopeEmail({ sunSign, date, appUrl, unsubId }: 
 
               <Heading style={{
                 color: "#F3E5AB",
-                fontSize: 28,
+                fontSize: headline ? 22 : 28,
                 fontWeight: 400,
                 lineHeight: 1.4,
                 margin: "0 0 16px",
                 fontFamily: "Georgia, 'Times New Roman', serif",
               }}>
-                Twój horoskop na dziś jest gotowy
+                {headline ?? "Twój horoskop na dziś jest gotowy"}
               </Heading>
 
               <Text style={{ color: "rgba(148,163,184,0.80)", fontSize: 15, lineHeight: 1.7, margin: "0 0 28px" }}>
-                Kosmogram przygotował Twój spersonalizowany horoskop na {date}. Sprawdź co gwiazdy mówią o Twoim dniu — tranzytowe aspekty do Twojej karty natalnej, energia dnia i konkretne wskazówki.
+                {headline
+                  ? `Twój personalny horoskop na ${date} jest gotowy — otwórz aplikację, żeby go przeczytać.`
+                  : `Kosmogram przygotował Twój spersonalizowany horoskop na ${date}. Sprawdź co gwiazdy mówią o Twoim dniu — tranzytowe aspekty do Twojej karty natalnej, energia dnia i konkretne wskazówki.`}
               </Text>
 
               <Button

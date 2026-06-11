@@ -5,7 +5,7 @@ import { checkRateLimit } from "@/lib/rateLimiter";
 import { computeSynastryAspects, computeSynastryScore, type SynastryAspect } from "@/lib/synastry-score";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
-import { deepSeekChat } from "@/lib/deepseek";
+import { aiComplete } from "@/lib/deepseek";
 
 export type CompatibilityCategory = {
   name: string;
@@ -226,7 +226,7 @@ Napisz copy synastrii zgodne z tymi scores. Użyj aspektów z listy powyżej. Zw
 
     let rawText = "";
     try {
-      rawText = await deepSeekChat({
+      rawText = await aiComplete({
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userMessage }],
         maxTokens: 4500,

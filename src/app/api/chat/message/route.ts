@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 import { calculateChart } from "@/lib/chart-engine";
 import { hasActiveSubscription } from "@/lib/subscription";
 import type { NatalChart } from "@/lib/astro-types";
-import { deepSeekChat } from "@/lib/deepseek";
+import { aiComplete } from "@/lib/deepseek";
 import { checkRateLimit } from "@/lib/rateLimiter";
 
 const FREE_CHAT_MESSAGES = 3;
@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
 
   let reply = "";
   try {
-    reply = await deepSeekChat({
+    reply = await aiComplete({
       system: systemPrompt,
       messages,
       maxTokens: 1800,

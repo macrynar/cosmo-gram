@@ -6,14 +6,14 @@ import { ChevronLeft, ChevronRight, Flame, GitCompare, X, Sparkles } from "lucid
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
-import IntentionFilter, { type CalendarFilter } from "@/components/calendar/IntentionFilter";
 import CalendarGrid from "@/components/calendar/CalendarGrid";
 import UpcomingEvents from "@/components/calendar/UpcomingEvents";
 import DayPanel from "@/components/calendar/DayPanel";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
-import { computeMonthData, type DayData } from "@/lib/chart-engine";
-import { getPowerDays } from "@/lib/astro/powerDays";
+import { computeMonthData } from "@/lib/chart-engine";
+import { getPowerDays, type PowerDay } from "@/lib/astro/powerDays";
+import { getDayClass } from "@/lib/astro/dayClasses";
 import { useStreak } from "@/lib/useStreak";
 import { supabase } from "@/lib/supabase";
 import type { NatalChart } from "@/lib/astro-types";
@@ -57,43 +57,51 @@ export default function CalendarPage() {
   const paramDate = searchParams.get("date");
   const [year,  setYear]  = useState(() => paramDate ? parseInt(paramDate.slice(0, 4))  : now.getFullYear());
   const [month, setMonth] = useState(() => paramDate ? parseInt(paramDate.slice(5, 7))  : now.getMonth() + 1);
-  const [filter, setFilter] = useState<CalendarFilter>("all");
   const [selectedDate, setSelectedDate] = useState<string | null>(paramDate);
 
-  const [readings, setReadings] = useState<SavedReading[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [compareId, setCompareId] = useState<string | null>(null);
-  const [compareMode, setCompareMode] = useState(false);
+  const [readings, setReadings]         = useState<SavedReading[]>([]);
+  const [selectedId, setSelectedId]     = useState<string | null>(null);
+  const [compareId, setCompareId]       = useState<string | null>(null);
+  const [compareMode, setCompareMode]   = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [loadError, setLoadError] = useState("");
-  const [isPremium, setIsPremium] = useState(false);
+  const [loadError, setLoadError]       = useState("");
+  const [isPremium, setIsPremium]       = useState(false);
 
   const authHeader: Record<string, string> = session ? { Authorization: `Bearer ${session.access_token}` } : {};
 
   const selectedReading = useMemo(() => readings.find(r => r.id === selectedId) ?? null, [readings, selectedId]);
   const compareReading  = useMemo(() => compareMode && compareId ? readings.find(r => r.id === compareId) ?? null : null, [readings, compareId, compareMode]);
 
-  const days = useMemo<DayData[]>(() => {
-    if (!selectedReading?.chart_data) return [];
-    return computeMonthData(selectedReading.chart_data, year, month);
-  }, [selectedReading, year, month]);
+  const days = useMemo(
+    () => selectedReading?.chart_data ? computeMonthData(selectedReading.chart_data, year, month) : [],
+    [selectedReading, year, month]
+  );
 
-  const compareDays = useMemo<DayData[] | undefined>(() => {
-    if (!compareReading?.chart_data) return undefined;
-    return computeMonthData(compareReading.chart_data, year, month);
-  }, [compareReading, year, month]);
+  const compareDays = useMemo(
+    () => compareReading?.chart_data ? computeMonthData(compareReading.chart_data, year, month) : undefined,
+    [compareReading, year, month]
+  );
 
-  const selectedDayData = useMemo(() => days.find(d => d.date === selectedDate) ?? undefined, [days, selectedDate]);
-
-  const personalPowerDays = useMemo<Set<string>>(() => {
-    if (!isPremium || !selectedReading?.chart_data) return new Set();
-    const powerDays = getPowerDays(selectedReading.chart_data, year, month);
-    return new Set(powerDays.map(d => d.date));
+  // Power day map — premium only (Map<date, PowerDay>)
+  const powerDayMap = useMemo<Map<string, PowerDay>>(() => {
+    if (!isPremium || !selectedReading?.chart_data) return new Map();
+    return new Map(getPowerDays(selectedReading.chart_data, year, month).map(d => [d.date, d]));
   }, [isPremium, selectedReading, year, month]);
 
-  const solarReturnDays = useMemo(() =>
-    selectedReading?.birth_date ? nextBirthdayDaysUntil(selectedReading.birth_date) : null,
-  [selectedReading]);
+  const selectedDayData = useMemo(
+    () => days.find(d => d.date === selectedDate) ?? undefined,
+    [days, selectedDate]
+  );
+
+  const selectedDayClass = useMemo(
+    () => selectedDayData ? getDayClass(selectedDayData, powerDayMap, isPremium) : "normal",
+    [selectedDayData, powerDayMap, isPremium]
+  );
+
+  const solarReturnDays = useMemo(
+    () => selectedReading?.birth_date ? nextBirthdayDaysUntil(selectedReading.birth_date) : null,
+    [selectedReading]
+  );
 
   const loadReadings = useCallback(async () => {
     if (!session) return;
@@ -140,6 +148,22 @@ export default function CalendarPage() {
   }));
 
   const emptyState = !loadingHistory && readings.length === 0;
+
+  function renderDayPanel() {
+    if (!selectedDate || !selectedReading) return null;
+    return (
+      <DayPanel
+        date={selectedDate}
+        dayData={selectedDayData}
+        chart={selectedReading.chart_data}
+        readingId={selectedReading.id}
+        dayClass={selectedDayClass}
+        powerDay={powerDayMap.get(selectedDate)}
+        isPremium={isPremium}
+        onClose={() => setSelectedDate(null)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#03010d] text-white">
@@ -188,13 +212,11 @@ export default function CalendarPage() {
           </div>
         )}
 
-        {loadError && (
-          <p className="text-center text-red-400 text-sm mb-4">{loadError}</p>
-        )}
+        {loadError && <p className="text-center text-red-400 text-sm mb-4">{loadError}</p>}
 
         {!loadingHistory && readings.length > 0 && (
           <>
-            {/* Solar Return banner — when birthday is within 14 days */}
+            {/* Solar Return banner */}
             {solarReturnDays !== null && solarReturnDays <= 14 && (
               <Link
                 href={`${ROUTES.app.solarReturn.path}${selectedId ? `?reading_id=${selectedId}` : ""}`}
@@ -203,10 +225,8 @@ export default function CalendarPage() {
                 <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-amber-200">
-                    {solarReturnDays === 0
-                      ? "Twój Solar Return — Dziś! Nowy rok astrologiczny się zaczyna."
-                      : solarReturnDays === 1
-                      ? "Twój Solar Return jutro — odkryj energię nadchodzącego roku."
+                    {solarReturnDays === 0 ? "Twój Solar Return — Dziś!"
+                      : solarReturnDays === 1 ? "Twój Solar Return jutro — odkryj energię nadchodzącego roku."
                       : `Twój Solar Return za ${solarReturnDays} dni — odkryj energię nadchodzącego roku.`}
                   </p>
                 </div>
@@ -219,8 +239,9 @@ export default function CalendarPage() {
         {!loadingHistory && readings.length > 0 && (
           <div className={`${selectedDate ? "lg:flex lg:gap-5 lg:items-start" : ""}`}>
 
-            {/* ── Left column: selector + filters + calendar + upcoming ── */}
+            {/* ── Left column ── */}
             <div className={`${selectedDate ? "lg:flex-1 lg:min-w-0" : ""} space-y-5`}>
+
               {/* Reading selector */}
               <div className="glass-card rounded-2xl px-4 py-3">
                 <HistorySelector
@@ -245,61 +266,37 @@ export default function CalendarPage() {
                   newLabel="Nowy kosmogram"
                 />
 
-                {/* Compare mode toggle — only when 2+ readings exist */}
+                {/* Compare mode */}
                 {readings.length >= 2 && (
                   <div className="mt-3 pt-3 border-t border-white/8">
                     {!compareMode ? (
                       <button
-                        onClick={() => {
-                          setCompareMode(true);
-                          const other = readings.find(r => r.id !== selectedId);
-                          setCompareId(other?.id ?? null);
-                        }}
+                        onClick={() => { setCompareMode(true); setCompareId(readings.find(r => r.id !== selectedId)?.id ?? null); }}
                         className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
                       >
-                        <GitCompare className="w-3.5 h-3.5" />
-                        Porównaj z innym kosmogramem
+                        <GitCompare className="w-3.5 h-3.5" /> Porównaj z innym kosmogramem
                       </button>
                     ) : (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <p className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Porównanie z:</p>
-                          <button
-                            onClick={() => { setCompareMode(false); setCompareId(null); }}
-                            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                            Zakończ
+                          <button onClick={() => { setCompareMode(false); setCompareId(null); }} className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors">
+                            <X className="w-3.5 h-3.5" /> Zakończ
                           </button>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {readings.filter(r => r.id !== selectedId).map(r => (
-                            <button
-                              key={r.id}
-                              onClick={() => setCompareId(r.id)}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
-                                compareId === r.id
-                                  ? "bg-violet-700/50 border-violet-500/60 text-violet-200"
-                                  : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
-                              }`}
+                            <button key={r.id} onClick={() => setCompareId(r.id)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${compareId === r.id ? "bg-violet-700/50 border-violet-500/60 text-violet-200" : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"}`}
                             >
                               {r.name || r.birth_date}
                             </button>
                           ))}
                         </div>
-                        <p className="text-[11px] text-slate-600">
-                          Lewa połówka kółka = Twoje tranzyty · prawa = porównanie ·
-                          <span className="text-amber-600/80"> złota obwódka = oboje intensywni</span>
-                        </p>
                       </div>
                     )}
                   </div>
                 )}
-              </div>
-
-              {/* Filters */}
-              <div className="flex items-center gap-3 flex-wrap">
-                <IntentionFilter active={filter} onChange={(f) => { setFilter(f); setSelectedDate(null); }} />
               </div>
 
               {/* Month navigator */}
@@ -329,34 +326,33 @@ export default function CalendarPage() {
                     compareDays={compareDays}
                     selectedDate={selectedDate}
                     onSelect={(date) => setSelectedDate(prev => prev === date ? null : date)}
-                    filter={filter}
+                    isPremium={isPremium}
+                    powerDayMap={powerDayMap}
                   />
                 ) : (
                   <div className="text-center py-8 text-slate-500 text-sm">Wybierz kosmogram, aby zobaczyć siatkę.</div>
                 )}
               </div>
 
-              {/* Upcoming Events */}
+              {/* Upcoming events */}
               {selectedReading?.chart_data && (
-                <UpcomingEvents chart={selectedReading.chart_data} />
+                <UpcomingEvents
+                  chart={selectedReading.chart_data}
+                  onDaySelect={(date) => {
+                    // Navigate to the month containing the peak date, then select it
+                    const d = new Date(date + "T12:00:00Z");
+                    setYear(d.getUTCFullYear());
+                    setMonth(d.getUTCMonth() + 1);
+                    setSelectedDate(date);
+                  }}
+                />
               )}
             </div>
 
-            {/* ── Right column: Day Drawer (desktop sticky) ── */}
+            {/* ── Right column: Day Panel (desktop) ── */}
             {selectedDate && selectedReading && (
               <div className="hidden lg:block lg:w-[420px] lg:shrink-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
-                <DayPanel
-                  date={selectedDate}
-                  dayData={selectedDayData}
-                  chart={selectedReading.chart_data}
-                  readingId={selectedReading.id}
-                  promptContext={""}
-                  interpretation={selectedReading.interpretation}
-                  filter={filter}
-                  onClose={() => setSelectedDate(null)}
-                  isPremium={isPremium}
-                  isPersonalPowerDay={personalPowerDays.has(selectedDate)}
-                />
+                {renderDayPanel()}
               </div>
             )}
           </div>
@@ -365,29 +361,12 @@ export default function CalendarPage() {
         {/* ── Mobile bottom sheet ── */}
         {selectedDate && selectedReading && (
           <div className="lg:hidden fixed inset-0 z-50 flex items-end">
-            {/* Backdrop */}
-            <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setSelectedDate(null)}
-            />
-            {/* Sheet */}
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedDate(null)} />
             <div className="relative w-full max-h-[85vh] overflow-y-auto rounded-t-2xl bg-[#07050f] border-t border-white/10 shadow-2xl">
-              {/* Drag handle visual */}
               <div className="flex justify-center pt-3 pb-1">
                 <div className="w-10 h-1 rounded-full bg-white/20" />
               </div>
-              <DayPanel
-                date={selectedDate}
-                dayData={selectedDayData}
-                chart={selectedReading.chart_data}
-                readingId={selectedReading.id}
-                promptContext={""}
-                interpretation={selectedReading.interpretation}
-                filter={filter}
-                onClose={() => setSelectedDate(null)}
-                isPremium={isPremium}
-                isPersonalPowerDay={personalPowerDays.has(selectedDate)}
-              />
+              {renderDayPanel()}
             </div>
           </div>
         )}

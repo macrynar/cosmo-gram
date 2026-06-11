@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { computeTopTransits } from "@/lib/chart-engine";
 import type { NatalChart } from "@/lib/astro-types";
-import { deepSeekChat } from "@/lib/deepseek";
+import { aiComplete } from "@/lib/deepseek";
 
 export type DailyReadingData = {
   headline: string;
@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
 
     let raw = "";
     try {
-      raw = await deepSeekChat({
+      raw = await aiComplete({
         system: SYSTEM_PROMPT,
         maxTokens: 1200,
         messages: [

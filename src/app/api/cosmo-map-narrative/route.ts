@@ -130,8 +130,8 @@ ${similarCandidates.join("\n")}
 Napisz głęboką narrację. JSON tylko.`;
 
   async function callAI(prompt: string): Promise<Record<string, unknown>> {
-    const { deepSeekChat } = await import("@/lib/deepseek");
-    const raw = await deepSeekChat({
+    const { aiComplete } = await import("@/lib/deepseek");
+    const raw = await aiComplete({
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: prompt }],
       maxTokens: 1400,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import type { ActiveLine } from "@/lib/astrocartography";
 import { PLANET_PL, LINE_PL_SHORT } from "@/lib/astrocartography";
-import { deepSeekChat } from "@/lib/deepseek";
+import { aiComplete } from "@/lib/deepseek";
 
 export const maxDuration = 60;
 
@@ -116,7 +116,7 @@ Zwróć JSON. Pierwsze zdanie main_prose MUSI być rozpoznawalnie o ${city_name_
 
   let text = "";
   try {
-    text = await deepSeekChat({
+    text = await aiComplete({
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
       maxTokens: 900,

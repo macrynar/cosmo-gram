@@ -1,4 +1,4 @@
-import { deepSeekChat } from "@/lib/deepseek";
+import { aiComplete } from "@/lib/deepseek";
 
 const JUDGE_SYSTEM = `Jesteś krytycznym ewaluatorem astrologicznych interpretacji generowanych przez AI. Oceniasz w skali 1-5 (1=fatalne, 5=znakomite) na pięciu wymiarach:
 
@@ -61,8 +61,8 @@ Oceń. Zwróć tylko JSON.`;
     temperature: 0.2,
   };
 
-  let raw = await deepSeekChat(callParams);
-  if (!raw) raw = await deepSeekChat(callParams); // one retry on empty
+  let raw = await aiComplete(callParams);
+  if (!raw) raw = await aiComplete(callParams); // one retry on empty
   if (!raw) throw new Error("AI zwrócił pustą odpowiedź po retry");
 
   let parsed: JudgeScores & { reasoning: string };

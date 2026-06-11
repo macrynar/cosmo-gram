@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits";
-import { deepSeekChat, AiDisabledError } from "@/lib/deepseek";
+import { aiComplete, AiDisabledError } from "@/lib/deepseek";
 import { PersonalHoroscopeAIOutputSchema } from "@/lib/schemas/personalHoroscope";
 import { sendDailyHoroscopeEmail } from "@/lib/email";
 import type { NatalChart } from "@/lib/astro-types";
@@ -83,6 +83,7 @@ export async function GET(req: NextRequest) {
 
   let generated = 0, failed = 0;
   const date = new Date(`${today}T12:00:00Z`);
+  const headlineByUser = new Map<string, string>(); // track headlines for email
 
   for (const userId of userIds) {
     if (alreadyDone.has(userId)) continue;
@@ -94,7 +95,7 @@ export async function GET(req: NextRequest) {
       const weather  = getDayWeather(transits);
       const context  = buildContext(transits, weather, today);
 
-      const raw = await deepSeekChat({
+      const raw = await aiComplete({
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: `Horoskop na ${today}:\n\n${context}` }],
         maxTokens: 1200,
@@ -117,6 +118,7 @@ export async function GET(req: NextRequest) {
         transits_used:     transits.slice(0, 3),
       });
 
+      headlineByUser.set(userId, validated.headline);
       generated++;
     } catch (err) {
       if (err instanceof AiDisabledError) break;
@@ -147,7 +149,7 @@ export async function GET(req: NextRequest) {
         if (!email) return;
         const chart = latestByUser.get(userId);
         const sunSign = (chart?.planets ?? []).find(p => p.name === "Słońce")?.sign ?? "Baran";
-        await sendDailyHoroscopeEmail(email, sunSign, today_pl, userId);
+        await sendDailyHoroscopeEmail(email, sunSign, today_pl, userId, headlineByUser.get(userId));
       })
     );
   }

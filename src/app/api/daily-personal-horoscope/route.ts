@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits";
-import { deepSeekChat, AiDisabledError } from "@/lib/deepseek";
+import { aiComplete, AiDisabledError } from "@/lib/deepseek";
 import { PersonalHoroscopeAIOutputSchema } from "@/lib/schemas/personalHoroscope";
 import type { NatalChart } from "@/lib/astro-types";
 
@@ -68,7 +68,7 @@ async function generateHoroscope(
   const weather  = getDayWeather(transits);
   const context  = buildTransitContext(transits, weather, dateStr);
 
-  const raw = await deepSeekChat({
+  const raw = await aiComplete({
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: `Napisz personalny horoskop na ${dateStr}:\n\n${context}` }],
     maxTokens: 1200,

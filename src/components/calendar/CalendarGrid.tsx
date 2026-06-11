@@ -1,95 +1,106 @@
 "use client";
 
+import React from "react";
+import { Lock } from "lucide-react";
 import type { DayData } from "@/lib/chart-engine";
 import type { MoonPhaseName } from "@/lib/moonPhases";
-import type { CalendarFilter } from "./IntentionFilter";
+import type { PowerDay } from "@/lib/astro/powerDays";
+import { getDayClass, getDayIntensity, type DayClass } from "@/lib/astro/dayClasses";
 
 type Props = {
-  year: number;
-  month: number;
-  days: DayData[];
-  compareDays?: DayData[];
-  selectedDate: string | null;
-  onSelect: (date: string) => void;
-  filter: CalendarFilter;
+  year:           number;
+  month:          number;
+  days:           DayData[];
+  compareDays?:   DayData[];
+  selectedDate:   string | null;
+  onSelect:       (date: string) => void;
+  isPremium:      boolean;
+  powerDayMap:    Map<string, PowerDay>;
 };
 
 const WEEKDAYS = ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"];
 
-// ── Score helpers ─────────────────────────────────────────────────────────────
+// ── Moon phase glyphs ──────────────────────────────────────────────────────────
+const MOON_GLYPHS: Partial<Record<MoonPhaseName, string>> = {
+  new_moon:       "🌑",
+  full_moon:      "🌕",
+  first_quarter:  "🌓",
+  last_quarter:   "🌗",
+};
 
-function getDayScore(day: DayData, filter: CalendarFilter): number {
-  if (filter === "love")   return day.intentionScores.love;
-  if (filter === "career") return day.intentionScores.career;
-  if (filter === "energy") return day.intentionScores.energy;
-  if (filter === "mind")   return day.intentionScores.mind;
-  return day.score;
-}
-
-// ── Power-day computation: top ~5 days per month, score must be ≥ 7 ──────────
-
-const POWER_MAX    = 5;   // at most 5 highlighted days per month
-const POWER_MIN_SCORE = 7; // absolute floor — days below this are never power days
-
-function computePowerDates(days: DayData[], filter: CalendarFilter): Set<string> {
-  return new Set(
-    [...days]
-      .filter(d => getDayScore(d, filter) >= POWER_MIN_SCORE)
-      .sort((a, b) => getDayScore(b, filter) - getDayScore(a, filter))
-      .slice(0, POWER_MAX)
-      .map(d => d.date)
+function MoonGlyph({ phase }: { phase: MoonPhaseName }) {
+  const glyph = MOON_GLYPHS[phase];
+  if (!glyph) return null;
+  return (
+    <span
+      className="absolute bottom-0.5 right-0.5 text-[9px] leading-none pointer-events-none select-none opacity-70"
+      aria-hidden="true"
+    >
+      {glyph}
+    </span>
   );
 }
 
-// ── Color palette per dominant intention ──────────────────────────────────────
-
-type ColorDef = { bg: string; border: string; glow: string; text: string };
-
-const COLOR: Record<string, ColorDef> = {
-  love:    { bg: "rgba(251,113,133,0.16)", border: "rgba(251,113,133,0.55)", glow: "0 0 16px rgba(251,113,133,0.40)", text: "#fda4af" },
-  career:  { bg: "rgba(212,175,55,0.16)",  border: "rgba(212,175,55,0.60)",  glow: "0 0 16px rgba(212,175,55,0.38)",  text: "#D4AF37" },
-  energy:  { bg: "rgba(251,146,60,0.16)",  border: "rgba(251,146,60,0.55)",  glow: "0 0 16px rgba(251,146,60,0.38)",  text: "#fb923c" },
-  mind:    { bg: "rgba(45,212,191,0.16)",  border: "rgba(45,212,191,0.50)",  glow: "0 0 16px rgba(45,212,191,0.35)",  text: "#2dd4bf" },
-  warning: { bg: "rgba(239,68,68,0.14)",   border: "rgba(239,68,68,0.50)",   glow: "0 0 16px rgba(239,68,68,0.35)",   text: "#f87171" },
-};
-
-function getDominantKey(day: DayData, filter: CalendarFilter): keyof typeof COLOR {
-  if (filter !== "all") return filter;
-  if (day.challengingScore > day.positiveScore + 2) return "warning";
-  const { love, career, energy, mind } = day.intentionScores;
-  const max = Math.max(love, career, energy, mind);
-  if (max === love)   return "love";
-  if (max === career) return "career";
-  if (max === energy) return "energy";
-  return "mind";
+// ── Intensity → visual tint (gold palette, barely visible at 1, warm at 5) ───
+function intensityStyle(intensity: 1 | 2 | 3 | 4 | 5): React.CSSProperties {
+  const alpha = [0, 0.03, 0.06, 0.10, 0.15, 0.22][intensity];
+  return {
+    background: `rgba(212,175,55,${alpha})`,
+    border: "0.5px solid rgba(255,255,255,0.06)",
+  };
 }
 
-// ── Moon phase markers (kept — not colored dots, purely astronomical info) ───
+// ── Day cell style by class ────────────────────────────────────────────────────
+function cellStyle(
+  cls: DayClass,
+  isSelected: boolean,
+  isToday: boolean,
+  intensity: 1 | 2 | 3 | 4 | 5,
+): React.CSSProperties {
+  if (isSelected) return {
+    background: "transparent",
+    border: "1.5px solid rgba(212,175,55,0.85)",
+    color: "#D4AF37",
+    boxShadow: "0 0 14px rgba(212,175,55,0.22)",
+    fontWeight: 600,
+  };
 
-type MoonIconProps = { phase: MoonPhaseName };
-function MoonPhaseIcon({ phase }: MoonIconProps) {
-  const base = "absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full pointer-events-none";
-  if (phase === "new_moon")  return <span className={`${base} bg-slate-800 ring-1 ring-white/40`} />;
-  if (phase === "full_moon") return <span className={`${base} bg-white/70`} />;
-  const g = phase === "first_quarter"
-    ? "linear-gradient(to right, #0f0c1a 50%, rgba(255,255,255,0.70) 50%)"
-    : "linear-gradient(to left, #0f0c1a 50%, rgba(255,255,255,0.70) 50%)";
-  return <span className={`${base} overflow-hidden`} style={{ background: g }} />;
+  if (cls === "exceptional") return {
+    ...intensityStyle(intensity),
+    border: "1.5px solid rgba(212,175,55,0.80)",
+    boxShadow: "0 0 18px rgba(212,175,55,0.35), inset 0 0 8px rgba(212,175,55,0.08)",
+    color: "#ffffff",
+  };
+
+  if (cls === "power") return {
+    ...intensityStyle(intensity),
+    border: "1px solid rgba(212,175,55,0.55)",
+    boxShadow: "0 0 12px rgba(212,175,55,0.20)",
+    color: "#ffffff",
+  };
+
+  // significant + normal: intensity tint only; today gets a white ring
+  const base = intensityStyle(intensity);
+  if (isToday) return {
+    ...base,
+    border: "1.5px solid rgba(255,255,255,0.50)",
+    color: "rgba(255,255,255,0.90)",
+    fontWeight: 700,
+  };
+  return {
+    ...base,
+    color: cls === "significant" ? "rgba(255,255,255,0.75)" : "rgba(100,116,139,0.55)",
+  };
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
-export default function CalendarGrid({ year, month, days, compareDays, selectedDate, onSelect, filter }: Props) {
-  const today = new Date().toISOString().slice(0, 10);
-
-  // Computed once per render — guarantees ≤ 5 highlighted days regardless of score distribution
-  const powerDates        = computePowerDates(days, filter);
-  const comparePowerDates = compareDays ? computePowerDates(compareDays, filter) : new Set<string>();
-
-  const firstDayJS  = new Date(year, month - 1, 1).getDay();
-  const firstDayMon = (firstDayJS + 6) % 7;
-  const blanks      = firstDayMon;
-  const rows        = Math.ceil((blanks + days.length) / 7);
+// ── Component ──────────────────────────────────────────────────────────────────
+export default function CalendarGrid({
+  year, month, days, compareDays, selectedDate, onSelect, isPremium, powerDayMap,
+}: Props) {
+  const today        = new Date().toISOString().slice(0, 10);
+  const firstDayJS   = new Date(year, month - 1, 1).getDay();
+  const firstDayMon  = (firstDayJS + 6) % 7;
+  const rows         = Math.ceil((firstDayMon + days.length) / 7);
 
   return (
     <div>
@@ -105,108 +116,78 @@ export default function CalendarGrid({ year, month, days, compareDays, selectedD
       {/* Day cells */}
       <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: rows * 7 }).map((_, idx) => {
-          const dayIdx = idx - blanks;
+          const dayIdx = idx - firstDayMon;
           if (dayIdx < 0 || dayIdx >= days.length) return <div key={idx} className="h-11" />;
 
           const day        = days[dayIdx];
           const compareDay = compareDays?.[dayIdx];
           const isToday    = day.date === today;
           const isSelected = day.date === selectedDate;
+          const cls        = getDayClass(day, powerDayMap, isPremium);
+          const intensity  = getDayIntensity(day.score);
 
-          // Strict binary: power or not
-          const isPower        = powerDates.has(day.date);
-          const isComparePower = comparePowerDates.has(day.date);
-          const hasMoon        = day.moonPhase !== null;
+          // Compare mode: split halves when both have a class
+          const compareCls = compareDay ? getDayClass(compareDay, new Map(), false) : "normal";
+          const compareIntensity = compareDay ? getDayIntensity(compareDay.score) : 1;
 
-          const domKey = getDominantKey(day, filter);
-          const color  = COLOR[domKey] ?? COLOR.career;
-
-          // Compare mode: also get compare day's dominant color
-          const compareDomKey = compareDay ? getDominantKey(compareDay, filter) : domKey;
-          const compareColor  = COLOR[compareDomKey] ?? COLOR.career;
-
-          // ── Build styles ──────────────────────────────────────────────────
-
-          // Default: silent grey, uniform, no color signal whatsoever
-          let style: React.CSSProperties = {
-            background:  "transparent",
-            border:      "0.5px solid rgba(255,255,255,0.06)",
-            color:       "rgba(100,116,139,0.55)",
-            boxShadow:   "none",
-          };
-
-          // Power day: fill + glow
-          if (isPower && !isSelected) {
-            style = {
-              background: color.bg,
-              border:     `0.5px solid ${color.border}`,
-              color:      "#ffffff",
-              boxShadow:  color.glow,
-            };
-          }
-
-          // Selected: gold ring, always overrides
-          if (isSelected) {
-            style = {
-              background: "transparent",
-              border:     "1.5px solid rgba(212,175,55,0.80)",
-              color:      "#D4AF37",
-              boxShadow:  "0 0 14px rgba(212,175,55,0.22)",
-              fontWeight: 600,
-            };
-          }
-
-          // Today (when not selected): white ring only
-          if (isToday && !isSelected) {
-            style = {
-              ...style,
-              border:     isPower ? `1.5px solid ${color.border}` : "1.5px solid rgba(255,255,255,0.45)",
-              color:      isPower ? "#ffffff" : "rgba(255,255,255,0.90)",
-              fontWeight: 700,
-            };
-          }
+          const style = cellStyle(cls, isSelected, isToday, intensity);
 
           return (
             <button
               key={day.date}
               onClick={() => onSelect(day.date)}
-              className="relative flex items-center justify-center h-11 rounded-lg text-sm transition-all select-none hover:border-white/20"
+              title={cls === "exceptional" ? "Wyjątkowy dzień" : cls === "power" ? "Dzień Mocy" : undefined}
+              className="relative flex items-center justify-center h-11 rounded-lg text-sm transition-all select-none hover:brightness-125"
               style={style}
             >
-              {/* Compare mode: split half-circles — only when both have data */}
-              {compareDay && (isPower || isComparePower) && (
+              {/* Compare split background */}
+              {compareDay && (cls !== "normal" || compareCls !== "normal") && (
                 <span
                   className="absolute inset-0 rounded-lg pointer-events-none"
                   style={{
-                    background: `linear-gradient(to right, ${color.bg} 50%, ${compareColor.bg} 50%)`,
-                    borderLeft:  `0.5px solid ${color.border}`,
-                    borderRight: `0.5px solid ${compareColor.border}`,
-                    borderTop:   `0.5px solid ${isPower ? color.border : compareColor.border}`,
-                    borderBottom:`0.5px solid ${isPower ? color.border : compareColor.border}`,
+                    background: `linear-gradient(to right, rgba(212,175,55,${[0,0.03,0.06,0.10,0.15,0.22][intensity]}) 50%, rgba(212,175,55,${[0,0.03,0.06,0.10,0.15,0.22][compareIntensity]}) 50%)`,
                   }}
                 />
               )}
 
-              <span className="relative z-10">{dayIdx + 1}</span>
+              <span className="relative z-10 flex items-center gap-0.5">
+                {cls === "exceptional" && <span className="text-amber-400 text-[10px] leading-none">★</span>}
+                {dayIdx + 1}
+              </span>
 
-              {/* Moon phase: kept because it's astronomical fact, not a score indicator */}
-              {hasMoon && <MoonPhaseIcon phase={day.moonPhase!} />}
+              {/* Moon glyph */}
+              {day.moonPhase && <MoonGlyph phase={day.moonPhase} />}
             </button>
           );
         })}
       </div>
 
-      {/* Legend — two items only */}
+      {/* Legend — 3 items max */}
       <div className="mt-4 flex items-center justify-center gap-5 text-[11px]" style={{ color: "rgba(100,116,139,0.50)" }}>
         <span className="flex items-center gap-1.5">
-          <span className="w-4 h-4 rounded-md inline-block" style={{ background: "rgba(212,175,55,0.16)", border: "0.5px solid rgba(212,175,55,0.55)" }} />
-          Dzień mocy (~5 / mies.)
+          <span className="w-4 h-4 rounded-md inline-block" style={{ border: "1px solid rgba(212,175,55,0.55)" }} />
+          Dzień Mocy
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full inline-block bg-white/70" />
+          <span className="text-amber-400 text-[10px]">★</span>
+          Wyjątkowy
+        </span>
+        <span className="flex items-center gap-1.5">
+          🌕
           Pełnia / Nów
         </span>
       </div>
+
+      {/* Free user upsell */}
+      {!isPremium && (
+        <div className="mt-5 flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: "rgba(212,175,55,0.04)", border: "0.5px solid rgba(212,175,55,0.14)" }}>
+          <Lock className="w-4 h-4 text-amber-500/40 shrink-0" />
+          <p className="text-sm text-slate-500 leading-snug">
+            Twoje osobiste Dni Mocy —{" "}
+            <a href="/pricing" className="text-amber-400 hover:text-amber-300 transition-colors">odblokuj w Premium</a>
+          </p>
+        </div>
+      )}
     </div>
   );
 }
