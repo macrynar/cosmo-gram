@@ -12,7 +12,7 @@ import { useAuth } from "@/components/AuthContext";
 import { motion } from "framer-motion";
 import { X, Moon, TrendingUp, AlertTriangle, Pencil, Lock } from "lucide-react";
 import {
-  SIGN_LOCATIVE, ASPECT_LABEL_PL,
+  SIGN_LOCATIVE,
   natalInstrumental, formatTransit,
 } from "@/lib/i18n/astro";
 
@@ -323,7 +323,7 @@ export default function DayPanel({
           <p className="text-xs text-slate-500 uppercase tracking-widest mb-0.5">
             {isToday ? "Dzisiaj" : "Wybrany dzień"}
           </p>
-          <h3 className={`text-base font-semibold capitalize ${isPeak ? "text-amber-100" : "text-white"}`}>
+          <h3 className={`text-base font-semibold ${isPeak ? "text-amber-100" : "text-white"}`}>
             {isToday ? formatDateShortPL(date) : formatDatePL(date)}
           </h3>
           <div className="flex items-center gap-3 mt-1.5 flex-wrap">
@@ -351,20 +351,18 @@ export default function DayPanel({
 
       <div className="p-5 space-y-4">
 
-        {/* ── 2. Window context (if in window, not peak) ── */}
-        {activeWindow && !isPeak && (
-          <p className="text-sm text-slate-400 leading-snug">
-            {formatTransit(activeWindow)}
-            {" — "}
-            <span className="text-slate-500 text-xs">
-              dzień {Math.round(
-                (new Date(date + "T12:00:00Z").getTime() - new Date(activeWindow.start + "T12:00:00Z").getTime()) / 86_400_000
-              ) + 1} z {activeWindow.lengthDays}, peak{" "}
-              {date < activeWindow.peak
-                ? `za ${Math.round((new Date(activeWindow.peak + "T12:00:00Z").getTime() - new Date(date + "T12:00:00Z").getTime()) / 86_400_000)} dni`
-                : "już za nami"}
-            </span>
-          </p>
+        {/* ── 2. Window context ── */}
+        {activeWindow && (
+          <div className={`rounded-xl px-3.5 py-3 ${isPeak ? "bg-amber-900/12 border border-amber-700/25" : "bg-white/3 border border-white/8"}`}>
+            <p className={`text-sm font-medium leading-snug ${isPeak ? "text-amber-200" : "text-slate-300"}`}>
+              {formatTransit(activeWindow)}
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              {isPeak
+                ? `★ Peak okna · ${activeWindow.start} – ${activeWindow.end} · ${activeWindow.lengthDays} dni`
+                : `Dzień ${Math.round((new Date(date + "T12:00:00Z").getTime() - new Date(activeWindow.start + "T12:00:00Z").getTime()) / 86_400_000) + 1} z ${activeWindow.lengthDays} · peak ${date < activeWindow.peak ? `za ${Math.round((new Date(activeWindow.peak + "T12:00:00Z").getTime() - new Date(date + "T12:00:00Z").getTime()) / 86_400_000)} dni` : "już za nami"}`}
+            </p>
+          </div>
         )}
 
         {/* ── 3. Sprzyja / Uważaj ── */}
