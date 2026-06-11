@@ -1,0 +1,201 @@
+{
+  "meta": {
+    "id": "ref-03",
+    "name": "Paris morning 1985",
+    "input": {
+      "id": "ref-03",
+      "name": "Paris morning 1985",
+      "date": "1985-03-21",
+      "time": "08:30",
+      "lat": 48.8566,
+      "lng": 2.3522,
+      "place": "Paris, France"
+    }
+  },
+  "planets": [
+    {
+      "name": "Słońce",
+      "sign": "Baran",
+      "longitude": 0.6377464798981691
+    },
+    {
+      "name": "Księżyc",
+      "sign": "Ryby",
+      "longitude": 358.5876248839081
+    },
+    {
+      "name": "Merkury",
+      "sign": "Baran",
+      "longitude": 17.86668883476665
+    },
+    {
+      "name": "Wenus",
+      "sign": "Baran",
+      "longitude": 21.133424722397876
+    },
+    {
+      "name": "Mars",
+      "sign": "Byk",
+      "longitude": 34.426282168147736
+    },
+    {
+      "name": "Jowisz",
+      "sign": "Wodnik",
+      "longitude": 309.0379502561093
+    },
+    {
+      "name": "Saturn",
+      "sign": "Skorpion",
+      "longitude": 237.96413494842363
+    },
+    {
+      "name": "Uran",
+      "sign": "Strzelec",
+      "longitude": 257.98240768200253
+    },
+    {
+      "name": "Neptun",
+      "sign": "Koziorożec",
+      "longitude": 273.5540594179055
+    },
+    {
+      "name": "Pluton",
+      "sign": "Skorpion",
+      "longitude": 214.22771101586181
+    }
+  ],
+  "ascendant": 46.11247458257799,
+  "mc": 291.8562548943182,
+  "placements": [
+    {
+      "planet": "Ascendent",
+      "sign": "Byk",
+      "house": 1
+    },
+    {
+      "planet": "Słońce",
+      "sign": "Baran",
+      "house": 11
+    },
+    {
+      "planet": "Księżyc",
+      "sign": "Ryby",
+      "house": 11
+    },
+    {
+      "planet": "Merkury",
+      "sign": "Baran",
+      "house": 12
+    },
+    {
+      "planet": "Wenus",
+      "sign": "Baran",
+      "house": 12,
+      "retrograde": true
+    },
+    {
+      "planet": "Mars",
+      "sign": "Byk",
+      "house": 12
+    },
+    {
+      "planet": "Jowisz",
+      "sign": "Wodnik",
+      "house": 9
+    },
+    {
+      "planet": "Saturn",
+      "sign": "Skorpion",
+      "house": 7,
+      "retrograde": true
+    },
+    {
+      "planet": "Uran",
+      "sign": "Strzelec",
+      "house": 8
+    },
+    {
+      "planet": "Neptun",
+      "sign": "Koziorożec",
+      "house": 8
+    },
+    {
+      "planet": "Pluton",
+      "sign": "Skorpion",
+      "house": 6,
+      "retrograde": true
+    }
+  ],
+  "aspects": [
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Księżyc",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Saturn",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Neptun",
+      "type": "square"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Saturn",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Neptun",
+      "type": "square"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Wenus",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Uran",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Uran",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Jowisz",
+      "type": "square"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Neptun",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Pluton",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Jowisz",
+      "planet_b": "Pluton",
+      "type": "square"
+    },
+    {
+      "planet_a": "Saturn",
+      "planet_b": "Węzeł Północny",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Neptun",
+      "planet_b": "Pluton",
+      "type": "sextile"
+    }
+  ]
+}

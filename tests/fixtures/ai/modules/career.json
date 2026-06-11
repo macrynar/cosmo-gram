@@ -1,0 +1,17 @@
+{
+  "id": "career",
+  "title": "Kariera i ambicje",
+  "quote": "Nie ma sensu wspinać się na szczyt jeśli to nie jest Twoja góra",
+  "content": "Saturn w Twojej karcie definiuje etykę pracy: systematyczność, odpowiedzialność, długoterminowe myślenie. Nie boisz się ciężkiej pracy — ba, często pracujesz ciężej niż potrzeba, bo standard 'wystarczająco dobrze' jest dla Ciebie trudny do zaakceptowania.\n\nSłońce w strefie kariery wskazuje, że praca jest dla Ciebie jednym z kluczowych obszarów wyrażania siebie. Kiedy praca idzie dobrze, Ty też czujesz się dobrze. Kiedy projekt utknął, masz wrażenie że jesteś ty, który utknął. Ta identyfikacja z pracą ma swoją cenę: trudno Ci 'wyłączyć się', i trudno Ci przyjąć porażkę zawodową bez odbierania jej personalnie.\n\nNaturalne środowisko zawodowe to takie, gdzie masz przestrzeń do samodzielnego decydowania o sposobie działania. Mikrozarządzanie Cię dusi. Potrzebujesz celu i zasobów, resztę wolisz wypracować sam.\n\nTo co Cię wypala: praca wyłącznie wykonawcza, bez wpływu na decyzje. Praca, gdzie nie wiesz po co robisz to co robisz. Praca, gdzie nieuczciwość jest normą — to dla Ciebie fizycznie nie do zniesienia.\n\nArchetyp roli zawodowej, który najlepiej pasuje do Twojej karty: budowniczy z wizją. Nie tylko zarządca — ktoś kto projektuje i realizuje coś trwałego, a potem potrafi przekazać to dalej bez przywiązania.\n\nSygnałem że jesteś w złym miejscu jest wstawanie rano z poczuciem że masz odpracować dzień, nie że masz coś zbudować.",
+  "tactics": [
+    "Przy każdym nowym projekcie zadaj sobie pytanie: czy za dwa lata będę dumny z tego że to robiłem, nie tylko że to skończyłem?",
+    "Ustal granicę godzin pracy i traktuj ją jak spotkanie z ważną osobą — nienaruszalne, nie do odwołania bez poważnego powodu.",
+    "Raz w kwartale oceń czy Twoja codzienna praca jest spójna z kierunkiem w którym chcesz zmierzać, a nie tylko z tym co jest pilne."
+  ],
+  "tags": ["kariera", "ambicja", "praca", "cel"],
+  "visualMeters": [
+    { "label": "Dyscyplina zawodowa", "value": 86, "archetype": "Władca", "category": "action" },
+    { "label": "Wizja strategiczna", "value": 73, "archetype": "Mędrzec", "category": "mind" },
+    { "label": "Równowaga praca-życie", "value": 48, "archetype": "Opiekun", "category": "soul" }
+  ]
+}

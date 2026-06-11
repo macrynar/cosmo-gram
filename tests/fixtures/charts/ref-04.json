@@ -1,0 +1,204 @@
+{
+  "meta": {
+    "id": "ref-04",
+    "name": "New York afternoon 1970",
+    "input": {
+      "id": "ref-04",
+      "name": "New York afternoon 1970",
+      "date": "1970-07-04",
+      "time": "14:00",
+      "lat": 40.7128,
+      "lng": -74.006,
+      "place": "New York, USA"
+    }
+  },
+  "planets": [
+    {
+      "name": "Słońce",
+      "sign": "Rak",
+      "longitude": 102.33603605355353
+    },
+    {
+      "name": "Księżyc",
+      "sign": "Rak",
+      "longitude": 114.77784331034559
+    },
+    {
+      "name": "Merkury",
+      "sign": "Rak",
+      "longitude": 99.66187253307424
+    },
+    {
+      "name": "Wenus",
+      "sign": "Lew",
+      "longitude": 141.0672833018955
+    },
+    {
+      "name": "Mars",
+      "sign": "Rak",
+      "longitude": 111.26262468200719
+    },
+    {
+      "name": "Jowisz",
+      "sign": "Waga",
+      "longitude": 206.2613013691315
+    },
+    {
+      "name": "Saturn",
+      "sign": "Byk",
+      "longitude": 49.47495730037741
+    },
+    {
+      "name": "Uran",
+      "sign": "Waga",
+      "longitude": 184.87585223611518
+    },
+    {
+      "name": "Neptun",
+      "sign": "Skorpion",
+      "longitude": 238.44840359007685
+    },
+    {
+      "name": "Pluton",
+      "sign": "Panna",
+      "longitude": 174.9132473099055
+    }
+  ],
+  "ascendant": 202.42020881280123,
+  "mc": 116.31212510465178,
+  "placements": [
+    {
+      "planet": "Ascendent",
+      "sign": "Waga",
+      "house": 1
+    },
+    {
+      "planet": "Słońce",
+      "sign": "Rak",
+      "house": 9
+    },
+    {
+      "planet": "Księżyc",
+      "sign": "Rak",
+      "house": 10
+    },
+    {
+      "planet": "Merkury",
+      "sign": "Rak",
+      "house": 9
+    },
+    {
+      "planet": "Wenus",
+      "sign": "Lew",
+      "house": 10
+    },
+    {
+      "planet": "Mars",
+      "sign": "Rak",
+      "house": 9
+    },
+    {
+      "planet": "Jowisz",
+      "sign": "Waga",
+      "house": 1
+    },
+    {
+      "planet": "Saturn",
+      "sign": "Byk",
+      "house": 7
+    },
+    {
+      "planet": "Uran",
+      "sign": "Waga",
+      "house": 12
+    },
+    {
+      "planet": "Neptun",
+      "sign": "Skorpion",
+      "house": 2,
+      "retrograde": true
+    },
+    {
+      "planet": "Pluton",
+      "sign": "Panna",
+      "house": 12
+    }
+  ],
+  "aspects": [
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Merkury",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Węzeł Północny",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Mars",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Jowisz",
+      "type": "square"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Neptun",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Pluton",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Uran",
+      "type": "square"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Węzeł Północny",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Saturn",
+      "type": "square"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Jowisz",
+      "type": "square"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Saturn",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Neptun",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Pluton",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Saturn",
+      "planet_b": "Pluton",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Neptun",
+      "planet_b": "Pluton",
+      "type": "sextile"
+    }
+  ]
+}

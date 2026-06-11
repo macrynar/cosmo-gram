@@ -1,0 +1,17 @@
+{
+  "id": "purpose",
+  "title": "Cel i spełnienie",
+  "quote": "Ta karta jest zbudowana żeby tworzyć rzeczy które będą trwać dłużej niż chwila",
+  "content": "Kierunek wzrostu z poprzedniej sekcji nie jest przypadkowy — prowadzi do czegoś konkretnego. Dary i talenty, które nosisz, nie są po to żeby je zatrzymać dla siebie. Są po to żeby realizować pewną funkcję w świecie.\n\nTwoja karta jest zbudowana, żeby tworzyć struktury i systemy, które pomagają innym działać sprawniej. Nie koniecznie przez bycie na scenie — raczej przez bycie architektą za kulisami. Kimś, kto widzi jak coś powinno działać i sprawia, że tak właśnie działa.\n\nDary, które temu służą: zdolność do długoterminowego myślenia, cierpliwość w realizacji, odporność na presję chwilowych wyników. Nie gonisz za natychmiastową gratyfikacją — potrafisz pracować przez lata na coś, co przyniesie efekt za pięć lat.\n\nMisja w tym wcieleniu nie jest wielką filozoficzną abstrakcją. Manifestuje się w małym: codziennych wyborach, które są spójne z Twoją głębszą wartością — rzetelnością. W świecie gdzie często łatwiej jest skrócić drogę niż zrobić to jak należy, Twoja rzetelność ma swoją wyjątkową wagę.\n\nNajważniejsze afirmacja tej karty: jesteś we właściwym miejscu kiedy robisz rzeczy które możesz podpisać swoim imieniem, nie wstydzą Cię po czasie, i służą czemuś większemu niż Twoje ego.\n\nKiedy to czujesz — kiedy praca, relacja, decyzja jest spójna z tym co naprawdę cenisz — masz dostęp do spokoju, który nie pochodzi z zewnątrz. To jest spełnienie którego szukasz.",
+  "tactics": [
+    "Raz w miesiącu oceń co robiłeś przez ostatnie cztery tygodnie i zapytaj: czy to co budowałem jest spójne z wartościami które chcę reprezentować?",
+    "Zidentyfikuj jedną osobę lub grupę której Twoja praca służy bezpośrednio i przypomnij sobie o tym kiedy będziesz zmęczony.",
+    "Napisz jedno zdanie opisujące co chcesz że zostanie po Tobie za dwadzieścia lat i sprawdź czy to co robisz dziś jest z tym spójne."
+  ],
+  "tags": ["cel", "misja", "spełnienie", "dziedzictwo"],
+  "visualMeters": [
+    { "label": "Poczucie sensu", "value": 82, "archetype": "Mędrzec", "category": "soul" },
+    { "label": "Spójność wartości", "value": 76, "archetype": "Władca", "category": "mind" },
+    { "label": "Wkład w świat", "value": 71, "archetype": "Bohater", "category": "social" }
+  ]
+}

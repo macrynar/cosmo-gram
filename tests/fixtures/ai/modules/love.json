@@ -1,0 +1,17 @@
+{
+  "id": "love",
+  "title": "Miłość i relacje",
+  "quote": "Przyciągasz intensywność bo sam ją nosisz i szukasz jej odbicia",
+  "content": "Mars w Twojej karcie opisuje to, co przyciąga Cię w partnerach: energia, niezależność, odwaga robienia swoich rzeczy. Nudzi Cię ktoś, kto czeka na pozwolenie — chcesz kogoś, kto sam decyduje, i kto potrafi Ci podskoczyć. Ta cecha Marsa sprawia, że Twoje relacje rzadko bywają spokojne przez długi czas.\n\nWenus wskazuje na Twój styl kochania: przez gesty, obecność, konkretne działanie. Mówisz 'kocham Cię' przez to co robisz, nie przez to co mówisz. Problem pojawia się, kiedy partner oczekuje słów — możesz nie rozumieć, że sam gotowany obiad to dla Ciebie wyznanie, które nie zostaje zauważone.\n\nNapięcie między Wenus a Księżycem w Twojej karcie tworzy ciekawy wzorzec: emocjonalne bezpieczeństwo i fizyczna bliskość nie zawsze idą u Ciebie w parze. Możesz być bardzo blisko kogoś fizycznie i jednocześnie trzymać emocjonalny dystans, który sam w sobie czujesz jako ochronny, ale partner może odbierać jako zimny.\n\nKonkretny wzorzec sabotażu: kiedy relacja staje się bardzo bliska, pojawia się w Tobie coś co ją testuje — konflikt, wycofanie, zmiana kierunku. Nie jest to zła wola. To nieświadomy mechanizm sprawdzający czy ta bliskość jest bezpieczna.\n\nNajwiększy prezent jaki możesz dać swojemu partnerowi to powiedzieć wprost co czujesz, zanim działasz — zamiast zostawiać go z interpretacją Twoich gestów.",
+  "tactics": [
+    "Zamiast czekać aż partner odgadnie co czujesz, powiedz to jednym prostym zdaniem — nawet jeśli czujesz że to oczywiste dla niego.",
+    "Kiedy poczujesz impuls do wycofania się z relacji, zatrzymaj się i zapytaj: czy ta bliskość mnie przeraża czy naprawdę coś jest nie tak?",
+    "Raz w tygodniu zrób konkretny gest miłości i powiedz głośno dlaczego to robisz — łącz działanie ze słowem."
+  ],
+  "tags": ["miłość", "bliskość", "intymność", "relacja"],
+  "visualMeters": [
+    { "label": "Zdolność do bliskości", "value": 65, "archetype": "Kochanek", "category": "emotion" },
+    { "label": "Wyrażanie uczuć", "value": 52, "archetype": "Twórca", "category": "social" },
+    { "label": "Namiętność", "value": 81, "archetype": "Wojownik", "category": "soul" }
+  ]
+}

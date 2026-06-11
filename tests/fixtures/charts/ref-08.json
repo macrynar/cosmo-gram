@@ -1,0 +1,229 @@
+{
+  "meta": {
+    "id": "ref-08",
+    "name": "Warsaw summer 1980",
+    "input": {
+      "id": "ref-08",
+      "name": "Warsaw summer 1980",
+      "date": "1980-08-01",
+      "time": "16:00",
+      "lat": 52.2297,
+      "lng": 21.0122,
+      "place": "Warsaw, Poland"
+    }
+  },
+  "planets": [
+    {
+      "name": "Słońce",
+      "sign": "Lew",
+      "longitude": 129.45324327253394
+    },
+    {
+      "name": "Księżyc",
+      "sign": "Baran",
+      "longitude": 13.923164931097062
+    },
+    {
+      "name": "Merkury",
+      "sign": "Rak",
+      "longitude": 110.04501565791332
+    },
+    {
+      "name": "Wenus",
+      "sign": "Bliźnięta",
+      "longitude": 86.29933065284501
+    },
+    {
+      "name": "Mars",
+      "sign": "Waga",
+      "longitude": 192.67523050636566
+    },
+    {
+      "name": "Jowisz",
+      "sign": "Panna",
+      "longitude": 161.7528437620216
+    },
+    {
+      "name": "Saturn",
+      "sign": "Panna",
+      "longitude": 174.11342811179497
+    },
+    {
+      "name": "Uran",
+      "sign": "Skorpion",
+      "longitude": 231.49882988702757
+    },
+    {
+      "name": "Neptun",
+      "sign": "Strzelec",
+      "longitude": 260.1352702204374
+    },
+    {
+      "name": "Pluton",
+      "sign": "Waga",
+      "longitude": 199.28772821769076
+    }
+  ],
+  "ascendant": 243.79953035087965,
+  "mc": 181.4619361126521,
+  "placements": [
+    {
+      "planet": "Ascendent",
+      "sign": "Strzelec",
+      "house": 1
+    },
+    {
+      "planet": "Słońce",
+      "sign": "Lew",
+      "house": 9
+    },
+    {
+      "planet": "Księżyc",
+      "sign": "Baran",
+      "house": 5
+    },
+    {
+      "planet": "Merkury",
+      "sign": "Rak",
+      "house": 8
+    },
+    {
+      "planet": "Wenus",
+      "sign": "Bliźnięta",
+      "house": 7
+    },
+    {
+      "planet": "Mars",
+      "sign": "Waga",
+      "house": 11
+    },
+    {
+      "planet": "Jowisz",
+      "sign": "Panna",
+      "house": 10
+    },
+    {
+      "planet": "Saturn",
+      "sign": "Panna",
+      "house": 10
+    },
+    {
+      "planet": "Uran",
+      "sign": "Skorpion",
+      "house": 12
+    },
+    {
+      "planet": "Neptun",
+      "sign": "Strzelec",
+      "house": 1,
+      "retrograde": true
+    },
+    {
+      "planet": "Pluton",
+      "sign": "Waga",
+      "house": 11
+    }
+  ],
+  "aspects": [
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Księżyc",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Mars",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Merkury",
+      "type": "square"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Mars",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Neptun",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Pluton",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Węzeł Północny",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Saturn",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Uran",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Pluton",
+      "type": "square"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Saturn",
+      "type": "square"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Neptun",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Pluton",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Pluton",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Saturn",
+      "planet_b": "Uran",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Saturn",
+      "planet_b": "Neptun",
+      "type": "square"
+    },
+    {
+      "planet_a": "Uran",
+      "planet_b": "Węzeł Północny",
+      "type": "square"
+    },
+    {
+      "planet_a": "Neptun",
+      "planet_b": "Pluton",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Neptun",
+      "planet_b": "Węzeł Północny",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Pluton",
+      "planet_b": "Węzeł Północny",
+      "type": "sextile"
+    }
+  ]
+}

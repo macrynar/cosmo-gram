@@ -1,0 +1,196 @@
+{
+  "meta": {
+    "id": "ref-06",
+    "name": "Moscow leap year 1960",
+    "input": {
+      "id": "ref-06",
+      "name": "Moscow leap year 1960",
+      "date": "1960-02-29",
+      "time": "01:00",
+      "lat": 55.7558,
+      "lng": 37.6173,
+      "place": "Moscow, Russia"
+    }
+  },
+  "planets": [
+    {
+      "name": "Słońce",
+      "sign": "Ryby",
+      "longitude": 339.33975742095436
+    },
+    {
+      "name": "Księżyc",
+      "sign": "Baran",
+      "longitude": 6.279540676089084
+    },
+    {
+      "name": "Merkury",
+      "sign": "Ryby",
+      "longitude": 355.63965674066674
+    },
+    {
+      "name": "Wenus",
+      "sign": "Wodnik",
+      "longitude": 310.1102000050025
+    },
+    {
+      "name": "Mars",
+      "sign": "Wodnik",
+      "longitude": 304.38351461797754
+    },
+    {
+      "name": "Jowisz",
+      "sign": "Strzelec",
+      "longitude": 269.7770508844019
+    },
+    {
+      "name": "Saturn",
+      "sign": "Koziorożec",
+      "longitude": 285.7678563236524
+    },
+    {
+      "name": "Uran",
+      "sign": "Lew",
+      "longitude": 138.1658261636686
+    },
+    {
+      "name": "Neptun",
+      "sign": "Skorpion",
+      "longitude": 219.0333185259883
+    },
+    {
+      "name": "Pluton",
+      "sign": "Panna",
+      "longitude": 154.782910133423
+    }
+  ],
+  "ascendant": 229.83657503717674,
+  "mc": 164.0938917244414,
+  "placements": [
+    {
+      "planet": "Ascendent",
+      "sign": "Skorpion",
+      "house": 1
+    },
+    {
+      "planet": "Słońce",
+      "sign": "Ryby",
+      "house": 4
+    },
+    {
+      "planet": "Księżyc",
+      "sign": "Baran",
+      "house": 5
+    },
+    {
+      "planet": "Merkury",
+      "sign": "Ryby",
+      "house": 5
+    },
+    {
+      "planet": "Wenus",
+      "sign": "Wodnik",
+      "house": 3
+    },
+    {
+      "planet": "Mars",
+      "sign": "Wodnik",
+      "house": 3
+    },
+    {
+      "planet": "Jowisz",
+      "sign": "Strzelec",
+      "house": 2
+    },
+    {
+      "planet": "Saturn",
+      "sign": "Koziorożec",
+      "house": 2
+    },
+    {
+      "planet": "Uran",
+      "sign": "Lew",
+      "house": 9,
+      "retrograde": true
+    },
+    {
+      "planet": "Neptun",
+      "sign": "Skorpion",
+      "house": 12,
+      "retrograde": true
+    },
+    {
+      "planet": "Pluton",
+      "sign": "Panna",
+      "house": 10,
+      "retrograde": true
+    }
+  ],
+  "aspects": [
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Neptun",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Pluton",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Wenus",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Mars",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Jowisz",
+      "type": "square"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Jowisz",
+      "type": "square"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Węzeł Północny",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Mars",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Neptun",
+      "type": "square"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Neptun",
+      "type": "square"
+    },
+    {
+      "planet_a": "Jowisz",
+      "planet_b": "Pluton",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Jowisz",
+      "planet_b": "Węzeł Północny",
+      "type": "square"
+    },
+    {
+      "planet_a": "Neptun",
+      "planet_b": "Pluton",
+      "type": "sextile"
+    }
+  ]
+}

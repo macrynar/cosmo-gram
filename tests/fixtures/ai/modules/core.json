@@ -1,0 +1,17 @@
+{
+  "id": "core",
+  "title": "Rdzeń osobowości",
+  "quote": "Twoja siła rodzi się tam gdzie intuicja spotyka działanie",
+  "content": "Wyobraź sobie kogoś, kto wchodzi do pokoju i od razu wie, co jest najważniejsze w tej chwili. Nie analizuje, nie waży argumentów przez godzinę — po prostu czuje. To nie magia, to Twój sposób przetwarzania świata, ukształtowany przez specyficzne napięcie między Słońcem a Księżycem w Twojej karcie.\n\nSłońce wskazuje na centralny konflikt napędzający Twoje życie: chęć bycia dostrzeganym za to, czym naprawdę jesteś, a nie za to, czym chcieliby Cię widzieć inni. Ten konflikt nie jest słabością — to silnik. Każda wielka decyzja, którą podjąłeś i z której byłeś później dumny, wynikała z tego, że oparłeś się presji i wybrałeś siebie.\n\nKsiężyc w Twojej karcie opisuje wewnętrzny świat, który często stoi w kontraście do tego, co pokazujesz na zewnątrz. Emocje są intensywne, ale rzadko widoczne — przetrawiane w ciszy, zanim ktokolwiek się o nich dowie. To strategia przetrwania, która kiedyś miała sens, teraz może Cię izolować.\n\nAscendent — Twoja maska — jest precyzyjna i profesjonalna. Ludzie widzą kogoś kompetentnego i opanowanego. Rzadko domyślają się, jak wiele dzieje się pod powierzchnią. Ta rozbieżność między tym, co widzą inni, a tym, czego doświadczasz wewnętrznie, jest źródłem zarówno Twojej siły jak i zmęczenia.\n\nKiedy jesteś we właściwym miejscu, ta rozbieżność znika — robisz, kim naprawdę jesteś, i jest to w pełni widoczne. Kiedy jesteś nie na miejscu, nosisz maskę na masce i to kosztuje dużo energii.\n\nTwoja karta jest zbudowana dla kogoś, kto rozumie, że autentyczność to nie wyznanie — to codzienne wybory zgodne z własnym centrum.",
+  "tactics": [
+    "Raz dziennie rano zadaj sobie pytanie: czy to co mam zrobić dziś jest spójne z tym kogo chcę być, czy tylko z tym czego oczekują inni?",
+    "Kiedy czujesz wewnętrzny sprzeciw wobec jakiejś decyzji, nie ignoruj go. Zapisz go w kilku słowach i wróć do notatki za dobę.",
+    "Raz w tygodniu zrób jedną rzecz wyłącznie dla siebie, bez uzasadniania jej wartości nikomu innemu."
+  ],
+  "tags": ["autentyczność", "głębia", "równowaga", "siła"],
+  "visualMeters": [
+    { "label": "Siła wewnętrzna", "value": 78, "archetype": "Wojownik ducha", "category": "soul" },
+    { "label": "Ekspresja własna", "value": 62, "archetype": "Twórca", "category": "action" },
+    { "label": "Integracja emocji", "value": 71, "archetype": "Opiekun", "category": "emotion" }
+  ]
+}

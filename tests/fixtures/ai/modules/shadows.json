@@ -1,0 +1,17 @@
+{
+  "id": "shadows",
+  "title": "Cienie i wzorce",
+  "quote": "Najtrudniejsza do zdjęcia jest zbroja którą sam skułeś z kompetencji",
+  "content": "Pluton w Twojej karcie nie jest wrogiem. Jest obszarem, w którym dusza chce się w tym życiu radykalnie przekształcić. To co trudne, ciężkie, kompulsywne w Twoim zachowaniu — to właśnie tam. Ale to też obszar gdzie masz największą potencjalną głębię.\n\nPierwszy cień: kontrola. Kiedy czujesz niepewność, Twoja pierwsza reakcja to próba przejęcia kontroli nad sytuacją lub ludźmi wokół. Kiedyś to chroniło — w środowisku gdzie byłeś dzieckiem i chaos był nieprzewidywalny, kontrola dawała poczucie bezpieczeństwa. Teraz ogranicza. Trzymasz zbyt mocno i tracisz relacje, które by rozkwitły gdybyś pozwolił im oddychać.\n\nDrugi cień: samokrytyka. Mars w napięciu tworzy wewnętrznego sędziego, który ocenia każde działanie i rzadko jest zadowolony. To napędza osiągnięcia, ale kosztuje. Błąd staje się wyrokiem, a nie informacją.\n\nTrzeci cień: trudność z odpoczynkiem. Wartość odpoczynku dla Ciebie jest warunkowa: zasługujesz na niego kiedy skończyłeś. Ale lista nigdy nie jest skończona. Kiedyś ta strategia miała sens — może musiałeś być produktywny żeby zasłużyć na miejsce w jakimś systemie. Teraz możesz się zatrzymać niezależnie od listy.\n\nNajważniejszy krok: zauważyć kiedy uruchamia się któryś z tych mechanizmów. Nie walczyć z nim — on ma swój powód. Po prostu zauważyć.\n\nKrzy wiesz że coś jest cieniem, a nie cechą: to coś, co robisz pomimo że wiesz że szkodzi, i co robisz automatycznie, bez decyzji.",
+  "tactics": [
+    "Kiedy poczujesz impuls do kontrolowania sytuacji lub osoby, zatrzymaj się i zapytaj: co konkretnie się stanie jeśli tego nie kontroluję?",
+    "Kiedy wewnętrzny sędzia zaczyna Cię oceniać po błędzie, zapisz co mówi, a potem zapytaj: czy powiedziałbym to komuś komu życzę dobrze?",
+    "Zaplanuj w tym tygodniu jedną godzinę odpoczynku bez warunku produktywności — nie po skończeniu zadania, ale niezależnie od niego."
+  ],
+  "tags": ["cienie", "wzorce", "transformacja", "świadomość"],
+  "visualMeters": [
+    { "label": "Integracja cieni", "value": 54, "archetype": "Mag", "category": "soul" },
+    { "label": "Samowspółczucie", "value": 47, "archetype": "Kochanek", "category": "emotion" },
+    { "label": "Elastyczność kontroli", "value": 51, "archetype": "Błazen", "category": "mind" }
+  ]
+}

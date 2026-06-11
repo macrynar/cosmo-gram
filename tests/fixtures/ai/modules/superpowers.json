@@ -1,0 +1,17 @@
+{
+  "id": "superpowers",
+  "title": "Supermoce i predyspozycje",
+  "quote": "Najcenniejszy dar to ten który nosisz tak naturalnie że go nie widzisz",
+  "content": "Są rzeczy, które robisz bez wysiłku, podczas gdy inni poświęcają na nie godziny treningów i wciąż nie osiągają Twojego poziomu. Nie dlatego, że jesteś lepszy — po prostu Twoja karta jest inaczej zbudowana w tym obszarze. Trzy zdolności wyróżniają się szczególnie wyraźnie.\n\nPierwsza to zdolność do szybkiego odczytywania złożonych sytuacji. Widzisz wzorce zanim inni je nazwą. W rozmowie grupowej zazwyczaj wiesz, co tak naprawdę się dzieje, jeszcze zanim ktokolwiek to powie wprost. To dar analityczny połączony z intuicją — rzadka kombinacja, która sprawia, że Twoje oceny sytuacji są zwykle celne.\n\nDruga predyspozycja dotyczy budowania zaufania. Nie jest to cecha, którą wypracowałeś — po prostu ludzie szybko Ci ufają. Czują, że jesteś uczciwy. Robisz to co mówisz i mówisz co robisz, bez zbędnego ozdabiania. W erze, gdy autentyczność jest deficytowym towarem, to jest wyjątkowa siła.\n\nTrzecia supermoc jest najbardziej ukryta: zdolność do trwania. Kiedy inni odpuszczają przy pierwszych trudnościach, Ty po prostu kontynuujesz. Nie zawsze z entuzjazmem — czasem ze zmęczeniem — ale kontynuujesz. To nie jest upór, to wytrwałość zakorzeniona w głębszym przekonaniu, że warto.\n\nInni widzą Cię jako osobę godną zaufania, zrównoważoną i kompetentną. Dla Ciebie to tak naturalne, że rzadko traktujesz to jak dar — bardziej jak podstawowy tryb działania. Ale to właśnie jest definicja prawdziwego talentu.",
+  "tactics": [
+    "Kiedy ktoś chwali Twoją zdolność do szybkiego rozumienia sytuacji, nie odpowiadaj 'to nic takiego' — powiedz dziękuję i zapamiętaj że ta umiejętność ma realną wartość.",
+    "Zidentyfikuj jedną sytuację tygodniowo gdzie Twoja zdolność do trwania przyniosła wynik który byłby niemożliwy bez niej.",
+    "Celowo wchodzi w sytuacje gdzie możesz ćwiczyć odczytywanie dynamiki grupowej — spotkania, negocjacje, trudne rozmowy."
+  ],
+  "tags": ["talent", "wytrwałość", "intuicja", "zaufanie"],
+  "visualMeters": [
+    { "label": "Analityka intuicyjna", "value": 84, "archetype": "Strateg", "category": "mind" },
+    { "label": "Budowanie zaufania", "value": 79, "archetype": "Mędrzec", "category": "social" },
+    { "label": "Wytrwałość", "value": 88, "archetype": "Bohater", "category": "action" }
+  ]
+}

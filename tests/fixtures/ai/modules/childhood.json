@@ -1,0 +1,17 @@
+{
+  "id": "childhood",
+  "title": "Dziecko i korzenie",
+  "quote": "Dom z dzieciństwa wciąż żyje w tym jak reagujesz na stres",
+  "content": "Atmosfera domu, w którym dorastałeś, nie była ani idealna ani katastrofalna. Była — jak większość — mieszanką ciepła i nieuchwytnych zasad, które nigdy nie były wypowiedziane wprost, ale zawsze obecnych. Dziecko rozumie te reguły zanim nauczy się mówić i zaczyna im podporządkowywać swoje zachowanie.\n\nKsiężyc w Twojej karcie wskazuje na środowisko, gdzie emocjonalne bezpieczeństwo było warunkowo dostępne — trzeba było na nie zasłużyć, spełniając pewne oczekiwania. Niekoniecznie jawne, ale wyraźnie odczuwalne. W odpowiedzi na to nauczyłeś się regulować swoje emocje samodzielnie, zanim ktokolwiek zdążył pomóc.\n\nSaturn w Twojej karcie mówi o strukturze i odpowiedzialności, które pojawiły się za wcześnie. Możliwe, że byłeś dzieckiem, które szybko wzięło na siebie obowiązki — opiekowanie się innymi, bycie rozsądnym, nie sprawianie problemów. To wykształciło w Tobie silne poczucie odpowiedzialności, które dziś jest zasobem.\n\nAle ukształtowało też mechanizm obronny: trudności w proszeniu o pomoc. Skoro jako dziecko nauczyłeś się radzić sobie samodzielnie, dziś robisz to samo — nawet gdy kosztuje Cię to znacznie więcej niż gdybyś poprosił.\n\nTen dziecięcy wzorzec manifestuje się w dorosłości jako perfekcjonizm w pracy i zbyt wysoka poprzeczka wobec siebie. Kiedy coś idzie nie tak, pierwsza myśl to 'co zrobiłem źle' — rzadko 'co mogło się zdarzyć niezależnie ode mnie'.\n\nNajważniejszy krok to nauczyć się rozróżniać odpowiedzialność od winy.",
+  "tactics": [
+    "Kiedy następnym razem będziesz potrzebował pomocy, poproś o nią zanim problem urośnie — to ćwiczenie które uczy mózg że proszenie jest bezpieczne.",
+    "Kiedy coś pójdzie nie tak, zanim zaczniesz szukać swojej winy zapytaj: czy to co się stało było w moim zakresie kontroli?",
+    "Raz w miesiącu zrób coś niedoskonałego celowo i pozwól żeby zostało niedoskonałe — to trenuje tolerancję wobec niedoskonałości."
+  ],
+  "tags": ["wzorce", "korzenie", "bezpieczeństwo", "odpowiedzialność"],
+  "visualMeters": [
+    { "label": "Poczucie bezpieczeństwa", "value": 58, "archetype": "Dziecko", "category": "emotion" },
+    { "label": "Samodzielność", "value": 85, "archetype": "Bohater", "category": "action" },
+    { "label": "Otwartość na wsparcie", "value": 44, "archetype": "Opiekun", "category": "social" }
+  ]
+}

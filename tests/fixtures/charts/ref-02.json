@@ -1,0 +1,209 @@
+{
+  "meta": {
+    "id": "ref-02",
+    "name": "London midnight 2000",
+    "input": {
+      "id": "ref-02",
+      "name": "London midnight 2000",
+      "date": "2000-01-01",
+      "time": "00:00",
+      "lat": 51.5074,
+      "lng": -0.1278,
+      "place": "London, UK"
+    }
+  },
+  "planets": [
+    {
+      "name": "Słońce",
+      "sign": "Koziorożec",
+      "longitude": 279.8648258138327
+    },
+    {
+      "name": "Księżyc",
+      "sign": "Skorpion",
+      "longitude": 217.29338647963323
+    },
+    {
+      "name": "Merkury",
+      "sign": "Koziorożec",
+      "longitude": 271.117157997267
+    },
+    {
+      "name": "Wenus",
+      "sign": "Strzelec",
+      "longitude": 240.96536262077439
+    },
+    {
+      "name": "Mars",
+      "sign": "Wodnik",
+      "longitude": 327.5799616580897
+    },
+    {
+      "name": "Jowisz",
+      "sign": "Baran",
+      "longitude": 25.232712279239422
+    },
+    {
+      "name": "Saturn",
+      "sign": "Byk",
+      "longitude": 40.40337863503356
+    },
+    {
+      "name": "Uran",
+      "sign": "Wodnik",
+      "longitude": 314.78573327802724
+    },
+    {
+      "name": "Neptun",
+      "sign": "Wodnik",
+      "longitude": 303.1829980006959
+    },
+    {
+      "name": "Pluton",
+      "sign": "Strzelec",
+      "longitude": 251.4423148066985
+    }
+  ],
+  "ascendant": 186.93654315897453,
+  "mc": 99.03872488335105,
+  "placements": [
+    {
+      "planet": "Ascendent",
+      "sign": "Waga",
+      "house": 1
+    },
+    {
+      "planet": "Słońce",
+      "sign": "Koziorożec",
+      "house": 4
+    },
+    {
+      "planet": "Księżyc",
+      "sign": "Skorpion",
+      "house": 2
+    },
+    {
+      "planet": "Merkury",
+      "sign": "Koziorożec",
+      "house": 3
+    },
+    {
+      "planet": "Wenus",
+      "sign": "Strzelec",
+      "house": 2
+    },
+    {
+      "planet": "Mars",
+      "sign": "Wodnik",
+      "house": 5
+    },
+    {
+      "planet": "Jowisz",
+      "sign": "Baran",
+      "house": 7
+    },
+    {
+      "planet": "Saturn",
+      "sign": "Byk",
+      "house": 8,
+      "retrograde": true
+    },
+    {
+      "planet": "Uran",
+      "sign": "Wodnik",
+      "house": 5
+    },
+    {
+      "planet": "Neptun",
+      "sign": "Wodnik",
+      "house": 4
+    },
+    {
+      "planet": "Pluton",
+      "sign": "Strzelec",
+      "house": 3
+    }
+  ],
+  "aspects": [
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Księżyc",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Saturn",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Saturn",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Neptun",
+      "type": "square"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Węzeł Północny",
+      "type": "square"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Mars",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Jowisz",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Mars",
+      "type": "square"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Neptun",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Węzeł Północny",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Jowisz",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Saturn",
+      "planet_b": "Uran",
+      "type": "square"
+    },
+    {
+      "planet_a": "Saturn",
+      "planet_b": "Węzeł Północny",
+      "type": "square"
+    },
+    {
+      "planet_a": "Uran",
+      "planet_b": "Pluton",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Neptun",
+      "planet_b": "Węzeł Północny",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Pluton",
+      "planet_b": "Węzeł Północny",
+      "type": "trine"
+    }
+  ]
+}

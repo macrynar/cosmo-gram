@@ -1,0 +1,17 @@
+{
+  "id": "roots",
+  "title": "Korzenie duszy",
+  "quote": "Kierunek rośnie zawsze w stronę tego co budzi największy opór",
+  "content": "Pluton w Twojej karcie opisuje obszar radykalnej transformacji — nie wybranej, ale koniecznej. Chodzi o przekształcenie się nie w lepszą wersję tego samego, ale w kogoś zasadniczo innego w tym obszarze. To zazwyczaj dotyczy władzy, kontroli lub głębi — sposobu, w jaki Ty i inni ludzie posługują się wpływem.\n\nOś węzłów Twojej karty opisuje historię podróży. To co znane — Twój węzeł południowy — to obszar, który opanowałeś do perfekcji w poprzednich etapach życia. Prawdopodobnie to struktura, system, bezpieczna analiza. Robisz to bezbłędnie i to właśnie jest pułapka: możesz całe życie spędzić w tym co już umiesz, bo jest bezpieczne.\n\nKierunek wzrostu wskazuje na obszar który budzi opór: bezpośrednie działanie, własna inicjatywa, bycie pierwszym, nawet bez gwarancji że to zadziała. Dla Ciebie, kto przywykł do analizowania zanim ruszy — to jest niekomfortowe. Ale tylko tam jest spełnienie które poczujesz jako właściwe.\n\nIstnieje planeta w napięciu do osi węzłów. To niedokończona sprawa, która wraca jako natrętny wzorzec: oscylacja między nadmierną ostrożnością a impulsywnym działaniem. Brakuje ci środka — spokojnego, zdecydowanego kroku naprzód bez dramatyzmu.\n\nGłębsza intencja Twojej karty: nauczyć się działać pomimo niepewności, nie czekając aż stanie się pewna. Codziennie manifestuje się to w małych wyborach — kiedy coś robisz mimo że nie wiesz jak to się skończy.",
+  "tactics": [
+    "Zidentyfikuj jeden obszar gdzie od miesięcy 'czekasz aż będziesz gotowy' i zrób w tym tygodniu jeden mały krok naprzód bez przygotowania.",
+    "Zauważ kiedy opór wobec czegoś nowego jest sygnałem strachu a kiedy jest sygnałem że coś naprawdę nie jest dla Ciebie — to są różne uczucia.",
+    "Raz w miesiącu zrób coś z obszaru węzła północnego — inicjatywa, bezpośrednie działanie, nowe terytorium — i zapamiętaj jak to smakuje."
+  ],
+  "tags": ["dusza", "kierunek", "wzrost", "przeznaczenie"],
+  "visualMeters": [
+    { "label": "Głębia duchowa", "value": 77, "archetype": "Mędrzec", "category": "soul" },
+    { "label": "Odwaga zmiany", "value": 61, "archetype": "Bohater", "category": "action" },
+    { "label": "Akceptacja niepewności", "value": 55, "archetype": "Błazen", "category": "mind" }
+  ]
+}

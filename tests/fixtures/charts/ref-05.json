@@ -1,0 +1,203 @@
+{
+  "meta": {
+    "id": "ref-05",
+    "name": "Sydney evening 1995",
+    "input": {
+      "id": "ref-05",
+      "name": "Sydney evening 1995",
+      "date": "1995-12-25",
+      "time": "20:00",
+      "lat": -33.8688,
+      "lng": 151.2093,
+      "place": "Sydney, Australia"
+    }
+  },
+  "planets": [
+    {
+      "name": "Słońce",
+      "sign": "Koziorożec",
+      "longitude": 273.0935753765076
+    },
+    {
+      "name": "Księżyc",
+      "sign": "Wodnik",
+      "longitude": 319.3126737488474
+    },
+    {
+      "name": "Merkury",
+      "sign": "Koziorożec",
+      "longitude": 290.28415875276175
+    },
+    {
+      "name": "Wenus",
+      "sign": "Wodnik",
+      "longitude": 304.46196900497534
+    },
+    {
+      "name": "Mars",
+      "sign": "Koziorożec",
+      "longitude": 289.02229866019377
+    },
+    {
+      "name": "Jowisz",
+      "sign": "Strzelec",
+      "longitude": 267.9789751924843
+    },
+    {
+      "name": "Saturn",
+      "sign": "Ryby",
+      "longitude": 348.9820108236171
+    },
+    {
+      "name": "Uran",
+      "sign": "Koziorożec",
+      "longitude": 298.986435486609
+    },
+    {
+      "name": "Neptun",
+      "sign": "Koziorożec",
+      "longitude": 294.4442661199521
+    },
+    {
+      "name": "Pluton",
+      "sign": "Strzelec",
+      "longitude": 241.72830788979604
+    }
+  ],
+  "ascendant": 92.49583492743864,
+  "mc": 21.231249056493255,
+  "placements": [
+    {
+      "planet": "Ascendent",
+      "sign": "Rak",
+      "house": 1
+    },
+    {
+      "planet": "Słońce",
+      "sign": "Koziorożec",
+      "house": 7
+    },
+    {
+      "planet": "Księżyc",
+      "sign": "Wodnik",
+      "house": 8
+    },
+    {
+      "planet": "Merkury",
+      "sign": "Koziorożec",
+      "house": 7
+    },
+    {
+      "planet": "Wenus",
+      "sign": "Wodnik",
+      "house": 8
+    },
+    {
+      "planet": "Mars",
+      "sign": "Koziorożec",
+      "house": 7
+    },
+    {
+      "planet": "Jowisz",
+      "sign": "Strzelec",
+      "house": 6
+    },
+    {
+      "planet": "Saturn",
+      "sign": "Ryby",
+      "house": 9
+    },
+    {
+      "planet": "Uran",
+      "sign": "Koziorożec",
+      "house": 7
+    },
+    {
+      "planet": "Neptun",
+      "sign": "Koziorożec",
+      "house": 7
+    },
+    {
+      "planet": "Pluton",
+      "sign": "Strzelec",
+      "house": 5
+    }
+  ],
+  "aspects": [
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Jowisz",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Węzeł Północny",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Mars",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Saturn",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Neptun",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Węzeł Północny",
+      "type": "square"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Uran",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Pluton",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Saturn",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Neptun",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Węzeł Północny",
+      "type": "square"
+    },
+    {
+      "planet_a": "Uran",
+      "planet_b": "Neptun",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Uran",
+      "planet_b": "Pluton",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Uran",
+      "planet_b": "Węzeł Północny",
+      "type": "square"
+    },
+    {
+      "planet_a": "Neptun",
+      "planet_b": "Węzeł Północny",
+      "type": "square"
+    }
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "meta": {
+    "id": "ref-10",
+    "name": "Warsaw no time",
+    "input": {
+      "id": "ref-10",
+      "name": "Warsaw no time",
+      "date": "2005-09-23",
+      "time": "12:00",
+      "lat": 52.2297,
+      "lng": 21.0122,
+      "place": "Warsaw, Poland",
+      "timeUnknown": true
+    }
+  },
+  "planets": [
+    {
+      "name": "Słońce",
+      "sign": "Waga",
+      "longitude": 180.4794304949769
+    },
+    {
+      "name": "Księżyc",
+      "sign": "Bliźnięta",
+      "longitude": 69.08000867080898
+    },
+    {
+      "name": "Merkury",
+      "sign": "Waga",
+      "longitude": 184.85446484270096
+    },
+    {
+      "name": "Wenus",
+      "sign": "Skorpion",
+      "longitude": 223.51688146762285
+    },
+    {
+      "name": "Mars",
+      "sign": "Byk",
+      "longitude": 52.83943983082929
+    },
+    {
+      "name": "Jowisz",
+      "sign": "Waga",
+      "longitude": 202.97871097208417
+    },
+    {
+      "name": "Saturn",
+      "sign": "Lew",
+      "longitude": 128.2158697727864
+    },
+    {
+      "name": "Uran",
+      "sign": "Ryby",
+      "longitude": 337.9170144855609
+    },
+    {
+      "name": "Neptun",
+      "sign": "Wodnik",
+      "longitude": 315.116100849953
+    },
+    {
+      "name": "Pluton",
+      "sign": "Strzelec",
+      "longitude": 261.9438809688768
+    }
+  ],
+  "ascendant": null,
+  "mc": null,
+  "placements": [
+    {
+      "planet": "Słońce",
+      "sign": "Waga",
+      "house": null
+    },
+    {
+      "planet": "Księżyc",
+      "sign": "Bliźnięta",
+      "house": null
+    },
+    {
+      "planet": "Merkury",
+      "sign": "Waga",
+      "house": null
+    },
+    {
+      "planet": "Wenus",
+      "sign": "Skorpion",
+      "house": null
+    },
+    {
+      "planet": "Mars",
+      "sign": "Byk",
+      "house": null
+    },
+    {
+      "planet": "Jowisz",
+      "sign": "Waga",
+      "house": null
+    },
+    {
+      "planet": "Saturn",
+      "sign": "Lew",
+      "house": null
+    },
+    {
+      "planet": "Uran",
+      "sign": "Ryby",
+      "house": null,
+      "retrograde": true
+    },
+    {
+      "planet": "Neptun",
+      "sign": "Wodnik",
+      "house": null,
+      "retrograde": true
+    },
+    {
+      "planet": "Pluton",
+      "sign": "Strzelec",
+      "house": null
+    }
+  ],
+  "aspects": [
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Merkury",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Mars",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Merkury",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Saturn",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Uran",
+      "type": "square"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Neptun",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Saturn",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Saturn",
+      "type": "square"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Uran",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Neptun",
+      "type": "square"
+    },
+    {
+      "planet_a": "Jowisz",
+      "planet_b": "Neptun",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Jowisz",
+      "planet_b": "Pluton",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Saturn",
+      "planet_b": "Neptun",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Saturn",
+      "planet_b": "Węzeł Północny",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Neptun",
+      "planet_b": "Węzeł Północny",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Pluton",
+      "planet_b": "Węzeł Północny",
+      "type": "trine"
+    }
+  ]
+}

@@ -1,9 +1,16 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { AstroModuleAIOutputSchema, type AstroModuleAIOutput } from "./schemas/astroModule";
+import path from "path";
+import fs from "fs";
 
 const MAX_RETRIES = 2;
 const BACKOFF_MS  = [1000, 3000] as const;
+
+function loadAiFixture(name: string): unknown {
+  const fixturePath = path.join(process.cwd(), "tests", "fixtures", "ai", name);
+  return JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+}
 
 function getClient(): Anthropic {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -19,6 +26,11 @@ export async function generateModuleWithRetry(
   expectedModuleId: string,
   attempt           = 0
 ): Promise<AstroModuleAIOutput> {
+  if (process.env.AI_MOCK === "true") {
+    const fixture = loadAiFixture(`modules/${expectedModuleId}.json`);
+    return AstroModuleAIOutputSchema.parse({ ...(fixture as object), id: expectedModuleId });
+  }
+
   try {
     const response = await getClient().messages.create({
       model:      "claude-sonnet-4-6",
@@ -74,6 +86,13 @@ export async function deepSeekChat({
   maxTokens,
   temperature,
 }: DeepSeekChatParams): Promise<string> {
+  if (process.env.AI_MOCK === "true") {
+    return fs.readFileSync(
+      path.join(process.cwd(), "tests", "fixtures", "ai", "chat-response.txt"),
+      "utf-8"
+    );
+  }
+
   const response = await getClient().messages.create({
     model:      "claude-haiku-4-5-20251001",
     max_tokens: maxTokens ?? 1024,

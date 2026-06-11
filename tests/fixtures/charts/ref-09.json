@@ -1,0 +1,228 @@
+{
+  "meta": {
+    "id": "ref-09",
+    "name": "Buenos Aires 1950",
+    "input": {
+      "id": "ref-09",
+      "name": "Buenos Aires 1950",
+      "date": "1950-01-15",
+      "time": "06:00",
+      "lat": -34.6037,
+      "lng": -58.3816,
+      "place": "Buenos Aires, Argentina"
+    }
+  },
+  "planets": [
+    {
+      "name": "Słońce",
+      "sign": "Koziorożec",
+      "longitude": 294.6584530197433
+    },
+    {
+      "name": "Księżyc",
+      "sign": "Strzelec",
+      "longitude": 256.4036863482967
+    },
+    {
+      "name": "Merkury",
+      "sign": "Koziorożec",
+      "longitude": 299.9352140028641
+    },
+    {
+      "name": "Wenus",
+      "sign": "Wodnik",
+      "longitude": 318.2684927725395
+    },
+    {
+      "name": "Mars",
+      "sign": "Waga",
+      "longitude": 186.87508982905365
+    },
+    {
+      "name": "Jowisz",
+      "sign": "Wodnik",
+      "longitude": 309.8162570071552
+    },
+    {
+      "name": "Saturn",
+      "sign": "Panna",
+      "longitude": 169.198212678137
+    },
+    {
+      "name": "Uran",
+      "sign": "Rak",
+      "longitude": 92.0880504135294
+    },
+    {
+      "name": "Neptun",
+      "sign": "Waga",
+      "longitude": 197.35094602908225
+    },
+    {
+      "name": "Pluton",
+      "sign": "Lew",
+      "longitude": 137.50754311928995
+    }
+  ],
+  "ascendant": 294.4925304503688,
+  "mc": 191.81334032752625,
+  "placements": [
+    {
+      "planet": "Ascendent",
+      "sign": "Koziorożec",
+      "house": 1
+    },
+    {
+      "planet": "Słońce",
+      "sign": "Koziorożec",
+      "house": 1
+    },
+    {
+      "planet": "Księżyc",
+      "sign": "Strzelec",
+      "house": 11
+    },
+    {
+      "planet": "Merkury",
+      "sign": "Koziorożec",
+      "house": 1,
+      "retrograde": true
+    },
+    {
+      "planet": "Wenus",
+      "sign": "Wodnik",
+      "house": 1,
+      "retrograde": true
+    },
+    {
+      "planet": "Mars",
+      "sign": "Waga",
+      "house": 9
+    },
+    {
+      "planet": "Jowisz",
+      "sign": "Wodnik",
+      "house": 1
+    },
+    {
+      "planet": "Saturn",
+      "sign": "Panna",
+      "house": 8,
+      "retrograde": true
+    },
+    {
+      "planet": "Uran",
+      "sign": "Rak",
+      "house": 6,
+      "retrograde": true
+    },
+    {
+      "planet": "Neptun",
+      "sign": "Waga",
+      "house": 9
+    },
+    {
+      "planet": "Pluton",
+      "sign": "Lew",
+      "house": 7,
+      "retrograde": true
+    }
+  ],
+  "aspects": [
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Merkury",
+      "type": "conjunction"
+    },
+    {
+      "planet_a": "Słońce",
+      "planet_b": "Saturn",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Wenus",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Saturn",
+      "type": "square"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Neptun",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Pluton",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Księżyc",
+      "planet_b": "Węzeł Północny",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Merkury",
+      "planet_b": "Mars",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Neptun",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Wenus",
+      "planet_b": "Pluton",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Jowisz",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Uran",
+      "type": "square"
+    },
+    {
+      "planet_a": "Mars",
+      "planet_b": "Węzeł Północny",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Jowisz",
+      "planet_b": "Neptun",
+      "type": "trine"
+    },
+    {
+      "planet_a": "Jowisz",
+      "planet_b": "Pluton",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Jowisz",
+      "planet_b": "Węzeł Północny",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Neptun",
+      "planet_b": "Pluton",
+      "type": "sextile"
+    },
+    {
+      "planet_a": "Neptun",
+      "planet_b": "Węzeł Północny",
+      "type": "opposition"
+    },
+    {
+      "planet_a": "Pluton",
+      "planet_b": "Węzeł Północny",
+      "type": "trine"
+    }
+  ]
+}
