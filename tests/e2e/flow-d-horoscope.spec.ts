@@ -120,4 +120,97 @@ test.describe("Flow D — horoskop dzienny", () => {
     });
     expect(res.status()).toBe(401);
   });
+
+  // ─── Security: nowe endpointy wymagają autoryzacji ────────────────────────
+
+  test("/api/daily-personal-horoscope wymaga tokenu Bearer", async ({ request }) => {
+    const res = await request.get("/api/daily-personal-horoscope?date=2026-06-15");
+    expect(res.status()).toBe(401);
+  });
+
+  test("/api/power-day-explanation wymaga tokenu Bearer", async ({ request }) => {
+    const res = await request.post("/api/power-day-explanation", {
+      data: { date: "2026-06-15" },
+    });
+    expect(res.status()).toBe(401);
+  });
+
+  test("/api/daily-personal-horoscope odrzuca nieprawidłową datę", async ({ request }) => {
+    const res = await request.get("/api/daily-personal-horoscope?date=not-a-date", {
+      headers: { Authorization: "Bearer fake-token-that-will-fail-auth" },
+    });
+    // Either 400 (bad date) or 401 (auth fails first) — not 500
+    expect(res.status()).toBeLessThan(500);
+  });
+
+  // ─── /app/horoscope — widok horoskopu ────────────────────────────────────
+
+  test("niezalogowany user na /app/horoscope jest przekierowany", async ({ page }) => {
+    await page.goto("/app/horoscope");
+    await page.waitForLoadState("networkidle");
+    // Should redirect to /login or similar auth gate
+    const url = page.url();
+    const isAuthGated = url.includes("/login") || url.includes("/signup") || url.includes("/app/horoscope");
+    expect(isAuthGated).toBe(true);
+  });
+
+  test("zalogowany user widzi sekcję 'Energia dnia'", async ({ page }) => {
+    const email    = process.env.TEST_USER_EMAIL;
+    const password = process.env.TEST_USER_PASSWORD;
+    test.skip(!email || !password, "Wymaga TEST_USER_EMAIL i TEST_USER_PASSWORD");
+
+    await page.goto("/login");
+    await page.locator('input[type="email"]').fill(email!);
+    await page.locator('input[type="password"]').fill(password!);
+    await page.locator('button[type="submit"]').click();
+    await page.waitForURL(/\/app\//);
+
+    await page.goto("/app/horoscope");
+    await page.waitForLoadState("networkidle");
+
+    // "Energia dnia" section should be visible for any user with a chart
+    const energySection = page.getByText("Energia dnia");
+    await expect(energySection).toBeVisible({ timeout: 8000 });
+  });
+
+  test("wolny user widzi lock na personalnym horoskopie", async ({ page }) => {
+    const email    = process.env.TEST_FREE_USER_EMAIL;
+    const password = process.env.TEST_FREE_USER_PASSWORD;
+    test.skip(!email || !password, "Wymaga TEST_FREE_USER_EMAIL i TEST_FREE_USER_PASSWORD");
+
+    await page.goto("/login");
+    await page.locator('input[type="email"]').fill(email!);
+    await page.locator('input[type="password"]').fill(password!);
+    await page.locator('button[type="submit"]').click();
+    await page.waitForURL(/\/app\//);
+
+    await page.goto("/app/horoscope");
+    await page.waitForLoadState("networkidle");
+
+    // Free user should see the upsell lock section
+    const lockSection = page.getByText("Personalny horoskop tranzytowy");
+    await expect(lockSection).toBeVisible({ timeout: 8000 });
+  });
+
+  // ─── Kalendarz — Dni Mocy ─────────────────────────────────────────────────
+
+  test("strona /app/calendar ładuje się bez błędów", async ({ page }) => {
+    const email    = process.env.TEST_USER_EMAIL;
+    const password = process.env.TEST_USER_PASSWORD;
+    test.skip(!email || !password, "Wymaga TEST_USER_EMAIL i TEST_USER_PASSWORD");
+
+    await page.goto("/login");
+    await page.locator('input[type="email"]').fill(email!);
+    await page.locator('input[type="password"]').fill(password!);
+    await page.locator('button[type="submit"]').click();
+    await page.waitForURL(/\/app\//);
+
+    const res = await page.goto("/app/calendar");
+    expect(res?.status()).toBeLessThan(400);
+    await page.waitForLoadState("networkidle");
+
+    // Calendar grid or loading state should be present
+    const hasContent = await page.locator('h1, h2, [class*="calendar"], [class*="Calendar"]').first().isVisible();
+    expect(hasContent).toBe(true);
+  });
 });

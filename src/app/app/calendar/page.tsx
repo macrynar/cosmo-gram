@@ -13,7 +13,9 @@ import DayPanel from "@/components/calendar/DayPanel";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
 import { computeMonthData, type DayData } from "@/lib/chart-engine";
+import { getPowerDays } from "@/lib/astro/powerDays";
 import { useStreak } from "@/lib/useStreak";
+import { supabase } from "@/lib/supabase";
 import type { NatalChart } from "@/lib/astro-types";
 import { ROUTES } from "@/lib/routes";
 
@@ -64,6 +66,7 @@ export default function CalendarPage() {
   const [compareMode, setCompareMode] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [isPremium, setIsPremium] = useState(false);
 
   const authHeader: Record<string, string> = session ? { Authorization: `Bearer ${session.access_token}` } : {};
 
@@ -82,6 +85,12 @@ export default function CalendarPage() {
 
   const selectedDayData = useMemo(() => days.find(d => d.date === selectedDate) ?? undefined, [days, selectedDate]);
 
+  const personalPowerDays = useMemo<Set<string>>(() => {
+    if (!isPremium || !selectedReading?.chart_data) return new Set();
+    const powerDays = getPowerDays(selectedReading.chart_data, year, month);
+    return new Set(powerDays.map(d => d.date));
+  }, [isPremium, selectedReading, year, month]);
+
   const solarReturnDays = useMemo(() =>
     selectedReading?.birth_date ? nextBirthdayDaysUntil(selectedReading.birth_date) : null,
   [selectedReading]);
@@ -91,10 +100,15 @@ export default function CalendarPage() {
     setLoadingHistory(true);
     setLoadError("");
     try {
-      const res = await fetch("/api/get-readings", { headers: authHeader });
-      const { readings: data } = await res.json() as { readings: SavedReading[] };
+      const [readingsRes, subData] = await Promise.all([
+        fetch("/api/get-readings", { headers: authHeader }),
+        supabase.from("subscriptions").select("status").eq("user_id", session.user.id).maybeSingle(),
+      ]);
+      const { readings: data } = await readingsRes.json() as { readings: SavedReading[] };
       setReadings(data || []);
       if (data?.length) setSelectedId(data[0].id);
+      const s = subData.data?.status;
+      setIsPremium(s === "active" || s === "trialing");
     } catch {
       setLoadError("Nie udało się wczytać kosmogramów.");
     } finally {
@@ -340,6 +354,8 @@ export default function CalendarPage() {
                   interpretation={selectedReading.interpretation}
                   filter={filter}
                   onClose={() => setSelectedDate(null)}
+                  isPremium={isPremium}
+                  isPersonalPowerDay={personalPowerDays.has(selectedDate)}
                 />
               </div>
             )}
@@ -369,6 +385,8 @@ export default function CalendarPage() {
                 interpretation={selectedReading.interpretation}
                 filter={filter}
                 onClose={() => setSelectedDate(null)}
+                isPremium={isPremium}
+                isPersonalPowerDay={personalPowerDays.has(selectedDate)}
               />
             </div>
           </div>

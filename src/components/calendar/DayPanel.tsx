@@ -11,7 +11,7 @@ import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
 import DailyReading from "@/components/generate/DailyReading";
 import { motion } from "framer-motion";
-import { X, Moon, TrendingUp, AlertTriangle, Pencil, Flame } from "lucide-react";
+import { X, Moon, TrendingUp, AlertTriangle, Pencil, Flame, Zap } from "lucide-react";
 
 // ── Polish instrumental case for planet names (after "z") ──────────────────
 const PLANET_INSTR: Record<string, string> = {
@@ -291,9 +291,11 @@ type Props = {
   interpretation: string;
   filter: CalendarFilter;
   onClose: () => void;
+  isPremium?: boolean;
+  isPersonalPowerDay?: boolean; // true = this date is in user's personal power days
 };
 
-export default function DayPanel({ date, dayData, chart, readingId, promptContext, interpretation, filter, onClose }: Props) {
+export default function DayPanel({ date, dayData, chart, readingId, promptContext, interpretation, filter, onClose, isPremium, isPersonalPowerDay }: Props) {
   const { session } = useAuth();
   const effectiveScore = getEffectiveScore(dayData, filter);
   const dateObj   = new Date(date + "T12:00:00Z");
@@ -314,6 +316,9 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
   const [note, setNote] = useState("");
   const [noteSaving, setNoteSaving] = useState(false);
   const [noteLoaded, setNoteLoaded] = useState(false);
+  const [powerExplanation, setPowerExplanation] = useState<string | null>(null);
+  const [powerLoading, setPowerLoading] = useState(false);
+  const [powerError, setPowerError] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const authHeader: Record<string, string> = session ? { Authorization: `Bearer ${session.access_token}` } : {};
 
@@ -343,6 +348,30 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
     setNote(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => saveNote(text), 400);
+  }
+
+  async function fetchPowerExplanation() {
+    if (!session || powerLoading) return;
+    setPowerLoading(true);
+    setPowerError("");
+    try {
+      import("posthog-js").then(({ default: ph }) => ph?.capture("power_day_clicked", { date }));
+      const res = await fetch("/api/power-day-explanation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ date }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Błąd generowania");
+      }
+      const { content } = await res.json() as { content: string };
+      setPowerExplanation(content);
+    } catch (e) {
+      setPowerError(e instanceof Error ? e.message : "Nieznany błąd");
+    } finally {
+      setPowerLoading(false);
+    }
   }
 
   async function handleGenerate() {
@@ -407,6 +436,39 @@ export default function DayPanel({ date, dayData, chart, readingId, promptContex
             <span>Księżyc w <span className="text-indigo-300 font-medium">{moonSign}</span></span>
           </div>
         </div>
+
+        {/* ── Personal Power Day widget (premium) ── */}
+        {isPremium && isPersonalPowerDay && (
+          <div
+            className="rounded-xl p-4 space-y-3"
+            style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.35)" }}
+          >
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+              <p className="text-xs font-semibold text-amber-300 uppercase tracking-wider">Twój Dzień Mocy</p>
+            </div>
+            {powerExplanation ? (
+              <p className="text-sm text-slate-200 leading-relaxed">{powerExplanation}</p>
+            ) : (
+              <>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Ten dzień jest jednym z Twoich 5 najsilniejszych dni tego miesiąca — wolna planeta aktywuje kluczowy punkt Twojego kosmogramu.
+                </p>
+                <button
+                  onClick={fetchPowerExplanation}
+                  disabled={powerLoading}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-50"
+                  style={{ background: "rgba(212,175,55,0.15)", border: "0.5px solid rgba(212,175,55,0.45)", color: "#F3E5AB" }}
+                >
+                  {powerLoading
+                    ? <><span className="w-3 h-3 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(212,175,55,0.3)", borderTopColor: "#D4AF37" }} /> Analizuję...</>
+                    : <><Zap className="w-3 h-3" /> Co ten dzień oznacza dla Ciebie?</>}
+                </button>
+                {powerError && <p className="text-xs text-red-400">{powerError}</p>}
+              </>
+            )}
+          </div>
+        )}
 
         {/* ── Day description ── */}
         <p className={`text-sm leading-relaxed ${sig.level === "quiet" ? "text-slate-500" : "text-slate-400"}`}>

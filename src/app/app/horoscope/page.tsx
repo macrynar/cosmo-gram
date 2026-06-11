@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits";
+import { getTransitsForDate, getDayWeather, getUpcomingSignificantTransits } from "@/lib/astro/transits";
+import type { UpcomingTransit } from "@/lib/astro/transits";
 import type { NatalChart } from "@/lib/astro-types";
 import Link from "next/link";
-import { Flame, Droplets, Wind, Mountain, Sparkles, Lock, RefreshCw, ChevronRight } from "lucide-react";
+import { Flame, Droplets, Wind, Mountain, Sparkles, Lock, RefreshCw, ChevronRight, TrendingUp, AlertTriangle } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,12 +89,13 @@ const CARD: React.CSSProperties = {
 
 export default function HoroscopePage() {
   const { user, session } = useAuth();
-  const [isPremium, setIsPremium]   = useState(false);
-  const [horoscope, setHoroscope]   = useState<PersonalHoroscope | null>(null);
-  const [weather, setWeather]       = useState<DayWeatherData | null>(null);
-  const [loading, setLoading]       = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [error, setError]           = useState<string | null>(null);
+  const [isPremium, setIsPremium]         = useState(false);
+  const [horoscope, setHoroscope]         = useState<PersonalHoroscope | null>(null);
+  const [weather, setWeather]             = useState<DayWeatherData | null>(null);
+  const [upcomingTransits, setUpcoming]   = useState<UpcomingTransit[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [generating, setGenerating]       = useState(false);
+  const [error, setError]                 = useState<string | null>(null);
 
   const today   = new Date().toISOString().slice(0, 10);
   const todayPl = new Intl.DateTimeFormat("pl-PL", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
@@ -125,6 +127,8 @@ export default function HoroscopePage() {
           const transits = getTransitsForDate(chart, new Date(`${today}T12:00:00Z`));
           const w = getDayWeather(transits);
           setWeather({ intensity: w.intensity, element: w.element, character: w.character });
+          const upcoming = getUpcomingSignificantTransits(chart, 14, new Date(`${today}T12:00:00Z`));
+          setUpcoming(upcoming.slice(0, 3));
 
           // PostHog
           if (typeof window !== "undefined") {
@@ -206,6 +210,36 @@ export default function HoroscopePage() {
               ? "Umiarkowana aktywność tranzytów — dobry dzień na skupienie."
               : "Spokojny dzień bez silnych tranzytów — dobry czas na regenerację."}
           </p>
+        </div>
+      )}
+
+      {/* Nadchodzące tranzyty — deterministic, no AI, available for all with chart */}
+      {upcomingTransits.length > 0 && (
+        <div className="rounded-2xl p-5 space-y-3" style={CARD}>
+          <p className="text-xs uppercase tracking-widest text-slate-500">Zbliżające się okna</p>
+          {upcomingTransits.map((t, i) => {
+            const datePl = new Intl.DateTimeFormat("pl-PL", { weekday: "short", day: "numeric", month: "short" }).format(new Date(t.date + "T12:00:00Z"));
+            const aspectPl: Record<string, string> = { conjunction: "koniunkcja", opposition: "opozycja", square: "kwadrat", trine: "trygon", sextile: "sekstyl" };
+            return (
+              <button
+                key={i}
+                onClick={() => import("posthog-js").then(({ default: ph }) => ph?.capture("upcoming_transit_banner_clicked", { planet: t.transitPlanet, aspect: t.aspectType, date: t.date }))}
+                className="w-full flex items-start gap-3 text-left"
+              >
+                {t.favorable
+                  ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                  : <AlertTriangle className="w-3.5 h-3.5 text-amber-400/70 shrink-0 mt-0.5" />}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-slate-200 leading-snug">
+                    <span className="font-medium">{t.transitPlanet}</span>
+                    {" "}{aspectPl[t.aspectType] ?? t.aspectType}{" "}
+                    <span className="text-slate-400">do natalnego {t.natalPoint}</span>
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">{datePl} · orb {t.orbDegrees.toFixed(1)}°{t.applying ? " · aplikacyjny" : ""}</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
 
