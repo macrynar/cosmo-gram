@@ -76,10 +76,11 @@ function localToUtc(dateStr: string, timeStr: string, tz: string): Date {
     timeZone: tz,
     timeZoneName: "shortOffset",
   });
+  const MAX_OFFSET_CORRECTION_ITERATIONS = 3;
   const getOffsetMinutes = (date: Date): number => {
     const tzPart = tzFormatter.formatToParts(date).find((part) => part.type === "timeZoneName")?.value ?? "GMT";
     if (tzPart === "GMT" || tzPart === "UTC") return 0;
-    // shortOffset can return both "GMT+5" and "GMT+05:30" depending on locale/ICU.
+    // shortOffset can return e.g. "GMT+5", "GMT+0530" or "GMT+05:30" depending on locale/ICU.
     const match = tzPart.match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/);
     if (!match) return 0;
     const sign = match[1] === "-" ? -1 : 1;
@@ -91,7 +92,7 @@ function localToUtc(dateStr: string, timeStr: string, tz: string): Date {
   let candidate = localAsUtc;
   // Repeat a few times to stabilize around DST boundaries where offset can change
   // after the first correction.
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < MAX_OFFSET_CORRECTION_ITERATIONS; i++) {
     const offsetMinutes = getOffsetMinutes(candidate);
     candidate = new Date(localAsUtc.getTime() - offsetMinutes * 60_000);
   }
