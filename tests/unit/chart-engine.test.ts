@@ -90,7 +90,7 @@ describe("edge cases", () => {
     expect(jup1.sign).toBe(jup2.sign);
   });
 
-  it("London 00:00/00:01 — pozycja Słońca zmienia się minimalnie", () => {
+  it("London 00:00/00:01 - pozycja Słońca zmienia się minimalnie", () => {
     const r1 = calculateChart({ date: "2000-01-01", time: "00:00", lat: 51.5074, lng: -0.1278, place: "London" });
     const r2 = calculateChart({ date: "2000-01-01", time: "00:01", lat: 51.5074, lng: -0.1278, place: "London" });
     const sun1 = r1.chart.planets.find(p => p.name === "Słońce")!;

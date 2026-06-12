@@ -86,6 +86,8 @@ function localToUtc(dateStr: string, timeStr: string, tz: string): Date {
     const sign = match[1] === "-" ? -1 : 1;
     const hours = Number(match[2]);
     const minutes = Number(match[3] ?? "0");
+    if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return 0;
+    if (hours < 0 || hours > 14 || minutes < 0 || minutes > 59) return 0;
     return sign * (hours * 60 + minutes);
   };
 
