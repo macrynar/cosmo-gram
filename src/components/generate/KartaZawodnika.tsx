@@ -5,12 +5,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import ModuleCard from "./ModuleCard";
+import ModuleNav from "./ModuleNav";
 import LockedModulePlaceholder from "./LockedModulePlaceholder";
+import FailedModulePlaceholder from "./FailedModulePlaceholder";
 import PaywallModal from "@/components/PaywallModal";
-import type { AstroModule } from "@/lib/schemas/astroModule";
+import type { AstroModule, ModuleId } from "@/lib/schemas/astroModule";
 import type { NatalChart } from "@/lib/astro-types";
 import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
 import { PREMIUM_MODULE_IDS, MODULE_SPECS } from "@/lib/moduleSpecs";
+import { getSourceChips } from "@/lib/astro/sourceChips";
 
 type ReadingMeta = {
   id:           string;
@@ -42,6 +45,7 @@ function loadLocal(readingId: string): AstroModule[] | null {
 
 export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
   const [modules,      setModules]      = useState<AstroModule[]>([]);
+  const [failedIds,    setFailedIds]    = useState<ModuleId[]>([]);
   const [loading,      setLoading]      = useState(false);
   const [cacheLoading, setCacheLoading] = useState(true);
   const [error,        setError]        = useState<string | null>(null);
@@ -69,7 +73,7 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
         if (!res.ok || cancelled) return;
-        const { modules: mods } = await res.json() as { modules: AstroModule[] };
+        const { modules: mods } = await res.json() as { modules: AstroModule[]; failedIds?: ModuleId[] };
         if (mods && mods.length > 0 && !cancelled) {
           setModules(mods);
           setGenerated(true);
@@ -147,14 +151,59 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
         throw new Error(body.detail ?? body.error ?? `HTTP ${kartaRes.status} — błąd serwera`);
       }
 
-      const { modules: mods } = await kartaRes.json() as { modules: AstroModule[] };
+      const { modules: mods, failedIds: failed } = await kartaRes.json() as { modules: AstroModule[]; failedIds?: ModuleId[] };
       setModules(mods);
+      setFailedIds(failed ?? []);
       setGenerated(true);
       saveLocal(reading.id, mods);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Nieznany błąd");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleRetryModule(moduleId: ModuleId) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const bd = reading.chart_data.birthData;
+      const chartRes = await fetch("/api/chart", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: reading.birth_date, time: reading.birth_time, lat: bd.lat, lng: bd.lng, place: reading.birth_place, timeUnknown: bd.timeUnknown }),
+      });
+      if (!chartRes.ok) return;
+      const { placements, aspects, nodes } = await chartRes.json() as { placements: unknown; aspects: unknown; nodes: unknown };
+
+      const kartaRes = await fetch("/api/natal-karta", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          chart_id:            reading.id,
+          natal_data:          { placements, aspects, nodes },
+          hasExactTime:        !bd.timeUnknown,
+          birthYear:           new Date(reading.birth_date).getFullYear(),
+          grammatical_form:    "neutralna",
+          locationPrecisionKm: 10,
+          onlyModuleIds:       [moduleId],
+        }),
+      });
+      if (!kartaRes.ok) return;
+
+      const { modules: mods } = await kartaRes.json() as { modules: AstroModule[] };
+      if (mods.length > 0) {
+        setModules(prev => {
+          const exists = prev.some(m => m.id === moduleId);
+          const updated = exists ? prev.map(m => m.id === moduleId ? mods[0] : m) : [...prev, mods[0]];
+          saveLocal(reading.id, updated);
+          return updated;
+        });
+        setFailedIds(prev => prev.filter(id => id !== moduleId));
+      }
+    } catch {
+      // silent — user can retry again
     }
   }
 
@@ -272,11 +321,13 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
               className="text-center mb-2"
             >
               <p className="text-[10px] uppercase tracking-[0.28em]" style={{ color: "rgba(212,175,55,0.45)" }}>
-                Karta Astrologiczna · {modules.length} {isPremiumUser ? "modułów" : `z 8 modułów`}
+                8 rozdziałów o Tobie
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <ModuleNav visibleIds={modules.map(m => m.id as ModuleId)} />
+
+            <div className="flex flex-col gap-5 max-w-[70ch] mx-auto">
               {/* Generated modules */}
               {modules.map((mod, i) => (
                 <ModuleCard
@@ -284,7 +335,18 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
                   module={mod}
                   isPremiumUser={isPremiumUser}
                   index={i}
+                  sourceChips={getSourceChips(mod.id as ModuleId, reading.chart_data)}
                   onPaywall={() => setShowPaywall(true)}
+                />
+              ))}
+
+              {/* Failed modules — partial failure */}
+              {failedIds.map((id, i) => (
+                <FailedModulePlaceholder
+                  key={`failed-${id}`}
+                  title={MODULE_SPECS[id].title_pl}
+                  index={modules.length + i}
+                  onRetry={() => handleRetryModule(id)}
                 />
               ))}
 
@@ -293,7 +355,7 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
                 <LockedModulePlaceholder
                   key={id}
                   title={MODULE_SPECS[id].title_pl}
-                  index={modules.length + i}
+                  index={modules.length + failedIds.length + i}
                   onPaywall={() => setShowPaywall(true)}
                 />
               ))}

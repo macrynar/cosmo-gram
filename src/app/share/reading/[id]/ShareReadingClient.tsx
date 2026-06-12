@@ -1,16 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Star } from "lucide-react";
+import { Star, Eye, EyeOff, CalendarDays, MapPin } from "lucide-react";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import NatalChartAltarView from "@/components/generate/NatalChartAltarView";
 import PlanetTable from "@/components/generate/PlanetTable";
 import Interpretation from "@/components/generate/Interpretation";
 import ModuleCard from "@/components/generate/ModuleCard";
+import ModuleNav from "@/components/generate/ModuleNav";
 import { getPersonalityTags } from "@/lib/personality-tags";
+import { getSourceChips } from "@/lib/astro/sourceChips";
+import { useAuth } from "@/components/AuthContext";
 import type { NatalChart } from "@/lib/astro-types";
-import type { AstroModule } from "@/lib/schemas/astroModule";
+import type { AstroModule, ModuleId } from "@/lib/schemas/astroModule";
 
 const ELEMENTS: Record<string, string> = {
   "Baran": "Ogień", "Lew": "Ogień", "Strzelec": "Ogień",
@@ -32,6 +36,56 @@ function getDominantElement(c: NatalChart) {
   return { label: dominant, ...ELEMENT_STYLE[dominant] };
 }
 
+function InlineCTA() {
+  return (
+    <div
+      className="rounded-2xl p-6 text-center space-y-4"
+      style={{ background: "rgba(212,175,55,0.06)", border: "0.5px solid rgba(212,175,55,0.20)" }}
+    >
+      <p className="text-[10px] uppercase tracking-[0.28em]" style={{ color: "rgba(212,175,55,0.55)" }}>
+        Stwórz swój kosmogram
+      </p>
+      <p className="text-white/80 text-sm leading-relaxed">
+        Te 8 rozdziałów powstało z jednej daty urodzenia. Zobacz swoje.
+      </p>
+      <Link
+        href="/generate"
+        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all shadow-lg"
+        style={{
+          background: "linear-gradient(135deg, rgba(212,175,55,0.92), rgba(197,160,89,0.92))",
+          color: "#050508",
+          boxShadow: "0 4px 20px rgba(212,175,55,0.20)",
+        }}
+      >
+        <CosmoIcon className="w-4 h-4" />
+        Stwórz swój kosmogram — bezpłatnie
+      </Link>
+    </div>
+  );
+}
+
+function EndCTA() {
+  return (
+    <div className="text-center space-y-4 pt-4">
+      <p className="text-slate-400 text-sm">
+        Twoje niebo wygląda inaczej — sprawdź jak.
+      </p>
+      <Link
+        href="/generate"
+        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all"
+        style={{
+          background: "rgba(212,175,55,0.12)",
+          color: "rgba(212,175,55,0.90)",
+          border: "0.5px solid rgba(212,175,55,0.30)",
+        }}
+      >
+        <CosmoIcon className="w-4 h-4" />
+        Stwórz swój kosmogram
+      </Link>
+    </div>
+  );
+}
+
 type Props = {
   name: string;
   birthDate: string;
@@ -39,12 +93,33 @@ type Props = {
   chart: NatalChart;
   interpretation: string;
   kartaModules: AstroModule[];
+  readingUserId: string;
+  bigThree: { sun: string | null; moon: string | null; asc: string | null };
 };
 
-export default function ShareReadingClient({ name, birthDate, birthPlace, chart, interpretation, kartaModules }: Props) {
-  const el   = getDominantElement(chart);
-  const tags = getPersonalityTags(chart);
+export default function ShareReadingClient({
+  name,
+  birthDate,
+  birthPlace,
+  chart,
+  interpretation,
+  kartaModules,
+  readingUserId,
+  bigThree,
+}: Props) {
+  const { user, loading: authLoading } = useAuth();
+  const isOwner = !authLoading && !!user && user.id === readingUserId;
+  const [showBirthData, setShowBirthData] = useState(false);
+
+  const el         = getDominantElement(chart);
+  const tags       = getPersonalityTags(chart);
   const hasModules = kartaModules.length > 0;
+
+  const bigThreeLine = [
+    bigThree.sun  ? `☀ ${bigThree.sun}`   : null,
+    bigThree.moon ? `☽ ${bigThree.moon}`  : null,
+    bigThree.asc  ? `↑ ${bigThree.asc}`   : null,
+  ].filter(Boolean).join("  ·  ");
 
   return (
     <div className="min-h-screen text-white" style={{ background: "#050508" }}>
@@ -76,19 +151,40 @@ export default function ShareReadingClient({ name, birthDate, birthPlace, chart,
             Kosmogram Natalny
           </p>
           <h1
-            className="text-3xl sm:text-4xl font-medium text-white mb-4"
+            className="text-3xl sm:text-4xl font-medium text-white mb-3"
             style={{ fontFamily: "var(--font-cormorant), serif" }}
           >
             {name || "Kosmogram"}
           </h1>
-          <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-            <span className="px-3 py-1 rounded-full text-slate-400" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
-              📅 {birthDate}
-            </span>
-            <span className="px-3 py-1 rounded-full text-slate-400 max-w-[240px] truncate" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
-              📍 {birthPlace}
-            </span>
-          </div>
+          {bigThreeLine && (
+            <p className="text-xs tracking-wide mb-2" style={{ color: "rgba(212,175,55,0.65)" }}>
+              {bigThreeLine}
+            </p>
+          )}
+          {/* Birth data — hidden by default; owner can reveal */}
+          {isOwner && (
+            <button
+              onClick={() => setShowBirthData(v => !v)}
+              className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors mt-1"
+            >
+              {showBirthData ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+              {showBirthData ? "Ukryj dane urodzenia" : "Pokaż datę urodzenia"}
+            </button>
+          )}
+          {isOwner && showBirthData && (
+            <div className="flex flex-wrap items-center justify-center gap-2 text-xs mt-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-slate-400" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
+                <CalendarDays className="w-3 h-3 shrink-0" style={{ color: "rgba(212,175,55,0.55)" }} />
+                {birthDate}
+              </span>
+              {birthPlace && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-slate-400 max-w-[240px] truncate" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
+                  <MapPin className="w-3 h-3 shrink-0" style={{ color: "rgba(212,175,55,0.55)" }} />
+                  {birthPlace}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Altar view */}
@@ -120,17 +216,26 @@ export default function ShareReadingClient({ name, birthDate, birthPlace, chart,
           <div className="space-y-5">
             <div className="text-center">
               <p className="text-[10px] uppercase tracking-[0.28em]" style={{ color: "rgba(212,175,55,0.45)" }}>
-                Karta Astrologiczna · {kartaModules.length} modułów
+                8 rozdziałów o Tobie
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <ModuleNav visibleIds={kartaModules.map(m => m.id as ModuleId)} />
+            <div className="flex flex-col gap-5 max-w-[70ch] mx-auto">
               {kartaModules.map((mod, i) => (
-                <ModuleCard
-                  key={mod.id}
-                  module={mod}
-                  isPremiumUser={true}
-                  index={i}
-                />
+                <div key={mod.id}>
+                  <ModuleCard
+                    module={mod}
+                    isPremiumUser={true}
+                    index={i}
+                    sourceChips={getSourceChips(mod.id as ModuleId, chart)}
+                  />
+                  {/* Inline CTA after 3rd module (index 2), only for non-owners */}
+                  {i === 2 && !isOwner && !authLoading && (
+                    <div className="mt-5">
+                      <InlineCTA />
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
@@ -141,29 +246,34 @@ export default function ShareReadingClient({ name, birthDate, birthPlace, chart,
           <Interpretation text={interpretation} loading={false} />
         )}
 
+        {/* End CTA for guests */}
+        {!isOwner && !authLoading && hasModules && <EndCTA />}
+
       </main>
 
-      {/* Sticky CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 backdrop-blur-md border-t border-white/8 px-4 py-4"
-        style={{ background: "rgba(5,4,14,0.90)" }}>
-        <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-slate-400 text-sm text-center sm:text-left">
-            Chcesz poznać swój kosmogram?
-          </p>
-          <Link
-            href="/generate"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all shadow-lg whitespace-nowrap"
-            style={{
-              background: "linear-gradient(135deg, rgba(212,175,55,0.92), rgba(197,160,89,0.92))",
-              color: "#050508",
-              boxShadow: "0 4px 20px rgba(212,175,55,0.20)",
-            }}
-          >
-            <CosmoIcon className="w-4 h-4" />
-            Stwórz swój kosmogram — bezpłatnie
-          </Link>
+      {/* Sticky CTA — hidden from owner */}
+      {!isOwner && (
+        <div className="fixed bottom-0 left-0 right-0 z-20 backdrop-blur-md border-t border-white/8 px-4 py-4"
+          style={{ background: "rgba(5,4,14,0.90)" }}>
+          <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-slate-400 text-sm text-center sm:text-left">
+              Chcesz poznać swój kosmogram?
+            </p>
+            <Link
+              href="/generate"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all shadow-lg whitespace-nowrap"
+              style={{
+                background: "linear-gradient(135deg, rgba(212,175,55,0.92), rgba(197,160,89,0.92))",
+                color: "#050508",
+                boxShadow: "0 4px 20px rgba(212,175,55,0.20)",
+              }}
+            >
+              <CosmoIcon className="w-4 h-4" />
+              Stwórz swój kosmogram — bezpłatnie
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

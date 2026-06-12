@@ -1,8 +1,10 @@
 import { supabaseAdmin } from "@/lib/supabase-server";
-import { generateModuleWithRetry } from "@/lib/deepseek";
+import { generateModuleWithRetry, correctModuleWithHaiku } from "@/lib/deepseek";
 import { buildSystemPrompt, buildUserPrompt, type GenerationContext } from "@/lib/moduleSpecs";
 import { computeConfidenceScore } from "@/lib/confidence";
 import { AstroModuleSchema, ALL_MODULE_IDS, type AstroModule, type ModuleId } from "@/lib/schemas/astroModule";
+import { computeModuleMetrics } from "@/lib/astro/metrics";
+import { getModuleTags } from "@/lib/personality-tags";
 
 const PROMPT_VERSION = process.env.NATAL_PROMPT_VERSION ?? "v2";
 
@@ -90,10 +92,15 @@ export async function getKartaByChartId(chartId: string): Promise<AstroModule[]>
 
 // ─── Main generator ───────────────────────────────────────────────────────────
 
+export type KartaResult = {
+  modules:   AstroModule[];
+  failedIds: ModuleId[];
+};
+
 export async function generateNatalKarta(
   ctx: GenerationContext,
   onlyModuleIds?: ModuleId[]
-): Promise<AstroModule[]> {
+): Promise<KartaResult> {
   const { user_id, chart_id, grammatical_form } = ctx;
   const targetIds = onlyModuleIds ?? ALL_MODULE_IDS;
 
@@ -103,38 +110,64 @@ export async function generateNatalKarta(
   // 2. Which need generation?
   const toGenerate = targetIds.filter(id => !cached.has(id));
   if (toGenerate.length === 0) {
-    return targetIds.map(id => cached.get(id)!).filter(Boolean);
+    return { modules: targetIds.map(id => cached.get(id)!).filter(Boolean), failedIds: [] };
   }
 
   const systemPrompt = buildSystemPrompt(grammatical_form);
 
-  // 3. All needed modules in parallel — avoids sequential-batch timeout on Vercel
-  const generated = await Promise.all(
+  // 3. All modules in parallel with allSettled — partial failure allowed
+  const results = await Promise.allSettled(
     toGenerate.map(async (moduleId) => {
       console.log(`[karta] generating module: ${moduleId}`);
       const confidence = computeConfidenceScore(moduleId, ctx);
-      const userPrompt = buildUserPrompt(ctx, moduleId, confidence);
-      const aiOutput   = await generateModuleWithRetry(systemPrompt, userPrompt, moduleId);
+      const preMetrics = computeModuleMetrics(ctx.natal_data, moduleId);
+      const preTags    = getModuleTags(ctx.natal_data, moduleId);
+      const userPrompt = buildUserPrompt(ctx, moduleId, confidence, { metrics: preMetrics, tags: preTags });
+      const rawOutput  = await generateModuleWithRetry(systemPrompt, userPrompt, moduleId);
+      const aiOutput   = await correctModuleWithHaiku(rawOutput);
       console.log(`[karta] module ${moduleId} AI output received, validating schema`);
       const cacheKey   = await computeCacheKey(user_id, chart_id, moduleId, grammatical_form);
 
+      const mergedMeters = aiOutput.visualMeters.map((meter, i) => ({
+        ...meter,
+        label:    preMetrics[i]?.label    ?? meter.label,
+        value:    preMetrics[i]?.value    ?? meter.value,
+        category: preMetrics[i]?.category ?? meter.category,
+      }));
+
       const parsed = AstroModuleSchema.parse({
         ...aiOutput,
+        tags:            preTags,
+        visualMeters:    mergedMeters,
         confidenceScore: confidence,
         isPremium:       PREMIUM_IDS.has(moduleId),
         cacheKey,
         promptVersion:   PROMPT_VERSION,
       });
       console.log(`[karta] module ${moduleId} schema valid`);
-      return parsed;
+      return { moduleId, parsed };
     })
   );
 
-  // Write cache — awaited so Vercel Lambda doesn't terminate before writes complete
+  const generated: AstroModule[] = [];
+  const failedIds: ModuleId[]    = [];
+
+  results.forEach((result, i) => {
+    if (result.status === "fulfilled") {
+      generated.push(result.value.parsed);
+    } else {
+      console.error(`[karta] module ${toGenerate[i]} failed:`, result.reason);
+      failedIds.push(toGenerate[i]);
+    }
+  });
+
+  // Write cache for successful modules
   await Promise.all(generated.map(m => saveModuleCache(user_id, chart_id, m)))
     .catch(err => console.error("[karta] cache write error:", err));
 
   // 4. Merge cached + generated in canonical order
   const allById = new Map([...cached, ...generated.map(m => [m.id, m] as [ModuleId, AstroModule])]);
-  return targetIds.map(id => allById.get(id)!).filter(Boolean);
+  const modules = targetIds.filter(id => !failedIds.includes(id)).map(id => allById.get(id)!).filter(Boolean);
+
+  return { modules, failedIds };
 }

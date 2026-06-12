@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Star, Share2, Baby, Plus, RefreshCw } from "lucide-react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Star, Share2, Baby, Plus, RefreshCw, CalendarDays, Clock, MapPin, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import BirthForm from "@/components/generate/BirthForm";
@@ -430,7 +430,7 @@ export default function CosmogramPage() {
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
                 }}>
-                  Kosmogram Natalny
+                  kosmogram natalny
                 </span>
               </h1>
               <p className="text-slate-500 text-sm">Obliczenia astronomiczne · Swiss Ephemeris · Interpretacja AI</p>
@@ -504,13 +504,14 @@ export default function CosmogramPage() {
             {hasResults && (
               <div className="space-y-6">
                 <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-400">
-                  {[
-                    `📅 ${chart.birthData.date}`,
-                    `🕐 ${chart.birthData.timeUnknown ? "godzina nieznana" : chart.birthData.time}`,
-                    `📍 ${chart.birthData.place}`,
-                    ...(!chart.birthData.timeUnknown ? [`🌐 ${chart.birthData.timezone}`] : []),
-                  ].map(label => (
-                    <span key={label} className="px-3 py-1 rounded-full max-w-[240px] truncate" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
+                  {([
+                    { Icon: CalendarDays, label: chart.birthData.date },
+                    { Icon: Clock,        label: chart.birthData.timeUnknown ? "godzina nieznana" : chart.birthData.time },
+                    { Icon: MapPin,       label: chart.birthData.place },
+                    ...(!chart.birthData.timeUnknown ? [{ Icon: Globe, label: chart.birthData.timezone }] : []),
+                  ] as { Icon: React.ElementType; label: string }[]).map(({ Icon, label }) => (
+                    <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full max-w-[240px] truncate" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
+                      <Icon className="w-3 h-3 shrink-0" style={{ color: "rgba(212,175,55,0.55)" }} />
                       {label}
                     </span>
                   ))}
