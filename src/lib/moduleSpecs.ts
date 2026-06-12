@@ -1,4 +1,4 @@
-import type { ModuleId } from "./schemas/astroModule";
+import type { ModuleId, ComputedMetric } from "./schemas/astroModule";
 
 export const FREE_MODULE_IDS:    ModuleId[] = ["core", "superpowers", "childhood"];
 export const PREMIUM_MODULE_IDS: ModuleId[] = ["love", "career", "shadows", "roots", "purpose"];
@@ -118,6 +118,31 @@ Pokaż gdzie user ucieka do strefy komfortu zamiast iść w kierunku wzrostu.`,
   },
 };
 
+// ─── Shared style block ────────────────────────────────────────────────────────
+// Included in EVERY generative prompt (natal, child, match, chat, horoscope).
+// One source — update here, propagates everywhere.
+
+export const STYLE_BLOCK = `═══ STYL BEZRODZAJOWY (OBOWIĄZUJE BEZWZGLĘDNIE) ═══
+
+PODSTAWA: 2. osoba czasu teraźniejszego — naturalnie bezrodzajowa i intymna.
+PRZYKŁADY POPRAWNE: "widzisz", "budujesz", "twoja siła", "nosisz w sobie", "twój sposób na..."
+
+ZAKAZ 1 — czas przeszły/tryb przypuszczający w 2. osobie:
+  ŹLE: "powiedziałbyś/powiedziałabyś", "zrobiłeś/zrobiłaś", "czułeś/czułaś", "gdybyś był/była"
+  DOBRZE: "możesz powiedzieć", "robisz", "czujesz", "kiedy jesteś w tej sytuacji"
+
+ZAKAZ 2 — przymiotniki/imiesłowy rodzajowe o userze:
+  ŹLE: "gotowy/gotowa", "sam/sama", "zdolny/zdolna", "świadomy/świadoma", "zagubiony/zagubiona"
+  DOBRZE: "w gotowości", "w pojedynkę", "zdolność", "świadomość", "poczucie zagubienia"
+
+ZAKAZ 3 — chłodne konstrukcje bezosobowe (opis z zewnątrz):
+  ŹLE: "można funkcjonować", "potrafi się przyciągać", "da się zauważyć", "warto by rozważyć"
+  DOBRZE: "funkcjonujesz", "przyciągasz", "zauważasz", "rozważ"
+
+ZASADA: zawsze pisz W STRONĘ "ty". Jeśli kuszący jest bezosobowy opis — przeformułuj:
+  ŹLE: "co powiedziałbyś bliskiej osobie" → DOBRZE: "co usłyszałaby od ciebie bliska osoba"
+  ŹLE: "można tam funkcjonować, gdzie inni się rozpadają" → DOBRZE: "funkcjonujesz tam, gdzie inni się rozpadają"`;
+
 // ─── Prompt builders ──────────────────────────────────────────────────────────
 
 export function buildSystemPrompt(grammaticalForm: GrammaticalForm): string {
@@ -130,6 +155,8 @@ export function buildSystemPrompt(grammaticalForm: GrammaticalForm): string {
 dla polskich użytkowników aplikacji Cosmogram (wiek 25-40, rozwój osobisty).
 
 Twój styl: literacki ale konkretny, evocative ale niemistyczny. Pomiędzy Harari a Jungiem — z polską wrażliwością.
+
+${STYLE_BLOCK}
 
 ═══ KRYTYCZNE ZASADY ═══
 
@@ -156,10 +183,21 @@ Twój styl: literacki ale konkretny, evocative ale niemistyczny. Pomiędzy Harar
      ale nie zastępują rozmowy z terapeutą — rozważ ją jeśli odczuwasz ciężar."
 
 4. QUOTE (hook, share-asset):
-   - Max 12-14 słów, po polsku, present tense, 2. osoba
-   - ZAKAZ: "Posiadasz...", "Jesteś osobą która..."
-   - TAK: "Twoja domena to ruch w czasie ciszy."
-   - 1 metafora dozwolona, bez żargonu
+   - Dokładnie 40–90 znaków (sprawdź długość przed wpisaniem!)
+   - Po polsku, present tense, 2. osoba, styl bezrodzajowy
+   - MUSI wynikać z KONKRETU karty tego modułu — test: czy pasowałby każdemu? Jeśli tak — przepisz
+   - BEZ kropki na końcu (konwencja typograficzna cytatu)
+   - BEZ znaku zapytania — cytat to teza, nie pytanie
+   - ZAKAZ frazesów: "podróż w głąb siebie", "odkryj swój potencjał", "moc gwiazd",
+     "wszechświat ma plan", "przeznaczenie", "dusza bliźniacza", "wyjątkowy potencjał",
+     "szczególna misja", "kosmiczne połączenie", "głębia duszy", "piękno wnętrza",
+     "siła intuicji", "energia znaku", "naturalna mądrość", "ścieżka wzrostu",
+     "przepływ życia", "autentyczność siebie"
+   - ZAKAZ: "Posiadasz...", "Jesteś osobą która...", "Twój/Twoja dar..."
+   - 8 cytatów w jednym dokumencie: żaden nie może dzielić głównej metafory z innym
+     (brak powtórzonego rzeczownika-klucza: "głębia" max 1×, "cisza" max 1×, "moc" max 1×)
+   - TAK: "Twoja domena to ruch w czasie ciszy"
+   - TAK: "Budujesz tam, gdzie inni rezygnują przy pierwszym oporze"
 
 5. TACTICS (działania, nie wglądy):
    - Imperatywy: "Zrób X", "Przez 7 dni..."
@@ -208,15 +246,47 @@ export function formatNatalDataForPrompt(
   return `POZYCJE PLANET:\n${placementLines}\n\nASPEKTY:\n${aspectLines}\n\nWĘZŁY:\n${nodesText}`;
 }
 
+export type PreComputedData = {
+  metrics: ComputedMetric[];
+  tags:    string[];
+};
+
 export function buildUserPrompt(
   ctx: Pick<GenerationContext, "natal_data" | "hasExactTime">,
   moduleId: ModuleId,
-  confidence: number
+  confidence: number,
+  preComputed?: PreComputedData
 ): string {
   const spec = MODULE_SPECS[moduleId];
   const noTimeNote = !ctx.hasExactTime && ["childhood", "career", "love", "purpose"].includes(moduleId)
     ? "\n⚠️ UWAGA: Brak dokładnego czasu urodzenia. NIE używaj Ascendentu, Midheaven ani domów. Tylko pozycje planet w znakach. Soft hedging: \"często się zdarza\", \"u osób z taką konfiguracją\".\n"
     : "";
+
+  // Pre-computed section injected when available
+  const preComputedSection = preComputed ? `
+═══ MIERNIKI WYZNACZONE PRZEZ SYSTEM ═══
+Poniższe mierniki zostały obliczone deterministycznie z karty natalnej.
+WARTOŚCI I ETYKIETY są ustalone — napisz TYLKO "archetype" (8-15 słów): konkretny anchor opisujący POZIOM tego wymiaru u tej osoby.
+
+${preComputed.metrics.map((m, i) => `${i+1}. "${m.label}" | value: ${m.value} | category: ${m.category}`).join("\n")}
+
+TAGI MODUŁU (użyj DOKŁADNIE tych 4 tagów, w tej kolejności):
+${preComputed.tags.join(", ")}
+
+` : "";
+
+  // Build the visualMeters JSON schema section
+  const metersSchema = preComputed
+    ? preComputed.metrics.map(m =>
+        `    {"label": "${m.label}", "value": ${m.value}, "archetype": "<8-15 słów konkretny anchor>", "category": "${m.category}"}`
+      ).join(",\n")
+    : `    {"label": "<3-40 zn>", "value": <0-100>, "archetype": "<3-80 zn>", "category": "<action|emotion|mind|soul|social>"},
+    {"label": "...", "value": ..., "archetype": "...", "category": "..."},
+    {"label": "...", "value": ..., "archetype": "...", "category": "..."}`;
+
+  const tagsSchema = preComputed
+    ? `["${preComputed.tags.join('", "')}"]`
+    : `["<tag1>", "<tag2>", "<tag3>", "<tag4>"]`;
 
   return `═══ MODUŁ DO WYGENEROWANIA ═══
 ID: ${moduleId}
@@ -227,7 +297,7 @@ CONFIDENCE: ${confidence}/100 ${confidence < 70 ? "(używaj soft hedging)" : "(f
 
 INSTRUKCJA:
 ${spec.instruction}
-${noTimeNote}
+${noTimeNote}${preComputedSection}
 ═══ DANE KARTY NATALNEJ ═══
 
 ${formatNatalDataForPrompt(ctx.natal_data, ctx.hasExactTime)}
@@ -242,11 +312,9 @@ Wygeneruj OBIEKT JSON (wszystkie pola wymagane):
   "quote": "<12-14 słów, present tense, hook, NIE 'Posiadasz...'>",
   "content": "<${spec.length_words.min}–${spec.length_words.max} słów, **bold** 2-4x, krótkie akapity>",
   "tactics": ["<12-20 słów, imperatyw>", "<taktyka 2>", "<taktyka 3>"],
-  "tags": ["<tag1>", "<tag2>", "<tag3>", "<tag4>"],
+  "tags": ${tagsSchema},
   "visualMeters": [
-    {"label": "<3-40 zn>", "value": <0-100>, "archetype": "<3-80 zn>", "category": "<action|emotion|mind|soul|social>"},
-    {"label": "...", "value": ..., "archetype": "...", "category": "..."},
-    {"label": "...", "value": ..., "archetype": "...", "category": "..."}
+${metersSchema}
   ]
 }
 

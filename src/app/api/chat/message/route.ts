@@ -5,6 +5,7 @@ import { hasActiveSubscription } from "@/lib/subscription";
 import type { NatalChart } from "@/lib/astro-types";
 import { aiComplete } from "@/lib/deepseek";
 import { checkRateLimit } from "@/lib/rateLimiter";
+import { STYLE_BLOCK } from "@/lib/moduleSpecs";
 
 const FREE_CHAT_MESSAGES = 3;
 
@@ -33,7 +34,9 @@ const CHAT_SYSTEM_PROMPT = `Jesteś astrologicznym towarzyszem w aplikacji Cosmo
 Skupiasz się na znakach planet i aspektach - nie wspominasz o domach i Ascendencie. Nie tłumaczysz tego userowi, po prostu nie używasz tych elementów.
 
 # Format odpowiedzi
-Markdown: pogrubienie dla 1-2 kluczowych fraz. Żadnych nagłówków - to rozmowa, nie raport. Krótkie akapity.`;
+Markdown: pogrubienie dla 1-2 kluczowych fraz. Żadnych nagłówków - to rozmowa, nie raport. Krótkie akapity.
+
+${STYLE_BLOCK}`;
 
 function buildTodayLabel(): string {
   return new Intl.DateTimeFormat("pl-PL", {

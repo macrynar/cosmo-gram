@@ -6,6 +6,7 @@ import { computeSynastryAspects, computeSynastryScore, type SynastryAspect } fro
 import { hasActiveSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { aiComplete } from "@/lib/deepseek";
+import { STYLE_BLOCK } from "@/lib/moduleSpecs";
 
 export type CompatibilityCategory = {
   name: string;
@@ -21,6 +22,8 @@ export type CompatibilityResult = {
 };
 
 const SYSTEM_PROMPT = `Jesteś doświadczonym astrologiem specjalizującym się w astrologii synastrii - analizie kompatybilności dwóch kart urodzeniowych. Masz 20+ lat praktyki z parami.
+
+${STYLE_BLOCK}
 
 # ZAKAZ BEZWZGLĘDNY — SLASH-FORMY
 Nigdy nie używaj slash-form. Zakazane: "oddałeś/aś", "chciałeś/aś", "byłeś/aś", "zmęczony/a".

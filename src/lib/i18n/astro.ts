@@ -1,6 +1,22 @@
 // Declension maps for astrological terms in Polish UI.
 // Every sign/planet name in the calendar goes through these — no raw nominatives in text.
 
+// Genitive (dopełniacz) — used after "do", "z", prepositions: "cechy Barana"
+export const SIGN_GENITIVE: Record<string, string> = {
+  "Baran":      "Barana",
+  "Byk":        "Byka",
+  "Bliźnięta":  "Bliźniąt",
+  "Rak":        "Raka",
+  "Lew":        "Lwa",
+  "Panna":      "Panny",
+  "Waga":       "Wagi",
+  "Skorpion":   "Skorpiona",
+  "Strzelec":   "Strzelca",
+  "Koziorożec": "Koziorożca",
+  "Wodnik":     "Wodnika",
+  "Ryby":       "Ryb",
+};
+
 // Locative (miejscownik) — used after "w": "Księżyc w Baranie"
 export const SIGN_LOCATIVE: Record<string, string> = {
   "Baran":       "Baranie",

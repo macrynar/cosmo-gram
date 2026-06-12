@@ -15,8 +15,10 @@ export const AstroModuleSchema = z.object({
   title: z.string().min(3).max(60),
 
   quote: z.string()
-    .min(20).max(120)
-    .refine(s => s.split(/\s+/).length <= 14, "Max 14 słów")
+    .min(40, "Cytat min 40 znaków")
+    .max(90,  "Cytat max 90 znaków")
+    .refine(s => !s.endsWith("."),  "Cytat nie kończy się kropką")
+    .refine(s => !s.includes("?"),  "Cytat bez znaku zapytania")
     .refine(s => !/twój\/twoja|swój\/swoja/i.test(s), "No slash-form"),
 
   content: z.string()
@@ -53,6 +55,14 @@ export type AstroModule        = z.infer<typeof AstroModuleSchema>;
 export type AstroModuleAIOutput = z.infer<typeof AstroModuleAIOutputSchema>;
 export type VisualMeter        = z.infer<typeof VisualMeterSchema>;
 export type ModuleId           = AstroModule["id"];
+
+// Pre-computed metric (deterministic from chart, no AI archetype yet)
+export type ComputedMetric = {
+  id:       string;
+  label:    string;
+  value:    number;  // 30-95, integer
+  category: "action" | "emotion" | "mind" | "soul" | "social";
+};
 
 export const ALL_MODULE_IDS: ModuleId[] = [
   "core", "superpowers", "childhood", "love", "career", "shadows", "roots", "purpose",

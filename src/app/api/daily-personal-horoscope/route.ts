@@ -5,6 +5,7 @@ import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits";
 import { aiComplete, AiDisabledError } from "@/lib/deepseek";
 import { PersonalHoroscopeAIOutputSchema } from "@/lib/schemas/personalHoroscope";
 import type { NatalChart } from "@/lib/astro-types";
+import { STYLE_BLOCK } from "@/lib/moduleSpecs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +21,8 @@ const SYSTEM_PROMPT = `Jesteś astrolożką piszącą dzienny horoskop personaln
 - Zakaz clichés: "zaufaj sobie", "wszechświat", "moc chwili".
 - Zakaz przepowiadania przyszłości jako pewnika. Używaj: "może", "warto", "pojawia się".
 
+${STYLE_BLOCK}
+
 # FORMAT ODPOWIEDZI (JSON)
 Zwróć WYŁĄCZNIE JSON bez markdown:
 {
@@ -31,7 +34,9 @@ Zwróć WYŁĄCZNIE JSON bez markdown:
     "element": "Ogień|Ziemia|Powietrze|Woda|Mieszany",
     "character": "jedno słowo po polsku"
   }
-}`;
+}
+
+${STYLE_BLOCK}`;
 
 function buildTransitContext(
   transits: ReturnType<typeof getTransitsForDate>,

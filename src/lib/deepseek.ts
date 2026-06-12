@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { AstroModuleAIOutputSchema, type AstroModuleAIOutput } from "./schemas/astroModule";
+import { STYLE_BLOCK } from "./moduleSpecs";
 import { supabaseAdmin } from "./supabase-server";
 import path from "path";
 import fs from "fs";
@@ -97,6 +98,81 @@ export async function generateModuleWithRetry(
     console.error(`[karta] ${finalMsg}`);
     logAiCall({ task: `natal-module:${expectedModuleId}`, model, latency_ms, status: "error", error_msg: finalMsg.slice(0, 500) });
     throw new Error(finalMsg);
+  }
+}
+
+// ─── correctModuleWithHaiku (language/style correction pass) ─────────────────
+// Runs claude-haiku-4-5 over the generated module to fix ONLY:
+//   1. Polish language errors (declension, rusycyzmy: Wenera→Wenus)
+//   2. Violations of the gender-neutral style (STYLE_BLOCK rules)
+// Logs a diff metric (# of changed chars) to ai_call_logs.
+
+const CORRECTION_SYSTEM = `Jesteś korektorem tekstu astrologicznego w aplikacji Cosmogram.
+
+Twoje zadanie: popraw WYŁĄCZNIE następujące błędy w przekazanym JSON modułu.
+NICZEGO NIE DODAWAJ. NIE zmieniaj treści, argumentów, sensu ani stylu poza wymienionymi błędami.
+
+POPRAWIAJ:
+1. Błędy deklinacyjne polszczyzny (np. "Wag" → "Wagi", "w Baran" → "w Baranie")
+2. Rusycyzmy: "Wenera" → "Wenus" (Wenus jest nieodmienna), "Jowisz" odmieniony błędnie → sprawdź
+3. Naruszenia reguł stylu bezrodzajowego:
+
+${STYLE_BLOCK}
+
+ZWRÓĆ: TYLKO poprawiony obiekt JSON. Zero komentarza, zero \`\`\`json wrapperów.
+Jeśli nie ma błędów — zwróć oryginalny JSON bez zmian.`;
+
+export async function correctModuleWithHaiku(
+  module: AstroModuleAIOutput
+): Promise<AstroModuleAIOutput> {
+  if (process.env.AI_DISABLED === "true" || process.env.AI_MOCK === "true") {
+    return module;
+  }
+
+  const model = "claude-haiku-4-5-20251001";
+  const t0    = Date.now();
+  const inputJson = JSON.stringify(module);
+
+  try {
+    const response = await getClient().messages.create({
+      model,
+      max_tokens: 4096,
+      system:     CORRECTION_SYSTEM,
+      messages:   [{ role: "user", content: `Popraw ten JSON modułu:\n\n${inputJson}` }],
+    });
+
+    const latency_ms    = Date.now() - t0;
+    const input_tokens  = response.usage?.input_tokens;
+    const output_tokens = response.usage?.output_tokens;
+
+    const raw       = (response.content[0] as Anthropic.TextBlock).text?.trim() ?? "";
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    const jsonText  = jsonMatch ? jsonMatch[0] : raw;
+    const obj       = JSON.parse(jsonText);
+    const corrected = AstroModuleAIOutputSchema.parse({ ...obj, id: module.id });
+
+    // Log diff size as quality metric
+    const outputJson = JSON.stringify(corrected);
+    const diffChars = [...outputJson].filter((c, i) => c !== inputJson[i]).length;
+
+    logAiCall({
+      task: `natal-correction:${module.id}`,
+      model,
+      input_tokens,
+      output_tokens,
+      latency_ms,
+      status: "ok",
+      error_msg: diffChars > 0 ? `diff_chars:${diffChars}` : undefined,
+    });
+
+    return corrected;
+  } catch (err) {
+    // Correction pass is best-effort — never fail the main flow
+    const latency_ms = Date.now() - t0;
+    const errDetail  = err instanceof Error ? err.message : JSON.stringify(err);
+    console.warn(`[karta] correction pass failed for ${module.id}:`, errDetail);
+    logAiCall({ task: `natal-correction:${module.id}`, model, latency_ms, status: "error", error_msg: errDetail.slice(0, 500) });
+    return module;
   }
 }
 

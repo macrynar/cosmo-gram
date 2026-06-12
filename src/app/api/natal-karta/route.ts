@@ -5,6 +5,7 @@ import { hasActiveSubscription } from "@/lib/subscription";
 import type { GenerationContext } from "@/lib/moduleSpecs";
 import { FREE_MODULE_IDS } from "@/lib/moduleSpecs";
 import { checkRateLimit } from "@/lib/rateLimiter";
+import type { ModuleId } from "@/lib/schemas/astroModule";
 
 export const maxDuration = 120;
 
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
     hasExactTime?:        boolean;
     birthYear?:           number;
     locationPrecisionKm?: number;
+    onlyModuleIds?:       ModuleId[];
   };
   try {
     body = await req.json();
@@ -60,7 +62,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const isPaid = await hasActiveSubscription(user.id).catch(() => false);
-    const onlyModuleIds = isPaid ? undefined : FREE_MODULE_IDS;
+    // body.onlyModuleIds is used for single-module retry; falls back to tier-based restriction
+    const onlyModuleIds = body.onlyModuleIds ?? (isPaid ? undefined : FREE_MODULE_IDS);
 
     const ctx: GenerationContext = {
       user_id:             user.id,
@@ -72,8 +75,8 @@ export async function POST(req: NextRequest) {
       locationPrecisionKm: body.locationPrecisionKm ?? 10,
     };
 
-    const modules = await generateNatalKarta(ctx, onlyModuleIds);
-    return NextResponse.json({ modules });
+    const { modules, failedIds } = await generateNatalKarta(ctx, onlyModuleIds);
+    return NextResponse.json({ modules, failedIds });
 
   } catch (err) {
     if ((err as Error)?.name === "AiDisabledError") {

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Sun as SunIcon, Moon as MoonIcon, Compass } from "lucide-react";
 import type { NatalChart } from "@/lib/astro-types";
+import { SIGN_LOCATIVE } from "@/lib/i18n/astro";
 import NatalChartSVG from "./NatalChartSVG";
 
 // ─── Astrology data ─────────────────────────────────────────────────────────
@@ -211,7 +212,7 @@ function AmuletFlank({
               }}
             >
               <p className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: "#D4AF37" }}>
-                {bodyLabel} w {sign}
+                {bodyLabel} w {SIGN_LOCATIVE[sign] ?? sign}
               </p>
               <p className="text-[11px] text-slate-300 leading-relaxed italic mb-2.5">
                 &ldquo;{bodyDesc}&rdquo;
@@ -257,10 +258,10 @@ function AmuletFlank({
 
 // ─── Axis label helper ────────────────────────────────────────────────────────
 
-const SIGNS_ABBR = ["Bar","Byk","Bli","Rak","Lew","Pan","Wag","Sko","Str","Koz","Wod","Ryb"];
+const SIGN_GLYPHS = ["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"];
 function axisLabel(lon: number): string {
   const norm = ((lon % 360) + 360) % 360;
-  return `${Math.floor(norm % 30)}° ${SIGNS_ABBR[Math.floor(norm / 30)]}`;
+  return `${Math.floor(norm % 30)}° ${SIGN_GLYPHS[Math.floor(norm / 30)]}`;
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -373,7 +374,17 @@ export default function NatalChartAltarView({ chart }: Props) {
               />
             </motion.div>
           ) : (
-            <div style={{ gridColumn: 1, gridRow: 2 }} />
+            <motion.div
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.28, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              style={{ gridColumn: 1, gridRow: 2 }}
+              className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl text-center"
+            >
+              <Compass className="w-5 h-5" style={{ color: "rgba(148,163,184,0.30)" }} />
+              <p className="text-[9px] uppercase tracking-[0.18em]" style={{ color: "rgba(148,163,184,0.35)" }}>Ascendent</p>
+              <p className="text-[10px] leading-tight" style={{ color: "rgba(148,163,184,0.45)" }}>Nieznana godzina urodzenia</p>
+            </motion.div>
           )}
 
           {/* Col 2, row 2: Chart — ŚRODEK */}
@@ -466,14 +477,6 @@ export default function NatalChartAltarView({ chart }: Props) {
           ))}
         </motion.footer>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.1, duration: 0.8 }}
-          className="text-center text-[10px] text-slate-700 mt-4"
-        >
-          Najedź na symbol, aby odczytać jego energię
-        </motion.p>
       </div>
     </motion.div>
   );
