@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { HeartHandshake, Share2, Plus, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -25,6 +26,8 @@ type SavedMatch = {
 export default function AstroMatchPage() {
   const { session } = useAuth();
   const { isPro } = useSubscription();
+  const searchParams = useSearchParams();
+  const animate = searchParams.get("reveal") !== "instant";
 
   const [matches, setMatches]           = useState<SavedMatch[]>([]);
   const [selectedId, setSelectedId]     = useState<string | null>(null);
@@ -265,6 +268,7 @@ export default function AstroMatchPage() {
               person2Name={resultNames.p2}
               isPremiumUser={resultIsPremium}
               onPaywall={() => setShowPaywall(true)}
+              animate={animate}
             />
             {selectedId && (
               <div className="flex justify-center mt-5">

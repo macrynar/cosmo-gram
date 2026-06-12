@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { calculateChart } from "@/lib/chart-engine";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { computeSynastryAspects, computeSynastryScore, type SynastryAspect } from "@/lib/synastry-score";
+import { getSynastryAspects, getSynastryScore, extractPlanetPositions, type SynastryAspect, type PlanetPos } from "@/lib/astro/synastry";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { aiComplete } from "@/lib/deepseek";
@@ -19,6 +19,9 @@ export type CompatibilityResult = {
   overallScore: number;
   summary: string;
   categories: CompatibilityCategory[];
+  // Deterministic wheel data — included for visualisation; not AI content
+  aspects?: SynastryAspect[];
+  planetPositions?: { a: PlanetPos[]; b: PlanetPos[] };
 };
 
 const SYSTEM_PROMPT = `Jesteś doświadczonym astrologiem specjalizującym się w astrologii synastrii - analizie kompatybilności dwóch kart urodzeniowych. Masz 20+ lat praktyki z parami.
@@ -47,35 +50,31 @@ Zamiast: pisz po imieniu lub bezosobowo. Każde "/" w czasowniku = output odrzuc
 ## Clichés — nigdy
 - "kosmiczne połączenie", "dusza bliźniacza", "przeznaczenie", "wszechświat zdecydował"
 - "idealna para", "fascynujące połączenie", "energia X znaku"
-- "intuicja strukturalna", "wzorcowe myślenie"
 
 ## Zakaz wnioskowania bez aspektu
-Jeśli aspekt nie istnieje w danych — NIE piszesz o nim. Nie ma Venus-Mars conjunction? Nie piszesz o "silnym przyciąganiu fizycznym". Zero fikcyjnych aspektów.
+Jeśli aspekt nie istnieje w danych — NIE piszesz o nim. Zero fikcyjnych aspektów.
 
 # Twój styl
-
-Mówisz konkretnie i bez owijania w bawełnę. Każda obserwacja oparta o KONKRETNY aspekt synastrii. Nie pochlebiasz. Nie obiecujesz. Pokazujesz co jest — dobre i trudne.
+Mówisz konkretnie i bez owijania w bawełnę. Każda obserwacja oparta o KONKRETNY aspekt synastrii.
 
 # Zasady
-
 1. Analizuj aspekty MIĘDZY kartami (synastria), nie każdą kartę osobno.
 2. Kluczowe aspekty: Słońce-Księżyc, Wenus-Mars, Merkury-Merkury, Saturn-Słońce, Pluton-Wenus.
-3. Insight psychologiczny PRZED detalem technicznym. Kolejność: co to znaczy dla tej pary → (opcjonalnie) skrócona podstawa astro.
-4. Wyzwania opisuj bez dramatyzowania i bez minimalizowania. Konkretny wzorzec + jak się manifestuje.
-5. "Actionable insight" — 1 konkretny krok behawioralny wynikający z aspektu tej sekcji, niegeneric.
+3. Insight psychologiczny PRZED detalem technicznym.
+4. Wyzwania opisuj bez dramatyzowania i bez minimalizowania.
 
 # Zakaz stereotypów płciowych
-
 Pisz po imieniu LUB "osoba z Marsem w Skorpionie". Aspekt opisuje DYNAMIKĘ, nie przypisuje ról.
 
 # WAŻNE — score jest deterministyczny
-
-Scores (overall, communication, passion, values, challenge) są obliczone algorytmicznie i przekazane w inputcie.
+Scores (overall, communication, passion, values, challenge, longevity) są obliczone algorytmicznie i przekazane w inputcie.
 TWOJA PRACA: napisać copy które brzmi spójnie z tymi liczbami. NIE generujesz score'a samodzielnie.
 
 - passion_score wysoki (>70) → pisz o sile fizycznego przyciągania i braku nudy.
 - passion_score niski (<50) → pisz że chemia wymaga świadomej pracy.
 - challenge_score niski (<45) → sekcja "Wyzwania" mówi wprost że dynamika jest napięta.
+- longevity_score wysoki (>70) → pisz o trwałości i stabilizacji.
+- longevity_score niski (<50) → pisz o potrzebie wspólnej pracy nad fundamentami.
 - overall_score >75 → ton komplementarny.
 - overall_score 50-65 → "to się daje zrobić, ale wymaga uwagi".
 - overall_score <45 → ton ostrzegający bez katastrofizowania.
@@ -83,15 +82,7 @@ TWOJA PRACA: napisać copy które brzmi spójnie z tymi liczbami. NIE generujesz
 ZAKAZ: nie odwołuj się do aspektów których nie ma w input.aspects.
 
 # Struktura "Pułapka / Co zamiast" dla sekcji Wyzwania
-
-Dla każdego wyzwania: (a) wzorzec behawioralny w konkretnej sytuacji, (b) typowa reakcja i dlaczego nie działa, (c) co zamiast — konkretne zdanie lub działanie.
-
-# Zasada: rady wynikają z aspektów
-
-TEST: czy tę samą poradę można dać dowolnej parze? Jeśli tak — przepisz.
-
-Dobrze (z aspektu):
-- "Saturn [A] naprzeciw Merkurego [B]: gdy [A] analizuje pomysł [B], nazwij to głośno ('sprawdzam, nie krytykuję') zanim napięcie narośnie."
+Dla każdego wyzwania: (a) wzorzec behawioralny, (b) typowa reakcja i dlaczego nie działa, (c) co zamiast.
 
 # Format odpowiedzi
 
@@ -99,12 +90,12 @@ Zwróć WYŁĄCZNIE poprawny JSON (bez markdown, bez żadnego tekstu poza JSON):
 
 {
   "overallScore": <liczba z inputu — nie zmieniaj>,
-  "summary": "<2-3 konkretne zdania o tym co definiuje tę parę. Insight psychologiczny jako pierwszy. Bez ogólników.>",
+  "summary": "<2-3 konkretne zdania o tym co definiuje tę parę. Insight psychologiczny jako pierwszy.>",
   "categories": [
     {
       "name": "Komunikacja",
       "score": <liczba z inputu — nie zmieniaj>,
-      "interpretation": "<2-3 zdania oparte na pozycjach Merkurego i aspektach. Insight przed detalem.>",
+      "interpretation": "<2-3 zdania oparte na pozycjach Merkurego i aspektach.>",
       "insight": "<1 konkretny krok — niegeneric, z aspektu>"
     },
     {
@@ -123,7 +114,13 @@ Zwróć WYŁĄCZNIE poprawny JSON (bez markdown, bez żadnego tekstu poza JSON):
       "name": "Wyzwania",
       "score": <liczba z inputu — nie zmieniaj>,
       "interpretation": "<2-3 zdania o głównych napięciach. Konkretny wzorzec behawioralny + pułapka + co zamiast.>",
-      "insight": "<1 konkretny krok jak pracować z tym napięciem — z aspektu>"
+      "insight": "<1 konkretny krok jak pracować z napięciem — z aspektu>"
+    },
+    {
+      "name": "Długoterminowość",
+      "score": <liczba z inputu — nie zmieniaj>,
+      "interpretation": "<2-3 zdania o potencjale długotrwałej relacji. Oparte na aspektach Saturn, Słońce-Księżyc, Jowisz.>",
+      "insight": "<1 konkretny krok wzmacniający trwałość — z aspektu>"
     }
   ]
 }`;
@@ -131,8 +128,6 @@ Zwróć WYŁĄCZNIE poprawny JSON (bez markdown, bez żadnego tekstu poza JSON):
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
-  // Paywall: premium — max 10 matches/month; free — unlimited but partial results
-  // Rate limit by user ID (authenticated) or IP (anonymous)
   const authHeaderForRL = req.headers.get("Authorization");
   const rlIdentifier = authHeaderForRL
     ? authHeaderForRL.replace("Bearer ", "").slice(0, 32)
@@ -191,25 +186,31 @@ export async function POST(req: NextRequest) {
     const name1 = person1.name || "Osoba 1";
     const name2 = person2.name || "Osoba 2";
 
-    // Deterministic score — computed from aspects, not by AI (Patch E)
-    const aspects = computeSynastryAspects(r1.chart, name1, r2.chart, name2);
-    const scores = computeSynastryScore(aspects);
+    // Deterministic synastry — tight orbs, 5 dimensions
+    const aspects = getSynastryAspects(r1.chart, r2.chart);
+    const scores  = getSynastryScore(aspects);
 
+    // Planet positions for SynastryWheel (stripped of birth data)
+    const planetPositions = {
+      a: extractPlanetPositions(r1.chart),
+      b: extractPlanetPositions(r2.chart),
+    };
+
+    // Top 15 aspects for wheel + top 20 for AI (pseudonymized — no names, just planets)
+    const topAspects = aspects.slice(0, 15);
     const aspectsText = aspects
-      .filter(a => a.orb_degrees <= 5)
-      .sort((a, b) => a.orb_degrees - b.orb_degrees)
       .slice(0, 20)
-      .map(a => `${a.person_a_name}: ${a.planet_a} w ${a.sign_a} — ${a.type} — ${a.person_b_name}: ${a.planet_b} w ${a.sign_b} (orb: ${a.orb_degrees.toFixed(1)}°)`)
+      .map(a => `Osoba A: ${a.planet_a} w ${a.sign_a} — ${a.type} — Osoba B: ${a.planet_b} w ${a.sign_b} (orb: ${a.orb_degrees.toFixed(1)}°)`)
       .join("\n");
 
-    const userMessage = `Osoba 1 (${name1}):
+    const userMessage = `Osoba A (${name1}):
 ${r1.promptContext}
 
-Osoba 2 (${name2}):
+Osoba B (${name2}):
 ${r2.promptContext}
 
-Aspekty synastrii (obliczone algorytmicznie):
-${aspectsText || "Brak ścisłych aspektów synastrii (orb <5°)"}
+Aspekty synastrii (obliczone algorytmicznie, ścisłe orby):
+${aspectsText || "Brak ścisłych aspektów synastrii"}
 
 Scores (deterministyczne — NIE zmieniaj liczb w JSON):
 - overall: ${scores.overall}
@@ -217,14 +218,13 @@ Scores (deterministyczne — NIE zmieniaj liczb w JSON):
 - passion: ${scores.passion}
 - values: ${scores.values}
 - challenge: ${scores.challenge}
+- longevity: ${scores.longevity}
 
 Napisz copy synastrii zgodne z tymi scores. Użyj aspektów z listy powyżej. Zwróć TYLKO JSON.`;
 
     if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json({
-        result: mockResult(name1, name2, scores),
-        charts: { person1: r1.chart, person2: r2.chart },
-      });
+      const result = buildResult(mockResult(name1, name2, scores), topAspects, planetPositions);
+      return NextResponse.json({ result, isPaidUser, charts: { person1: r1.chart, person2: r2.chart } });
     }
 
     let rawText = "";
@@ -232,39 +232,49 @@ Napisz copy synastrii zgodne z tymi scores. Użyj aspektów z listy powyżej. Zw
       rawText = await aiComplete({
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userMessage }],
-        maxTokens: 4500,
+        maxTokens: 5000,
       });
     } catch (error) {
       console.error("AI match error:", error);
-      return NextResponse.json({ error: "AI unavailable" }, { status: 502 });
+      const result = buildResult(mockResult(name1, name2, scores), topAspects, planetPositions);
+      return NextResponse.json({ result, isPaidUser, charts: { person1: r1.chart, person2: r2.chart } });
     }
 
-    let result: CompatibilityResult;
+    let aiResult: CompatibilityResult;
     try {
-      const parsed = extractJson(rawText);
-      // Enforce deterministic scores — overwrite whatever AI returned (Patch E)
-      result = {
-        ...parsed,
+      const aiParsed = extractJson(rawText);
+      // Enforce deterministic scores — overwrite whatever AI returned
+      aiResult = {
+        ...aiParsed,
         overallScore: scores.overall,
-        categories: parsed.categories.map((cat, i) => {
+        categories: aiParsed.categories.map(cat => {
           const scoreMap: Record<string, number> = {
-            "Komunikacja": scores.communication,
-            "Namiętność": scores.passion,
-            "Wspólne wartości": scores.values,
-            "Wyzwania": scores.challenge,
+            "Komunikacja":       scores.communication,
+            "Namiętność":        scores.passion,
+            "Wspólne wartości":  scores.values,
+            "Wyzwania":          scores.challenge,
+            "Długoterminowość":  scores.longevity,
           };
           return { ...cat, score: scoreMap[cat.name] ?? cat.score };
         }),
       };
     } catch {
       console.error("JSON parse error in astro-match, raw:", rawText.slice(0, 500));
-      result = mockResult(name1, name2, scores);
+      aiResult = mockResult(name1, name2, scores);
     }
 
-    // Strip premium categories server-side — UI blur is not a security boundary
+    const fullResult = buildResult(aiResult, topAspects, planetPositions);
+
+    // Strip premium categories server-side for free users (wheel + score always visible)
     const safeResult: CompatibilityResult = isPaidUser
-      ? result
-      : { overallScore: result.overallScore, summary: result.summary, categories: [] };
+      ? fullResult
+      : {
+          overallScore:    fullResult.overallScore,
+          summary:         fullResult.summary,
+          categories:      [],
+          aspects:         fullResult.aspects,
+          planetPositions: fullResult.planetPositions,
+        };
 
     return NextResponse.json({
       result: safeResult,
@@ -277,36 +287,37 @@ Napisz copy synastrii zgodne z tymi scores. Użyj aspektów z listy powyżej. Zw
   }
 }
 
+function buildResult(
+  base: CompatibilityResult,
+  aspects: SynastryAspect[],
+  planetPositions: { a: PlanetPos[]; b: PlanetPos[] },
+): CompatibilityResult {
+  return { ...base, aspects, planetPositions };
+}
+
 function extractJson(raw: string): CompatibilityResult {
-  // Strip markdown code fences if present
   const stripped = raw
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```\s*$/i, "")
     .trim();
-
-  // Try direct parse first
   try {
     return JSON.parse(stripped) as CompatibilityResult;
   } catch { /* fall through */ }
-
-  // Extract first {...} block (greedy, handles nested objects)
   const match = stripped.match(/\{[\s\S]*\}/);
-  if (match) {
-    return JSON.parse(match[0]) as CompatibilityResult;
-  }
-
+  if (match) return JSON.parse(match[0]) as CompatibilityResult;
   throw new Error("No JSON found in response");
 }
 
-function mockResult(name1: string, name2: string, scores: { overall: number; communication: number; passion: number; values: number; challenge: number }): CompatibilityResult {
+function mockResult(name1: string, name2: string, scores: ReturnType<typeof getSynastryScore>): CompatibilityResult {
   return {
     overallScore: scores.overall,
-    summary: `Kosmogram ${name1 || "Osoby 1"} i ${name2 || "Osoby 2"} — analiza AI chwilowo niedostępna. Score obliczony deterministycznie.`,
+    summary: `Kosmogram ${name1} i ${name2} — analiza AI chwilowo niedostępna. Score obliczony deterministycznie.`,
     categories: [
-      { name: "Komunikacja", score: scores.communication, interpretation: "Analiza AI chwilowo niedostępna.", insight: "Porozmawiajcie o swoich stylach komunikacji." },
-      { name: "Namiętność", score: scores.passion, interpretation: "Analiza AI chwilowo niedostępna.", insight: "Odkryjcie co was pociąga." },
-      { name: "Wspólne wartości", score: scores.values, interpretation: "Analiza AI chwilowo niedostępna.", insight: "Omówcie swoje priorytety życiowe." },
-      { name: "Wyzwania", score: scores.challenge, interpretation: "Analiza AI chwilowo niedostępna.", insight: "Pracujcie nad komunikacją w konflikcie." },
+      { name: "Komunikacja",      score: scores.communication, interpretation: "Analiza AI chwilowo niedostępna.", insight: "Porozmawiajcie o swoich stylach komunikacji." },
+      { name: "Namiętność",       score: scores.passion,       interpretation: "Analiza AI chwilowo niedostępna.", insight: "Odkryjcie co was pociąga." },
+      { name: "Wspólne wartości", score: scores.values,        interpretation: "Analiza AI chwilowo niedostępna.", insight: "Omówcie swoje priorytety życiowe." },
+      { name: "Wyzwania",         score: scores.challenge,     interpretation: "Analiza AI chwilowo niedostępna.", insight: "Pracujcie nad komunikacją w konflikcie." },
+      { name: "Długoterminowość", score: scores.longevity,     interpretation: "Analiza AI chwilowo niedostępna.", insight: "Budujcie wspólne rytuały i tradycje." },
     ],
   };
 }

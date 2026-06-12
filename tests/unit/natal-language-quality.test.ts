@@ -37,8 +37,8 @@ function allText(m: ModuleFixture): string {
 const GENDERED_PAST_COND = /\b(?:powiedziałbyś|powiedziałabyś|zrobiłeś|zrobiłaś|czułeś|czułaś|byłeś|byłaś|miałeś|miałaś|wiedziałeś|wiedziałaś|chciałeś|chciałaś|myślałeś|myślałaś|bałeś|bałaś|mogłeś|mogłaś|musiałeś|musiałaś|zdecydowałeś|zdecydowałaś|poczułeś|poczułaś|znalazłeś|znalazłaś|wróciłeś|wróciłaś|dotarłeś|dotarłaś|zbudowałeś|zbudowałaś|stworzyłeś|stworzyłaś|osiągnąłeś|osiągnęłaś|postanowiłeś|postanowiłaś|zdałeś|zdałaś|nauczyłeś|nauczyłaś|poczułbyś|poczułabyś|byłbyś|byłabyś|miałbyś|miałabyś|chciałbyś|chciałabyś|mogłbyś|mogłabyś|zrobiłbyś|zrobiłabyś|wiedziałbyś|wiedziałabyś)\b/gi;
 
 // Hypothetical + gendered participial (jakbyś stał/stała, gdybyś chciał/chciała, etc.)
-// These slip through because "jakbyś" alone isn't gendered, but combined with past participial it is
-const HYPOTHETICAL_GENDERED = /\b(?:jakbyś|gdybyś|jakbyście|gdybyście)\s+\w+(?:ł|ła|łeś|łaś|łby|łaby|li|ły)\b/gi;
+// Only matches singular gendered endings (ł/ła/łeś/łaś/łby/łaby) — not plural li/ły which appear in non-gendered futures
+const HYPOTHETICAL_GENDERED = /\b(?:jakbyś|gdybyś|jakbyście|gdybyście)\s+\w+(?:łeś|łaś|łaby|łby|ła\b|[a-ząćęńóśźż]ł\b)/gi;
 
 // Gendered predicative adjectives about the user — forbidden
 const GENDERED_ADJECTIVES = /\b(?:gotowy|gotowa|sam(?:\s+\w+)?|sama|zdolny|zdolna|świadomy|świadoma|zagubiony|zagubiona|otwarty|otwarta|silny|silna|wolny|wolna|pewny|pewna|spokojny|spokojna|szczęśliwy|szczęśliwa)\b/gi;
