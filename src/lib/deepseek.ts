@@ -115,9 +115,15 @@ NICZEGO NIE DODAWAJ. NIE zmieniaj treści, argumentów, sensu ani stylu poza wym
 POPRAWIAJ:
 1. Błędy deklinacyjne polszczyzny (np. "Wag" → "Wagi", "w Baran" → "w Baranie")
 2. Rusycyzmy: "Wenera" → "Wenus" (Wenus jest nieodmienna), "Jowisz" odmieniony błędnie → sprawdź
-3. Naruszenia reguł stylu bezrodzajowego:
+3. Naruszenia reguł stylu bezrodzajowego (dotyczy WSZYSTKICH pól: content, quote, tactics, visualMeters.archetype, tags):
 
 ${STYLE_BLOCK}
+
+4. Tryb hipoteczny + imiesiłów rodzajowy w 2. osobie:
+   ŹLE: "jakbyś stał", "jakbyś stała", "gdybyś chciał", "gdybyś chciała", "jakbyś był/była"
+   DOBRZE: "kiedy stoisz", "gdy chcesz", "w tej sytuacji"
+5. Brak przecinka przed "który/która/które" w zdaniach względnych (w archetypach metryk):
+   ŹLE: "terapeuta który..." → DOBRZE: "terapeuta, który..."
 
 ZWRÓĆ: TYLKO poprawiony obiekt JSON. Zero komentarza, zero \`\`\`json wrapperów.
 Jeśli nie ma błędów — zwróć oryginalny JSON bez zmian.`;
