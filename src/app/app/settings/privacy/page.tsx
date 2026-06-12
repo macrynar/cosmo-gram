@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Trash2, Loader2, AlertTriangle, Check } from "lucide-react";
+import { Download, Trash2, Loader2, AlertTriangle, Check, MessageSquareOff } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/components/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -18,9 +18,23 @@ const SETTINGS_TABS = [
 export default function SettingsPrivacyPage() {
   const { session } = useAuth();
   const pathname = usePathname();
-  const [exportLoading, setExportLoading] = useState(false);
-  const [deleteStep, setDeleteStep]       = useState<"idle" | "confirm" | "loading" | "done">("idle");
-  const [confirmText, setConfirmText]     = useState("");
+  const [exportLoading, setExportLoading]     = useState(false);
+  const [chatDeleteDone, setChatDeleteDone]   = useState(false);
+  const [chatDeleteLoading, setChatDeleteLoading] = useState(false);
+  const [deleteStep, setDeleteStep]           = useState<"idle" | "confirm" | "loading" | "done">("idle");
+  const [confirmText, setConfirmText]         = useState("");
+
+  async function handleDeleteChat() {
+    if (!session) return;
+    setChatDeleteLoading(true);
+    try {
+      await fetch("/api/chat/delete?all=1", { method: "DELETE", headers: authHeader });
+      setChatDeleteDone(true);
+      import("posthog-js").then(({ default: ph }) => ph?.capture("chat_history_deleted", { scope: "all" }));
+    } finally {
+      setChatDeleteLoading(false);
+    }
+  }
 
   const authHeader: Record<string, string> = session ? { Authorization: `Bearer ${session.access_token}` } : {};
 
@@ -124,6 +138,35 @@ export default function SettingsPrivacyPage() {
             {exportLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             Pobierz moje dane
           </button>
+        </section>
+
+        {/* Chat history deletion */}
+        <section className="glass-card rounded-2xl p-6 border border-white/8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(148,163,184,0.08)" }}>
+              <MessageSquareOff className="w-4 h-4 text-slate-400" />
+            </div>
+            <h2 className="text-white font-semibold">Historia czatu</h2>
+          </div>
+          <p className="text-slate-400 text-sm mb-4 leading-relaxed">
+            Usuwa wszystkie rozmowy i podsumowania z Cosmo Chat. Kosmogram i inne dane pozostają nienaruszone.
+          </p>
+          {chatDeleteDone ? (
+            <div className="flex items-center gap-2 text-green-300 text-sm">
+              <Check className="w-4 h-4" />
+              Historia czatu usunięta.
+            </div>
+          ) : (
+            <button
+              onClick={handleDeleteChat}
+              disabled={chatDeleteLoading || !session}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm transition-all duration-200 disabled:opacity-40"
+              style={{ background: "rgba(148,163,184,0.06)", border: "0.5px solid rgba(148,163,184,0.20)", color: "#94a3b8" }}
+            >
+              {chatDeleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquareOff className="w-4 h-4" />}
+              Usuń historię czatu
+            </button>
+          )}
         </section>
 
         {/* Account deletion */}

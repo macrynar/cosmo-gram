@@ -4,6 +4,12 @@ import { upsertSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { getPostHogClient } from "@/lib/posthog-server";
 
+// billingCycleAnchorToDate converts billing_cycle_anchor (Unix epoch) to a Date.
+// Used for billing anniversary reset of chat limits.
+function billingCycleAnchorToDate(anchor: number): Date {
+  return new Date(anchor * 1000);
+}
+
 function subFromEvent(sub: Stripe.Subscription) {
   return {
     stripeSubscriptionId: sub.id,
@@ -11,6 +17,8 @@ function subFromEvent(sub: Stripe.Subscription) {
     priceId: sub.items.data[0]?.price.id ?? null,
     cancelAtPeriodEnd: sub.cancel_at_period_end,
     cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
+    // billing_cycle_anchor gives us the subscription anniversary date
+    currentPeriodStart: billingCycleAnchorToDate(sub.billing_cycle_anchor),
   };
 }
 

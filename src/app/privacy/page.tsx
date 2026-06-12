@@ -14,7 +14,7 @@ export default function PrivacyPage() {
       <Navbar />
       <main className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 pt-28 pb-24">
         <h1 className="font-brand text-3xl sm:text-4xl font-bold text-white mb-2">Polityka prywatności</h1>
-        <p className="text-slate-500 text-sm mb-10">serwisu cosmo-gram.com · wersja z dnia 10 czerwca 2026</p>
+        <p className="text-slate-500 text-sm mb-10">serwisu cosmo-gram.com · wersja z dnia 13 czerwca 2026</p>
 
         <LegalSection n="1" title="Kto odpowiada za Twoje dane">
           <p>Administratorem Twoich danych jest operator serwisu Cosmogram (www.cosmo-gram.com):</p>
@@ -71,7 +71,8 @@ export default function PrivacyPage() {
         <LegalSection n="9" title="Profilowanie i AI">
           <p>W Cosmogram stosujemy profilowanie — automatyczną analizę podanych danych urodzenia i Twojej aktywności w celu obliczenia kosmogramu, wygenerowania spersonalizowanych interpretacji, horoskopów i rekomendacji oraz personalizacji odpowiedzi czatu AI.</p>
           <p className="mt-3">Wynik jest interpretacją symboliczną, a nie „ostateczną prawdą" o Tobie. Profilowanie w Cosmogram służy personalizacji i pokazaniu treści — nie podejmujemy wobec Ciebie decyzji, które wywołują skutki prawne albo podobnie istotnie wpływają na Twoją sytuację.</p>
-          <p className="mt-3">Do zewnętrznych modeli AI przekazujemy tylko dane potrzebne do wygenerowania treści. Treści generowane przez AI mogą być niepełne, uproszczone albo błędne. Nie zastępują specjalisty.</p>
+          <p className="mt-3">Do zewnętrznych modeli AI przekazujemy tylko dane potrzebne do wygenerowania treści: dane z kosmogramu (daty i miejsca urodzenia), bieżące ułożenie planet oraz treść wpisaną przez Ciebie do czatu. Treść wiadomości czatu przesyłana jest do modelu w formie niezmienionej — to natura usługi konwersacyjnej. Nie wpisuj do czatu danych, których nie chcesz udostępniać zewnętrznemu dostawcy AI.</p>
+          <p className="mt-3">Treści generowane przez AI mogą być niepełne, uproszczone albo błędne. Nie zastępują specjalisty.</p>
         </LegalSection>
 
         <LegalSection n="10" title="Jakich danych nie chcemy">
@@ -89,6 +90,7 @@ export default function PrivacyPage() {
         <LegalSection n="13" title="Jak długo przechowujemy dane">
           <ul>
             <li>dane konta i zapisane kosmogramy — przez czas, kiedy masz konto,</li>
+            <li><strong className="text-slate-300">historia rozmów z asystentem AI (Cosmo Chat)</strong> — przez 12 miesięcy od ostatniej wiadomości w danej rozmowie; po upływie tego czasu rozmowy są automatycznie usuwane. Możesz usunąć historię czatu w dowolnym momencie w <a href="/app/settings/privacy" className="text-amber-400 hover:text-amber-300">ustawieniach → Prywatność</a>,</li>
             <li>dane potrzebne do płatności i rozliczeń — przez okres wymagany przez przepisy,</li>
             <li>dane potrzebne do obrony przed roszczeniami — do czasu przedawnienia roszczeń,</li>
             <li>dane przetwarzane na podstawie zgody — do czasu jej wycofania lub utraty przydatności.</li>

@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Plus, MessageCircle, ChevronDown, User, Baby } from "lucide-react";
+import { Send, Plus, MessageCircle, ChevronDown, User, Baby, Trash2, Info, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/components/AuthContext";
 import PaywallModal from "@/components/PaywallModal";
 import { track } from "@/components/PostHogProvider";
+import { motion, AnimatePresence } from "framer-motion";
 
-type Message = { role: "user" | "assistant"; content: string };
+type Message = { role: "user" | "assistant"; content: string; followups?: string[] };
 
 type ChartOption = {
   id: string;
@@ -21,36 +22,53 @@ type Conversation = {
   id: string;
   title: string;
   updated_at: string;
+  last_message_at: string | null;
+  summary_updated_at: string | null;
 };
 
+// Gender-neutral 2 os. starters (fallback before daily chips load)
 const STARTERS = [
-  "Dlaczego ostatnio jestem taki/a zmęczony/a?",
   "Co mój kosmogram mówi o relacjach?",
   "Czy to dobry moment na zmianę pracy?",
-  "Co dziś powinienem/powinnam wiedzieć?",
+  "Co dziś warto wiedzieć z astrologii?",
+  "Jak radzić sobie z trudną decyzją?",
 ];
+
+const IDLE_MS = 24 * 60 * 60 * 1000; // 24h — auto new session
 
 export default function ChatPage() {
   const { session } = useAuth();
 
-  const [charts, setCharts]           = useState<ChartOption[]>([]);
+  const [charts, setCharts]               = useState<ChartOption[]>([]);
   const [selectedChart, setSelectedChart] = useState<ChartOption | null>(null);
   const [showChartPicker, setShowChartPicker] = useState(false);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeId, setActiveId]       = useState<string | null>(null);
-  const [messages, setMessages]       = useState<Message[]>([]);
-  const [input, setInput]             = useState("");
-  const [sending, setSending]         = useState(false);
+  const [activeId, setActiveId]           = useState<string | null>(null);
+  const [messages, setMessages]           = useState<Message[]>([]);
+  const [input, setInput]                 = useState("");
+  const [sending, setSending]             = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [showConvList, setShowConvList] = useState(false);
-  const [error, setError]             = useState("");
-  const [showPaywall, setShowPaywall] = useState(false);
+  const [showConvList, setShowConvList]   = useState(false);
+  const [error, setError]                 = useState("");
+  const [showPaywall, setShowPaywall]     = useState(false);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef       = useRef<HTMLTextAreaElement>(null);
-  const convListRef    = useRef<HTMLDivElement>(null);
-  const chartPickerRef = useRef<HTMLDivElement>(null);
+  // Daily chips
+  const [dailyChips, setDailyChips]       = useState<string[]>([]);
+  const [chipsLoading, setChipsLoading]   = useState(false);
+
+  // Data warning
+  const [showDataWarning, setShowDataWarning] = useState(false);
+  const [warningDismissed, setWarningDismissed] = useState(false);
+
+  // Message counter (show when remaining < 30)
+  const [remaining, setRemaining]         = useState<number | null>(null);
+  const [isPaid, setIsPaid]               = useState(false);
+
+  const messagesEndRef  = useRef<HTMLDivElement>(null);
+  const inputRef        = useRef<HTMLTextAreaElement>(null);
+  const convListRef     = useRef<HTMLDivElement>(null);
+  const chartPickerRef  = useRef<HTMLDivElement>(null);
 
   const authHeader = useCallback((): Record<string, string> =>
     session ? { Authorization: `Bearer ${session.access_token}` } : {}
@@ -86,14 +104,66 @@ export default function ChatPage() {
     if (!res.ok) return;
     const { conversations: data } = await res.json() as { conversations: Conversation[] };
     setConversations(data ?? []);
+    return data as Conversation[];
+  }, [session, authHeader]);
+
+  const loadDailyChips = useCallback(async () => {
+    if (!session) return;
+    setChipsLoading(true);
+    try {
+      const res = await fetch("/api/chat/daily-chips", { headers: authHeader() });
+      if (!res.ok) return;
+      const { chips } = await res.json() as { chips: string[] };
+      if (chips?.length > 0) setDailyChips(chips);
+    } finally {
+      setChipsLoading(false);
+    }
+  }, [session, authHeader]);
+
+  const loadStatus = useCallback(async () => {
+    if (!session) return;
+    const res = await fetch("/api/chat/status", { headers: authHeader() });
+    if (!res.ok) return;
+    const data = await res.json() as { isPaid: boolean; remaining: number };
+    setIsPaid(data.isPaid);
+    setRemaining(data.remaining);
+  }, [session, authHeader]);
+
+  const checkDataWarning = useCallback(async () => {
+    if (!session) return;
+    // Check localStorage first (fast path)
+    if (localStorage.getItem("chat_data_warning_ok")) { setWarningDismissed(true); return; }
+    // If not dismissed, show warning on first chat interaction
+    setShowDataWarning(true);
+  }, [session]);
+
+  // Lazy summary generation: trigger for sessions without summary
+  const maybeTriggerSummary = useCallback(async (convs: Conversation[]) => {
+    if (!session) return;
+    const needsSummary = convs.filter(c =>
+      !c.summary_updated_at &&
+      c.last_message_at &&
+      // Only summarize sessions older than 1h (not the current one)
+      Date.now() - new Date(c.last_message_at).getTime() > 3600_000
+    );
+    for (const c of needsSummary.slice(0, 3)) {
+      fetch("/api/chat/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ conversationId: c.id }),
+      }).catch(() => {});
+    }
   }, [session, authHeader]);
 
   useEffect(() => {
     loadCharts();
-    loadConversations();
-  }, [loadCharts, loadConversations]);
+    loadConversations().then(convs => {
+      if (convs) maybeTriggerSummary(convs);
+    });
+    loadDailyChips();
+    loadStatus();
+  }, [loadCharts, loadConversations, loadDailyChips, loadStatus, maybeTriggerSummary]);
 
-  // Persist chart context per conversation in localStorage
   function saveChartContext(convId: string, chart: ChartOption) {
     try {
       const stored = JSON.parse(localStorage.getItem("chat_chart_ctx") ?? "{}") as Record<string, { id: string; type: string }>;
@@ -101,6 +171,7 @@ export default function ChatPage() {
       localStorage.setItem("chat_chart_ctx", JSON.stringify(stored));
     } catch { /* ignore */ }
   }
+
   function restoreChartContext(convId: string): ChartOption | null {
     try {
       const stored = JSON.parse(localStorage.getItem("chat_chart_ctx") ?? "{}") as Record<string, { id: string; type: string }>;
@@ -122,6 +193,7 @@ export default function ChatPage() {
       const res = await fetch(`/api/chat/history?id=${conv.id}`, { headers: authHeader() });
       const { messages: data } = await res.json() as { messages: Message[] };
       setMessages(data ?? []);
+      track("chat_session_resumed", { conv_id: conv.id });
     } finally {
       setLoadingHistory(false);
     }
@@ -136,7 +208,7 @@ export default function ChatPage() {
     const { id } = await res.json() as { id: string };
     const ctx = chart ?? selectedChart;
     if (ctx) saveChartContext(id, ctx);
-    const newConv: Conversation = { id, title: "Nowa rozmowa", updated_at: new Date().toISOString() };
+    const newConv: Conversation = { id, title: "Nowa rozmowa", updated_at: new Date().toISOString(), last_message_at: null, summary_updated_at: null };
     setConversations(prev => [newConv, ...prev]);
     setActiveId(id);
     setMessages([]);
@@ -148,6 +220,9 @@ export default function ChatPage() {
     const content = (text ?? input).trim();
     const convId = overrideConvId ?? activeId;
     if (!content || !convId || sending) return;
+
+    // Show data warning on first send if not dismissed
+    if (!warningDismissed && showDataWarning) return;
 
     setInput("");
     setSending(true);
@@ -168,21 +243,35 @@ export default function ChatPage() {
 
       if (!res.ok) {
         const { error: err } = await res.json() as { error: string };
-        if (err === "PAYWALL") { track("chat_paywall_hit"); setShowPaywall(true); setMessages(prev => prev.slice(0, -1)); return; }
+        if (err === "PAYWALL") {
+          track("chat_paywall_hit");
+          track("chat_limit_reached", { type: "free" });
+          setShowPaywall(true);
+          setMessages(prev => prev.slice(0, -1));
+          return;
+        }
+        if (err === "MONTHLY_LIMIT") {
+          track("chat_limit_reached", { type: "monthly" });
+          setError("Osiągnięto limit wiadomości w tym miesiącu.");
+          setMessages(prev => prev.slice(0, -1));
+          return;
+        }
         setError(err ?? "Błąd AI");
         return;
       }
 
-      const { reply } = await res.json() as { reply: string };
+      const { reply, suggested_followups } = await res.json() as { reply: string; suggested_followups?: string[] };
       setMessages(prev => {
         if (prev.filter(m => m.role === "user").length === 1) track("first_chat");
-        return [...prev, { role: "assistant", content: reply }];
+        return [...prev, { role: "assistant", content: reply, followups: suggested_followups ?? [] }];
       });
       setConversations(prev => prev.map(c =>
         c.id === convId
           ? { ...c, title: c.title === "Nowa rozmowa" ? content.slice(0, 50) : c.title, updated_at: new Date().toISOString() }
           : c
       ));
+      // Refresh counter
+      loadStatus();
     } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "Wystąpił błąd. Spróbuj ponownie." }]);
     } finally {
@@ -192,15 +281,52 @@ export default function ChatPage() {
 
   async function startWithMessage(text: string) {
     if (!session) return;
-    const id = await createConversation();
-    if (id) await sendMessage(text, id);
-    inputRef.current?.focus();
+    if (!warningDismissed) { await dismissDataWarning(); }
+    let convId = activeId;
+    // Auto-new session if idle >24h
+    if (conversations[0]?.last_message_at && Date.now() - new Date(conversations[0].last_message_at).getTime() > IDLE_MS) {
+      convId = null;
+    }
+    if (!convId) {
+      convId = await createConversation();
+    }
+    if (convId) {
+      await sendMessage(text, convId);
+      inputRef.current?.focus();
+    }
   }
 
   async function handleNewConversation() {
     if (!session) return;
     await createConversation();
     inputRef.current?.focus();
+  }
+
+  async function deleteConversation(convId: string) {
+    await fetch(`/api/chat/delete?id=${convId}`, {
+      method: "DELETE",
+      headers: authHeader(),
+    });
+    track("chat_history_deleted", { conv_id: convId });
+    setConversations(prev => prev.filter(c => c.id !== convId));
+    if (activeId === convId) {
+      setActiveId(null);
+      setMessages([]);
+    }
+  }
+
+  async function dismissDataWarning() {
+    setWarningDismissed(true);
+    setShowDataWarning(false);
+    localStorage.setItem("chat_data_warning_ok", "1");
+    // Persist to DB
+    if (session) {
+      fetch("/api/user-preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ chat_data_warning_dismissed: true }),
+      }).catch(() => {});
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -212,8 +338,10 @@ export default function ChatPage() {
     el.style.height = Math.min(el.scrollHeight, 120) + "px";
   }
 
+  const chips = dailyChips.length > 0 ? dailyChips : STARTERS;
   const activeConv = conversations.find(c => c.id === activeId);
   const isEmpty = !loadingHistory && messages.length === 0;
+  const showCounter = remaining !== null && (isPaid ? remaining < 30 : true);
 
   return (
     <div className="h-screen bg-[#03010d] text-white flex flex-col overflow-hidden">
@@ -224,7 +352,7 @@ export default function ChatPage() {
       <main className="relative z-10 flex flex-col flex-1 min-h-0 pt-16">
         <div className="flex flex-col flex-1 min-h-0 max-w-2xl mx-auto w-full px-4">
 
-          {/* ── Chart context selector ── */}
+          {/* Chart context selector */}
           {session && charts.length > 0 && (
             <div ref={chartPickerRef} className="relative shrink-0 pt-3 pb-2">
               <p className="text-xs text-slate-600 mb-1.5 pl-1">Kontekst rozmowy</p>
@@ -244,7 +372,7 @@ export default function ChatPage() {
               {showChartPicker && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-[#0b0906]/98 border border-amber-900/30 rounded-xl shadow-xl z-30 max-h-64 overflow-y-auto backdrop-blur-xl">
                   {charts.length === 0 ? (
-                    <p className="text-slate-500 text-sm px-4 py-3">Brak kosmogramów — wygeneruj kosmogram natalny lub dziecka</p>
+                    <p className="text-slate-500 text-sm px-4 py-3">Brak kosmogramów — wygeneruj kosmogram natalny</p>
                   ) : (
                     <>
                       {charts.filter(c => c.type === "natal").length > 0 && (
@@ -276,7 +404,7 @@ export default function ChatPage() {
             </div>
           )}
 
-          {/* ── Conversation selector ── */}
+          {/* Conversation selector */}
           <div className="flex items-center gap-2 py-2 border-b border-white/5 shrink-0">
             <div className="relative flex-1" ref={convListRef}>
               <button
@@ -297,16 +425,25 @@ export default function ChatPage() {
                   ) : conversations.map(c => {
                     const ctxChart = restoreChartContext(c.id);
                     return (
-                      <button key={c.id} onClick={() => openConversation(c)}
-                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-amber-900/15 transition-colors ${c.id === activeId ? "text-white bg-amber-900/10" : "text-slate-400"}`}>
-                        <span className="block truncate">{c.title}</span>
-                        {ctxChart && (
-                          <span className="text-xs text-slate-600 flex items-center gap-1 mt-0.5">
-                            {ctxChart.type === "child" ? <Baby className="w-3 h-3" /> : <User className="w-3 h-3" />}
-                            {ctxChart.name}
-                          </span>
-                        )}
-                      </button>
+                      <div key={c.id} className="flex items-center group">
+                        <button onClick={() => openConversation(c)}
+                          className={`flex-1 text-left px-4 py-2.5 text-sm hover:bg-amber-900/15 transition-colors ${c.id === activeId ? "text-white bg-amber-900/10" : "text-slate-400"}`}>
+                          <span className="block truncate">{c.title}</span>
+                          {ctxChart && (
+                            <span className="text-xs text-slate-600 flex items-center gap-1 mt-0.5">
+                              {ctxChart.type === "child" ? <Baby className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                              {ctxChart.name}
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => deleteConversation(c.id)}
+                          title="Usuń rozmowę"
+                          className="opacity-0 group-hover:opacity-100 p-2 mr-1 text-slate-600 hover:text-red-400 transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -319,7 +456,30 @@ export default function ChatPage() {
             </button>
           </div>
 
-          {/* ── Messages ── */}
+          {/* Data warning */}
+          <AnimatePresence>
+            {showDataWarning && !warningDismissed && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="mt-3 flex items-start gap-3 px-4 py-3 rounded-xl shrink-0"
+                style={{ background: "rgba(212,175,55,0.04)", border: "0.5px solid rgba(212,175,55,0.20)" }}
+              >
+                <Info className="w-4 h-4 text-amber-400/60 shrink-0 mt-0.5" />
+                <p className="text-xs text-slate-400 flex-1 leading-relaxed">
+                  To, co napiszesz, jest przetwarzane przez model AI — nie wpisuj danych, których nie chcesz udostępniać.{" "}
+                  <a href="/legal/privacy" className="text-amber-500/70 hover:text-amber-400 transition-colors">Polityka prywatności</a>
+                </p>
+                <button onClick={dismissDataWarning} className="text-slate-600 hover:text-slate-400 transition-colors shrink-0">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Messages */}
           <div className="flex-1 overflow-y-auto py-4 space-y-4 min-h-0">
             {!session && (
               <div className="text-center py-16">
@@ -336,15 +496,27 @@ export default function ChatPage() {
                 <p className="text-white font-medium mb-1 font-brand">Cosmogram Chat</p>
                 <p className="text-slate-500 text-xs mb-6">
                   {selectedChart
-                    ? `Pytasz o kosmogram: ${selectedChart.name}`
-                    : "Wybierz kosmogram powyżej, a potem zadaj pytanie"}
+                    ? `Znam kosmogram: ${selectedChart.name}. Zapytaj o cokolwiek.`
+                    : "Wybierz kosmogram powyżej, a potem zadaj pytanie."}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-sm mx-auto">
-                  {STARTERS.map(s => (
-                    <button key={s} onClick={() => startWithMessage(s)} disabled={sending || !selectedChart}
-                      className="text-left px-3 py-2.5 rounded-xl border border-amber-900/25 text-slate-400 hover:text-white hover:border-amber-700/50 hover:bg-amber-900/15 text-xs transition-colors disabled:opacity-40">
+                  {chipsLoading ? (
+                    <div className="col-span-2 flex justify-center py-3">
+                      <span className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(212,175,55,0.2)", borderTopColor: "#FFAE3D" }} />
+                    </div>
+                  ) : chips.map((s, i) => (
+                    <motion.button
+                      key={s}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      onClick={() => { track("chat_chip_clicked", { chip: s }); startWithMessage(s); }}
+                      disabled={sending || !selectedChart}
+                      className="text-left px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:border-amber-700/50 hover:bg-amber-900/15 text-xs transition-colors disabled:opacity-40"
+                      style={{ border: "0.5px solid var(--color-line, #2B2540)" }}
+                    >
                       {s}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               </div>
@@ -360,23 +532,30 @@ export default function ChatPage() {
               <div className="py-6">
                 <div className="glass-card rounded-2xl p-4 border border-amber-900/20 max-w-sm mx-auto text-center mb-4">
                   <p className="text-slate-300 text-sm leading-relaxed">
-                    Co Cię dziś interesuje? Mogę opowiedzieć o kosmogramie
-                    {selectedChart ? ` ${selectedChart.name}` : ""}, dzisiejszym układzie planet, albo odpowiedzieć na konkretne pytanie.
+                    Znam Twój kosmogram. Zapytaj o cokolwiek.
                   </p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-sm mx-auto">
-                  {STARTERS.map(s => (
-                    <button key={s} onClick={() => sendMessage(s)} disabled={sending}
-                      className="text-left px-3 py-2.5 rounded-xl border border-amber-900/25 text-slate-400 hover:text-white hover:border-amber-700/50 hover:bg-amber-900/15 text-xs transition-colors disabled:opacity-40">
+                  {chips.map((s, i) => (
+                    <motion.button
+                      key={s}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      onClick={() => { track("chat_chip_clicked", { chip: s }); sendMessage(s); }}
+                      disabled={sending}
+                      className="text-left px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:border-amber-700/50 hover:bg-amber-900/15 text-xs transition-colors disabled:opacity-40"
+                      style={{ border: "0.5px solid var(--color-line, #2B2540)" }}
+                    >
                       {s}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               </div>
             )}
 
             {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div key={i} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
                 <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 ${
                   msg.role === "user"
                     ? "bg-amber-900/25 border border-amber-700/35 text-white rounded-tr-sm"
@@ -391,6 +570,26 @@ export default function ChatPage() {
                     </ReactMarkdown>
                   ) : msg.content}
                 </div>
+
+                {/* Follow-up chips */}
+                {msg.role === "assistant" && msg.followups && msg.followups.length > 0 && i === messages.length - 1 && (
+                  <div className="flex gap-2 mt-2 flex-wrap max-w-[85%]">
+                    {msg.followups.map((f, fi) => (
+                      <motion.button
+                        key={f}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: fi * 0.08, duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                        onClick={() => { track("chat_followup_clicked", { followup: f }); sendMessage(f); }}
+                        disabled={sending}
+                        className="px-3 py-1.5 rounded-full text-xs text-slate-400 hover:text-white hover:border-amber-700/50 hover:bg-amber-900/15 transition-colors disabled:opacity-40"
+                        style={{ border: "0.5px solid var(--color-line, #2B2540)" }}
+                      >
+                        {f}
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
 
@@ -410,9 +609,14 @@ export default function ChatPage() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* ── Input ── */}
+          {/* Input + counter */}
           {session && activeId && (
             <div className="py-3 border-t border-white/5 shrink-0">
+              {showCounter && remaining !== null && (
+                <p className="text-[11px] text-slate-600 mb-2 text-right">
+                  {isPaid ? `${remaining} wiad. pozostało w tym miesiącu` : `${remaining}/${3} bezpłatnych wiadomości`}
+                </p>
+              )}
               <div className="flex items-end gap-2">
                 <textarea ref={inputRef} value={input}
                   onChange={e => { setInput(e.target.value); autoResize(e.target); }}
