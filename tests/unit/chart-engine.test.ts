@@ -95,8 +95,8 @@ describe("edge cases", () => {
     const r2 = calculateChart({ date: "2000-01-01", time: "00:01", lat: 51.5074, lng: -0.1278, place: "London" });
     const sun1 = r1.chart.planets.find(p => p.name === "Słońce")!;
     const sun2 = r2.chart.planets.find(p => p.name === "Słońce")!;
-    let diff = Math.abs(sun1.longitude - sun2.longitude);
-    if (diff > 180) diff = 360 - diff;
+    const rawDiff = Math.abs(sun1.longitude - sun2.longitude);
+    const diff = Math.min(rawDiff, 360 - rawDiff);
     expect(diff).toBeLessThan(0.05);
   });
 

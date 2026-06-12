@@ -82,12 +82,16 @@ function localToUtc(dateStr: string, timeStr: string, tz: string): Date {
     if (tzPart === "GMT" || tzPart === "UTC") return 0;
     // shortOffset can return e.g. "GMT+5", "GMT+0530" or "GMT+05:30" depending on locale/ICU.
     const match = tzPart.match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/);
-    if (!match) return 0;
+    if (!match) throw new RangeError(`Unsupported timezone offset format for ${tz}: ${tzPart}`);
     const sign = match[1] === "-" ? -1 : 1;
     const hours = Number(match[2]);
     const minutes = Number(match[3] ?? "0");
-    if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return 0;
-    if (hours < 0 || hours > 14 || minutes < 0 || minutes > 59) return 0;
+    if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
+      throw new RangeError(`Invalid timezone offset for ${tz}: ${tzPart}`);
+    }
+    if (hours < 0 || hours > 14 || minutes < 0 || minutes > 59) {
+      throw new RangeError(`Out-of-range timezone offset for ${tz}: ${tzPart}`);
+    }
     return sign * (hours * 60 + minutes);
   };
 
