@@ -44,22 +44,23 @@ export function getSourceChips(
     if (planetName === "Ascendent") {
       if (!hasExactTime) continue;
       const sign = longitudeToSign(chart.ascendant).name;
-      chips.push(`Asc w ${SIGN_LOC[sign] ?? sign}`);
+      chips.push(`ASC w ${SIGN_LOC[sign] ?? sign}`);
       continue;
     }
 
     const p = chart.planets.find(pl => pl.name === planetName);
     if (!p) continue;
 
+    const signLoc = SIGN_LOC[p.sign] ?? p.sign;
+
     if (hasExactTime && chart.houses.length >= 12) {
       const house = getPlanetHouse(p.longitude, chart.houses);
       if (house) {
-        chips.push(`${planetName} w ${ROMAN[house]}`);
+        chips.push(`${planetName} w ${signLoc} · ${ROMAN[house]} dom`);
         continue;
       }
     }
 
-    const signLoc = SIGN_LOC[p.sign] ?? p.sign;
     chips.push(`${planetName} w ${signLoc}`);
   }
 

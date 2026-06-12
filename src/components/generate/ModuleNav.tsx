@@ -115,7 +115,7 @@ export default function ModuleNav({ visibleIds }: Props) {
       </div>
 
       {/* Chapter dots */}
-      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none max-w-[70ch] mx-auto">
         {ALL_MODULE_IDS.map((id, i) => {
           const isVisible = visibleIds.includes(id);
           const isActive  = id === activeId;

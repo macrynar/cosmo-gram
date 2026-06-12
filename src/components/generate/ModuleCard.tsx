@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Lock, ChevronDown, ThumbsUp, ThumbsDown,
@@ -27,13 +27,6 @@ function meterGradient(value: number): string {
   if (value >= 80) return "linear-gradient(to right, #5B2C8F, #D4AF37)";
   if (value >= 55) return "linear-gradient(to right, #3b1f6e, #8b5cf6)";
   return "linear-gradient(to right, #1e1433, #4c3080)";
-}
-
-function scaleLabel(value: number): { text: string; color: string } {
-  if (value >= 80) return { text: "mocna strona",     color: "rgba(212,175,55,0.55)" };
-  if (value >= 65) return { text: "powyżej średniej", color: "rgba(148,163,184,0.50)" };
-  if (value >= 40) return { text: "w toku",           color: "rgba(148,163,184,0.38)" };
-  return             { text: "obszar rozwoju",    color: "rgba(148,163,184,0.32)" };
 }
 
 const LS_READ = "cosmo_modules_read";
@@ -87,6 +80,7 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
   const [isExpanded,        setIsExpanded]        = useState(true);
   const [isMobileCollapsed, setIsMobileCollapsed] = useState(false);
   const [feedback,          setFeedback]          = useState<Feedback>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Load read state on mobile
@@ -97,6 +91,25 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
     }
     // Load feedback state
     setFeedback(loadFeedback(module.id));
+  }, [module.id]);
+
+  // Mark as read when user scrolls to bottom of module (≥80% of content seen)
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    if (getRead().includes(module.id)) return; // already read
+    const obs = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          markRead(module.id);
+          document.dispatchEvent(new CustomEvent("cosmo-module-expanded", { detail: { id: module.id } }));
+          obs.disconnect();
+        }
+      },
+      { threshold: 0 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
   }, [module.id]);
 
   function handleExpand() {
@@ -186,15 +199,11 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
         {/* Visual Meters */}
         <div className="space-y-3.5">
           {module.visualMeters.map((meter, i) => {
-            const scale = scaleLabel(meter.value);
             return (
               <div key={i}>
                 <div className="flex justify-between items-baseline mb-1.5">
                   <span className="text-xs text-slate-400">{meter.label}</span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[9px]" style={{ color: scale.color }}>{scale.text}</span>
-                    <span className="text-[10px] tabular-nums" style={{ color: "rgba(212,175,55,0.50)" }}>{meter.value}</span>
-                  </div>
+                  <span className="text-[10px] tabular-nums" style={{ color: "rgba(212,175,55,0.50)" }}>{meter.value}</span>
                 </div>
                 <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
                   <motion.div
@@ -253,6 +262,9 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
             czytaj dalej
           </button>
         )}
+
+        {/* Scroll sentinel — fires when user reaches bottom of content (marks as read) */}
+        <div ref={sentinelRef} aria-hidden className="h-px" />
 
         {/* Footer: feedback + chat bridge — visible when expanded */}
         {(!isMobileCollapsed || isExpanded) && (

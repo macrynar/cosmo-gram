@@ -19,15 +19,26 @@ const fixtures: ModuleFixture[] = readdirSync(FIXTURE_DIR)
   .filter(f => f.endsWith(".json"))
   .map(f => JSON.parse(readFileSync(join(FIXTURE_DIR, f), "utf-8")) as ModuleFixture);
 
-// Collect all prose text from a module (quote + content + tactics + archetypes)
+// Collect all prose text from a module (all output fields)
 function allText(m: ModuleFixture): string {
-  return [m.quote, m.content, ...m.tactics, ...m.visualMeters.map(v => v.archetype)].join(" ");
+  return [
+    m.quote,
+    m.content,
+    ...m.tactics,
+    ...m.tags,
+    ...m.visualMeters.map(v => v.archetype),
+    ...m.visualMeters.map(v => v.label),
+  ].join(" ");
 }
 
 // ─── 1. Gender form detector ────────────────────────────────────────────────
 
 // Past tense / conditional in 2nd person — these are gendered forms, forbidden by STYLE_BLOCK
 const GENDERED_PAST_COND = /\b(?:powiedziałbyś|powiedziałabyś|zrobiłeś|zrobiłaś|czułeś|czułaś|byłeś|byłaś|miałeś|miałaś|wiedziałeś|wiedziałaś|chciałeś|chciałaś|myślałeś|myślałaś|bałeś|bałaś|mogłeś|mogłaś|musiałeś|musiałaś|zdecydowałeś|zdecydowałaś|poczułeś|poczułaś|znalazłeś|znalazłaś|wróciłeś|wróciłaś|dotarłeś|dotarłaś|zbudowałeś|zbudowałaś|stworzyłeś|stworzyłaś|osiągnąłeś|osiągnęłaś|postanowiłeś|postanowiłaś|zdałeś|zdałaś|nauczyłeś|nauczyłaś|poczułbyś|poczułabyś|byłbyś|byłabyś|miałbyś|miałabyś|chciałbyś|chciałabyś|mogłbyś|mogłabyś|zrobiłbyś|zrobiłabyś|wiedziałbyś|wiedziałabyś)\b/gi;
+
+// Hypothetical + gendered participial (jakbyś stał/stała, gdybyś chciał/chciała, etc.)
+// These slip through because "jakbyś" alone isn't gendered, but combined with past participial it is
+const HYPOTHETICAL_GENDERED = /\b(?:jakbyś|gdybyś|jakbyście|gdybyście)\s+\w+(?:ł|ła|łeś|łaś|łby|łaby|li|ły)\b/gi;
 
 // Gendered predicative adjectives about the user — forbidden
 const GENDERED_ADJECTIVES = /\b(?:gotowy|gotowa|sam(?:\s+\w+)?|sama|zdolny|zdolna|świadomy|świadoma|zagubiony|zagubiona|otwarty|otwarta|silny|silna|wolny|wolna|pewny|pewna|spokojny|spokojna|szczęśliwy|szczęśliwa)\b/gi;
@@ -50,6 +61,34 @@ describe("gender form detector (STYLE_BLOCK rule)", () => {
       expect(
         matches,
         `Module "${fixture.id}" contains slash-form: [${matches.join(", ")}]`
+      ).toHaveLength(0);
+    });
+
+    it(`${fixture.id}: no hypothetical + gendered participial (jakbyś stał, gdybyś chciała)`, () => {
+      const text = allText(fixture);
+      const matches = text.match(HYPOTHETICAL_GENDERED) ?? [];
+      expect(
+        matches,
+        `Module "${fixture.id}" contains hypothetical+gendered: [${matches.join(", ")}]`
+      ).toHaveLength(0);
+    });
+  }
+});
+
+// ─── 1b. Comma-before-który check (metric archetypes) ───────────────────────
+
+// In Polish relative clauses introduced by "który/która/które", a comma is required.
+// e.g. "terapeuta który" → "terapeuta, który"
+const MISSING_COMMA_KTORY = / [a-ząćęłńóśźż]+ który[a-ząćęłńóśźżA-ZĄĆĘŁŃÓŚŹŻ]*/g;
+
+describe("comma before który (metric archetypes)", () => {
+  for (const fixture of fixtures) {
+    it(`${fixture.id}: comma before 'który' in archetype labels`, () => {
+      const text = fixture.visualMeters.map(v => v.archetype).join(" ");
+      const matches = text.match(MISSING_COMMA_KTORY) ?? [];
+      expect(
+        matches,
+        `Module "${fixture.id}" missing comma before który: [${matches.join(", ")}]`
       ).toHaveLength(0);
     });
   }

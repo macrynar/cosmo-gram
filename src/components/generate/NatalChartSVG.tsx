@@ -7,12 +7,14 @@ import { SIGN_LOCATIVE } from "@/lib/i18n/astro";
 // ─── Layout constants ─────────────────────────────────────────────────────────
 
 const CX = 300, CY = 300;
-const R_OUTER     = 278;
-const R_ZODIAC    = 242;
-const R_HOUSE_OUT = 218;
-const R_HOUSE_IN  = 188;
-const R_PLANET    = 158;
-const R_INNER     = 96; // reduced dead disc
+const R_OUTER            = 278;
+const R_ZODIAC           = 242;
+const R_HOUSE_OUT        = 218;
+const R_HOUSE_IN         = 188;
+const R_PLANET_PRIMARY   = 158;   // main glyph ring
+const R_PLANET_SECONDARY = 126;   // inner ring for oversized stelliums
+const R_INNER            = 96;    // center disc
+const R_ASPECT           = 145;   // aspect chord endpoints (just inside planet orbit)
 
 // ─── Geometry helpers ─────────────────────────────────────────────────────────
 
@@ -64,32 +66,93 @@ function computeTopAspects(planets: Planet[]): ComputedAspect[] {
 }
 
 // ─── Stellium fan-out ─────────────────────────────────────────────────────────
-// Planets within ~9° of each other are spread along the arc; a line connects
-// the displayed glyph back to the actual ecliptic position.
+// Planets without collision: glyph exactly on real position, no connector.
+// Clusters: spread symmetrically around centroid; max displacement ≤ 12°.
+// Clusters ≥4 planets: two rings (primary/secondary) to stay within 12°.
+// Connector line + dot: only when angular shift > 3°.
 
-function fanOut(planets: Planet[], asc: number) {
-  const MIN_GAP = 0.17; // ~9.7° minimum glyph spacing
-  const arr = planets
-    .map(p => ({
-      planet:  p,
-      display: lonToAngle(p.longitude, asc),
-      actual:  lonToAngle(p.longitude, asc),
-    }))
-    .sort((a, b) => a.display - b.display);
+const GLYPH_MIN_GAP_DEG = 9.0;
+const MAX_SHIFT_DEG     = 12.0;
 
-  for (let pass = 0; pass < 10; pass++) {
-    for (let i = 1; i < arr.length; i++) {
-      let d = arr[i].display - arr[i - 1].display;
-      while (d > Math.PI)  d -= 2 * Math.PI;
-      while (d < -Math.PI) d += 2 * Math.PI;
-      if (d < MIN_GAP) {
-        const push = (MIN_GAP - d) / 2 + 0.001;
-        arr[i - 1].display -= push;
-        arr[i].display     += push;
-      }
+type Positioned = {
+  planet:  Planet;
+  display: number;   // angle for glyph (radians)
+  actual:  number;   // real ecliptic angle (radians)
+  radius:  number;   // radial position for glyph
+};
+
+function fanOut(planets: Planet[], asc: number): Positioned[] {
+  if (planets.length === 0) return [];
+
+  const relLon = (p: Planet) => ((p.longitude - asc + 360) % 360);
+  const getActual = (p: Planet) => lonToAngle(p.longitude, asc);
+
+  const sorted = [...planets].sort((a, b) => relLon(a) - relLon(b));
+
+  // Group adjacent planets within GLYPH_MIN_GAP_DEG into clusters
+  const clusters: Planet[][] = [];
+  let group: Planet[] = [sorted[0]];
+  for (let i = 1; i < sorted.length; i++) {
+    if (relLon(sorted[i]) - relLon(sorted[i - 1]) < GLYPH_MIN_GAP_DEG) {
+      group.push(sorted[i]);
+    } else {
+      clusters.push(group);
+      group = [sorted[i]];
     }
   }
-  return arr;
+  clusters.push(group);
+
+  const result: Positioned[] = [];
+
+  for (const cluster of clusters) {
+    if (cluster.length === 1) {
+      const p = cluster[0];
+      const a = getActual(p);
+      result.push({ planet: p, actual: a, display: a, radius: R_PLANET_PRIMARY });
+      continue;
+    }
+
+    // Centroid in relative longitude space
+    const lons     = cluster.map(relLon);
+    const centroid = lons.reduce((s, x) => s + x, 0) / lons.length;
+    const n        = cluster.length;
+    const halfSpread = ((n - 1) * GLYPH_MIN_GAP_DEG) / 2;
+
+    const spreadGroup = (group: Planet[], radius: number) => {
+      const m  = group.length;
+      const hs = m > 1 ? ((m - 1) * GLYPH_MIN_GAP_DEG) / 2 : 0;
+      group.forEach((p, i) => {
+        const dispRelLon = centroid - hs + i * GLYPH_MIN_GAP_DEG;
+        const dispLon    = (dispRelLon + asc + 360) % 360;
+        result.push({
+          planet:  p,
+          actual:  getActual(p),
+          display: lonToAngle(dispLon, asc),
+          radius,
+        });
+      });
+    };
+
+    if (halfSpread <= MAX_SHIFT_DEG) {
+      // Single ring — all fit within 12° shift
+      spreadGroup(cluster, R_PLANET_PRIMARY);
+    } else {
+      // Two rings: even-indexed on primary, odd-indexed on secondary (inner)
+      const primary   = cluster.filter((_, i) => i % 2 === 0);
+      const secondary = cluster.filter((_, i) => i % 2 === 1);
+      spreadGroup(primary,   R_PLANET_PRIMARY);
+      spreadGroup(secondary, R_PLANET_SECONDARY);
+    }
+  }
+
+  return result;
+}
+
+// Helper: angular displacement in degrees between two angles
+function angularShiftDeg(a: number, b: number): number {
+  const raw  = Math.abs(a - b);
+  const norm = Math.min(raw, 2 * Math.PI - raw);
+  return norm * (180 / Math.PI);
 }
 
 // ─── Descriptions ─────────────────────────────────────────────────────────────
@@ -159,10 +222,9 @@ export default function NatalChartSVG({ chart }: Props) {
   const [pulseVisible, setPulseVisible] = useState(false);
 
   const { planets, houses, ascendant: asc, mc } = chart;
-  const aspects   = computeTopAspects(planets);
+  const aspects    = computeTopAspects(planets);
   const positioned = fanOut(planets, asc);
 
-  // First-entry pulse on Sun — fires once, fades after 1.5s
   useEffect(() => {
     const t0 = setTimeout(() => setPulseVisible(true),  500);
     const t1 = setTimeout(() => setPulseVisible(false), 2000);
@@ -172,7 +234,6 @@ export default function NatalChartSVG({ chart }: Props) {
   const handlePlanetClick = (name: string) =>
     setActivePlanet(prev => (prev === name ? null : name));
 
-  // Aspects connected to active planet (for highlight)
   const activeAspects = activePlanet
     ? aspects.filter(a => a.p1.name === activePlanet || a.p2.name === activePlanet)
     : [];
@@ -188,7 +249,6 @@ export default function NatalChartSVG({ chart }: Props) {
         aria-label="Kosmogram natalny"
         style={{ overflow: "visible" }}
         onClick={e => {
-          // click on background = deselect
           if ((e.target as SVGElement).tagName === "svg") setActivePlanet(null);
         }}
       >
@@ -286,12 +346,12 @@ export default function NatalChartSVG({ chart }: Props) {
         <circle cx={CX} cy={CY} r={R_INNER}
           fill="url(#inner-disc)" stroke="rgba(212,175,55,0.16)" strokeWidth={0.8} />
 
-        {/* ── Aspect lines — top 8, color-coded, interactive ── */}
+        {/* ── Aspect lines — top 8, from real positions, spanning full interior ── */}
         {aspects.map((asp) => {
           const a1 = lonToAngle(asp.p1.longitude, asc);
           const a2 = lonToAngle(asp.p2.longitude, asc);
-          const q1 = polarToXY(a1, R_INNER - 5);
-          const q2 = polarToXY(a2, R_INNER - 5);
+          const q1 = polarToXY(a1, R_ASPECT);
+          const q2 = polarToXY(a2, R_ASPECT);
 
           const isInvolved = activePlanet === null
             || asp.p1.name === activePlanet
@@ -301,41 +361,42 @@ export default function NatalChartSVG({ chart }: Props) {
             <line key={`${asp.p1.name}-${asp.p2.name}`}
               x1={q1.x} y1={q1.y} x2={q2.x} y2={q2.y}
               stroke={asp.color}
-              strokeWidth={isInvolved ? (activePlanet ? 1.8 : 1.1) : 0.5}
-              strokeOpacity={activePlanet ? (isInvolved ? 0.90 : 0.10) : 0.55}
+              strokeWidth={isInvolved ? (activePlanet ? 1.8 : 1.2) : 0.5}
+              strokeOpacity={activePlanet ? (isInvolved ? 0.90 : 0.08) : 0.50}
               strokeDasharray={asp.dash}
               style={{ transition: "stroke-opacity 0.25s, stroke-width 0.25s" }} />
           );
         })}
 
-        {/* ── Stellium connector lines: display pos → actual pos ── */}
-        {positioned.map(({ planet, display, actual }) => {
-          if (Math.abs(display - actual) < 0.01) return null;
-          const from = polarToXY(display, R_PLANET + 18);
-          const to   = polarToXY(actual,  R_HOUSE_OUT - 5);
+        {/* ── Connector lines: glyph → actual position (only when shift > 3°) ── */}
+        {positioned.map(({ planet, display, actual, radius }) => {
+          if (angularShiftDeg(display, actual) <= 3) return null;
+          const from = polarToXY(display, radius + 16);
+          const to   = polarToXY(actual,  R_HOUSE_OUT - 6);
           return (
             <line key={`connector-${planet.name}`}
               x1={from.x} y1={from.y} x2={to.x} y2={to.y}
               stroke={PLANET_COLORS[planet.name] ?? "#a78bfa"}
-              strokeOpacity={0.30} strokeWidth={0.7}
-              strokeDasharray="2 2" />
+              strokeOpacity={0.28} strokeWidth={0.7}
+              strokeDasharray="2 3" />
           );
         })}
 
-        {/* ── Planet position dots on house ring ── */}
-        {planets.map((p) => {
-          const pos   = polarToXY(lonToAngle(p.longitude, asc), R_HOUSE_OUT - 6);
-          const color = PLANET_COLORS[p.name] ?? "#a78bfa";
+        {/* ── Planet position dots on house ring (only for displaced glyphs) ── */}
+        {positioned.map(({ planet, display, actual }) => {
+          if (angularShiftDeg(display, actual) <= 3) return null;
+          const pos   = polarToXY(actual, R_HOUSE_OUT - 6);
+          const color = PLANET_COLORS[planet.name] ?? "#a78bfa";
           return (
-            <circle key={`dot-${p.name}`}
+            <circle key={`dot-${planet.name}`}
               cx={pos.x} cy={pos.y} r={2.5}
-              fill={color} fillOpacity={0.60} />
+              fill={color} fillOpacity={0.65} />
           );
         })}
 
         {/* ── Planets — clickable, interactive dim ── */}
-        {positioned.map(({ planet, display }) => {
-          const pos   = polarToXY(display, R_PLANET);
+        {positioned.map(({ planet, display, radius }) => {
+          const pos   = polarToXY(display, radius);
           const color = PLANET_COLORS[planet.name] ?? "#a78bfa";
           const isActive  = activePlanet === planet.name;
           const isDimmed  = activePlanet !== null && !isActive;
@@ -347,7 +408,6 @@ export default function NatalChartSVG({ chart }: Props) {
               style={{ cursor: "pointer" }}
               onClick={(e) => { e.stopPropagation(); handlePlanetClick(planet.name); }}
             >
-              {/* First-entry pulse ring on Sun */}
               {isPulsing && (
                 <circle
                   cx={pos.x} cy={pos.y} r={17}
@@ -357,19 +417,16 @@ export default function NatalChartSVG({ chart }: Props) {
                   style={{ animation: "subtlePulse 1.2s ease-in-out infinite" }}
                 />
               )}
-              {/* Active ring */}
               {isActive && (
                 <circle cx={pos.x} cy={pos.y} r={20}
                   fill="none" stroke={color} strokeWidth={1.5} strokeOpacity={0.60} />
               )}
-              {/* Planet circle */}
               <circle cx={pos.x} cy={pos.y} r={15}
                 fill={isActive ? `${color}22` : "rgba(5,4,14,0.90)"}
                 stroke={color}
                 strokeWidth={isActive ? 2.0 : 1.5}
                 strokeOpacity={isDimmed ? 0.30 : 0.88}
                 style={{ transition: "stroke-opacity 0.25s, fill 0.25s" }} />
-              {/* Symbol */}
               <text
                 x={pos.x} y={pos.y}
                 textAnchor="middle" dominantBaseline="central"
@@ -460,14 +517,12 @@ export default function NatalChartSVG({ chart }: Props) {
 
       {/* ── Aspect legend ── */}
       <div className="flex items-center justify-center gap-5 mt-2 mb-1">
-        {/* Harmonious */}
         <div className="flex items-center gap-1.5">
           <svg width="28" height="10">
             <line x1="2" y1="5" x2="26" y2="5" stroke="#28c897" strokeWidth="1.5" />
           </svg>
           <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.35)" }}>harmonijne</span>
         </div>
-        {/* Tense */}
         <div className="flex items-center gap-1.5">
           <svg width="28" height="10">
             <line x1="2" y1="5" x2="26" y2="5" stroke="#e05c5c" strokeWidth="1.5" strokeDasharray="5 3" />
@@ -486,7 +541,6 @@ export default function NatalChartSVG({ chart }: Props) {
             backdropFilter: "blur(12px)",
           }}
         >
-          {/* Planet header */}
           <div className="flex items-center gap-3">
             <span className="text-xl" style={{
               color: PLANET_COLORS[activePlanetObj.name] ?? "#a78bfa",
@@ -509,7 +563,6 @@ export default function NatalChartSVG({ chart }: Props) {
             </div>
           </div>
 
-          {/* Aspects of this planet */}
           {activeAspects.length > 0 ? (
             <div className="space-y-1.5 pt-1 border-t border-white/5">
               {activeAspects.map(asp => {
@@ -518,7 +571,6 @@ export default function NatalChartSVG({ chart }: Props) {
                 return (
                   <div key={`${asp.p1.name}-${asp.p2.name}`}
                     className="flex items-center gap-2 text-[11px]">
-                    {/* Aspect swatch */}
                     <svg width="20" height="10" className="shrink-0">
                       <line x1="2" y1="5" x2="18" y2="5"
                         stroke={def.color} strokeWidth="1.5"
@@ -534,7 +586,6 @@ export default function NatalChartSVG({ chart }: Props) {
                   </div>
                 );
               })}
-              {/* One-line meaning of most important aspect */}
               <p className="text-[10px] text-slate-600 italic pt-1">
                 {aspectOneLineSentence(activeAspects[0])}
               </p>
