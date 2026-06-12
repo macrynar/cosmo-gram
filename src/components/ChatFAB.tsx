@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 export default function ChatFAB() {
   const pathname = usePathname();
-  if (pathname === "/app/chat" || pathname.startsWith("/app/chat/")) return null;
+  if (pathname === "/" || pathname === "/app/chat" || pathname.startsWith("/app/chat/")) return null;
 
   return (
     <Link
