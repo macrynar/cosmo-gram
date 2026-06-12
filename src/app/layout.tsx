@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Montserrat, Cormorant_Garamond } from "next/font/google";
+import { Montserrat, Cormorant_Garamond, Fraunces } from "next/font/google";
 import "./globals.css";
+import "@/styles/landing-tokens.css";
 import "leaflet/dist/leaflet.css";
 import { AuthProvider } from "@/components/AuthContext";
 import BottomNav from "@/components/BottomNav";
@@ -22,6 +23,14 @@ const cormorant = Cormorant_Garamond({
   weight: ["400", "500", "600", "700"],
 });
 
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  display: "swap",
+  weight: "variable",
+  style: ["italic"],
+});
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -32,19 +41,26 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Cosmo-gram — Twoja astrologia z prawdziwym głosem",
+  title: "Cosmogram — Horoskop, który naprawdę jest o Tobie",
   description:
-    "Kosmogram, synastria i chat z astrologiem AI. Oparte na Swiss Ephemeris i Claude AI.",
+    "Cosmogram łączy dane astronomiczne NASA z wiedzą astrologiczną. Astrea — AI tworzona z astrologami — zamienia je w portret, w którym rozpoznasz siebie. Za darmo, bez karty.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Cosmo-gram",
+    title: "Cosmogram",
   },
   openGraph: {
-    title: "Cosmo-gram — Twoja astrologia z prawdziwym głosem",
-    description: "Kosmogram natury, synastria i chat z astrologiem AI.",
+    title: "Cosmogram — Horoskop, który naprawdę jest o Tobie",
+    description: "Kosmogram natalny, Cosmo Match, Kalendarz i Cosmo Chat — spersonalizowana astrologia oparta na Twoim niebie.",
     type: "website",
+    url: "https://www.cosmo-gram.com",
+    siteName: "Cosmogram",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Cosmogram — Horoskop, który naprawdę jest o Tobie",
+    description: "Personalizowana astrologia oparta na danych NASA. Za darmo.",
   },
   icons: {
     icon: "/icons/icon-192.png",
@@ -59,7 +75,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pl">
-      <body className={`${montserrat.variable} ${cormorant.variable} antialiased`}>
+      <head>
+        <link rel="preconnect" href="https://api.fontshare.com" />
+        <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet" />
+      </head>
+      <body className={`${montserrat.variable} ${cormorant.variable} ${fraunces.variable} antialiased`}>
         <PostHogProvider>
           <AuthProvider>
             <SubscriptionProvider>
