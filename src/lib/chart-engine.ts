@@ -70,22 +70,37 @@ function calculateEqualHouses(asc: number): HouseCusp[] {
 }
 
 function localToUtc(dateStr: string, timeStr: string, tz: string): Date {
-  const localIso = `${dateStr}T${timeStr}:00`;
-  const tempDate = new Date(localIso + "Z");
-  const formatter = new Intl.DateTimeFormat("en-US", {
+  const localIso = `${dateStr}T${timeStr}:00Z`;
+  const localAsUtc = new Date(localIso);
+  const tzFormatter = new Intl.DateTimeFormat("en-US", {
     timeZone: tz,
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
-    hour12: false,
+    timeZoneName: "shortOffset",
   });
-  let candidate = tempDate;
-  for (let i = 0; i < 3; i++) {
-    const parts = formatter.formatToParts(candidate);
-    const p: Record<string, string> = {};
-    parts.forEach(({ type, value }) => { p[type] = value; });
-    const localAtTz = new Date(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}Z`);
-    const diff = tempDate.getTime() - localAtTz.getTime();
-    candidate = new Date(tempDate.getTime() + diff);
+  const MAX_OFFSET_CORRECTION_ITERATIONS = 3;
+  const getOffsetMinutes = (date: Date): number => {
+    const tzPart = tzFormatter.formatToParts(date).find((part) => part.type === "timeZoneName")?.value ?? "GMT";
+    if (tzPart === "GMT" || tzPart === "UTC") return 0;
+    // shortOffset can return e.g. "GMT+5", "GMT+0530" or "GMT+05:30" depending on locale/ICU.
+    const match = tzPart.match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/);
+    if (!match) throw new RangeError(`Unsupported timezone offset format for ${tz}: ${tzPart}`);
+    const sign = match[1] === "-" ? -1 : 1;
+    const hours = Number(match[2]);
+    const minutes = Number(match[3] ?? "0");
+    if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
+      throw new RangeError(`Invalid timezone offset for ${tz}: ${tzPart}`);
+    }
+    if (hours < 0 || hours > 14 || minutes < 0 || minutes > 59) {
+      throw new RangeError(`Out-of-range timezone offset for ${tz}: ${tzPart}`);
+    }
+    return sign * (hours * 60 + minutes);
+  };
+
+  let candidate = localAsUtc;
+  // Repeat a few times to stabilize around DST boundaries where offset can change
+  // after the first correction.
+  for (let i = 0; i < MAX_OFFSET_CORRECTION_ITERATIONS; i++) {
+    const offsetMinutes = getOffsetMinutes(candidate);
+    candidate = new Date(localAsUtc.getTime() - offsetMinutes * 60_000);
   }
   return candidate;
 }
