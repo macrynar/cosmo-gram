@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { HeartHandshake, Share2, Plus, Loader2 } from "lucide-react";
+import { HeartHandshake, Share2, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import PersonBirthForm, { type PersonData, type SavedReadingOption } from "@/components/astro-match/PersonBirthForm";
@@ -29,14 +29,14 @@ export default function AstroMatchPage() {
   const searchParams = useSearchParams();
   const animate = searchParams.get("reveal") !== "instant";
 
-  const [matches, setMatches]           = useState<SavedMatch[]>([]);
-  const [selectedId, setSelectedId]     = useState<string | null>(null);
+  const [matches, setMatches]               = useState<SavedMatch[]>([]);
+  const [selectedId, setSelectedId]         = useState<string | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [savedReadings, setSavedReadings]   = useState<SavedReadingOption[]>([]);
 
-  const [person1, setPerson1]   = useState<PersonData | null>(null);
-  const [person2, setPerson2]   = useState<PersonData | null>(null);
-  const [result, setResult]         = useState<CompatibilityResult | null>(null);
+  const [person1, setPerson1] = useState<PersonData | null>(null);
+  const [person2, setPerson2] = useState<PersonData | null>(null);
+  const [result, setResult]   = useState<CompatibilityResult | null>(null);
   const [resultIsPremium, setResultIsPremium] = useState(false);
   const [resultNames, setResultNames] = useState({ p1: "", p2: "" });
   const [loading, setLoading]   = useState(false);
@@ -57,7 +57,7 @@ export default function AstroMatchPage() {
         fetch("/api/get-matches",  { headers: authHeader }),
         fetch("/api/get-readings", { headers: authHeader }),
       ]);
-      const { matches: matchData }   = await matchRes.json()   as { matches: SavedMatch[] };
+      const { matches: matchData }    = await matchRes.json()   as { matches: SavedMatch[] };
       const { readings: readingData } = await readingRes.json() as { readings: SavedReadingOption[] };
 
       setMatches(matchData);
@@ -143,7 +143,7 @@ export default function AstroMatchPage() {
       setResult(matchResult);
       setResultIsPremium(isPaidUser);
       setResultNames({ p1: person1.name || "Osoba 1", p2: person2.name || "Osoba 2" });
-      track("first_match", { score: matchResult.overallScore });
+      track("match_revealed", { score: matchResult.overallScore });
       setShowForm(false);
 
       if (session) {
@@ -186,16 +186,19 @@ export default function AstroMatchPage() {
   const canSubmit = !!person1 && !!person2 && !loading;
 
   return (
-    <div className="min-h-screen text-white" style={{ background: "#050508" }}>
+    <div className="min-h-screen text-white" style={{ background: "#0B0912" }}>
       <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
+      {/* Aurora ambient — barely visible */}
       <div
         aria-hidden="true"
         className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(88,60,140,0.15) 0%, transparent 70%)" }}
+        style={{
+          background: "radial-gradient(ellipse at 50% 0%, rgba(94,72,162,.10) 0%, transparent 70%)",
+          opacity: 0.6,
+        }}
       />
 
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
-
       <Navbar />
 
       <main className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pt-24 pb-20">
@@ -209,18 +212,19 @@ export default function AstroMatchPage() {
         >
           <div
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium mb-5"
-            style={{ color: "#fb7185", background: "rgba(244,63,94,0.08)", border: "0.5px solid rgba(244,63,94,0.25)" }}
+            style={{
+              color: "#E0B566",
+              background: "rgba(224,181,102,0.08)",
+              border: "0.5px solid rgba(224,181,102,0.25)",
+            }}
           >
             <HeartHandshake className="w-3.5 h-3.5" />
             Analiza kompatybilności
           </div>
-          <h1
-            className="text-3xl sm:text-4xl font-semibold text-white mb-2"
-            style={{ fontFamily: "var(--font-cormorant), serif" }}
-          >
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
             Cosmo{" "}
             <span style={{
-              background: "linear-gradient(135deg, #fb7185 0%, #fda4af 50%, #e11d48 100%)",
+              background: "linear-gradient(110deg, #F4F1EA 30%, #E0B566 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
@@ -228,7 +232,9 @@ export default function AstroMatchPage() {
               Match
             </span>
           </h1>
-          <p className="text-slate-500 text-sm">Porównanie kosmogramów · Synastria · Interpretacja AI</p>
+          <p className="text-sm" style={{ color: "#877FA0" }}>
+            Porównanie kosmogramów · Synastria · Interpretacja AI
+          </p>
         </motion.div>
 
         {/* History selector */}
@@ -254,8 +260,8 @@ export default function AstroMatchPage() {
             className="rounded-2xl p-10 text-center mb-5"
             style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)" }}
           >
-            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3" style={{ color: "#D4AF37", opacity: 0.5 }} />
-            <p className="text-slate-600 text-sm">Wczytuję historię matchów…</p>
+            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3" style={{ color: "#FFAE3D", opacity: 0.5 }} />
+            <p className="text-sm" style={{ color: "#877FA0" }}>Wczytuję historię matchów…</p>
           </div>
         )}
 
@@ -271,12 +277,12 @@ export default function AstroMatchPage() {
               animate={animate}
             />
             {selectedId && (
-              <div className="flex justify-center mt-5">
+              <div className="flex justify-center mt-6">
                 <button
-                  onClick={() => setShowShare(true)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm transition-all duration-300"
-                  style={{ border: "0.5px solid rgba(244,63,94,0.30)", color: "#fb7185" }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(244,63,94,0.07)"}
+                  onClick={() => { track("match_shared"); setShowShare(true); }}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm transition-all duration-200"
+                  style={{ border: "0.5px solid rgba(212,175,55,0.28)", color: "#E0B566" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(212,175,55,0.06)"}
                   onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
                 >
                   <Share2 className="w-4 h-4" />
@@ -287,8 +293,25 @@ export default function AstroMatchPage() {
           </>
         )}
 
+        {/* Loading overlay */}
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="rounded-3xl p-16 text-center"
+            style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.12)" }}
+          >
+            <div className="w-14 h-14 rounded-full mx-auto mb-5 flex items-center justify-center"
+              style={{ border: "1.5px solid rgba(212,175,55,0.20)" }}>
+              <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#FFAE3D", opacity: 0.7 }} />
+            </div>
+            <p className="text-sm font-medium" style={{ color: "#E0B566" }}>Odczytujemy połączenia…</p>
+            <p className="text-xs mt-2" style={{ color: "#877FA0" }}>Obliczamy aspekty synastrii i generujemy interpretację</p>
+          </motion.div>
+        )}
+
         {/* Form */}
-        {!loadingHistory && showForm && (
+        {!loadingHistory && !loading && showForm && (
           <motion.form
             onSubmit={handleSubmit}
             initial={{ opacity: 0, y: 12 }}
@@ -296,37 +319,34 @@ export default function AstroMatchPage() {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-              {/* Person 1 */}
               <div
                 className="rounded-2xl p-6"
                 style={{ background: "rgba(5,4,14,0.72)", border: "0.5px solid rgba(212,175,55,0.18)", backdropFilter: "blur(24px)" }}
               >
                 <PersonBirthForm
                   label="Osoba 1"
-                  accent="#D4AF37"
+                  accent="#FFAE3D"
                   onChange={setPerson1}
                   disabled={loading}
                   savedReadings={savedReadings}
                 />
               </div>
 
-              {/* Divider symbol on mobile */}
               <div className="md:hidden flex items-center justify-center">
                 <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 w-16" style={{ background: "linear-gradient(to right, transparent, rgba(244,63,94,0.30))" }} />
-                  <HeartHandshake className="w-5 h-5" style={{ color: "rgba(244,63,94,0.50)" }} />
-                  <div className="h-px flex-1 w-16" style={{ background: "linear-gradient(to left, transparent, rgba(244,63,94,0.30))" }} />
+                  <div className="h-px flex-1 w-16" style={{ background: "linear-gradient(to right, transparent, rgba(212,175,55,0.20))" }} />
+                  <HeartHandshake className="w-5 h-5" style={{ color: "rgba(212,175,55,0.35)" }} />
+                  <div className="h-px flex-1 w-16" style={{ background: "linear-gradient(to left, transparent, rgba(212,175,55,0.20))" }} />
                 </div>
               </div>
 
-              {/* Person 2 */}
               <div
                 className="rounded-2xl p-6"
-                style={{ background: "rgba(5,4,14,0.72)", border: "0.5px solid rgba(244,63,94,0.18)", backdropFilter: "blur(24px)" }}
+                style={{ background: "rgba(5,4,14,0.72)", border: "0.5px solid rgba(212,175,55,0.12)", backdropFilter: "blur(24px)" }}
               >
                 <PersonBirthForm
                   label="Osoba 2"
-                  accent="#fb7185"
+                  accent="#E0B566"
                   onChange={setPerson2}
                   disabled={loading}
                   savedReadings={savedReadings}
@@ -337,7 +357,7 @@ export default function AstroMatchPage() {
             {error && (
               <div
                 className="mb-4 p-3 rounded-xl text-sm text-center"
-                style={{ background: "rgba(239,68,68,0.08)", border: "0.5px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}
+                style={{ background: "rgba(239,68,68,0.08)", border: "0.5px solid rgba(239,68,68,0.22)", color: "#fca5a5" }}
               >
                 {error}
               </div>
@@ -349,32 +369,29 @@ export default function AstroMatchPage() {
                 disabled={!canSubmit}
                 className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full text-sm font-semibold transition-all duration-300"
                 style={canSubmit ? {
-                  background: "linear-gradient(135deg, #e11d48, #fb7185)",
-                  color: "white",
-                  boxShadow: "0 4px 24px rgba(244,63,94,0.25)",
+                  background: "linear-gradient(135deg, #FFC56B 0%, #FFAE3D 45%, #F08F2E 100%)",
+                  color: "#201405",
+                  boxShadow: "0 0 32px rgba(255,174,61,0.22)",
                 } : {
                   background: "rgba(255,255,255,0.04)",
                   color: "#475569",
                   cursor: "not-allowed",
                 }}
-                onMouseEnter={e => canSubmit && ((e.currentTarget as HTMLElement).style.transform = "scale(1.02)")}
-                onMouseLeave={e => ((e.currentTarget as HTMLElement).style.transform = "scale(1)")}
+                onMouseEnter={e => canSubmit && ((e.currentTarget as HTMLElement).style.boxShadow = "0 0 48px rgba(255,174,61,0.32)")}
+                onMouseLeave={e => canSubmit && ((e.currentTarget as HTMLElement).style.boxShadow = "0 0 32px rgba(255,174,61,0.22)")}
               >
-                {loading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Analizuję kompatybilność…</>
-                ) : (
-                  <><Plus className="w-4 h-4" /> Analizuj kompatybilność</>
-                )}
+                <HeartHandshake className="w-4 h-4" />
+                Analizuj kompatybilność
               </button>
 
               {!session && (
-                <p className="mt-3 text-xs text-slate-600">
+                <p className="mt-3 text-xs" style={{ color: "#877FA0" }}>
                   Match bezpłatny · Zaloguj się żeby zapisać historię
                 </p>
               )}
               {session && !isPro && (
-                <p className="mt-3 text-xs text-slate-600">
-                  Wynik score + pierwsza sekcja bezpłatnie · Pełna analiza w planie Plus
+                <p className="mt-3 text-xs" style={{ color: "#877FA0" }}>
+                  Score + koło synastrii bezpłatnie · Pełna analiza 5 wymiarów w planie Plus
                 </p>
               )}
             </div>
