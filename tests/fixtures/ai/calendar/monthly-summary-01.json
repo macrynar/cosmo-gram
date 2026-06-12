@@ -1,0 +1,21 @@
+{
+  "id": "monthly-summary-01",
+  "synthesis": "Czerwiec koncentruje się wokół relacji i komunikacji. Dwa wyraźne okna stwarzają przestrzeń na autentyczne rozmowy i odważne decyzje w obszarze zawodowym. To dobry czas na domknięcie spraw, które od dawna czekają.",
+  "windows": [
+    {
+      "key": "Mars-trine-Jupiter",
+      "phrase": "Mars trygon Jowisz",
+      "sentence": "Dobry czas na odważne inicjatywy i decyzje, które rozszerzają Twój horyzont."
+    },
+    {
+      "key": "Venus-sextile-Moon",
+      "phrase": "Wenus sekstyl Księżyc",
+      "sentence": "Relacje i emocjonalne połączenia są teraz łatwiejsze — warto z tego korzystać."
+    },
+    {
+      "key": "Mercury-conjunction-ASC",
+      "phrase": "Merkury koniunkcja Ascendent",
+      "sentence": "Komunikacja i sposób wyrażania siebie działają na Twoją korzyść."
+    }
+  ]
+}

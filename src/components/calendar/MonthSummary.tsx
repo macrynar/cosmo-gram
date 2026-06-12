@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Lock, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Lock, Sparkles, ChevronDown, ChevronUp, Globe } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { skyEventText, type SkyEvent } from "@/lib/astro/layers";
 
 const MONTH_NAMES_PL = [
   "", "styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec",
@@ -15,7 +16,12 @@ const MONTH_NAMES_GEN = [
   "lipca", "sierpnia", "września", "października", "listopada", "grudnia",
 ];
 
-const CATEGORY_EMOJI: Record<string, string> = {
+const MONTH_SHORT: Record<number, string> = {
+  1: "sty", 2: "lut", 3: "mar", 4: "kwi", 5: "maj", 6: "cze",
+  7: "lip", 8: "sie", 9: "wrz", 10: "paź", 11: "lis", 12: "gru",
+};
+
+const CATEGORY_SYMBOL: Record<string, string> = {
   "miłość":        "♥",
   "kariera":       "↑",
   "energia":       "◆",
@@ -36,14 +42,15 @@ type WindowEntry = {
 };
 
 type Props = {
-  year:       number;
-  month:      number;
-  isPremium:  boolean;
-  // Called when user clicks a window row — navigates grid to peak date
+  year:           number;
+  month:          number;
+  isPremium:      boolean;
+  readingId:      string | null;
+  skyEvents:      SkyEvent[];    // retrogrades + eclipses for the month
   onWindowClick?: (peakDate: string) => void;
 };
 
-export default function MonthSummary({ year, month, isPremium, onWindowClick }: Props) {
+export default function MonthSummary({ year, month, isPremium, readingId, skyEvents, onWindowClick }: Props) {
   const { session } = useAuth();
   const [windows, setWindows]     = useState<WindowEntry[]>([]);
   const [synthesis, setSynthesis] = useState<string | null>(null);
@@ -51,16 +58,17 @@ export default function MonthSummary({ year, month, isPremium, onWindowClick }: 
   const [expanded, setExpanded]   = useState(true);
   const prevKey = useRef("");
 
-  const monthKey = `${year}-${month}`;
+  const monthKey = `${year}-${month}-${readingId ?? ""}`;
 
   useEffect(() => {
     if (prevKey.current === monthKey) return;
     prevKey.current = monthKey;
-    if (!session) return;
+    if (!session || !readingId) return;
 
     setWindows([]); setSynthesis(null); setLoading(true);
 
-    fetch(`/api/monthly-summary?year=${year}&month=${month}`, {
+    const params = new URLSearchParams({ year: String(year), month: String(month), reading_id: readingId });
+    fetch(`/api/monthly-summary?${params}`, {
       headers: { Authorization: `Bearer ${session.access_token}` },
     })
       .then(async r => {
@@ -88,8 +96,21 @@ export default function MonthSummary({ year, month, isPremium, onWindowClick }: 
     return `${sDay} ${sMon}–${eDay} ${eMon}`;
   }
 
+  function formatPeak(peak: string): string {
+    const d = new Date(peak + "T12:00:00Z");
+    return `peak ${d.getUTCDate()} ${MONTH_SHORT[d.getUTCMonth() + 1]}`;
+  }
+
+  // Sky events for the month (retrogrades and eclipses)
+  const monthSkyEvents = skyEvents.filter(e => {
+    const d = new Date(e.date + "T12:00:00Z");
+    return d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month;
+  });
+
+  const hasContent = !loading && (windows.length > 0 || monthSkyEvents.length > 0);
+
   if (!session) return null;
-  if (!loading && windows.length === 0) return null;
+  if (!loading && !hasContent) return null;
 
   const monthLabel = `Twój ${MONTH_NAMES_PL[month]}`;
 
@@ -125,6 +146,7 @@ export default function MonthSummary({ year, month, isPremium, onWindowClick }: 
                 </div>
               ) : (
                 <>
+                  {/* Fast transit windows — chronological */}
                   {windows.map(w => (
                     <button
                       key={w.key}
@@ -144,13 +166,13 @@ export default function MonthSummary({ year, month, isPremium, onWindowClick }: 
                             color: w.character === "wspierające" ? "#D4AF37" : "#C07030",
                           }}
                         >
-                          {CATEGORY_EMOJI[w.category] ?? "·"}
+                          {CATEGORY_SYMBOL[w.category] ?? "·"}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-baseline gap-2 flex-wrap">
                             <span className="text-xs font-medium text-amber-400/70">
                               {formatRange(w.start, w.end)}
-                              {w.peak && <span className="text-amber-500/50"> ★{new Date(w.peak + "T12:00:00Z").getUTCDate()}</span>}
+                              <span className="text-amber-500/50"> · {formatPeak(w.peak)}</span>
                             </span>
                             <span className="text-xs text-slate-400 leading-snug group-hover:text-slate-300 transition-colors">
                               {w.phrase}
@@ -158,25 +180,81 @@ export default function MonthSummary({ year, month, isPremium, onWindowClick }: 
                           </div>
                           {isPremium && w.sentence ? (
                             <p className="text-xs text-slate-500 mt-0.5 leading-snug">{w.sentence}</p>
-                          ) : isPremium && !w.sentence ? null : (
-                            /* Free: locked sentences */
+                          ) : !isPremium ? (
                             <div className="flex items-center gap-1 mt-0.5">
                               <Lock className="w-2.5 h-2.5 text-slate-600" />
-                              <span className="text-[11px] text-slate-600">Co to okno znaczy dla Ciebie —{" "}
+                              <span className="text-[11px] text-slate-600">Znaczenie —{" "}
                                 <a href="/pricing" className="text-amber-500/50 hover:text-amber-400 transition-colors">w Premium</a>
                               </span>
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     </button>
                   ))}
+
+                  {/* Sky events section — "Niebo dla wszystkich" */}
+                  {monthSkyEvents.length > 0 && (
+                    <>
+                      {windows.length > 0 && (
+                        <div className="h-px bg-gradient-to-r from-transparent via-white/8 to-transparent" />
+                      )}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5">
+                          <Globe className="w-3 h-3 text-slate-500" />
+                          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Niebo dla wszystkich</p>
+                        </div>
+                        {monthSkyEvents.map((e, i) => {
+                          const d = new Date(e.date + "T12:00:00Z");
+                          const dateLabel = `${d.getUTCDate()} ${MONTH_SHORT[d.getUTCMonth() + 1]}`;
+                          const text = skyEventText(e);
+                          const isEclipse = e.type === "solar_eclipse" || e.type === "lunar_eclipse";
+                          return (
+                            <div key={i} className="flex items-start gap-2">
+                              <span className="text-xs font-medium shrink-0 mt-0.5"
+                                style={{ color: isEclipse ? "rgba(253,224,71,0.70)" : "rgba(212,175,55,0.55)" }}>
+                                {isEclipse ? "◎" : "℞"} {dateLabel}
+                              </span>
+                              <div className="min-w-0">
+                                <span className="text-xs text-slate-400">{text}</span>
+                                {isPremium && e.natalHouse && (
+                                  <span className="text-xs text-slate-500 ml-1">· Twój {e.natalHouse}. dom</span>
+                                )}
+                                {!isPremium && (
+                                  <span className="text-[11px] text-slate-600 ml-1">
+                                    · dom{" "}
+                                    <a href="/pricing" className="text-amber-500/50 hover:text-amber-400">w Premium</a>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
 
                   {/* Synthesis */}
                   {isPremium && synthesis && (
                     <>
                       <div className="h-px bg-gradient-to-r from-transparent via-white/8 to-transparent" />
                       <p className="text-xs text-slate-500 italic leading-relaxed">{synthesis}</p>
+                    </>
+                  )}
+
+                  {/* Density line — visible to all, always last */}
+                  {windows.length > 0 && (
+                    <>
+                      <div className="h-px bg-gradient-to-r from-transparent via-white/6 to-transparent" />
+                      <p className="text-[11px] text-center" style={{ color: "rgba(100,116,139,0.40)" }}>
+                        {windows.length >= 5
+                          ? "Gęsty miesiąc — wiele aktywnych energii naraz."
+                          : windows.length === 1
+                          ? "Spokojny miesiąc — jedno wyraźne okno."
+                          : windows.length <= 2
+                          ? "Spokojny miesiąc — mało aktywnych tranzytów."
+                          : `${windows.length} okna tranzytowe — umiarkowana intensywność.`}
+                      </p>
                     </>
                   )}
                 </>
