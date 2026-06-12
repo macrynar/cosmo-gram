@@ -2,18 +2,29 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Flame, GitCompare, X, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Flame, GitCompare, X, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
 import CalendarGrid from "@/components/calendar/CalendarGrid";
-import UpcomingEvents from "@/components/calendar/UpcomingEvents";
-import DayPanel from "@/components/calendar/DayPanel";
 import MonthSummary from "@/components/calendar/MonthSummary";
+import DayPanel from "@/components/calendar/DayPanel";
+import TodayBar from "@/components/calendar/TodayBar";
+import SeasonsCard from "@/components/calendar/SeasonsCard";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
 import { computeMonthData } from "@/lib/chart-engine";
-import { getPowerWindows, buildWindowDateMap, type TransitWindow } from "@/lib/astro/windows";
+import {
+  getFastWindows,
+  buildWindowDateMap,
+  getSeasons,
+  getExactDaysForMonth,
+  getMoonSignChangeDatesForMonth,
+  getSkyEvents,
+  type TransitWindow,
+  type Season,
+  type SkyEvent,
+} from "@/lib/astro/layers";
 import { useStreak } from "@/lib/useStreak";
 import { supabase } from "@/lib/supabase";
 import type { NatalChart } from "@/lib/astro-types";
@@ -47,11 +58,26 @@ const MONTH_NAMES = [
   "Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień",
 ];
 
+// Onboarding coachmarks — shown on first calendar visit, stored in localStorage
+function useOnboarding() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!localStorage.getItem("cal_v4_onboarded")) setShow(true);
+  }, []);
+  function dismiss() {
+    localStorage.setItem("cal_v4_onboarded", "1");
+    setShow(false);
+  }
+  return { show, dismiss };
+}
+
 export default function CalendarPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { session, loading: authLoading } = useAuth();
   const { current: streakDays } = useStreak();
+  const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
 
   const now = new Date();
   const paramDate = searchParams.get("date");
@@ -75,6 +101,7 @@ export default function CalendarPage() {
     [readings, compareId, compareMode]
   );
 
+  // ── Month day data ──
   const days = useMemo(
     () => selectedReading?.chart_data ? computeMonthData(selectedReading.chart_data, year, month) : [],
     [selectedReading, year, month]
@@ -85,23 +112,62 @@ export default function CalendarPage() {
     [compareReading, year, month]
   );
 
-  // Windows model — replaces powerDayMap (premium only)
-  const powerWindows = useMemo<TransitWindow[]>(() => {
+  // ── Layer 2: Fast windows ──
+  const fastWindows = useMemo<TransitWindow[]>(() => {
     if (!isPremium || !selectedReading?.chart_data) return [];
-    return getPowerWindows(selectedReading.chart_data, year, month);
+    return getFastWindows(selectedReading.chart_data, year, month);
   }, [isPremium, selectedReading, year, month]);
 
   const windowDateMap = useMemo(
-    () => buildWindowDateMap(powerWindows),
-    [powerWindows]
+    () => buildWindowDateMap(fastWindows),
+    [fastWindows]
   );
 
-  // Active window for selected date (the highest-score window containing it)
+  // ── Layer 1: Seasons ──
+  const seasons = useMemo<Season[]>(() => {
+    if (!isPremium || !selectedReading?.chart_data) return [];
+    try {
+      return getSeasons(selectedReading.chart_data, new Date());
+    } catch { return []; }
+  }, [isPremium, selectedReading]);
+
+  const exactDaysThisMonth = useMemo(
+    () => getExactDaysForMonth(seasons, year, month),
+    [seasons, year, month]
+  );
+
+  const moonSignChangeDates = useMemo(
+    () => getMoonSignChangeDatesForMonth(year, month),
+    [year, month]
+  );
+
+  // ── Layer 3b: Sky events (month ±1 day buffer) ──
+  const skyEvents = useMemo<SkyEvent[]>(() => {
+    const start = new Date(Date.UTC(year, month - 1, 1));
+    const end   = new Date(Date.UTC(year, month, 0));
+    try {
+      return getSkyEvents(start, end, selectedReading?.chart_data);
+    } catch { return []; }
+  }, [year, month, selectedReading]);
+
+  // ── Active window for selected date ──
   const selectedActiveWindow = useMemo<TransitWindow | undefined>(() => {
     if (!selectedDate || !isPremium) return undefined;
-    const ws = windowDateMap.get(selectedDate);
-    return ws?.[0]; // already sorted by score desc from getPowerWindows
+    return windowDateMap.get(selectedDate)?.[0];
   }, [selectedDate, windowDateMap, isPremium]);
+
+  // ── Is selected date an exact day? ──
+  const selectedIsExactDay = useMemo(
+    () => !!selectedDate && exactDaysThisMonth.has(selectedDate),
+    [selectedDate, exactDaysThisMonth]
+  );
+
+  // ── Today's active window (for TodayBar) ──
+  const todayStr = now.toISOString().slice(0, 10);
+  const todayWindow = useMemo<TransitWindow | null>(() => {
+    if (!isPremium) return null;
+    return windowDateMap.get(todayStr)?.[0] ?? null;
+  }, [windowDateMap, todayStr, isPremium]);
 
   const selectedDayData = useMemo(
     () => days.find(d => d.date === selectedDate) ?? undefined,
@@ -169,6 +235,8 @@ export default function CalendarPage() {
         readingId={selectedReading.id}
         isPremium={isPremium}
         activeWindow={selectedActiveWindow}
+        isExactDay={selectedIsExactDay}
+        skyEvents={skyEvents}
         onClose={() => setSelectedDate(null)}
       />
     );
@@ -194,7 +262,6 @@ export default function CalendarPage() {
               </Link>
             )}
           </div>
-          <p className="text-slate-500 text-sm">Wybierz kosmogram i odkryj swoje astrologiczne okna</p>
         </div>
 
         {loadingHistory && (
@@ -248,7 +315,7 @@ export default function CalendarPage() {
           <div className={`${selectedDate ? "lg:flex lg:gap-5 lg:items-start" : ""}`}>
 
             {/* ── Left column ── */}
-            <div className={`${selectedDate ? "lg:flex-1 lg:min-w-0" : ""} space-y-5`}>
+            <div className={`${selectedDate ? "lg:flex-1 lg:min-w-0" : ""} space-y-4`}>
 
               {/* Reading selector */}
               <div className="glass-card rounded-2xl px-4 py-3">
@@ -307,22 +374,45 @@ export default function CalendarPage() {
                 )}
               </div>
 
-              {/* Month summary card — above grid */}
+              {/* ── LAYER 3: Today bar ── */}
               {selectedReading?.chart_data && (
-                <MonthSummary
-                  year={year}
-                  month={month}
+                <TodayBar
+                  chart={selectedReading.chart_data}
                   isPremium={isPremium}
-                  onWindowClick={(peakDate) => {
-                    const d = new Date(peakDate + "T12:00:00Z");
-                    setYear(d.getUTCFullYear());
-                    setMonth(d.getUTCMonth() + 1);
-                    setSelectedDate(peakDate);
-                  }}
+                  activeWindow={todayWindow}
+                  skyEvents={skyEvents}
+                  onWindowClick={() => { setSelectedDate(todayStr); }}
                 />
               )}
 
-              {/* Month navigator + grid */}
+              {/* ── No birth time CTA ── */}
+              {selectedReading?.chart_data?.birthData?.timeUnknown && (
+                <div className="glass-card rounded-2xl px-4 py-3 flex items-center gap-3"
+                  style={{ border: "0.5px solid rgba(148,163,184,0.15)" }}>
+                  <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                  <p className="text-sm text-slate-400 flex-1 leading-snug">
+                    Uzupełnij godzinę urodzenia, żeby odblokować domy natalne i pełnię kalendarza.
+                  </p>
+                  <Link href={ROUTES.app.cosmogram.path}
+                    className="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors shrink-0">
+                    Uzupełnij →
+                  </Link>
+                </div>
+              )}
+
+              {/* ── LAYER 1: Seasons — DESKTOP default collapsed; MOBILE after grid ── */}
+              {selectedReading?.chart_data && seasons.length > 0 && (
+                <div className="hidden lg:block">
+                  <SeasonsCard
+                    seasons={seasons}
+                    isPremium={isPremium}
+                    readingId={selectedId}
+                    defaultExpanded={false}
+                  />
+                </div>
+              )}
+
+              {/* ── Month navigator + grid ── */}
               <div className="glass-card rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-4">
                   <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
@@ -350,25 +440,44 @@ export default function CalendarPage() {
                     selectedDate={selectedDate}
                     onSelect={(date) => setSelectedDate(prev => prev === date ? null : date)}
                     isPremium={isPremium}
-                    powerWindows={powerWindows}
+                    fastWindows={fastWindows}
                     windowDateMap={windowDateMap}
+                    exactDays={exactDaysThisMonth}
+                    skyEvents={skyEvents}
+                    moonSignChangeDates={moonSignChangeDates}
                   />
                 ) : (
                   <div className="text-center py-8 text-slate-500 text-sm">Wybierz kosmogram, aby zobaczyć siatkę.</div>
                 )}
               </div>
 
-              {/* Upcoming events */}
+              {/* ── LAYER 2: Month summary — fast windows + sky events ── */}
               {selectedReading?.chart_data && (
-                <UpcomingEvents
-                  chart={selectedReading.chart_data}
-                  onDaySelect={(date) => {
-                    const d = new Date(date + "T12:00:00Z");
+                <MonthSummary
+                  year={year}
+                  month={month}
+                  isPremium={isPremium}
+                  readingId={selectedId}
+                  skyEvents={skyEvents}
+                  onWindowClick={(peakDate) => {
+                    const d = new Date(peakDate + "T12:00:00Z");
                     setYear(d.getUTCFullYear());
                     setMonth(d.getUTCMonth() + 1);
-                    setSelectedDate(date);
+                    setSelectedDate(peakDate);
                   }}
                 />
+              )}
+
+              {/* ── LAYER 1: Seasons — MOBILE (after grid) ── */}
+              {selectedReading?.chart_data && seasons.length > 0 && (
+                <div className="lg:hidden">
+                  <SeasonsCard
+                    seasons={seasons}
+                    isPremium={isPremium}
+                    readingId={selectedId}
+                    defaultExpanded={false}
+                  />
+                </div>
               )}
             </div>
 
@@ -390,6 +499,35 @@ export default function CalendarPage() {
                 <div className="w-10 h-1 rounded-full bg-white/20" />
               </div>
               {renderDayPanel()}
+            </div>
+          </div>
+        )}
+
+        {/* ── Onboarding coachmarks ── */}
+        {showOnboarding && (
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4">
+            <div className="glass-card rounded-2xl p-5 border border-white/12 shadow-2xl space-y-3">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Jak czytać kalendarz</p>
+              <div className="space-y-2">
+                <p className="text-sm text-slate-300">
+                  <span className="inline-block w-4 h-[3px] rounded-full bg-amber-400/60 mr-2 align-middle" />
+                  to Twoje <strong>okna</strong>: kilka dni sprzyjającej lub wymagającej energii
+                </p>
+                <p className="text-sm text-slate-300">
+                  <span className="text-amber-400 text-[10px] mr-2">★</span>
+                  <strong>peak</strong> — najsilniejszy dzień okna
+                </p>
+                <p className="text-sm text-slate-300">
+                  <span className="text-violet-400 text-[9px] mr-2">◆</span>
+                  <strong>dzień dokładności</strong> — sezon w najciaśniejszym orbie (rzadkie, ważne)
+                </p>
+              </div>
+              <button
+                onClick={dismissOnboarding}
+                className="w-full py-2 rounded-xl text-sm font-medium text-slate-400 border border-white/10 hover:bg-white/5 transition-colors"
+              >
+                Rozumiem
+              </button>
             </div>
           </div>
         )}

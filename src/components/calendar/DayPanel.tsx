@@ -5,7 +5,7 @@ import * as Astronomy from "astronomy-engine";
 import { longitudeToSign } from "@/lib/astro-types";
 import type { NatalChart } from "@/lib/astro-types";
 import type { DayData } from "@/lib/chart-engine";
-import type { TransitWindow } from "@/lib/astro/windows";
+import type { TransitWindow, SkyEvent } from "@/lib/astro/layers";
 import { MOON_PHASE_INFO, getRitualPrompt } from "@/lib/moonPhases";
 import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
@@ -106,25 +106,27 @@ const NORMAL_SENTENCES = [
 // ── Props ────────────────────────────────────────────────────────────────────
 
 type Props = {
-  date:         string;
-  dayData?:     DayData;
-  chart:        NatalChart;
-  readingId:    string;
-  isPremium:    boolean;
-  // Window this day belongs to (if any), for "peak" status
-  activeWindow?: TransitWindow;
-  onClose:      () => void;
+  date:          string;
+  dayData?:      DayData;
+  chart:         NatalChart;
+  readingId:     string;
+  isPremium:     boolean;
+  activeWindow?: TransitWindow;  // fast window this day belongs to
+  isExactDay?:   boolean;         // ◆ season exact day (orb < 0.3°)
+  skyEvents?:    SkyEvent[];      // for eclipse variant of moon phase card
+  onClose:       () => void;
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function DayPanel({
-  date, dayData, chart, readingId, isPremium, activeWindow, onClose,
+  date, dayData, chart, readingId, isPremium, activeWindow, isExactDay, skyEvents, onClose,
 }: Props) {
   const { session } = useAuth();
   const today      = new Date().toISOString().slice(0, 10);
   const isToday    = date === today;
   const isPeak     = !!activeWindow && activeWindow.peak === date;
+  const isClosing  = !!activeWindow && !isPeak && date > activeWindow.peak;
 
   const dateObj    = new Date(date + "T12:00:00Z");
   const moonSign   = getMoonSign(dateObj);
@@ -132,6 +134,10 @@ export default function DayPanel({
   const moonPhase  = dayData?.moonPhase ?? null;
   const moonPhaseInfo  = moonPhase ? MOON_PHASE_INFO[moonPhase] : null;
   const ritualPrompt   = moonPhase ? getRitualPrompt(moonPhase, dayOfYear) : null;
+  const eclipseEvent   = (skyEvents ?? []).find(
+    e => e.date === date && (e.type === "solar_eclipse" || e.type === "lunar_eclipse")
+  ) ?? null;
+  const isEclipse      = !!eclipseEvent;
 
   const supporting  = (dayData?.score ?? 0) >= 3 ? (dayData?.topSupporting  ?? null) : null;
   const challenging = (dayData?.score ?? 0) >= 3 ? (dayData?.topChallenging ?? null) : null;
@@ -214,14 +220,18 @@ export default function DayPanel({
       .finally(() => setSigChecking(false));
     }
 
-    import("posthog-js").then(({ default: ph }) =>
+    import("posthog-js").then(({ default: ph }) => {
       ph?.capture("calendar_day_opened", {
         date,
         is_today: isToday,
         is_peak: isPeak,
+        is_exact_day: !!isExactDay,
         score: dayData?.score ?? 0,
-      })
-    );
+      });
+      if (isExactDay) {
+        ph?.capture("season_exact_day_viewed", { date });
+      }
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, readingId, session, isPremium]);
 
@@ -236,10 +246,19 @@ export default function DayPanel({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, readingId, session]);
 
+  const moonPhaseAnsweredFired = useRef(false);
+
   function handleNoteChange(text: string) {
     setNote(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => saveNote(text), 400);
+    // Fire once per day when user writes on a moon phase day
+    if (moonPhaseInfo && text.length > 0 && !moonPhaseAnsweredFired.current) {
+      moonPhaseAnsweredFired.current = true;
+      import("posthog-js").then(({ default: ph }) =>
+        ph?.capture("moon_phase_question_answered", { date, phase: moonPhase })
+      );
+    }
   }
 
   // On-demand: today's horoscope (cron hasn't run yet)
@@ -351,17 +370,45 @@ export default function DayPanel({
 
       <div className="p-5 space-y-4">
 
-        {/* ── 2. Window context ── */}
-        {activeWindow && (
+        {/* ── 2. Window context (only when NOT an exact day — spec §5: ◆ wins, window in 1 line) ── */}
+        {activeWindow && !isExactDay && (
           <div className={`rounded-xl px-3.5 py-3 ${isPeak ? "bg-amber-900/12 border border-amber-700/25" : "bg-white/3 border border-white/8"}`}>
             <p className={`text-sm font-medium leading-snug ${isPeak ? "text-amber-200" : "text-slate-300"}`}>
               {formatTransit(activeWindow)}
             </p>
             <p className="text-xs text-slate-500 mt-1">
               {isPeak
-                ? `★ Peak okna · ${activeWindow.start} – ${activeWindow.end} · ${activeWindow.lengthDays} dni`
-                : `Dzień ${Math.round((new Date(date + "T12:00:00Z").getTime() - new Date(activeWindow.start + "T12:00:00Z").getTime()) / 86_400_000) + 1} z ${activeWindow.lengthDays} · peak ${date < activeWindow.peak ? `za ${Math.round((new Date(activeWindow.peak + "T12:00:00Z").getTime() - new Date(date + "T12:00:00Z").getTime()) / 86_400_000)} dni` : "już za nami"}`}
+                ? `★ Peak okna · ${activeWindow.start} – ${activeWindow.end}`
+                : isClosing
+                ? "Okno się domyka"
+                : `Peak ${new Date(activeWindow.peak + "T12:00:00Z").toLocaleDateString("pl-PL", { day: "numeric", month: "short" })}`}
             </p>
+          </div>
+        )}
+
+        {/* ── 2b. Window one-liner when both window AND exact day (spec §5: max 2 cards, ◆ wins) ── */}
+        {activeWindow && isExactDay && (
+          <p className="text-xs text-amber-400/60">
+            Okno: {formatTransit(activeWindow)}
+            {isClosing ? " · okno się domyka" : ""}
+          </p>
+        )}
+
+        {/* ── 2c. Exact day (◆ season day) — premium card ── */}
+        {isExactDay && (
+          <div className="rounded-xl px-3.5 py-3 bg-violet-950/40 border border-violet-700/30">
+            <p className="text-[11px] font-semibold text-violet-300 uppercase tracking-wider mb-1">◆ Dzień dokładności sezonu</p>
+            <p className="text-sm text-slate-300 leading-snug">
+              Tranzyt jest dziś w najciaśniejszym orbie — jeden z najważniejszych dni astrologicznych w roku.
+            </p>
+            {!isPremium && (
+              <div className="flex items-center gap-1.5 mt-2">
+                <Lock className="w-3 h-3 text-violet-500/50" />
+                <span className="text-xs text-slate-500">Pełny odczyt —{" "}
+                  <a href="/pricing" className="text-violet-400 hover:text-violet-300">w Premium</a>
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -404,16 +451,31 @@ export default function DayPanel({
           <p className="text-sm text-slate-500 leading-relaxed">{normalSentence}</p>
         )}
 
-        {/* ── Moon ritual ── */}
+        {/* ── Moon ritual (eclipse = stronger variant) ── */}
         {moonPhaseInfo && ritualPrompt && (
-          <div className="rounded-xl bg-indigo-950/40 border border-indigo-700/30 p-4">
+          <div className={`rounded-xl p-4 ${
+            isEclipse
+              ? "bg-amber-950/50 border border-amber-700/45"
+              : "bg-indigo-950/40 border border-indigo-700/30"
+          }`}>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xl">{moonPhaseInfo.symbol}</span>
               <div>
-                <p className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">{moonPhaseInfo.label}</p>
-                <p className="text-[11px] text-indigo-400/70">{moonPhaseInfo.purpose}</p>
+                <p className={`text-xs font-semibold uppercase tracking-wider ${isEclipse ? "text-amber-300" : "text-indigo-300"}`}>
+                  {isEclipse ? `Zaćmienie · ${moonPhaseInfo.label}` : moonPhaseInfo.label}
+                </p>
+                <p className={`text-[11px] ${isEclipse ? "text-amber-400/70" : "text-indigo-400/70"}`}>
+                  {isEclipse ? "Portale czasu — rzadkie i przełomowe" : moonPhaseInfo.purpose}
+                </p>
               </div>
             </div>
+            {isEclipse && (
+              <p className="text-xs text-amber-300/60 mb-2 leading-relaxed">
+                {eclipseEvent?.type === "solar_eclipse"
+                  ? "Zaćmienie Słońca — czas nowych początków na skalę życiową."
+                  : "Zaćmienie Księżyca — kulminacja i głębokie zakończenia."}
+              </p>
+            )}
             <p className="text-sm text-slate-200 italic leading-relaxed">&ldquo;{ritualPrompt}&rdquo;</p>
           </div>
         )}

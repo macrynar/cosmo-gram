@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { hasActiveSubscription } from "@/lib/subscription";
-import { getWindowsForMonth, getPowerWindows } from "@/lib/astro/windows";
+import { getFastWindows } from "@/lib/astro/layers";
 import { aiComplete, AiDisabledError } from "@/lib/deepseek";
 import { transitPhrase } from "@/lib/i18n/astro";
 import { containsForeignScript, endsWithSentence } from "@/lib/text-validation";
+import { STYLE_BLOCK } from "@/lib/moduleSpecs";
 import type { NatalChart } from "@/lib/astro-types";
 
 export const runtime = "nodejs";
 
 const SYSTEM_PROMPT = `Jesteś astrolożką piszącą krótkie opisy okien tranzytowych dla konkretnej osoby.
 Dla każdego okna: 1 zdanie co to oznacza praktycznie — konkretnie, bez clichés, bez żargonu.
-Na końcu: 1 zdanie syntezy całego miesiąca. Pisz w drugiej osobie.
+Na końcu: 1 zdanie syntezy całego miesiąca.
+
+${STYLE_BLOCK}
 
 Wejście: lista okien tranzytowych (planeta, aspekt, punkt natalny, charakter, daty).
 Zwróć WYŁĄCZNIE JSON:
@@ -33,25 +36,23 @@ export async function GET(req: NextRequest) {
 
   const isPremium = await hasActiveSubscription(user.id);
 
-  const url   = new URL(req.url);
-  const year  = parseInt(url.searchParams.get("year")  ?? "0");
-  const month = parseInt(url.searchParams.get("month") ?? "0");
+  const url       = new URL(req.url);
+  const year      = parseInt(url.searchParams.get("year")  ?? "0");
+  const month     = parseInt(url.searchParams.get("month") ?? "0");
+  const readingId = url.searchParams.get("reading_id");
   if (!year || !month) return NextResponse.json({ error: "Wymagane year i month" }, { status: 400 });
 
-  // Get natal chart
-  const { data: reading } = await supabaseAdmin
-    .from("readings")
-    .select("chart_data")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Get natal chart — use specific reading_id when provided to avoid cross-reading inconsistency
+  const { data: reading } = readingId
+    ? await supabaseAdmin.from("readings").select("chart_data").eq("user_id", user.id).eq("id", readingId).maybeSingle()
+    : await supabaseAdmin.from("readings").select("chart_data").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
 
   if (!reading?.chart_data) return NextResponse.json({ error: "Brak kosmogramu" }, { status: 404 });
 
   const chart   = reading.chart_data as NatalChart;
-  const windows = getWindowsForMonth(chart, year, month);
-  const power   = getPowerWindows(chart, year, month);
+  const windows = getFastWindows(chart, year, month);
+  // top-N fast windows for AI sentence generation (reuse existing limit)
+  const power   = windows.slice(0, 5);
 
   // Free users get window phrases (deterministic) but no AI sentences
   if (!isPremium) {
@@ -79,14 +80,15 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // Premium: check cache
-  const { data: cached } = await supabaseAdmin
+  // Premium: check cache (keyed per reading to avoid cross-reading stale data)
+  const cacheQuery = supabaseAdmin
     .from("monthly_summaries")
     .select("summary_text, windows_json")
-    .eq("user_id", user.id)
     .eq("year", year)
-    .eq("month", month)
-    .maybeSingle();
+    .eq("month", month);
+  if (readingId) cacheQuery.eq("reading_id", readingId);
+  else cacheQuery.eq("user_id", user.id);
+  const { data: cached } = await cacheQuery.maybeSingle();
 
   if (cached) {
     return NextResponse.json({
@@ -153,6 +155,7 @@ export async function GET(req: NextRequest) {
 
     await supabaseAdmin.from("monthly_summaries").upsert({
       user_id:      user.id,
+      reading_id:   readingId ?? null,
       year,
       month,
       windows_json: enriched,
