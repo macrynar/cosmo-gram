@@ -43,9 +43,9 @@ const ASPECT_TYPE_LABEL: Record<string, string> = {
 };
 
 function aspectColor(a: SynastryAspect) {
-  if (a.harmony === "harmonious") return "#5eead4"; // teal
-  if (a.harmony === "tense")      return "#fb923c"; // orange-red
-  return "#c4b5fd";                                  // lavender (intense/conjunction)
+  if (a.harmony === "harmonious") return "#E0B566"; // amber-gold
+  if (a.harmony === "tense")      return "#E0865A"; // warm burnt amber
+  return "rgba(182,175,198,0.75)";                  // muted cool (conjunction/neutral)
 }
 
 function aspectDash(a: SynastryAspect) {
@@ -116,15 +116,15 @@ export default function SynastryWheel({
           <span style={{ color: "#f87185" }}>{nameB}</span>
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block w-4 border-t" style={{ borderColor: "#5eead4" }} />
-          <span style={{ color: "rgba(94,234,212,0.70)" }}>harmonijny</span>
+          <span className="inline-block w-4 border-t" style={{ borderColor: "#E0B566" }} />
+          <span style={{ color: "rgba(224,181,102,0.75)" }}>harmonijny</span>
         </span>
         <span className="flex items-center gap-1.5">
           <span
             className="inline-block w-4 border-t"
-            style={{ borderColor: "#fb923c", borderStyle: "dashed" }}
+            style={{ borderColor: "#E0865A", borderStyle: "dashed" }}
           />
-          <span style={{ color: "rgba(251,146,60,0.70)" }}>napięty</span>
+          <span style={{ color: "rgba(224,134,90,0.75)" }}>napięty</span>
         </span>
       </div>
 
@@ -198,7 +198,7 @@ export default function SynastryWheel({
                 style={{ cursor: "pointer" }}
                 initial={animate ? { opacity: 0 } : { opacity: isHov ? 0.95 : 0.45 }}
                 animate={{ opacity: isHov ? 0.95 : 0.45 }}
-                transition={animate ? { delay: i * 0.12, duration: 0.5 } : { duration: 0.15 }}
+                transition={animate ? { delay: 1.6 + i * 0.10, duration: 0.45 } : { duration: 0.15 }}
                 onPointerEnter={e => handleLineEnter(a, e)}
                 onPointerLeave={handleLineLeave}
                 onClick={() => handleLineTap(a)}
