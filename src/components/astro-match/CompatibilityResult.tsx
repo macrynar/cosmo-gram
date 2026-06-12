@@ -67,43 +67,72 @@ function CategoryCard({ cat, locked, onPaywall, delay = 0 }: {
   onPaywall?: () => void;
   delay?: number;
 }) {
-  const isChallenge = cat.name === "Wyzwania";
+  const isChallenge    = cat.name === "Wyzwania";
   const effectiveScore = isChallenge ? 100 - cat.score : cat.score;
-  const barColor = effectiveScore >= 70 ? "#FFAE3D" : effectiveScore >= 50 ? "#E0B566" : "#877FA0";
+  const barColor       = effectiveScore >= 70 ? "#FFAE3D" : effectiveScore >= 50 ? "#E0B566" : "#877FA0";
+  const barGlow        = effectiveScore >= 70
+    ? "0 0 10px rgba(255,174,61,0.35)"
+    : effectiveScore >= 50
+    ? "0 0 10px rgba(224,181,102,0.28)"
+    : "none";
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="relative glass-card rounded-2xl p-5 space-y-3 overflow-hidden"
+      className="relative glass-card rounded-2xl overflow-hidden"
+      style={{ border: "0.5px solid rgba(255,174,61,0.10)" }}
     >
-      <div className={locked ? "blur-sm select-none pointer-events-none" : ""}>
+      <div className={locked ? "blur-sm select-none pointer-events-none p-5 space-y-4" : "p-5 space-y-4"}>
+
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-white flex items-center gap-2">
-            <span style={{ color: "#FFAE3D" }}>{CATEGORY_ICON[cat.name] ?? null}</span>
-            {cat.name}
-          </span>
-          <span className="text-lg font-bold text-white font-brand">
-            {cat.score}<span className="text-xs text-slate-500 font-normal">/100</span>
-          </span>
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{
+                background: "rgba(255,174,61,0.10)",
+                border: "0.5px solid rgba(255,174,61,0.22)",
+                color: "#FFAE3D",
+              }}
+            >
+              {CATEGORY_ICON[cat.name] ?? null}
+            </div>
+            <span className="text-sm font-semibold text-white">{cat.name}</span>
+          </div>
+          <div className="text-right">
+            <span className="text-2xl font-bold font-brand" style={{ color: barColor }}>{cat.score}</span>
+            <span className="text-xs ml-0.5" style={{ color: "rgba(255,255,255,0.25)" }}>/100</span>
+          </div>
         </div>
 
-        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+        {/* Progress bar */}
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
           <motion.div
             className="h-full rounded-full"
-            style={{ background: barColor }}
+            style={{ background: barColor, boxShadow: barGlow }}
             initial={{ width: 0 }}
             animate={{ width: `${effectiveScore}%` }}
             transition={{ delay: delay + 0.2, duration: 0.7, ease: "easeOut" }}
           />
         </div>
 
-        <p className="text-sm text-slate-300 leading-relaxed">{cat.interpretation}</p>
+        {/* Interpretation */}
+        <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
+          {cat.interpretation}
+        </p>
 
-        <div className="pt-1 border-t border-amber-900/15">
-          <p className="text-xs text-amber-400/80 leading-relaxed">
-            <span className="font-semibold text-amber-400">→ </span>{cat.insight}
+        {/* Insight callout */}
+        <div
+          className="rounded-lg px-3 py-2.5"
+          style={{
+            background: "rgba(255,174,61,0.06)",
+            borderLeft: "2px solid rgba(255,174,61,0.40)",
+          }}
+        >
+          <p className="text-xs leading-relaxed" style={{ color: "#E0B566" }}>
+            {cat.insight}
           </p>
         </div>
       </div>
@@ -111,7 +140,7 @@ function CategoryCard({ cat, locked, onPaywall, delay = 0 }: {
       {locked && (
         <div
           className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 cursor-pointer rounded-2xl"
-          style={{ background: "rgba(5,4,14,0.80)", backdropFilter: "blur(6px)" }}
+          style={{ background: "rgba(5,4,14,0.82)", backdropFilter: "blur(8px)" }}
           onClick={onPaywall}
         >
           <div
@@ -120,13 +149,11 @@ function CategoryCard({ cat, locked, onPaywall, delay = 0 }: {
           >
             <Lock className="w-4 h-4" style={{ color: "#FFAE3D" }} />
           </div>
-          <p className="text-sm font-medium" style={{ color: "#E0B566" }}>
-            {cat.name}
-          </p>
-          <p className="text-xs text-slate-500">Dostępne w planie Plus</p>
+          <p className="text-sm font-semibold" style={{ color: "#E0B566" }}>{cat.name}</p>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>Dostępne w planie Plus</p>
           <div
-            className="px-3.5 py-1 rounded-full text-xs font-semibold"
-            style={{ background: "rgba(255,174,61,0.08)", border: "0.5px solid rgba(255,174,61,0.22)", color: "#FFAE3D" }}
+            className="mt-1 px-4 py-1.5 rounded-full text-xs font-semibold"
+            style={{ background: "rgba(255,174,61,0.10)", border: "0.5px solid rgba(255,174,61,0.28)", color: "#FFAE3D" }}
           >
             Odblokuj →
           </div>
