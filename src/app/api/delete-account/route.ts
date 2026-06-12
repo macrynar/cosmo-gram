@@ -33,6 +33,7 @@ export async function DELETE(req: NextRequest) {
   await Promise.allSettled([
     supabaseAdmin.from("messages").delete().eq("user_id", uid),
     supabaseAdmin.from("conversations").delete().eq("user_id", uid),
+    supabaseAdmin.from("chat_suggested_questions").delete().eq("user_id", uid),
     supabaseAdmin.from("matches").delete().eq("user_id", uid),
     supabaseAdmin.from("children").delete().eq("user_id", uid),
     supabaseAdmin.from("readings").delete().eq("user_id", uid),
