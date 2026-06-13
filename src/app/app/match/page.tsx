@@ -289,6 +289,24 @@ export default function AstroMatchPage() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
+              {result.summary?.includes("chwilowo niedostępna") && (
+                <div style={{
+                  marginBottom: "16px", padding: "12px 18px", borderRadius: "14px",
+                  background: "rgba(224,181,102,.07)", border: "1px solid rgba(224,181,102,.22)",
+                  display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
+                }}>
+                  <span style={{ fontSize: "13px", color: "#E0B566" }}>
+                    Ta analiza pochodzi ze starszej wersji i nie ma jeszcze interpretacji AI.
+                  </span>
+                  <button onClick={handleNew} style={{
+                    padding: "6px 14px", borderRadius: "999px", fontSize: "12px",
+                    background: "rgba(224,181,102,.15)", border: "1px solid rgba(224,181,102,.35)",
+                    color: "#E0B566", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                  }}>
+                    Nowy match →
+                  </button>
+                </div>
+              )}
               <CompatibilityResultView
                 result={result}
                 person1Name={resultNames.p1}

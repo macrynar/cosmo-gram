@@ -234,10 +234,12 @@ Scores (deterministyczne — NIE zmieniaj liczb w JSON):
 Napisz 8 modułów synastrii zgodnych z tymi scores. Każda interpretacja: 160–240 słów. Użyj aspektów z listy powyżej. Zwróć TYLKO JSON.`;
 
     if (!process.env.ANTHROPIC_API_KEY) {
+      console.error("[astro-match] ANTHROPIC_API_KEY not set — returning mock");
       const result = buildResult(mockResult(name1, name2, scores), topAspects, planetPositions);
       return NextResponse.json({ result, isPaidUser, charts: { person1: r1.chart, person2: r2.chart } });
     }
 
+    console.log("[astro-match] calling Sonnet 4.6 for", name1, "×", name2);
     let rawText = "";
     try {
       rawText = await aiComplete({
