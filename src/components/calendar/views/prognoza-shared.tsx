@@ -320,8 +320,8 @@ export function intensityChar(weather: DayWeather): { intensity: number; charact
   return { intensity: weather.intensity, character: humanCharacter(rawChar), charKind: kind === "tense" ? "tense" : "harm" };
 }
 
-// Derives period-level weather from a list of fast-planet windows so that the
-// header card stays consistent with the per-day icons (both use windowDateMap, not slow planets).
+// Derives period-level weather from fast-planet windows so the header card
+// stays consistent with per-day icons (both use windowDateMap, not slow planets).
 export function summarizeWindows(windows: Array<{ favorable: boolean }>): {
   intensity: number; character: string; charKind: "harm" | "tense"; kind: WeatherKind; orbSrc: string;
 } {
@@ -344,7 +344,6 @@ export function summarizeWindows(windows: Array<{ favorable: boolean }>): {
 export function moodImg(kind: WeatherKind | string): string {
   if (kind === "tense") return "/assets/prognoza/mood-intense.png";
   if (kind === "calm")  return "/assets/prognoza/mood-calm.png";
-  // good = electric in this context, or calm by default
   return "/assets/prognoza/mood-electric.png";
 }
 

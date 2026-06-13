@@ -71,15 +71,15 @@ export default function WeekView({
   const headerLabel = `${startD.getUTCDate()} ${MONTH_SHORT[startD.getUTCMonth() + 1]} – ${endD.getUTCDate()} ${MONTH_SHORT[endD.getUTCMonth() + 1]} ${endD.getUTCFullYear()}`;
   const eyebrow = `Pogoda · Tydzień`;
 
-  // Week windows (fast planets only) — same data source as per-day icons → consistent header + icons
+  // Windows for this week — computed first so week-level header uses same source as per-day icons
   const weekWindows = weekDates.flatMap(d => windowDateMap.get(d) ?? []);
   const uniqueWindows = Array.from(
     new Map(weekWindows.map(w => [`${w.transitPlanet}-${w.aspectType}-${w.natalPoint}`, w])).values()
   ).slice(0, 5);
 
-  const { intensity, character, charKind: _charKind, kind: weekKind, orbSrc } = summarizeWindows(uniqueWindows);
+  const { intensity, character, kind: weekKind, orbSrc } = summarizeWindows(uniqueWindows);
 
-  // Per-day weather: same windowDateMap → icons consistent with header
+  // Per-day weather: use pre-computed windowDateMap (fast planets only) for natural daily variation
   const dayWeathers = weekDates.map(dateStr => {
     const wins = windowDateMap.get(dateStr);
     if (!wins || wins.length === 0) return { kind: "calm" as WeatherKind };
