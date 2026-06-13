@@ -19,3 +19,14 @@ export function endsWithSentence(text: string): boolean {
 export function isValidPolishText(text: string): boolean {
   return !containsForeignScript(text) && endsWithSentence(text);
 }
+
+// Concreteness check: calendar AI output must cite ≥1 planet or sign name.
+// Prevents generic "energy is strong today" outputs with no astrological anchor.
+const PLANET_NAMES = ["Słońce","Księżyc","Merkury","Wenus","Mars","Jowisz","Saturn","Uran","Neptun","Pluton"];
+const SIGN_NAMES   = ["Baran","Byk","Bliźnięta","Rak","Lew","Panna","Waga","Skorpion","Strzelec","Koziorożec","Wodnik","Ryby",
+                      // locative forms that appear in generated text
+                      "Baranie","Byku","Bliźniętach","Raku","Lwie","Pannie","Wadze","Skorpionie","Strzelcu","Koziorożcu","Wodniku","Rybach"];
+
+export function containsPlanetOrSign(text: string): boolean {
+  return [...PLANET_NAMES, ...SIGN_NAMES].some(name => text.includes(name));
+}
