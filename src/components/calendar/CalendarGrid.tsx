@@ -86,18 +86,18 @@ export default function CalendarGrid({
           const moonPhase  = day.moonPhase as MoonPhaseName | null ?? null;
           const moonInfo   = moonPhase ? (MOON_GLYPHS[moonPhase] ?? null) : null;
 
-          // Cell style
+          // Cell style — ordered by priority: selected > peak > today > exact > inWindow > quiet
           const cellStyle: React.CSSProperties = isSelected
-            ? { background: "transparent", border: "1.5px solid rgba(212,175,55,0.85)", color: "#D4AF37", boxShadow: "0 0 14px rgba(212,175,55,0.22)", fontWeight: 600 }
+            ? { background: "rgba(255,174,61,0.10)", border: "1.5px solid rgba(255,174,61,0.80)", color: "#FFAE3D", boxShadow: "0 0 14px rgba(255,174,61,0.18)", fontWeight: 600 }
             : isPeak
-            ? { background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.45)", boxShadow: "0 0 10px rgba(212,175,55,0.15)", color: "#E3B85C" }
-            : isExact
-            ? { background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.35)", color: "rgba(196,181,253,0.90)" }
+            ? { background: "rgba(255,174,61,0.07)", border: "1px solid rgba(255,174,61,0.45)", boxShadow: "0 0 10px rgba(255,174,61,0.12)", color: "#E3B85C" }
             : isToday
-            ? { background: "transparent", border: "1.5px solid rgba(139,92,246,0.60)", color: "rgba(255,255,255,0.90)", fontWeight: 700 }
+            ? { background: "rgba(255,174,61,0.05)", border: "1.5px solid rgba(255,174,61,0.50)", color: "rgba(255,255,255,0.95)", fontWeight: 700 }
+            : isExact
+            ? { background: "rgba(107,196,160,0.06)", border: "0.5px solid rgba(107,196,160,0.35)", color: "rgba(107,196,160,0.90)" }
             : inWindow
-            ? { background: "transparent", border: "0.5px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.70)" }
-            : { background: "transparent", border: "0.5px solid rgba(255,255,255,0.04)", color: "rgba(100,116,139,0.50)" };
+            ? { background: "rgba(255,174,61,0.04)", border: "0.5px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.70)" }
+            : { background: "transparent", border: "0.5px solid transparent", color: "rgba(100,116,139,0.50)" };
 
           return (
             <button
@@ -115,7 +115,7 @@ export default function CalendarGrid({
               {/* Day number + peak star */}
               <span className="relative z-10 flex items-center gap-0.5 leading-none">
                 {isPeak  && <span className="text-amber-400 text-[10px] leading-none">★</span>}
-                {isExact && !isPeak && <span className="text-violet-400 text-[9px] leading-none">◆</span>}
+                {isExact && !isPeak && <span className="text-[9px] leading-none" style={{ color: "rgba(107,196,160,0.85)" }}>◆</span>}
                 {dayIdx + 1}
               </span>
 
@@ -150,17 +150,17 @@ export default function CalendarGrid({
                 </span>
               )}
 
-              {/* Fast window band — bottom stripe (no band on selected cell) */}
+              {/* Fast window band — thin indented bottom stripe */}
               {inWindow && !isSelected && (
                 <>
                   {dayWindows.length === 1 ? (
-                    <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-b-lg pointer-events-none"
+                    <span className="absolute bottom-1 left-1.5 right-1.5 h-[2px] rounded-full pointer-events-none"
                       style={{ background: bandColor(dayWindows[0].character) }} />
                   ) : (
                     <>
-                      <span className="absolute bottom-0 left-0 right-1/2 h-[3px] rounded-bl-lg pointer-events-none"
+                      <span className="absolute bottom-1 left-1.5 right-[calc(50%+1px)] h-[2px] rounded-full pointer-events-none"
                         style={{ background: bandColor(dayWindows[0].character) }} />
-                      <span className="absolute bottom-0 left-1/2 right-0 h-[3px] rounded-br-lg pointer-events-none"
+                      <span className="absolute bottom-1 left-[calc(50%+1px)] right-1.5 h-[2px] rounded-full pointer-events-none"
                         style={{ background: bandColor(dayWindows[1].character) }} />
                     </>
                   )}
@@ -183,7 +183,7 @@ export default function CalendarGrid({
           peak okna
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="text-violet-400 text-[9px]">◆</span>
+          <span className="text-[9px]" style={{ color: "rgba(107,196,160,0.80)" }}>◆</span>
           dzień dokładności sezonu
         </span>
         <span className="flex items-center gap-1.5">
