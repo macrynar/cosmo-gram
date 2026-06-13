@@ -26,12 +26,12 @@ export default function FailedModulePlaceholder({ title, index, onRetry }: Props
       transition={{ delay: index * 0.07, duration: 0.5 }}
       className="rounded-2xl p-6 text-center"
       style={{
-        background:     "rgba(5,4,14,0.55)",
-        border:         "0.5px solid rgba(148,163,184,0.12)",
+        background:     "rgba(11,9,18,0.55)",
+        border:         "0.5px solid rgba(135,127,160,0.12)",
         backdropFilter: "blur(18px)",
       }}
     >
-      <p className="text-[10px] uppercase tracking-[0.22em] mb-2" style={{ color: "rgba(148,163,184,0.40)" }}>
+      <p className="text-[10px] uppercase tracking-[0.22em] mb-2" style={{ color: "rgba(135,127,160,0.40)" }}>
         {title}
       </p>
       <p className="text-sm text-slate-500 mb-4">Ten rozdział jeszcze się pisze</p>
@@ -39,7 +39,7 @@ export default function FailedModulePlaceholder({ title, index, onRetry }: Props
         onClick={handleRetry}
         disabled={retrying}
         className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs transition-all disabled:opacity-40"
-        style={{ border: "0.5px solid rgba(148,163,184,0.22)", color: "rgba(148,163,184,0.60)" }}
+        style={{ border: "0.5px solid rgba(135,127,160,0.22)", color: "rgba(135,127,160,0.60)" }}
       >
         <RotateCcw className={`w-3 h-3 ${retrying ? "animate-spin" : ""}`} />
         {retrying ? "Próbuję..." : "Spróbuj ponownie"}

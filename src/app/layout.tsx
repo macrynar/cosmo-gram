@@ -27,8 +27,7 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
   display: "swap",
-  weight: "variable",
-  style: ["italic"],
+  style: ["normal", "italic"],
 });
 
 export const viewport: Viewport = {
