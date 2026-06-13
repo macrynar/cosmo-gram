@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits";
 import type { NatalChart } from "@/lib/astro-types";
 import type { TransitWindow, SkyEvent } from "@/lib/astro/layers";
 import type { DayData } from "@/lib/chart-engine";
@@ -12,9 +11,7 @@ import {
   PgWindowsList,
   DayIcon,
   PROGNOZA_STYLES,
-  moodImgByCharacter,
-  dayWeatherKind,
-  intensityChar,
+  summarizeWindows,
   WEEK_DAY_SHORT,
   MONTH_SHORT,
   type ProgInterpretation,
@@ -74,14 +71,13 @@ export default function WeekView({
   const headerLabel = `${startD.getUTCDate()} ${MONTH_SHORT[startD.getUTCMonth() + 1]} – ${endD.getUTCDate()} ${MONTH_SHORT[endD.getUTCMonth() + 1]} ${endD.getUTCFullYear()}`;
   const eyebrow = `Pogoda · Tydzień`;
 
-  // Compute week-level weather from midweek day (Thursday)
-  const thuDate = new Date(weekStart + "T12:00:00Z");
-  thuDate.setUTCDate(thuDate.getUTCDate() + 3);
-  const thuTransits = getTransitsForDate(chart, thuDate);
-  const weekWeather = getDayWeather(thuTransits);
-  const { intensity, character } = intensityChar(weekWeather);
-  const weekKind   = dayWeatherKind(weekWeather.character, thuTransits[0]?.transitPlanet ?? "");
-  const orbSrc     = moodImgByCharacter(weekWeather.character, thuTransits[0]?.transitPlanet ?? "");
+  // Windows for this week — computed first so week-level header uses same source as per-day icons
+  const weekWindows = weekDates.flatMap(d => windowDateMap.get(d) ?? []);
+  const uniqueWindows = Array.from(
+    new Map(weekWindows.map(w => [`${w.transitPlanet}-${w.aspectType}-${w.natalPoint}`, w])).values()
+  ).slice(0, 5);
+
+  const { intensity, character, kind: weekKind, orbSrc } = summarizeWindows(uniqueWindows);
 
   // Per-day weather: use pre-computed windowDateMap (fast planets only) for natural daily variation
   const dayWeathers = weekDates.map(dateStr => {
@@ -95,12 +91,14 @@ export default function WeekView({
   // AI interpretation
   const [interp, setInterp] = useState<ProgInterpretation | null>(null);
   const [interpLoading, setInterpLoading] = useState(false);
+  const [interpError, setInterpError] = useState(false);
   const [activeChip, setActiveChip] = useState<string | null>(null);
 
   const fetchInterp = useCallback(async () => {
     if (!readingId || !session || !isPremium) return;
     setInterpLoading(true);
     setInterp(null);
+    setInterpError(false);
     try {
       const res = await fetch("/api/prognoza-interpretation", {
         method: "POST",
@@ -111,18 +109,15 @@ export default function WeekView({
         body: JSON.stringify({ reading_id: readingId, zoom: "tydzien", date: weekStart }),
       });
       if (res.ok) setInterp(await res.json() as ProgInterpretation);
+      else setInterpError(true);
+    } catch {
+      setInterpError(true);
     } finally {
       setInterpLoading(false);
     }
   }, [readingId, session, isPremium, weekStart]);
 
   useEffect(() => { fetchInterp(); }, [fetchInterp]);
-
-  // Windows for this week
-  const weekWindows = weekDates.flatMap(d => windowDateMap.get(d) ?? []);
-  const uniqueWindows = Array.from(
-    new Map(weekWindows.map(w => [`${w.transitPlanet}-${w.aspectType}-${w.natalPoint}`, w])).values()
-  ).slice(0, 5);
 
   const winItems = uniqueWindows.map(w => ({
     label:     `${w.transitPlanet} – ${w.natalPoint}`,
@@ -139,8 +134,14 @@ export default function WeekView({
       <PgWeatherZone
         eyebrow={eyebrow}
         theme={interp?.theme ?? headerLabel}
-        desc={interp?.summary ?? "Analizuję energię tygodnia…"}
-        sub={`szczyt: ${weekDates.find((_, i) => dayWeathers[i]?.kind === "tense") ?? thuDate.toISOString().slice(0, 10)}`}
+        desc={
+          interp?.summary ??
+          (interpLoading ? "Generuję interpretację tygodnia…" :
+           interpError   ? "Interpretacja chwilowo niedostępna." :
+           !isPremium    ? "Interpretacja AI dostępna w planie Plus." :
+                           "Ładowanie…")
+        }
+        sub={uniqueWindows.length > 0 ? `${uniqueWindows.length} aktywnych okien` : "spokojny tydzień"}
         intensity={intensity}
         character={character}
         kind={weekKind}
