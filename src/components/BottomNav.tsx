@@ -14,7 +14,7 @@ type Tab = {
 
 const TABS: Tab[] = [
   { href: "/app/cosmogram", label: "Kosmogram", icon: Star },
-  { href: "/app/calendar",  label: "Kalendarz",  icon: CalendarDays },
+  { href: "/app/calendar",  label: "Prognoza",   icon: CalendarDays },
   { href: "/app/chat",      label: "Chat",        icon: MessageCircle, center: true },
   { href: "/app/match",     label: "Match",       icon: Heart },
   { href: "/app/settings",  label: "Konto",       icon: User },

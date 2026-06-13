@@ -12,13 +12,12 @@ type Props = {
   isPremium: boolean;
 };
 
-function Spinner() {
+function Skeleton() {
   return (
-    <div className="flex items-center justify-center py-8">
-      <span
-        className="w-5 h-5 border-2 rounded-full animate-spin"
-        style={{ borderColor: "rgba(255,174,61,0.20)", borderTopColor: "#FFAE3D" }}
-      />
+    <div className="space-y-2 py-1 animate-pulse">
+      <div className="h-3 rounded-full bg-white/8 w-full" />
+      <div className="h-3 rounded-full bg-white/8 w-5/6" />
+      <div className="h-3 rounded-full bg-white/8 w-4/6" />
     </div>
   );
 }
@@ -101,7 +100,7 @@ export default function YearReadingCard({ year, readingId, isPremium }: Props) {
               Odblokuj w Premium
             </Link>
           </div>
-        ) : checking ? <Spinner /> :
+        ) : checking ? <Skeleton /> :
           content ? (
             <p className="text-sm text-slate-200 leading-relaxed">{content}</p>
           ) : (
