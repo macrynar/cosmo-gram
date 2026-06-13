@@ -320,10 +320,30 @@ export function intensityChar(weather: DayWeather): { intensity: number; charact
   return { intensity: weather.intensity, character: humanCharacter(rawChar), charKind: kind === "tense" ? "tense" : "harm" };
 }
 
+// Derives period-level weather from fast-planet windows so the header card
+// stays consistent with per-day icons (both use windowDateMap, not slow planets).
+export function summarizeWindows(windows: Array<{ favorable: boolean }>): {
+  intensity: number; character: string; charKind: "harm" | "tense"; kind: WeatherKind; orbSrc: string;
+} {
+  if (windows.length === 0) {
+    return { intensity: 1, character: "spokojny", charKind: "harm", kind: "calm", orbSrc: "/assets/prognoza/mood-calm.png" };
+  }
+  const unfavorable = windows.filter(w => !w.favorable).length;
+  const favorable   = windows.length - unfavorable;
+  const intensity   = Math.min(5, Math.max(1, windows.length));
+  let character: string; let kind: WeatherKind;
+  if (unfavorable > favorable)  { character = "napięty";     kind = "tense"; }
+  else if (favorable > 0)       { character = "sprzyjający"; kind = "good";  }
+  else                          { character = "spokojny";    kind = "calm";  }
+  const orbSrc = kind === "tense" ? "/assets/prognoza/mood-intense.png"
+               : kind === "good"  ? "/assets/prognoza/mood-electric.png"
+               :                    "/assets/prognoza/mood-calm.png";
+  return { intensity, character, charKind: kind === "tense" ? "tense" : "harm", kind, orbSrc };
+}
+
 export function moodImg(kind: WeatherKind | string): string {
   if (kind === "tense") return "/assets/prognoza/mood-intense.png";
   if (kind === "calm")  return "/assets/prognoza/mood-calm.png";
-  // good = electric in this context, or calm by default
   return "/assets/prognoza/mood-electric.png";
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits"; // still used for month-level weather
 import type { NatalChart } from "@/lib/astro-types";
 import type { TransitWindow, SkyEvent } from "@/lib/astro/layers";
 import type { DayData } from "@/lib/chart-engine";
@@ -12,13 +11,11 @@ import {
   PgWindowsList,
   DayIcon,
   PROGNOZA_STYLES,
-  moodImgByCharacter,
-  dayWeatherKind,
-  intensityChar,
+  summarizeWindows,
   MONTH_SHORT,
   type ProgInterpretation,
   type WeatherKind,
-} from "./prognoza-shared"; // dayWeatherKind used for month-level weather only
+} from "./prognoza-shared";
 
 const MONTH_FULL: Record<number, string> = {
   1: "Styczeń", 2: "Luty", 3: "Marzec", 4: "Kwiecień", 5: "Maj", 6: "Czerwiec",
@@ -58,13 +55,8 @@ export default function MonthView({
   const eyebrow    = `Pogoda · ${monthName}`;
   const daysInMonth = new Date(year, month, 0).getDate();
 
-  // Compute month-level weather from midmonth (15th)
-  const midDate = new Date(Date.UTC(year, month - 1, 15, 12, 0, 0));
-  const midTransits = getTransitsForDate(chart, midDate);
-  const monthWeather = getDayWeather(midTransits);
-  const { intensity, character } = intensityChar(monthWeather);
-  const monthKind = dayWeatherKind(monthWeather.character, midTransits[0]?.transitPlanet ?? "");
-  const orbSrc    = moodImgByCharacter(monthWeather.character, midTransits[0]?.transitPlanet ?? "");
+  // Month-level weather from fastWindows — same source as per-day icons → consistent header + grid
+  const { intensity, character, kind: monthKind, orbSrc } = summarizeWindows(fastWindows);
 
   // Per-day weather: use pre-computed windowDateMap (fast planets only) for natural daily variation.
   // Slow outer planets (Uran/Neptun/Saturn) move <0.1°/day and would dominate every day the same way
