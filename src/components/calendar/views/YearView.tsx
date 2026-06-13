@@ -59,12 +59,14 @@ export default function YearView({ seasons, isPremium, readingId, year, chart, o
   // AI interpretation
   const [interp, setInterp] = useState<ProgInterpretation | null>(null);
   const [interpLoading, setInterpLoading] = useState(false);
+  const [interpError, setInterpError] = useState(false);
   const [activeChip, setActiveChip] = useState<string | null>(null);
 
   const fetchInterp = useCallback(async () => {
     if (!readingId || !session || !isPremium) return;
     setInterpLoading(true);
     setInterp(null);
+    setInterpError(false);
     const dateKey = `${year}-06-15`;
     try {
       const res = await fetch("/api/prognoza-interpretation", {
@@ -76,6 +78,9 @@ export default function YearView({ seasons, isPremium, readingId, year, chart, o
         body: JSON.stringify({ reading_id: readingId, zoom: "rok", date: dateKey }),
       });
       if (res.ok) setInterp(await res.json() as ProgInterpretation);
+      else setInterpError(true);
+    } catch {
+      setInterpError(true);
     } finally {
       setInterpLoading(false);
     }
@@ -141,7 +146,13 @@ export default function YearView({ seasons, isPremium, readingId, year, chart, o
       <PgWeatherZone
         eyebrow={`Pogoda · Rok ${year}`}
         theme={interp?.theme ?? `Rok ${year}`}
-        desc={interp?.summary ?? "Analizuję energię roku…"}
+        desc={
+          interp?.summary ??
+          (interpLoading ? "Generuję interpretację roku…" :
+           interpError   ? "Interpretacja chwilowo niedostępna." :
+           !isPremium    ? "Interpretacja AI dostępna w planie Plus." :
+                           "Ładowanie…")
+        }
         sub={`${seasons.length} sezonów · aktualny miesiąc: ${MONTH_SHORT_ARR[curMonth]}`}
         intensity={intensity}
         character={character}
@@ -163,7 +174,7 @@ export default function YearView({ seasons, isPremium, readingId, year, chart, o
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
 
-          <svg className="pg-wheel" viewBox="0 0 300 300" fill="none">
+          <svg className="pg-wheel" viewBox="0 0 300 300" fill="none" style={{ position: "relative", zIndex: 1 }}>
             {/* Outer ring */}
             <circle cx="150" cy="150" r="143" stroke="rgba(224,181,102,.12)" />
 

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cosmogram — warianty tła hero (Higgsfield)</title>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-base:#0B0912; --text-primary:#F4F1EA; --text-secondary:#B6AFC6; --text-muted:#877FA0;
+  --on-accent:#201405;
+  --grad-ember:linear-gradient(135deg,#FFC56B 0%,#FFAE3D 45%,#F08F2E 100%);
+  --grad-text:linear-gradient(110deg,#FFF8EC 0%,#FFD9A0 55%,#E8BE78 100%);
+}
+*{margin:0;box-sizing:border-box}
+body{background:var(--bg-base);color:var(--text-primary);font-family:'General Sans',system-ui,sans-serif}
+.variant{
+  position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background-size:cover;background-position:center;overflow:hidden;
+}
+.variant::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(5,4,10,.55) 100%)}
+.tag{
+  position:absolute;top:24px;left:24px;z-index:9;font-size:13px;letter-spacing:.14em;
+  text-transform:uppercase;color:#E0B566;background:rgba(11,9,18,.7);
+  border:1px solid #2B2540;border-radius:999px;padding:8px 18px;
+}
+.content{position:relative;z-index:8;text-align:center;padding:0 24px;max-width:980px}
+.content::before{content:'';position:absolute;inset:-72px -140px;z-index:-1;
+  background:radial-gradient(closest-side,rgba(11,9,18,.62) 0%,rgba(11,9,18,.35) 55%,transparent 100%)}
+h1{font-size:clamp(40px,6.5vw,72px);font-weight:700;line-height:1.05;letter-spacing:-.02em;margin-bottom:28px}
+h1 .em{background:var(--grad-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:clamp(17px,1.6vw,19.5px);line-height:1.6;color:var(--text-secondary);max-width:660px;margin:0 auto 44px}
+.cta{display:inline-flex;align-items:center;gap:10px;font-size:17.5px;font-weight:600;
+  color:var(--on-accent);background:var(--grad-ember);border:none;border-radius:999px;
+  padding:19px 40px;cursor:pointer;box-shadow:0 0 48px rgba(255,174,61,.18)}
+.micro{margin-top:18px;font-size:14px;color:var(--text-muted)}
+</style>
+</head>
+<body>
+
+<section class="variant" style="background-image:url('https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_154636_236c3112-235d-4636-a00e-966b9675765b.png')">
+  <div class="tag">Wariant C · NOWY — atmosfera + eteryczne glify, bez planet (pod naszą interaktywną warstwę)</div>
+  <div class="content">
+    <h1><span style="display:block">Horoskop, który</span><span style="display:block"><span class="em">naprawdę</span> jest o&nbsp;Tobie.</span></h1>
+    <p class="sub">Cosmogram łączy dane astronomiczne NASA z&nbsp;wiedzą astrologiczną gromadzoną od tysięcy lat. AI zamienia je w&nbsp;Twój osobisty portret — taki, w&nbsp;którym rozpoznasz siebie, a&nbsp;nie jedną dwunastą ludzkości.</p>
+    <button class="cta">Odkryj swój kosmogram →</button>
+    <div class="micro">Za darmo · bez karty · wystarczy data i&nbsp;miejsce urodzenia</div>
+  </div>
+</section>
+
+<section class="variant" style="background-image:url('https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_150628_d7ea3dc8-d72b-4435-a09a-b287b639880c.png')">
+  <div class="tag">Wariant A · układ orbit, malarska precyzja</div>
+  <div class="content">
+    <h1><span style="display:block">Horoskop, który</span><span style="display:block"><span class="em">naprawdę</span> jest o&nbsp;Tobie.</span></h1>
+    <p class="sub">Cosmogram łączy dane astronomiczne NASA z&nbsp;wiedzą astrologiczną gromadzoną od tysięcy lat. AI zamienia je w&nbsp;Twój osobisty portret — taki, w&nbsp;którym rozpoznasz siebie, a&nbsp;nie jedną dwunastą ludzkości.</p>
+    <button class="cta">Odkryj swój kosmogram →</button>
+    <div class="micro">Za darmo · bez karty · wystarczy data i&nbsp;miejsce urodzenia</div>
+  </div>
+</section>
+
+<section class="variant" style="background-image:url('https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_150640_f22a2866-223a-42ae-8027-0cbc8aa86389.png')">
+  <div class="tag">Wariant B · mgławica, ukryty wschód słońca</div>
+  <div class="content">
+    <h1><span style="display:block">Horoskop, który</span><span style="display:block"><span class="em">naprawdę</span> jest o&nbsp;Tobie.</span></h1>
+    <p class="sub">Cosmogram łączy dane astronomiczne NASA z&nbsp;wiedzą astrologiczną gromadzoną od tysięcy lat. AI zamienia je w&nbsp;Twój osobisty portret — taki, w&nbsp;którym rozpoznasz siebie, a&nbsp;nie jedną dwunastą ludzkości.</p>
+    <button class="cta">Odkryj swój kosmogram →</button>
+    <div class="micro">Za darmo · bez karty · wystarczy data i&nbsp;miejsce urodzenia</div>
+  </div>
+</section>
+
+</body>
+</html>

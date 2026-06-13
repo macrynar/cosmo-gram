@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cosmo Prognoza — ujednolicony timeline · mockup</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-base:#0B0912;--bg-elevated:#14101F;--text-primary:#F4F1EA;--text-secondary:#B6AFC6;
+  --text-muted:#877FA0;--accent:#FFAE3D;--accent-deep:#E0B566;--voice:#E9DCC0;
+  --line:#2B2540;--line-soft:rgba(182,175,198,.14);--tense:#E2654A;
+  --grad-ember:linear-gradient(135deg,#FFC56B 0%,#FFAE3D 45%,#F08F2E 100%);
+  --grad-text:linear-gradient(110deg,#FFF8EC 0%,#FFD9A0 55%,#E8BE78 100%);--ease:cubic-bezier(.22,1,.36,1);
+}
+*{margin:0;box-sizing:border-box}
+body{background:radial-gradient(130% 90% at 50% -5%,#1A1530 0%,#0B0912 60%) fixed var(--bg-base);
+  color:var(--text-primary);font-family:'General Sans',system-ui,sans-serif;padding-bottom:80px}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:70;opacity:.045;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.nav{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,9,18,.7);backdrop-filter:blur(10px);z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600}
+.tabs{display:flex;gap:4px}.tab{padding:8px 15px;border-radius:999px;color:var(--text-muted);font-size:14px;text-decoration:none}
+.tab.on{color:var(--voice);background:rgba(224,181,102,.10);border:1px solid var(--line)}
+.ava{width:33px;height:33px;border-radius:50%;border:1px solid var(--accent-deep);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--accent-deep)}
+
+.wrap{max-width:880px;margin:0 auto;padding:38px 22px 0}
+h1{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(30px,4.4vw,46px);text-align:center;margin-bottom:22px;background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.people{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:18px}
+.person{padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:var(--bg-elevated);color:var(--text-muted);font-size:13.5px;white-space:nowrap;cursor:pointer}
+.person.on{border-color:var(--accent-deep);color:var(--voice)}.person.ghost{border-style:dashed}
+
+/* zoom tabs */
+.zoom{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:6px;border-radius:16px;background:var(--bg-elevated);border:1px solid var(--line);margin-bottom:24px}
+.zoom button{border:none;background:none;color:var(--text-muted);font-size:15px;padding:12px;border-radius:11px;cursor:pointer;transition:.2s var(--ease)}
+.zoom button.on{background:rgba(224,181,102,.12);color:var(--voice);box-shadow:inset 0 0 0 1px var(--line)}
+
+/* ── ZONE: POGODA ── */
+.weather{position:relative;border:1px solid var(--line);border-radius:22px;overflow:hidden;padding:24px;margin-bottom:16px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(26,21,48,.5),var(--bg-base) 75%),var(--bg-elevated)}
+.weather .eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent-deep)}
+.weather .mood{float:right;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:5px 12px;border-radius:999px;border:1px solid var(--line)}
+.mood.harm{color:var(--accent-deep);background:rgba(224,181,102,.08)}.mood.tense{color:var(--tense);background:rgba(226,101,74,.08)}
+.weather h2{font-family:'Fraunces',serif;font-weight:500;font-size:24px;line-height:1.25;color:var(--voice);margin:10px 0 8px}
+.weather .sub{font-size:13.5px;color:var(--text-muted);display:flex;align-items:center;gap:7px}
+.weather .wbg{position:absolute;right:6px;top:50%;margin-top:-116px;width:232px;height:232px;border-radius:50%;object-fit:cover;opacity:.6;pointer-events:none;z-index:0;
+  -webkit-mask-image:radial-gradient(circle,#000 44%,transparent 70%);mask-image:radial-gradient(circle,#000 44%,transparent 70%);animation:wspin 70s linear infinite}
+.weather>*:not(.wbg){position:relative;z-index:1}
+@keyframes wspin{to{transform:rotate(360deg)}}
+.yearwrap{position:relative}
+.yearbg{position:absolute;left:50%;top:50%;margin-left:-92px;margin-top:-92px;width:184px;height:184px;border-radius:50%;object-fit:cover;opacity:.95;pointer-events:none;animation:wspin 90s linear infinite;box-shadow:0 0 0 1px var(--line),0 0 50px rgba(255,174,61,.08)}
+.wheel{position:relative}
+.season{cursor:pointer}
+.arctip{position:absolute;z-index:5;pointer-events:none;width:212px;padding:11px 13px;border-radius:12px;background:var(--bg-elevated);border:1px solid var(--line);box-shadow:0 12px 40px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translate(-50%,calc(-100% - 14px));transition:opacity .18s var(--ease)}
+.arctip.on{opacity:1;visibility:visible}
+.arctip b{display:block;font-size:13px;color:var(--text-primary)}
+.arctip span{font-size:11.5px;color:var(--accent-deep);font-variant-numeric:tabular-nums}
+.arctip p{font-size:12px;color:var(--text-muted);line-height:1.5;margin-top:6px}
+
+/* ── ZONE: OŚ CZASU ── */
+.timeline{border:1px solid var(--line);border-radius:22px;padding:22px;margin-bottom:16px;background:var(--bg-elevated)}
+.tl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.tl-head b{font-size:15px}.tl-nav{display:flex;gap:8px}.tl-nav button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--text-muted);cursor:pointer}
+.hint{font-size:12px;color:var(--text-muted);margin-top:12px;text-align:center}
+/* dzień */
+.gauge{position:absolute;right:22px;top:22px;text-align:right;z-index:1}
+.gauge .gl{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
+.gauge .bars{display:flex;gap:4px;justify-content:flex-end}.gauge .bars i{width:16px;height:6px;border-radius:3px;background:var(--line);transition:.3s var(--ease)}
+.gauge .bars i.on{background:var(--accent)}
+.gchar{margin-top:7px;font-size:11px}.gchar.harm{color:var(--accent-deep)}.gchar.tense{color:var(--tense)}
+.wdesc{color:var(--text-secondary);font-size:15px;line-height:1.55;margin:8px 0 10px;max-width:560px}
+.daytl{position:relative;height:104px;margin-top:4px}
+.daytl .track{position:absolute;left:8px;right:8px;top:40px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(43,37,64,.4),rgba(94,72,162,.35),rgba(255,174,61,.28),rgba(43,37,64,.4))}
+.daytl .now{position:absolute;top:18px;height:46px;width:2px;background:var(--accent);z-index:2}
+.daytl .now::after{content:'teraz';position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--accent)}
+.moment{position:absolute;top:23px;transform:translateX(-50%);text-align:center}
+.moment .disc{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--accent-deep);background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;color:var(--voice);font-size:16px;box-shadow:0 0 14px rgba(224,181,102,.18)}
+.moment.tense .disc{border-color:var(--tense);box-shadow:0 0 14px rgba(226,101,74,.2)}
+.moment .lbl{font-size:10.5px;color:var(--text-muted);margin-top:7px;white-space:nowrap}.moment .lbl b{color:var(--accent-deep)}.moment.tense .lbl b{color:var(--tense)}
+.moment .tip{position:absolute;bottom:48px;left:50%;transform:translateX(-50%);width:180px;padding:9px 11px;border-radius:10px;background:var(--bg-elevated);border:1px solid var(--line);font-size:11.5px;line-height:1.45;color:var(--text-secondary);opacity:0;transition:.2s var(--ease);pointer-events:none;z-index:3}
+.moment:hover .tip{opacity:1}
+/* tydzień */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.wd{border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center;cursor:pointer;transition:.2s var(--ease)}
+.wd:hover{border-color:var(--accent-deep)}.wd.on{border-color:var(--accent-deep);background:rgba(224,181,102,.06)}
+.wd .dn{font-size:11px;color:var(--text-muted)}.wd .dd{font-size:18px;font-weight:600;margin:4px 0 6px}
+.wd .dots{display:flex;gap:3px;justify-content:center;min-height:8px}.wd .dots i{width:5px;height:5px;border-radius:50%}
+/* miesiąc */
+.month{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.mh{font-size:11px;color:var(--text-muted);text-align:center;padding-bottom:4px}
+.mc{aspect-ratio:1.1;border:1px solid transparent;border-radius:12px;padding:8px;cursor:pointer;position:relative;font-size:14px;color:var(--text-secondary);transition:.2s var(--ease)}
+.mc.act{border-color:var(--line)}.mc.act:hover{border-color:var(--accent-deep)}
+.mc.today{border-color:var(--accent-deep);color:var(--voice)}
+.mc .star{position:absolute;top:6px;right:7px;color:var(--accent);font-size:10px}
+.mc .win{position:absolute;left:8px;right:8px;bottom:7px;height:2px;border-radius:2px;background:var(--accent-deep);opacity:.6}
+.mc.tense .win{background:var(--tense)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:14px;font-size:11.5px;color:var(--text-muted)}
+.legend button{border:none;background:none;color:var(--accent-deep);font-size:11.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.wd .wic{display:flex;justify-content:center;margin:5px 0 3px;min-height:26px}
+.wd .wlab{font-size:10px}.wlab.good{color:var(--accent)}.wlab.tense{color:var(--tense)}.wlab.calm{color:var(--text-muted)}
+.mc .dnum{position:absolute;top:7px;left:9px;font-size:13px;color:var(--text-secondary)}
+.mc.today .dnum{color:var(--voice)}
+.mc .mic{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);display:flex}
+.src{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 14px}
+.src .sl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted)}
+.src .sc{font-size:11.5px;color:var(--accent-deep);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:rgba(224,181,102,.05)}
+/* rok */
+.yearwrap{display:flex;justify-content:center;padding:6px 0}
+.wheel{width:300px;height:300px}
+
+/* ── ZONE: NARRACJA ── */
+.narr{border:1px solid var(--line);border-radius:22px;padding:24px;margin-bottom:16px;background:var(--bg-elevated)}
+.narr p{color:var(--text-secondary);font-size:15.5px;line-height:1.7;margin-bottom:12px}
+.refl{margin-top:6px;border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:rgba(224,181,102,.04)}
+.refl .h{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent-deep);margin-bottom:8px}
+.refl p{font-family:'Fraunces',serif;font-style:italic;color:var(--voice);font-size:15px;line-height:1.6;margin:0}
+
+/* ── ZONE: KIEDY NAJLEPIEJ ── */
+.best{border:1px solid var(--line);border-radius:22px;padding:22px;margin-bottom:16px;background:var(--bg-elevated)}
+.best .h{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent-deep);margin-bottom:14px}
+.best .chips{display:flex;flex-wrap:wrap;gap:9px}
+.best .chip{padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:rgba(182,175,198,.03);color:var(--text-secondary);font-size:13.5px;cursor:pointer;transition:.2s var(--ease)}
+.best .chip:hover,.best .chip.on{border-color:var(--accent-deep);color:var(--voice);background:rgba(224,181,102,.06)}
+.best .answer{margin-top:14px;font-size:14.5px;color:var(--text-secondary);min-height:22px}
+.best .answer b{color:var(--voice)}.best .answer .when{color:var(--accent-deep);font-variant-numeric:tabular-nums}
+
+/* ── ZONE: OKNA ── */
+.windows{border:1px solid var(--line);border-radius:22px;padding:22px;background:var(--bg-elevated)}
+.windows .h{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
+.win-item{display:flex;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.win-item:first-of-type{border-top:none}
+.win-item .rail{width:3px;border-radius:3px;flex:0 0 auto;background:var(--accent-deep)}.win-item.tense .rail{background:var(--tense)}
+.win-item .body b{font-size:14.5px}.win-item .body .meta{font-size:12.5px;color:var(--accent-deep);font-variant-numeric:tabular-nums;margin-left:8px}
+.win-item.tense .body .meta{color:var(--tense)}
+.win-item .body p{font-size:13.5px;color:var(--text-muted);line-height:1.55;margin-top:4px}
+.win-item .when{margin-left:auto;flex:0 0 auto;font-size:11px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+
+.skeleton{opacity:.5;font-style:italic;color:var(--text-muted);font-size:13px}
+@media(max-width:640px){.month .mc{font-size:12px}}
+</style></head>
+<body>
+
+<nav class="nav">
+  <div class="brand"><svg width="22" height="22" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>cosmogram</div>
+  <div class="tabs"><a class="tab">Kosmogram</a><a class="tab on">Kalendarz</a><a class="tab">Cosmo Match</a><a class="tab">Cosmo Chat</a></div>
+  <div class="ava">MR</div>
+</nav>
+
+<div class="wrap">
+  <h1>Cosmo Prognoza</h1>
+  <div class="people">
+    <button class="person on">Maciej</button><button class="person">Michał</button>
+    <button class="person">Mateusz</button><button class="person">Asia</button>
+    <button class="person ghost">＋ Nowy kosmogram</button>
+  </div>
+
+  <div class="zoom">
+    <button data-z="dzis" class="on">Dziś</button><button data-z="tydzien">Tydzień</button>
+    <button data-z="miesiac">Miesiąc</button><button data-z="rok">Rok</button>
+  </div>
+
+  <!-- 1. POGODA -->
+  <section class="weather">
+    <img class="wbg" id="wBg" alt="" onerror="this.style.display='none'">
+    <div class="gauge" id="wGauge"></div>
+    <div class="eyebrow" id="wEyebrow"></div>
+    <h2 id="wTheme"></h2>
+    <p class="wdesc" id="wDesc"></p>
+    <div class="sub" id="wSub"></div>
+  </section>
+
+  <!-- 2. OŚ CZASU -->
+  <section class="timeline">
+    <div class="tl-head"><b id="tlTitle"></b><div class="tl-nav"><button>‹</button><button>›</button></div></div>
+    <div id="timeline"></div>
+  </section>
+
+  <!-- 3. NARRACJA -->
+  <section class="narr" id="narr"></section>
+
+  <!-- 4. KIEDY NAJLEPIEJ -->
+  <section class="best">
+    <div class="h">Kiedy najlepiej…?</div>
+    <div class="chips" id="bestChips"></div>
+    <div class="answer" id="bestAnswer">Wybierz obszar, a Astrea wskaże najlepsze okno w tym widoku.</div>
+  </section>
+
+  <!-- 5. OKNA I WYDARZENIA -->
+  <section class="windows">
+    <div class="h" id="winTitle">Okna i wydarzenia</div>
+    <div id="winList"></div>
+  </section>
+</div>
+
+<script>
+// ── DANE (przykładowe) — wspólna struktura dla wszystkich zoomów ──
+const BEST={ "Nowy biznes":["15–17 cze","Wenus trygon do ASC — wsparcie i dobre pierwsze wrażenie"],
+  "Miłość":["15 cze","Wenus trygon do ASC — otwartość i przyciąganie"],
+  "Pieniądze":["27–30 cze","Mars trygon do MC — decyzyjność i widoczność"],
+  "Ważna rozmowa":["20–22 cze","Merkury w zgodnym aspekcie — jasność myśli"],
+  "Odpoczynek":["23–25 cze","cisza między oknami — naładuj baterie"] };
+const Z={
+ dzis:{eyebrow:"Pogoda · Dziś",title:"Sobota, 13 czerwca",lvl:5,kind:"tense",char:"nieoczekiwany",
+  desc:"Dzień nieoczekiwanych zwrotów i wyostrzonej intuicji — plany mogą zmieniać się z godziny na godzinę.",
+  theme:"Uran wywraca plany — Neptun mieni rzeczywistość",sub:"☾︎ Księżyc w Bliźniętach · 6. dom",
+  narr:`<p>Dziś łatwo o nagłe zwroty — plany potrafią się sypać w ostatniej chwili, a rozmowy iść w stronę, której nie przewidziałeś. To nie chaos dla samego chaosu: część tych niespodzianek może okazać się lepsza niż Twój pierwotny pomysł.</p><p>W tle masz dziś wyjątkowo czujną intuicję. Jeśli coś „czujesz", choć trudno to nazwać — warto posłuchać. Najwięcej zyskasz, łącząc luz na zmiany z zaufaniem do przeczucia.</p><div class="src"><span class="sl">na podstawie</span><span class="sc">Uran napina Ascendent</span><span class="sc">Neptun wspiera Ascendent</span></div><div class="refl"><div class="h">Na dziś</div><p>Które z nagłych zmian czujesz jako wyzwanie, a które mogą być iskrą? Dziś warto słuchać intuicji równie mocno co logiki.</p></div>`},
+ tydzien:{eyebrow:"Pogoda · Tydzień",title:"8 – 14 czerwca 2026",lvl:4,kind:"tense",char:"napięty",
+  desc:"Spokojny początek tygodnia, napięty weekend — warto trzymać plany elastycznie.",
+  theme:"Tydzień zwrotów i wyostrzonej intuicji",sub:"szczyt napięcia: sobota",
+  narr:`<p>Pierwsza połowa tygodnia jest spokojniejsza — dobry moment na przygotowania. Od czwartku napięcie rośnie: Uran porusza Twoją oś tożsamości, a weekend przynosi kulminację. To tydzień, w którym warto trzymać plany elastycznie i zostawić miejsce na niespodziankę.</p>`},
+ miesiac:{eyebrow:"Pogoda · Czerwiec",title:"Czerwiec 2026",lvl:3,kind:"harm",char:"wymagający",
+  desc:"Miesiąc prób, które uczą — energia rośnie ku końcowi, w stronę kariery.",
+  theme:"Miesiąc prób i dojrzewania decyzji",sub:"3 aktywne okna · 1 sezon w tle",
+  narr:`<p>Czerwiec układa się w rytm: druga i trzecia dekada przynoszą serię tranzytów Marsa do Twojej osi emocji i wartości — tarcie, które uczy. Pod koniec miesiąca energia przesuwa się ku karierze (Mars trygon do MC), gdzie Twoje działania zyskują realną wagę.</p>`},
+ rok:{eyebrow:"Pogoda · Rok",title:"2026",lvl:4,kind:"harm",char:"przełomowy",
+  desc:"Rok, w którym powoli zmienia się to, jak pokazujesz się światu.",
+  theme:"Rok przebudowy tożsamości",sub:"3 sezony · oś ASC w centrum uwagi",
+  narr:`<p>2026 to rok, w którym powoli zmienia się to, jak pokazujesz się światu. Uran (opozycja do ASC) wnosi przełomy i potrzebę wolności, a Neptun (trygon do ASC) — łagodniejszą, duchową odsłonę tej samej zmiany. W tle Neptun napina Twoje Słońce: pytanie roku brzmi „kim właściwie jestem, gdy znika stara forma?".</p>`}
+};
+const WIN={
+ dzis:[["Wenus trygon do ASC","sprzyja","szczyt 15 cze","Otwartość i dobre pierwsze wrażenie — łatwiej Cię polubić.","harm","15 cze"],
+   ["Mars opozycja do Wenus","napięcie","szczyt 16 cze","Pociąg i rozsądek ciągną w różne strony — uważaj na impulsy.","tense","16 cze"],
+   ["Słońce opozycja do Merkury","napięcie","szczyt 18 cze","Łatwo o nieporozumienie — dopytuj, zanim zareagujesz.","tense","18 cze"]],
+ tydzien:[["Wenus trygon do ASC","sprzyja","szczyt 15 cze","Dobry moment na relacje i pokazanie się.","harm","nd 15"],
+   ["Uran kwadrat do ASC","napięcie","cały tydzień","Zwroty w planach i wizerunku — trzymaj elastyczność.","tense","cz–nd"]],
+ miesiac:[["Mars opozycja do Księżyca w Skorpionie","napięcie","szczyt 20 cze","Rozdźwięk między działaniem a potrzebą bezpieczeństwa.","tense","17–23 cze"],
+   ["Mars opozycja do Wenus","napięcie","szczyt 16 cze","Pociąg fizyczny i emocjonalny idą w różne strony.","tense","13–18 cze"],
+   ["Mars trygon do MC w Pannie","sprzyja","szczyt 28 cze","Działasz zdecydowanie — kariera zyskuje rozpoznanie.","harm","27–30 cze"]],
+ rok:[["Sezon: Uran opozycja do ASC","domykanie","kwi–sie 2026","Przełomy w tożsamości i potrzeba wolności — kulminacja lata.","tense","kwi–sie"],
+   ["Sezon: Neptun trygon do ASC","środek","lut 2026 – kwi 2027","Łagodna, intuicyjna odsłona zmiany — kto jesteś naprawdę.","harm","do 2027"],
+   ["Sezon: Neptun kwadrat do Słońca","początek","maj–sie 2026","Rozmywa pewność celu — czas zaufać sobie inaczej.","tense","maj–sie"]]};
+const WINLABEL={dzis:"Nadchodzące — najbliższe okna",tydzien:"Okna w tym tygodniu",miesiac:"Okna w czerwcu",rok:"Twoje sezony"};
+
+// ── sezony (łuki na kole roku) ──
+const rad=a=>a*Math.PI/180;
+const SEASONS=[
+ {r:116,m0:3,m1:7,k:'tense',name:'Uran (opozycja) → ASC',dates:'kwi – sie 2026',desc:'Przełomy w tożsamości i potrzeba wolności — kulminacja lata.'},
+ {r:108,m0:1,m1:11.8,k:'harm',name:'Neptun (trygon) → ASC',dates:'lut 2026 – kwi 2027',desc:'Łagodna, intuicyjna odsłona tej samej zmiany — kim jesteś naprawdę.'},
+ {r:100,m0:4,m1:7,k:'tense',name:'Neptun (kwadrat) → Słońce',dates:'maj – sie 2026',desc:'Rozmywa pewność celu — czas zaufać sobie inaczej.'}
+];
+function arcPath(r,m0,m1){const a0=(m0/12)*360-90,a1=(m1/12)*360-90;
+  const x0=150+Math.cos(rad(a0))*r,y0=150+Math.sin(rad(a0))*r,x1=150+Math.cos(rad(a1))*r,y1=150+Math.sin(rad(a1))*r,lg=(a1-a0)>180?1:0;
+  return `M ${x0} ${y0} A ${r} ${r} 0 ${lg} 1 ${x1} ${y1}`;}
+// ikony „pogody dnia" — rysowane kodem (DS: funkcjonalne glify)
+function dayIcon(k,sz){sz=sz||22;
+  const c=k==='tense'?'var(--tense)':k==='good'?'var(--accent)':'var(--text-muted)';
+  let inner;
+  if(k==='good'){const rays=[0,45,90,135,180,225,270,315].map(d=>{const a=rad(d);return `<line x1="${(12+Math.cos(a)*6.5).toFixed(1)}" y1="${(12+Math.sin(a)*6.5).toFixed(1)}" x2="${(12+Math.cos(a)*9).toFixed(1)}" y2="${(12+Math.sin(a)*9).toFixed(1)}"/>`}).join('');
+    inner=`<circle cx="12" cy="12" r="3.8" fill="${c}"/><g stroke="${c}" stroke-width="1.6" stroke-linecap="round">${rays}</g>`;}
+  else if(k==='tense'){inner=`<path d="M13 2.5 L5.5 13.2 H11 L9 21.5 L18.8 9.2 H12.8 Z" fill="${c}"/>`;}
+  else{inner=`<path d="M12 3.4a8.6 8.6 0 1 0 8.6 8.6 6.7 6.7 0 0 1-8.6-8.6z" fill="${c}"/>`;}
+  return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none">${inner}</svg>`;}
+
+// ── render ──
+const $=id=>document.getElementById(id);
+const B="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/";
+const IMGS={wheel:B+"hf_20260613_133844_b3de8b49-253b-429f-9d5d-5e7897c991f7.jpeg",
+  calm:B+"hf_20260613_133847_4b5ca381-075c-4926-b594-df1933ac767d.jpeg",
+  intense:B+"hf_20260613_133849_350dd41a-dc4e-4d15-a1b2-ffe565026291.png",
+  electric:B+"hf_20260613_133853_3363c903-561a-45d9-aeb2-2ba405b62b0f.jpeg",
+  misty:B+"hf_20260613_133855_df417677-3eb1-4c5f-8f38-497f2061a52e.jpeg"};
+const MOOD_IMG={dzis:IMGS.electric,tydzien:IMGS.intense,miesiac:IMGS.calm,rok:IMGS.misty};
+function timelineHTML(z){
+  if(z==='dzis'){
+    const mo=[
+     {t:"9:00",x:24,g:"☽",k:"harm",w:"wsparcie",d:"Księżyc trygon do Wenus — ciepło i łatwość w relacjach"},
+     {t:"14:00",x:50,g:"♅",k:"tense",w:"zwrot",d:"Uran kwadrat do ASC — nagła zmiana planów, trzymaj luz"},
+     {t:"19:00",x:74,g:"♀",k:"harm",w:"wsparcie",d:"Wenus trygon do ASC — dobre wrażenie i otwartość"}
+    ];
+    return `<div class="daytl"><div class="track"></div><div class="now" style="left:58%"></div>${
+      mo.map(m=>`<div class="moment ${m.k}" style="left:${m.x}%"><div class="tip">${m.d}</div><div class="disc">${m.g}︎</div><div class="lbl">${m.t} · <b>${m.w}</b></div></div>`).join('')}</div>
+      <div class="hint">Każdy punkt to konkretny tranzyt dnia · złoto = wsparcie, terakota = napięcie · najedź po szczegół</div>`;
+  }
+  if(z==='tydzien'){
+    const dn=["PN","WT","ŚR","CZ","PT","SB","ND"],dd=[8,9,10,11,12,13,14];
+    const wk=['calm','calm','good','tense','good','tense','calm'];
+    const lab={good:'sprzyja',tense:'napięcie',calm:'spokojnie'};
+    let c='<div class="week">';
+    dd.forEach((d,i)=>{const k=wk[i];c+=`<div class="wd ${d===13?'on':''}" data-day="${d}"><div class="dn">${dn[i]}</div><div class="dd">${d}</div><div class="wic">${dayIcon(k,24)}</div><div class="wlab ${k}">${lab[k]}</div></div>`});
+    return c+'</div><div class="hint">Słońce = dzień sprzyjający · piorun = napięty · księżyc = spokojny · kliknij dzień po szczegóły</div>';
+  }
+  if(z==='miesiac'){
+    const head=["Pn","Wt","Śr","Cz","Pt","So","Nd"];let c='<div class="month">';
+    head.forEach(h=>c+=`<div class="mh">${h}</div>`);
+    const good=new Set([1,5,6,8,15,21,27,28,30]),tense=new Set([11,16,18,20,22]);
+    for(let i=0;i<3;i++)c+='<div></div>'; // offset (1 cze = czwartek)
+    for(let d=1;d<=30;d++){const k=tense.has(d)?'tense':good.has(d)?'good':'calm';
+      c+=`<div class="mc act ${d===13?'today':''}" data-day="${d}"><span class="dnum">${d}</span><span class="mic ${k}">${dayIcon(k,18)}</span></div>`}
+    c+=`</div><div class="legend"><span>${dayIcon('good',16)} dzień sprzyjający</span><span>${dayIcon('tense',16)} dzień napięty</span><span>${dayIcon('calm',16)} spokojny</span></div>`;
+    c+='<div class="hint">Kliknij dzień → „Dziś" tego dnia</div>';
+    return c;
+  }
+  // rok — medalion (grafika) + łuki sezonów + pierścień miesięcy (kod), współśrodkowe
+  const m=["sty","lut","mar","kwi","maj","cze","lip","sie","wrz","paź","lis","gru"],cur=5;
+  let labels='',ticks='';
+  m.forEach((mm,i)=>{const a=(i/12)*360-90,on=i===cur;
+    const lx=150+Math.cos(rad(a))*124,ly=150+Math.sin(rad(a))*124;
+    labels+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-weight="${on?600:400}" fill="${on?'var(--accent)':'var(--text-muted)'}" font-family="General Sans">${mm}</text>`;
+    const t1=141,t2=135,tx1=150+Math.cos(rad(a))*t1,ty1=150+Math.sin(rad(a))*t1,tx2=150+Math.cos(rad(a))*t2,ty2=150+Math.sin(rad(a))*t2;
+    ticks+=`<line x1="${tx1}" y1="${ty1}" x2="${tx2}" y2="${ty2}" stroke="${on?'var(--accent)':'var(--line)'}" stroke-width="${on?1.5:1}"/>`;});
+  let arcs='';SEASONS.forEach((s,i)=>{const p=arcPath(s.r,s.m0,s.m1);
+    arcs+=`<path d="${p}" stroke="${s.k==='tense'?'var(--tense)':'var(--accent-deep)'}" stroke-width="3" stroke-linecap="round" fill="none" opacity=".75"/><path class="season" data-i="${i}" d="${p}" stroke="transparent" stroke-width="15" fill="none"/>`;});
+  const pa=(cur/12)*360-90,px=150+Math.cos(rad(pa))*112,py=150+Math.sin(rad(pa))*112;
+  return `<div class="yearwrap"><img class="yearbg" src="${IMGS.wheel}" alt="" onerror="this.style.display='none'"><svg class="wheel" viewBox="0 0 300 300" fill="none">
+    <circle cx="150" cy="150" r="143" stroke="rgba(224,181,102,.12)"/>${arcs}${ticks}${labels}
+    <line x1="150" y1="150" x2="${px}" y2="${py}" stroke="var(--accent)" stroke-width="1.5" opacity=".4"/><circle cx="${px}" cy="${py}" r="3.5" fill="var(--accent)"/>
+    <circle cx="150" cy="150" r="38" fill="rgba(11,9,18,.6)"/>
+    <text x="150" y="144" text-anchor="middle" dominant-baseline="central" font-size="27" font-weight="700" fill="var(--text-primary)" font-family="General Sans">2026</text>
+    <text x="150" y="166" text-anchor="middle" dominant-baseline="central" font-size="10" letter-spacing="2" fill="var(--accent-deep)" font-family="General Sans">CZE</text>
+  </svg><div class="arctip" id="arcTip"></div></div>
+    <div class="hint">Łuki = sezony wpływu · najedź, by zobaczyć co znaczą · aktualny miesiąc podświetlony</div>`;
+}
+function render(z){
+  const d=Z[z];
+  $('wBg').src=MOOD_IMG[z];
+  $('wEyebrow').textContent=d.eyebrow;$('wTheme').textContent=d.theme;$('wSub').innerHTML=d.sub;
+  $('wDesc').textContent=d.desc;
+  const g=$('wGauge');g.className='gauge';
+  g.innerHTML='<div class="gl">intensywność</div><div class="bars">'+[1,2,3,4,5].map(n=>`<i class="${n<=d.lvl?'on':''}"></i>`).join('')+`</div><div class="gchar ${d.kind}">${d.char}</div>`;
+  $('tlTitle').textContent=d.title;$('timeline').innerHTML=timelineHTML(z);
+  $('narr').innerHTML=d.narr;
+  $('winTitle').textContent=WINLABEL[z];
+  $('winList').innerHTML=WIN[z].map(w=>`<div class="win-item ${w[4]}"><div class="rail"></div><div class="body"><b>${w[0]}</b><span class="meta">${w[1]} · ${w[2]}</span><p>${w[3]}</p></div><div class="when">${w[5]}</div></div>`).join('');
+  $('bestAnswer').textContent='Wybierz obszar, a Astrea wskaże najlepsze okno w tym widoku.';
+  document.querySelectorAll('.best .chip').forEach(c=>c.classList.remove('on'));
+  // nawigacja: klik dzień → Dziś
+  document.querySelectorAll('[data-day]').forEach(el=>el.onclick=()=>switchZoom('dzis'));
+  if(z==='rok'){
+    const tip=$('arcTip'),wrap=document.querySelector('.yearwrap');
+    document.querySelectorAll('.season').forEach(p=>{
+      p.onmouseenter=()=>{const s=SEASONS[+p.dataset.i];tip.innerHTML=`<b>${s.name}</b><span>${s.dates}</span><p>${s.desc}</p>`;tip.classList.add('on')};
+      p.onmouseleave=()=>tip.classList.remove('on');
+      p.onmousemove=e=>{const r=wrap.getBoundingClientRect();tip.style.left=(e.clientX-r.left)+'px';tip.style.top=(e.clientY-r.top)+'px'};
+    });
+  }
+}
+// kiedy najlepiej
+const bc=$('bestChips');Object.keys(BEST).forEach(k=>{const b=document.createElement('button');b.className='chip';b.textContent=k;
+  b.onclick=()=>{document.querySelectorAll('.best .chip').forEach(c=>c.classList.remove('on'));b.classList.add('on');
+    const[w,why]=BEST[k];$('bestAnswer').innerHTML=`Najlepsze okno na <b>${k.toLowerCase()}</b>: <span class="when">${w}</span> — ${why}.`};bc.appendChild(b)});
+// zoom
+function switchZoom(z){document.querySelectorAll('.zoom button').forEach(b=>b.classList.toggle('on',b.dataset.z===z));render(z);window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('.zoom button').forEach(b=>b.onclick=()=>switchZoom(b.dataset.z));
+render('dzis');
+</script>
+</body></html>

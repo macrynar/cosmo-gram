@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ALL_MODULE_IDS, type ModuleId } from "@/lib/schemas/astroModule";
 
 const SHORT_NAMES: Record<ModuleId, string> = {
@@ -35,6 +35,10 @@ interface Props {
 export default function ModuleNav({ visibleIds }: Props) {
   const [activeId, setActiveId]   = useState<ModuleId | null>(null);
   const [readIds,  setReadIds]    = useState<Set<string>>(new Set());
+  const [underline, setUnderline] = useState<{ left: number; width: number } | null>(null);
+  const buttonRefs   = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const navRef       = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setReadIds(loadRead());
@@ -92,30 +96,48 @@ export default function ModuleNav({ visibleIds }: Props) {
     document.dispatchEvent(new CustomEvent("cosmo-module-expanded", { detail: { id } }));
   }
 
-  if (visibleIds.length === 0) return null;
+  // Compute underline position relative to the sticky container
+  useEffect(() => {
+    const currentId = activeId ?? visibleIds[0] ?? null;
+    if (!currentId || !containerRef.current) { setUnderline(null); return; }
+    const btn = buttonRefs.current.get(currentId);
+    if (!btn) { setUnderline(null); return; }
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const btnRect       = btn.getBoundingClientRect();
+    setUnderline({
+      left:  btnRect.left - containerRect.left,
+      width: btnRect.width,
+    });
+  }, [activeId, visibleIds]);
 
-  const activeIndex = activeId ? visibleIds.indexOf(activeId) : 0;
-  const progress = Math.round(((activeIndex + 1) / visibleIds.length) * 100);
+  if (visibleIds.length === 0) return null;
 
   return (
     <div
+      ref={containerRef}
       className="sticky top-16 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 mb-6"
       style={{
-        background:   "rgba(11,9,18,0.92)",
-        borderBottom: "0.5px solid rgba(224,181,102,0.10)",
+        background:     "rgba(11,9,18,0.92)",
+        borderBottom:   "0.5px solid rgba(224,181,102,0.10)",
         backdropFilter: "blur(16px)",
       }}
     >
-      {/* Reading progress line */}
+      {/* Underline centered on active tab */}
       <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "rgba(224,181,102,0.07)" }}>
-        <div
-          className="h-full transition-all duration-500"
-          style={{ width: `${progress}%`, background: "rgba(224,181,102,0.38)" }}
-        />
+        {underline && (
+          <div
+            className="absolute h-full transition-all duration-400"
+            style={{
+              left:       underline.left,
+              width:      underline.width,
+              background: "rgba(224,181,102,0.70)",
+            }}
+          />
+        )}
       </div>
 
-      {/* Chapter dots */}
-      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none max-w-[70ch] mx-auto">
+      {/* Chapter tabs */}
+      <div ref={navRef} className="flex items-center gap-1 overflow-x-auto scrollbar-none max-w-[70ch] mx-auto">
         {ALL_MODULE_IDS.map((id, i) => {
           const isVisible = visibleIds.includes(id);
           const isActive  = id === activeId;
@@ -124,6 +146,7 @@ export default function ModuleNav({ visibleIds }: Props) {
           return (
             <button
               key={id}
+              ref={el => { if (el) buttonRefs.current.set(id, el); else buttonRefs.current.delete(id); }}
               onClick={() => isVisible && scrollTo(id)}
               title={SHORT_NAMES[id]}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full whitespace-nowrap transition-all duration-300 shrink-0"

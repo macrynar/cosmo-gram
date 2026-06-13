@@ -49,6 +49,12 @@ export const PROGNOZA_STYLES = `
 @media (prefers-reduced-motion:reduce) {
   .pg-orb,.pg-yearbg { animation:none !important; }
 }
+.pg-spin-ring {
+  display:inline-block;width:15px;height:15px;border-radius:50%;
+  border:2px solid rgba(224,181,102,.2);border-top-color:var(--pg-deep);
+  animation:pg-spin .75s linear infinite;vertical-align:middle;margin-right:8px;flex-shrink:0;
+}
+.pg-loading-row { display:flex;align-items:center;gap:0;color:var(--pg-muted);font-size:13px; }
 
 .pg-gauge { position:absolute;right:22px;top:22px;text-align:right;z-index:1; }
 .pg-gauge-label { font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--pg-muted);margin-bottom:6px; }
@@ -270,39 +276,48 @@ export type WeatherKind = "good" | "tense" | "calm";
 
 export function dayWeatherKind(character: string, _dominantPlanet: string): WeatherKind {
   const c = character.toLowerCase();
-  // Tense / unfavorable / intense
   if (
-    c.includes("nap")       || // napięty
-    c.includes("wymagaj")   || // wymagający
-    c.includes("trud")      || // trudny
-    c.includes("konflik")   || // konfliktowy
-    c.includes("niesp")     || // niespodziewany
-    c.includes("nieoczek")  || // nieoczekiwany
-    c.includes("transform") || // transformacyjny
-    c.includes("intensyw")  || // intensywny
-    c.includes("chaotycz")  || // chaotyczny
-    c.includes("nadmiar")      // nadmiarowy
+    c.includes("nap")       ||
+    c.includes("wymagaj")   ||
+    c.includes("trud")      ||
+    c.includes("konflik")   ||
+    c.includes("niesp")     ||
+    c.includes("nieoczek")  ||
+    c.includes("transform") ||
+    c.includes("intensyw")  ||
+    c.includes("chaotycz")  ||
+    c.includes("nadmiar")
   ) return "tense";
-  // Good / favorable / harmonious
   if (
-    c.includes("harmoni")   || // harmonijny
-    c.includes("ekspans")   || // ekspansywny
-    c.includes("dynamicz")  || // dynamiczny
-    c.includes("wyraz")     || // wyrazisty
-    c.includes("koncentr")  || // koncentracyjny
-    c.includes("analitycz") || // analityczny
-    c.includes("sprzyjaj")     // sprzyjający
+    c.includes("harmoni")   ||
+    c.includes("ekspans")   ||
+    c.includes("dynamicz")  ||
+    c.includes("wyraz")     ||
+    c.includes("koncentr")  ||
+    c.includes("analitycz") ||
+    c.includes("sprzyjaj")
   ) return "good";
-  // Default: calm (spokojny, emocjonalny, refleksyjny…)
   return "calm";
 }
 
+function humanCharacter(raw: string): string {
+  const c = raw.toLowerCase();
+  if (c.includes("nap") || c.includes("konflik") || c.includes("trud"))      return "napięty";
+  if (c.includes("wymagaj"))                                                   return "wymagający";
+  if (c.includes("niesp") || c.includes("nieoczek"))                          return "zaskakujący";
+  if (c.includes("przełom") || c.includes("transform"))                       return "przełomowy";
+  if (c.includes("harmoni") || c.includes("sprzyjaj") || c.includes("łagod")) return "łagodny";
+  if (c.includes("ekspans") || c.includes("dynamicz"))                        return "dynamiczny";
+  if (c.includes("intuicj") || c.includes("mglist") || c.includes("wizyjn")) return "mglisty";
+  if (c.includes("koncentr") || c.includes("analitycz"))                      return "skupiony";
+  if (c.includes("emocjon") || c.includes("wrażliw"))                         return "emocjonalny";
+  return "spokojny";
+}
+
 export function intensityChar(weather: DayWeather): { intensity: number; character: string; charKind: "harm" | "tense" } {
-  const char = weather.character ?? "spokojny";
-  const charKind: "harm" | "tense" = (char.toLowerCase().includes("nap") || char.toLowerCase().includes("wymagaj"))
-    ? "tense"
-    : "harm";
-  return { intensity: weather.intensity, character: char, charKind };
+  const rawChar = weather.character ?? "spokojny";
+  const kind    = dayWeatherKind(rawChar, "");
+  return { intensity: weather.intensity, character: humanCharacter(rawChar), charKind: kind === "tense" ? "tense" : "harm" };
 }
 
 export function moodImg(kind: WeatherKind | string): string {
@@ -452,7 +467,7 @@ export function PgNarrZone({ narr, sources, reflection, loading, isPremium }: Na
         </a>
       )}
       {isPremium && loading && (
-        <p className="pg-skeleton">Astrea analizuje Twój czas…</p>
+        <div className="pg-loading-row"><span className="pg-spin-ring" />Astrea analizuje Twój czas…</div>
       )}
       {isPremium && !loading && narr && (
         <>

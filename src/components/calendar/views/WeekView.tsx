@@ -83,12 +83,13 @@ export default function WeekView({
   const weekKind   = dayWeatherKind(weekWeather.character, thuTransits[0]?.transitPlanet ?? "");
   const orbSrc     = moodImgByCharacter(weekWeather.character, thuTransits[0]?.transitPlanet ?? "");
 
-  // Per-day weather
+  // Per-day weather: use pre-computed windowDateMap (fast planets only) for natural daily variation
   const dayWeathers = weekDates.map(dateStr => {
-    const d = new Date(dateStr + "T12:00:00Z");
-    const transits = getTransitsForDate(chart, d);
-    const weather  = getDayWeather(transits);
-    return { kind: dayWeatherKind(weather.character, transits[0]?.transitPlanet ?? "") as WeatherKind };
+    const wins = windowDateMap.get(dateStr);
+    if (!wins || wins.length === 0) return { kind: "calm" as WeatherKind };
+    const hasTense = wins.some(w => !w.favorable);
+    const hasGood  = wins.some(w => w.favorable);
+    return { kind: (hasTense && !hasGood ? "tense" : hasGood ? "good" : "calm") as WeatherKind };
   });
 
   // AI interpretation

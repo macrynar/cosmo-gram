@@ -172,19 +172,6 @@ export default function NatalChartAltarView({ chart }: Props) {
 
       <div className="relative z-10 px-5 py-7 sm:px-8 sm:py-9">
 
-        {/* ── Nagłówek ── */}
-        <motion.header {...enter(0.1)} className="text-center mb-7">
-          <p className="text-[11px] uppercase mb-1.5" style={{ letterSpacing: "0.3em", color: "var(--accent-deep)" }}>
-            Kosmogram natalny
-          </p>
-          <h2 className="text-2xl sm:text-3xl" style={{
-            fontFamily: "var(--font-fraunces), serif", fontWeight: 500,
-            letterSpacing: "0.01em", color: "var(--text-primary)",
-          }}>
-            Twoja Wielka Trójka
-          </h2>
-          <GoldDivider />
-        </motion.header>
 
         {/* ════ DESKTOP — krzyż: Słońce góra, ASC lewo, koło środek, Księżyc prawo ════ */}
         <div className="hidden sm:grid" style={{

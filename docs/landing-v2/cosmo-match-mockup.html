@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cosmo Match — redesign · mockup</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-base:#0B0912;--bg-elevated:#14101F;--text-primary:#F4F1EA;--text-secondary:#B6AFC6;
+  --text-muted:#877FA0;--accent:#FFAE3D;--accent-deep:#E0B566;--voice:#E9DCC0;
+  --line:#2B2540;--line-soft:rgba(182,175,198,.14);--tense:#E2654A;
+  --grad-ember:linear-gradient(135deg,#FFC56B 0%,#FFAE3D 45%,#F08F2E 100%);
+  --grad-text:linear-gradient(110deg,#FFF8EC 0%,#FFD9A0 55%,#E8BE78 100%);
+  --ease:cubic-bezier(.22,1,.36,1);--bond:var(--accent-deep);
+}
+*{margin:0;box-sizing:border-box}
+body{background:radial-gradient(130% 90% at 50% -5%,#1A1530 0%,#0B0912 62%) fixed var(--bg-base);
+  color:var(--text-primary);font-family:'General Sans',system-ui,sans-serif;padding-bottom:80px}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:70;opacity:.045;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.nav{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,9,18,.7);backdrop-filter:blur(10px);z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600}
+.tabs{display:flex;gap:4px}.tab{padding:8px 15px;border-radius:999px;color:var(--text-muted);font-size:14px;text-decoration:none}
+.tab.on{color:var(--voice);background:rgba(224,181,102,.10);border:1px solid var(--line)}
+.ava{width:33px;height:33px;border-radius:50%;border:1px solid var(--accent-deep);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--accent-deep)}
+
+.wrap{max-width:1040px;margin:0 auto;padding:44px 24px 0;text-align:center}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;border:1px solid var(--line);background:var(--bg-elevated);color:var(--accent-deep);font-size:12.5px}
+h1{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(34px,5vw,52px);margin:14px 0 6px;
+  background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.lede{color:var(--text-muted);font-size:15px;margin-bottom:26px}
+.matchbar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:30px}
+.chip{padding:10px 18px;border-radius:999px;border:1px solid var(--line);background:var(--bg-elevated);color:var(--text-secondary);font-size:14px;cursor:pointer}
+.chip.on{border-color:var(--accent-deep);color:var(--voice)}.chip.ghost{border-style:dashed;color:var(--text-muted)}
+
+.view{display:none}.view.on{display:block}
+
+/* ── HERO więzi ── */
+.hero{position:relative;border:1px solid var(--line);border-radius:28px;overflow:hidden;padding:30px 24px 40px;background:radial-gradient(ellipse at 50% 0%,rgba(26,21,48,.55) 0%,var(--bg-base) 72%)}
+.names{font-size:14px;letter-spacing:.06em;color:var(--text-secondary);margin-bottom:4px}
+.names b{color:var(--text-primary);font-weight:600}.names .x{color:var(--accent-deep);margin:0 8px}
+.kompat{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--text-muted);margin-bottom:18px}
+.bond{position:relative;width:min(420px,86vw);aspect-ratio:1;margin:0 auto 14px}
+.bond .backdrop{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:50%;opacity:.92;animation:spin 160s linear infinite,breathe 9s var(--ease) infinite;transition:opacity .5s}
+.bond .ring{position:absolute;inset:8%;border:1px solid rgba(224,181,102,.16);border-radius:50%;animation:spin 70s linear infinite}
+.bond .ring.r2{inset:22%;border-style:dashed;border-color:rgba(43,37,64,.9);animation:spinr 95s linear infinite}
+.bond .orbit{position:absolute;inset:6%;border-radius:50%;animation:spin 30s linear infinite}
+.bond .orbit.b{inset:18%;animation:spinr 44s linear infinite}
+.bond .orbit i{position:absolute;top:-4px;left:50%;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--bond);box-shadow:0 0 12px 2px var(--bond);transition:background .5s}
+.bond .scrim{position:absolute;left:50%;top:50%;width:64%;height:64%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(11,9,18,.82) 0,rgba(11,9,18,.45) 48%,transparent 70%)}
+.core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center}
+.core .num{font-size:64px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.core .den{font-size:14px;color:var(--text-muted);margin-top:2px}
+.tier{font-family:'Fraunces',serif;font-style:italic;font-size:22px;color:var(--voice);margin:8px 0 14px}
+.summary{max-width:620px;margin:0 auto;color:var(--text-secondary);font-size:15.5px;line-height:1.7}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes spinr{to{transform:rotate(-360deg)}}@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+
+.dims{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px;text-align:left}
+.dim{position:relative;border:1px solid var(--line);border-radius:20px;background:var(--bg-elevated);padding:22px;min-height:200px;overflow:hidden}
+.dim h3{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600}
+.dim h3 .v{margin-left:auto;font-size:13px;color:var(--text-muted);font-variant-numeric:tabular-nums}.dim h3 .v b{color:var(--accent-deep);font-size:16px}
+.bar{height:6px;border-radius:999px;background:rgba(182,175,198,.08);margin:12px 0 16px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(to right,rgba(224,181,102,.6),var(--accent))}
+.dim p{font-size:14px;line-height:1.6;color:var(--text-secondary)}
+.dim .insight{margin-top:12px;font-size:13px;line-height:1.55;color:var(--accent-deep);border-top:1px solid var(--line);padding-top:12px}
+.dim.locked .body{filter:blur(7px);opacity:.5;user-select:none}
+.lock{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.lock .ic{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);background:rgba(224,181,102,.08)}
+.lock .ic svg{width:18px;height:18px;color:var(--accent-deep)}
+.lock b{font-size:15px;font-weight:600}.lock span{font-size:12.5px;color:var(--text-muted)}
+.lock a{margin-top:6px;padding:8px 18px;border-radius:999px;border:1px solid var(--accent-deep);color:var(--voice);font-size:13px;text-decoration:none}
+
+.paywall{margin-top:26px;border:1px solid var(--line);border-radius:20px;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 0%,rgba(94,72,162,.12),transparent 70%),var(--bg-elevated)}
+.paywall p{color:var(--text-secondary);font-size:15px;margin-bottom:16px}.paywall .hi{color:var(--voice)}
+.cta{display:inline-block;padding:13px 28px;border-radius:999px;background:var(--grad-ember);color:#201405;font-weight:600;text-decoration:none;box-shadow:0 0 40px rgba(255,174,61,.18)}
+.share{display:flex;justify-content:center;margin:24px 0}
+.share button{display:inline-flex;gap:8px;align-items:center;padding:11px 22px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--voice);font-size:14px;cursor:pointer}
+
+/* ── SETUP (wybór osób) ── */
+.setup{display:grid;grid-template-columns:1fr 1fr;gap:20px;text-align:left}
+.panel{border:1px solid var(--line);border-radius:22px;background:var(--bg-elevated);padding:24px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.panel-head h3{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent-deep)}
+.seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:none;background:none;color:var(--text-muted);font-size:13px;padding:7px 16px;cursor:pointer}
+.seg button.on{background:rgba(224,181,102,.14);color:var(--voice)}
+.person{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:14px;border:1px solid var(--line);margin-bottom:10px;cursor:pointer;transition:.2s var(--ease)}
+.person:hover{border-color:var(--accent-deep)}.person.sel{border-color:var(--accent-deep);background:rgba(224,181,102,.06)}
+.person .av{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--text-muted);flex:0 0 auto}
+.person b{display:block;font-size:15px;font-weight:500}.person span{font-size:13px;color:var(--text-muted)}
+.input{width:100%;display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--bg-base);color:var(--text-muted);font-size:15px;margin-bottom:12px}
+.input .lab{color:var(--text-muted)}.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text-muted);margin:2px 2px 8px}
+.compare{display:flex;justify-content:center;margin-top:24px}
+
+.viewtoggle{display:inline-flex;gap:4px;padding:5px;border-radius:999px;background:var(--bg-elevated);border:1px solid var(--line);margin-bottom:26px}
+.viewtoggle button{border:none;background:none;color:var(--text-muted);font-size:13px;padding:8px 18px;border-radius:999px;cursor:pointer}
+.viewtoggle button.on{background:rgba(224,181,102,.12);color:var(--voice)}
+
+.switch{position:fixed;right:16px;bottom:16px;z-index:90;display:flex;gap:4px;padding:6px;border-radius:999px;background:var(--bg-elevated);border:1px solid var(--line);align-items:center}
+.switch span{font-size:11px;color:var(--text-muted);padding:0 8px}
+.switch button{border:none;background:none;color:var(--text-muted);font-size:12.5px;padding:7px 11px;border-radius:999px;cursor:pointer}
+.switch button.on{background:rgba(224,181,102,.14);color:var(--voice)}
+body.view-setup .switch{display:none}
+@media(max-width:720px){.dims,.setup{grid-template-columns:1fr}}
+</style></head>
+<body>
+
+<nav class="nav">
+  <div class="brand"><svg width="22" height="22" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>cosmogram</div>
+  <div class="tabs"><a class="tab">Kosmogram</a><a class="tab">Kalendarz</a><a class="tab on">Cosmo Match</a><a class="tab">Cosmo Chat</a></div>
+  <div class="ava">MR</div>
+</nav>
+
+<div class="wrap">
+  <span class="pill">♡ Analiza kompatybilności</span>
+  <h1>Cosmo Match</h1>
+  <p class="lede">Porównanie kosmogramów · Synastria · Interpretacja Astrei</p>
+
+  <div class="viewtoggle"><button id="vSetup">Wybór osób</button><button id="vResult" class="on">Wynik</button></div>
+
+  <div class="matchbar"><button class="chip on">Maciej × Joanna</button><button class="chip ghost">＋ Nowy match</button></div>
+
+  <!-- ===== WIDOK: WYBÓR OSÓB ===== -->
+  <section class="view view-setup">
+    <div class="setup">
+      <div class="panel">
+        <div class="panel-head"><h3>Osoba 1</h3><div class="seg"><button class="on">Moje</button><button>Nowe</button></div></div>
+        <div class="person sel"><div class="av">M</div><div><b>Maciej</b><span>28 grudnia 1986 · 05:00 · Hajnówka</span></div></div>
+        <div class="person"><div class="av">M</div><div><b>Michał</b><span>6 marca 1986 · 09:10 · Białystok</span></div></div>
+        <div class="person"><div class="av">M</div><div><b>Mateusz</b><span>5 kwietnia 1993 · 02:01 · Gołdap</span></div></div>
+        <div class="person"><div class="av">A</div><div><b>Asia</b><span>4 grudnia 1986 · 06:00 · Suwałki</span></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Osoba 2</h3><div class="seg"><button>Moje</button><button class="on">Nowe</button></div></div>
+        <div class="input"><span class="lab">☺</span> Imię (opcjonalne)</div>
+        <div class="input"><span class="lab">▦</span> dd.mm.rrrr</div>
+        <div class="row"><span>Godzina</span><span>Nie znam</span></div>
+        <div class="input"><span class="lab">◷</span> --:--</div>
+        <div class="input"><span class="lab">◎</span> Miasto urodzenia</div>
+      </div>
+    </div>
+    <div class="compare"><a class="cta" id="goResult" href="#">Porównaj kosmogramy →</a></div>
+  </section>
+
+  <!-- ===== WIDOK: WYNIK ===== -->
+  <section class="view view-result on">
+    <div class="hero">
+      <div class="kompat">Kompatybilność</div>
+      <div class="names"><b>Maciej</b><span class="x">×</span><b>Joanna</b></div>
+      <div class="bond">
+        <img class="backdrop" id="backdrop" alt="" onerror="this.style.display='none'">
+        <div class="ring"></div><div class="ring r2"></div>
+        <div class="orbit"><i></i></div><div class="orbit b"><i></i></div>
+        <div class="scrim"></div>
+        <div class="core"><div class="num" id="num">92</div><div class="den">/ 100</div></div>
+      </div>
+      <div class="tier" id="tier">Splecione gwiazdy</div>
+      <p class="summary" id="summary"></p>
+
+      <div class="dims">
+        <div class="dim">
+          <h3>◇ Komunikacja i zrozumienie <span class="v"><b id="kVal">67</b>/100</span></h3>
+          <div class="bar"><i id="kBar" style="width:67%"></i></div>
+          <p>Rozmowy między wami są emocjonalnie angażujące, za sprawą spotkania Księżyca Macieja z Merkurym Joanny i wspierającego trygonu Mars–Merkury. Różnica stylów — Maciej myśli szeroko, Joanna wnikliwie — bywa źródłem nieporozumień, gdy brakuje przestrzeni na doprecyzowanie.</p>
+          <p class="insight">→ Gdy Joanna zagłębia się w szczegóły, Maciej może zapytać: „Co dokładnie masz na myśli?" — to łączy jego dociekliwość z jej precyzją.</p>
+        </div>
+        <div class="dim locked"><div class="body"><h3>♡ Przyciąganie i chemia <span class="v"><b>—</b>/100</span></h3><div class="bar"><i style="width:60%"></i></div><p>Magnetyzm, pożądanie i iskra — jak się w sobie rozpalacie i co podtrzymuje napięcie…</p></div>
+          <div class="lock"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><b>Przyciąganie i chemia</b><span>Dostępne w planie Plus</span><a href="#">Odblokuj →</a></div></div>
+        <div class="dim locked"><div class="body"><h3>☾ Więź emocjonalna <span class="v"><b>—</b>/100</span></h3><div class="bar"><i style="width:74%"></i></div><p>Bliskość, czułość i poczucie bycia „u siebie" przy drugiej osobie…</p></div>
+          <div class="lock"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><b>Więź emocjonalna</b><span>Dostępne w planie Plus</span><a href="#">Odblokuj →</a></div></div>
+        <div class="dim locked"><div class="body"><h3>◈ Wartości i kierunek <span class="v"><b>—</b>/100</span></h3><div class="bar"><i style="width:80%"></i></div><p>Cele, światopogląd i to, co naprawdę budujecie razem…</p></div>
+          <div class="lock"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><b>Wartości i kierunek</b><span>Dostępne w planie Plus</span><a href="#">Odblokuj →</a></div></div>
+        <div class="dim locked"><div class="body"><h3>✧ Niezależność i bliskość <span class="v"><b>—</b>/100</span></h3><div class="bar"><i style="width:55%"></i></div><p>Równowaga wolności i „my" — ile przestrzeni, ile bycia razem…</p></div>
+          <div class="lock"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><b>Niezależność i bliskość</b><span>Dostępne w planie Plus</span><a href="#">Odblokuj →</a></div></div>
+        <div class="dim locked"><div class="body"><h3>✦ Wyzwania i napięcia <span class="v"><b>—</b>/100</span></h3><div class="bar"><i style="width:45%"></i></div><p>Punkty zapalne, które — świadomie prowadzone — stają się motorem rozwoju…</p></div>
+          <div class="lock"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><b>Wyzwania i napięcia</b><span>Dostępne w planie Plus</span><a href="#">Odblokuj →</a></div></div>
+        <div class="dim locked"><div class="body"><h3>∞ Trwałość i przyszłość <span class="v"><b>—</b>/100</span></h3><div class="bar"><i style="width:68%"></i></div><p>Potencjał na długo — co naprawdę was spaja i co buduje zobowiązanie…</p></div>
+          <div class="lock"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><b>Trwałość i przyszłość</b><span>Dostępne w planie Plus</span><a href="#">Odblokuj →</a></div></div>
+        <div class="dim locked"><div class="body"><h3>✷ Przeznaczenie i lekcja <span class="v"><b>—</b>/100</span></h3><div class="bar"><i style="width:72%"></i></div><p>Po co się spotkaliście — wątek karmiczny i lekcja, którą wnosicie sobie nawzajem…</p></div>
+          <div class="lock"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><b>Przeznaczenie i lekcja</b><span>Dostępne w planie Plus</span><a href="#">Odblokuj →</a></div></div>
+      </div>
+
+      <div class="paywall">
+        <p>Odblokuj <span class="hi">7 modułów pełnej analizy synastrii</span> — przyciąganie, więź emocjonalną, wartości, niezależność, wyzwania, przyszłość i przeznaczenie — w planie Plus.</p>
+        <a class="cta" href="#">Przejdź na Plus →</a>
+      </div>
+      <div class="share"><button>⤴ Udostępnij wynik</button></div>
+    </div>
+  </section>
+</div>
+
+<div class="switch">
+  <span>Siła relacji:</span>
+  <button data-s="35">35</button><button data-s="55">55</button><button data-s="70">70</button><button data-s="85">85</button><button class="on" data-s="92">92</button>
+</div>
+
+<script>
+const B="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/";
+const IMG={
+  s90:B+"hf_20260613_123451_1f1fb056-8570-489b-9857-00a91d0b824e.png",  // Splecione gwiazdy
+  s75:B+"hf_20260613_123931_832f2f7c-364e-48d3-b12d-e7ef6ae31e19.png",  // Silne przyciąganie
+  s60:B+"hf_20260613_123935_4406add3-cd37-4f4b-bad2-bc7d1f045227.png",  // Rosnąca więź
+  s45:B+"hf_20260613_123938_3891e468-254e-4156-a48a-5923fcbd2a0c.png",  // Nauka przez tarcie
+  s0 :B+"hf_20260613_123453_bba903c6-c990-4327-b5b1-eacc52916f37.png"   // Dwa różne nieba
+};
+const TIERS=[
+  {min:90,label:"Splecione gwiazdy",img:'s90',bond:'var(--accent-deep)',
+   sum:"Wasza relacja to rzadkie, magnetyczne przyciąganie — dwa nieba, które rozumieją się niemal bez słów. Wspólne wartości i głęboka więź dają fundament, na którym łatwo budować trwałość."},
+  {min:75,label:"Silne przyciąganie",img:'s75',bond:'var(--accent-deep)',
+   sum:"Wasza relacja opiera się na silnym, magnetycznym przyciąganiu i głębokim zrozumieniu. Wyzwaniem pozostaje zarządzanie impulsywnymi reakcjami — to napięcie, dobrze prowadzone, staje się motorem wzajemnego rozwoju."},
+  {min:60,label:"Rosnąca więź",img:'s60',bond:'var(--accent-deep)',
+   sum:"Wiele was łączy, reszty trzeba się nauczyć. To więź, która rośnie, gdy oboje dajecie sobie przestrzeń na różnice — przyciąganie jest realne, ale potrzebuje uważności."},
+  {min:45,label:"Nauka przez tarcie",img:'s45',bond:'var(--tense)',
+   sum:"Spotkanie przez kontrast. Uczycie się siebie nawzajem — czasem pod górę. To, co iskrzy, potrafi i przyciągać, i męczyć; klucz to świadomość, czego każde z was naprawdę potrzebuje."},
+  {min:0,label:"Dwa różne nieba",img:'s0',bond:'var(--tense)',
+   sum:"Dwa bardzo różne nieba — przyciąganie miesza się z tarciem. To relacja-lekcja: intensywna, wymagająca, zdolna wiele nauczyć, jeśli oboje są na to gotowi."}
+];
+const tierFor=s=>TIERS.find(t=>s>=t.min);
+function setScore(s){
+  const t=tierFor(s);
+  document.getElementById('num').textContent=s;
+  document.getElementById('tier').textContent=t.label;
+  document.getElementById('summary').textContent=t.sum;
+  document.documentElement.style.setProperty('--bond',t.bond);
+  document.getElementById('backdrop').src=IMG[t.img];
+  const k=Math.max(38,Math.min(95,s-24+(s%7)));
+  document.getElementById('kVal').textContent=k;document.getElementById('kBar').style.width=k+'%';
+}
+document.querySelectorAll('.switch button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.switch button').forEach(x=>x.classList.remove('on'));b.classList.add('on');setScore(+b.dataset.s);
+});
+setScore(92);
+
+// przełącznik widoku
+const vSetup=document.getElementById('vSetup'),vResult=document.getElementById('vResult');
+const setup=document.querySelector('.view-setup'),result=document.querySelector('.view-result');
+function show(v){
+  const isSetup=v==='setup';
+  document.body.classList.toggle('view-setup',isSetup);
+  setup.classList.toggle('on',isSetup);result.classList.toggle('on',!isSetup);
+  vSetup.classList.toggle('on',isSetup);vResult.classList.toggle('on',!isSetup);
+}
+vSetup.onclick=()=>show('setup');vResult.onclick=()=>show('result');
+document.getElementById('goResult').onclick=e=>{e.preventDefault();show('result')};
+// segmenty Moje/Nowe (demo)
+document.querySelectorAll('.seg').forEach(seg=>seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}));
+document.querySelectorAll('.person').forEach(p=>p.onclick=()=>{p.parentElement.querySelectorAll('.person').forEach(x=>x.classList.remove('sel'));p.classList.add('sel')});
+</script>
+</body></html>
