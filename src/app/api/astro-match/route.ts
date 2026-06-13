@@ -243,14 +243,15 @@ Napisz 8 modułów synastrii zgodnych z tymi scores. Każda interpretacja: 160�
       rawText = await aiComplete({
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userMessage }],
-        maxTokens: 5000,
+        maxTokens: 8000,
         model: "claude-sonnet-4-6",
+        task: "astro-match",
       });
       console.log("[astro-match] AI response length:", rawText.length, "chars");
     } catch (error) {
-      console.error("[astro-match] AI call error:", error);
-      const result = buildResult(mockResult(name1, name2, scores), topAspects, planetPositions);
-      return NextResponse.json({ result, isPaidUser, charts: { person1: r1.chart, person2: r2.chart } });
+      const errMsg = error instanceof Error ? error.message : String(error);
+      console.error("[astro-match] AI call error:", errMsg);
+      return NextResponse.json({ error: `[astro-match] AI call failed: ${errMsg}` }, { status: 500 });
     }
 
     let aiResult: CompatibilityResult;
@@ -281,9 +282,10 @@ Napisz 8 modułów synastrii zgodnych z tymi scores. Każda interpretacja: 160�
         }),
       };
     } catch (parseErr) {
-      console.error("[astro-match] JSON parse error:", parseErr);
+      const errMsg = parseErr instanceof Error ? parseErr.message : String(parseErr);
+      console.error("[astro-match] JSON parse error:", errMsg);
       console.error("[astro-match] raw (first 800 chars):", rawText.slice(0, 800));
-      aiResult = mockResult(name1, name2, scores);
+      return NextResponse.json({ error: `[astro-match] JSON parse failed: ${errMsg} | raw: ${rawText.slice(0, 300)}` }, { status: 500 });
     }
 
     const fullResult = buildResult(aiResult, topAspects, planetPositions);

@@ -194,14 +194,6 @@ export default function AstroMatchPage() {
           transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
           style={{ textAlign: "center", marginBottom: "26px" }}
         >
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: "8px",
-            padding: "7px 16px", borderRadius: "999px",
-            border: "1px solid #2B2540", background: "#14101F",
-            color: "#E0B566", fontSize: "12.5px", marginBottom: "14px",
-          }}>
-            ♡ Analiza kompatybilności
-          </div>
           <h1 style={{
             fontFamily: "'Fraunces', serif", fontWeight: 500,
             fontSize: "clamp(34px, 5vw, 52px)", margin: "0 0 6px",
@@ -262,31 +254,6 @@ export default function AstroMatchPage() {
           </div>
         )}
 
-        {/* ── View toggle ── */}
-        {(result || !loadingHistory) && (
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "26px" }}>
-            <div style={{
-              display: "inline-flex", gap: "4px", padding: "5px",
-              borderRadius: "999px", background: "#14101F", border: "1px solid #2B2540",
-            }}>
-              {(["setup", "result"] as const).map(v => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  style={{
-                    border: "none", borderRadius: "999px",
-                    fontSize: "13px", padding: "8px 18px", cursor: "pointer",
-                    fontFamily: "inherit", transition: ".2s",
-                    background: view === v ? "rgba(224,181,102,.12)" : "transparent",
-                    color: view === v ? "#E9DCC0" : "#877FA0",
-                  }}
-                >
-                  {v === "setup" ? "Wybór osób" : "Wynik"}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* ── Loading AI ── */}
         <AnimatePresence>
