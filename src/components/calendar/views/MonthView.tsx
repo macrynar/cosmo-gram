@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits";
+import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits"; // still used for month-level weather
 import type { NatalChart } from "@/lib/astro-types";
 import type { TransitWindow, SkyEvent } from "@/lib/astro/layers";
 import type { DayData } from "@/lib/chart-engine";
@@ -18,7 +18,7 @@ import {
   MONTH_SHORT,
   type ProgInterpretation,
   type WeatherKind,
-} from "./prognoza-shared";
+} from "./prognoza-shared"; // dayWeatherKind used for month-level weather only
 
 const MONTH_FULL: Record<number, string> = {
   1: "Styczeń", 2: "Luty", 3: "Marzec", 4: "Kwiecień", 5: "Maj", 6: "Czerwiec",
@@ -66,13 +66,20 @@ export default function MonthView({
   const monthKind = dayWeatherKind(monthWeather.character, midTransits[0]?.transitPlanet ?? "");
   const orbSrc    = moodImgByCharacter(monthWeather.character, midTransits[0]?.transitPlanet ?? "");
 
-  // Per-day weather (compute for each day)
+  // Per-day weather: use pre-computed windowDateMap (fast planets only) for natural daily variation.
+  // Slow outer planets (Uran/Neptun/Saturn) move <0.1°/day and would dominate every day the same way
+  // if computed directly via getTransitsForDate.
   const dayWeatherMap = new Map<number, WeatherKind>();
   for (let d = 1; d <= daysInMonth; d++) {
-    const date     = new Date(Date.UTC(year, month - 1, d, 12, 0, 0));
-    const transits = getTransitsForDate(chart, date);
-    const weather  = getDayWeather(transits);
-    dayWeatherMap.set(d, dayWeatherKind(weather.character, transits[0]?.transitPlanet ?? "") as WeatherKind);
+    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const wins    = windowDateMap.get(dateStr);
+    if (!wins || wins.length === 0) {
+      dayWeatherMap.set(d, "calm");
+    } else {
+      const hasTense = wins.some(w => !w.favorable);
+      const hasGood  = wins.some(w => w.favorable);
+      dayWeatherMap.set(d, hasTense && !hasGood ? "tense" : hasGood ? "good" : "calm");
+    }
   }
 
   // AI interpretation
