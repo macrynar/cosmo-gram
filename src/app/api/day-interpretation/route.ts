@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { getTransitsForDate } from "@/lib/astro/transits";
-import { aiComplete, AiDisabledError } from "@/lib/deepseek";
+import { aiComplete, correctCalendarText, AiDisabledError } from "@/lib/deepseek";
 import { ASPECT_LABEL_PL, inSign, PLANET_GENITIVE } from "@/lib/i18n/astro";
-import { containsForeignScript, endsWithSentence } from "@/lib/text-validation";
+import { containsForeignScript, endsWithSentence, containsPlanetOrSign } from "@/lib/text-validation";
+import { STYLE_BLOCK } from "@/lib/moduleSpecs";
 import type { NatalChart } from "@/lib/astro-types";
 import { z } from "zod";
 
@@ -18,7 +19,9 @@ const BodySchema = z.object({
 const SYSTEM_PROMPT = `Jesteś astrolożką opisującą energię konkretnego dnia dla danej osoby.
 Napisz 3–4 zdania: co dzieje się w kosmogramie tej osoby tego dnia, na co warto to skierować.
 Bądź konkretna — cytuj planety i znaki z podanego kontekstu. Pisz w drugiej osobie.
-Zakaz żargonu. Zakaz clichés. Tylko czysty tekst, bez nagłówków.`;
+Zakaz żargonu w warstwie wniosku. Zakaz clichés. Tylko czysty tekst, bez nagłówków.
+
+${STYLE_BLOCK}`;
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
@@ -81,10 +84,13 @@ export async function POST(req: NextRequest) {
         maxTokens: 400,
         task: "day-interpretation",
       });
-      if (!containsForeignScript(candidate) && endsWithSentence(candidate)) {
+      if (!containsForeignScript(candidate) && endsWithSentence(candidate) && containsPlanetOrSign(candidate)) {
         content = candidate;
         break;
       }
+    }
+    if (content) {
+      content = await correctCalendarText(content, "day-interpretation");
     }
     if (!content) return NextResponse.json({ error: "Błąd jakości AI" }, { status: 500 });
 

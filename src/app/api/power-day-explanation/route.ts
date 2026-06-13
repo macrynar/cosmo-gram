@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { getTransitsForDate } from "@/lib/astro/transits";
-import { aiComplete, AiDisabledError } from "@/lib/deepseek";
+import { aiComplete, correctCalendarText, AiDisabledError } from "@/lib/deepseek";
+import { inSign, ASPECT_LABEL_PL } from "@/lib/i18n/astro";
+import { containsForeignScript, endsWithSentence, containsPlanetOrSign } from "@/lib/text-validation";
+import { STYLE_BLOCK } from "@/lib/moduleSpecs";
 import type { NatalChart } from "@/lib/astro-types";
 import { z } from "zod";
 
@@ -14,8 +17,10 @@ const BodySchema = z.object({
 
 const SYSTEM_PROMPT = `Jesteś astrolożką wyjaśniającą dlaczego konkretny dzień jest "Dniem Mocy" dla tej osoby.
 Napisz krótko (3–5 zdań): który tranzyt tworzy ten dzień mocnym, co to znaczy dla tej osoby konkretnie, na co warto ten dzień wykorzystać.
-Zakaz żargonu astrologicznego w tekście dla użytkownika. Zakaz clichés. Pisz w drugiej osobie.
-Odpowiedz tylko zwykłym tekstem, bez JSON.`;
+Zakaz żargonu astrologicznego w warstwie wniosku. Zakaz clichés. Pisz w drugiej osobie.
+Odpowiedz tylko zwykłym tekstem, bez JSON.
+
+${STYLE_BLOCK}`;
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
@@ -70,16 +75,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Brak mocnych tranzytów tego dnia" }, { status: 404 });
   }
 
+  const aspect  = ASPECT_LABEL_PL[topTransit.aspectType] ?? topTransit.aspectType;
   const context = `Dzień: ${dateStr}
-Tranzyt: ${topTransit.transitPlanet} w ${topTransit.transitSign} ${topTransit.aspectType} do natalnego ${topTransit.natalPoint} w ${topTransit.natalSign} (orb ${topTransit.orbDegrees}°, ${topTransit.applying ? "aplikacyjny" : "separacyjny"}, ${topTransit.favorable ? "sprzyjający" : "napięciowy"})`;
+Tranzyt: ${topTransit.transitPlanet} ${inSign(topTransit.transitSign)} · ${aspect} do natalnego ${topTransit.natalPoint} ${inSign(topTransit.natalSign)} (orb ${topTransit.orbDegrees.toFixed(1)}°, ${topTransit.applying ? "aplikacyjny" : "separacyjny"}, ${topTransit.favorable ? "sprzyjający" : "napięciowy"})`;
 
   try {
-    const content = await aiComplete({
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: `Wyjaśnij dlaczego ${dateStr} jest Dniem Mocy:\n\n${context}` }],
-      maxTokens: 400,
-      task: "power-day-explanation",
-    });
+    const models  = ["claude-haiku-4-5-20251001", "claude-haiku-4-5-20251001", "claude-sonnet-4-6"];
+    let content   = "";
+    for (const model of models) {
+      const candidate = await aiComplete({
+        model,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: `Wyjaśnij dlaczego ${dateStr} jest Dniem Mocy:\n\n${context}` }],
+        maxTokens: 400,
+        task: "power-day-explanation",
+      });
+      if (!containsForeignScript(candidate) && endsWithSentence(candidate) && containsPlanetOrSign(candidate)) {
+        content = candidate;
+        break;
+      }
+    }
+    if (!content) return NextResponse.json({ error: "Błąd jakości AI" }, { status: 500 });
+    content = await correctCalendarText(content, "power-day-explanation");
 
     await supabaseAdmin.from("power_day_explanations").upsert({
       user_id: user.id,

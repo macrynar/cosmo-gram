@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "fs";
 import { join } from "path";
+import { containsForeignScript, containsPlanetOrSign } from "@/lib/text-validation";
+import { SIGN_LOCATIVE } from "@/lib/i18n/astro";
+
+const SIGN_NOMINATIVES = Object.keys(SIGN_LOCATIVE);
 
 // ─── Load calendar AI fixtures ────────────────────────────────────────────────
 
@@ -18,10 +22,16 @@ type SeasonContentFixture = {
   paragraph: string;
 };
 
-type CalendarFixture = MonthlySummaryFixture | SeasonContentFixture;
+// Free-text fixtures (day-interpretation, power-day-explanation)
+type FreeTextFixture = { id: string; content: string };
+
+type CalendarFixture = MonthlySummaryFixture | SeasonContentFixture | FreeTextFixture;
 
 function isMonthlySummary(f: CalendarFixture): f is MonthlySummaryFixture {
   return "windows" in f;
+}
+function isSeasonContent(f: CalendarFixture): f is SeasonContentFixture {
+  return "paragraph" in f && !("windows" in f);
 }
 
 const fixtures: CalendarFixture[] = readdirSync(CALENDAR_FIXTURE_DIR)
@@ -36,7 +46,8 @@ function allText(f: CalendarFixture): string {
       ...f.windows.map(w => w.phrase),
     ].join(" ");
   }
-  return [f.name, f.paragraph].join(" ");
+  if (isSeasonContent(f)) return [f.name, f.paragraph].join(" ");
+  return (f as FreeTextFixture).content ?? "";
 }
 
 // ─── Shared language quality regexes (same rules as natal modules) ───────────
@@ -113,7 +124,7 @@ describe("calendar language quality: no cold impersonal framing", () => {
 
 describe("calendar language quality: paragraph non-empty and not too short", () => {
   for (const fixture of fixtures) {
-    if (isMonthlySummary(fixture)) continue;
+    if (!isSeasonContent(fixture)) continue;
     it(`${fixture.id}: paragraph is at least 100 characters`, () => {
       expect(
         fixture.paragraph.length,
@@ -142,6 +153,45 @@ describe("calendar language quality: synthesis structure", () => {
         expect(w.key.trim().length, `window missing key`).toBeGreaterThan(0);
         expect(w.phrase.trim().length, `window missing phrase`).toBeGreaterThan(0);
       }
+    });
+  }
+});
+
+// ─── Faza 2: foreign script + concreteness + declension ─────────────────────
+
+describe("calendar language quality: no foreign scripts (Faza 2)", () => {
+  for (const fixture of fixtures) {
+    it(`${fixture.id}: no Cyrillic or CJK`, () => {
+      expect(containsForeignScript(allText(fixture))).toBe(false);
+    });
+  }
+});
+
+describe("calendar language quality: concreteness (Faza 2)", () => {
+  for (const fixture of fixtures) {
+    it(`${fixture.id}: references ≥1 planet or sign name`, () => {
+      expect(
+        containsPlanetOrSign(allText(fixture)),
+        `"${fixture.id}" is generic — no planet or sign name found`
+      ).toBe(true);
+    });
+  }
+});
+
+describe("calendar language quality: correct sign declension (Faza 2)", () => {
+  for (const fixture of fixtures) {
+    it(`${fixture.id}: no raw sign nominatives after "w "`, () => {
+      const text       = allText(fixture);
+      const violations: string[] = [];
+      for (const sign of SIGN_NOMINATIVES) {
+        const suffix = SIGN_LOCATIVE[sign].slice(sign.length);
+        const re     = new RegExp(`\\bw ${sign}(?!${suffix})\\b`);
+        if (re.test(text)) violations.push(`"w ${sign}"`);
+      }
+      expect(
+        violations,
+        `"${fixture.id}" has wrong declension: [${violations.join(", ")}]`
+      ).toHaveLength(0);
     });
   }
 });
