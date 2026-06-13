@@ -45,27 +45,6 @@ function ageFromDate(dateStr: string): number | null {
   return age;
 }
 
-function getDominantElement(c: NatalChart): { label: string; emoji: string; color: string } {
-  const ELEMENTS: Record<string, string> = {
-    "Baran": "Ogień", "Lew": "Ogień", "Strzelec": "Ogień",
-    "Byk": "Ziemia", "Panna": "Ziemia", "Koziorożec": "Ziemia",
-    "Bliźnięta": "Powietrze", "Waga": "Powietrze", "Wodnik": "Powietrze",
-    "Rak": "Woda", "Skorpion": "Woda", "Ryby": "Woda",
-  };
-  const counts: Record<string, number> = { "Ogień": 0, "Ziemia": 0, "Powietrze": 0, "Woda": 0 };
-  c.planets.forEach(p => { const el = ELEMENTS[p.sign]; if (el) counts[el]++; });
-  const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
-  const map: Record<string, { emoji: string; color: string }> = {
-    "Ogień":     { emoji: "🔥", color: "border-red-800/30 text-red-300/80 bg-red-900/10" },
-    "Ziemia":    { emoji: "🌿", color: "border-green-800/30 text-green-300/80 bg-green-900/10" },
-    "Powietrze": { emoji: "💨", color: "border-sky-800/30 text-sky-300/80 bg-sky-900/10" },
-    "Woda":      { emoji: "💧", color: "border-blue-800/30 text-blue-300/80 bg-blue-900/10" },
-  };
-  return { label: dominant, ...map[dominant] };
-}
-
-// ---------------------------------------------------------------------------
-
 export default function CosmogramPage() {
   const { session, loading: authLoading } = useAuth();
   const { isPro, isLoading: subLoading } = useSubscription();
@@ -365,7 +344,7 @@ export default function CosmogramPage() {
   const hasResults = chart && !chartLoading;
 
   return (
-    <div className="min-h-screen text-white" style={{ background: "#050508" }}>
+    <div className="min-h-screen text-white" style={{ background: "var(--bg-base)" }}>
       <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
       <div aria-hidden="true" className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] pointer-events-none"
         style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(88,60,140,0.18) 0%, transparent 70%)", filter: "blur(2px)" }} />
@@ -379,18 +358,19 @@ export default function CosmogramPage() {
         {/* ── Tab bar ── */}
         <div
           className="flex items-center justify-center gap-1 p-1 rounded-2xl w-fit mx-auto mb-8"
-          style={{ background: "rgba(5,4,14,0.70)", border: "0.5px solid rgba(212,175,55,0.14)" }}
+          style={{ background: "rgba(11,9,18,0.70)", border: "0.5px solid rgba(224,181,102,0.14)" }}
         >
           <button
             onClick={() => setActiveTab("natal")}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
             style={activeTab === "natal" ? {
-              background: "rgba(212,175,55,0.14)",
-              border: "0.5px solid rgba(212,175,55,0.38)",
-              color: "#F3E5AB",
-            } : { color: "#64748b" }}
+              background: "rgba(224,181,102,0.14)",
+              border: "0.5px solid rgba(224,181,102,0.38)",
+              color: "#E9DCC0",
+            } : { color: "#877FA0" }}
           >
-            ✨ Twój kosmogram
+            <Star className="w-3.5 h-3.5" />
+            Twój kosmogram
           </button>
           <button
             ref={childTabRef}
@@ -403,7 +383,7 @@ export default function CosmogramPage() {
             } : childNudge ? {
               color: "#6ee7b7",
               border: "0.5px solid rgba(16,185,129,0.35)",
-            } : { color: "#64748b" }}
+            } : { color: "#877FA0" }}
           >
             <Baby className="w-3.5 h-3.5" />
             Kosmogram dziecka
@@ -420,12 +400,12 @@ export default function CosmogramPage() {
               className="mb-8 text-center"
             >
               <h1
-                className="text-3xl sm:text-4xl font-bold text-white mb-2"
-                style={{ fontFamily: "var(--font-cormorant), serif" }}
+                className="text-3xl sm:text-4xl font-bold mb-2"
+                style={{ fontFamily: "var(--font-fraunces), serif", color: "var(--text-primary)" }}
               >
                 Twój{" "}
                 <span style={{
-                  background: "linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #C5A059 100%)",
+                  background: "var(--grad-text)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -433,12 +413,12 @@ export default function CosmogramPage() {
                   kosmogram natalny
                 </span>
               </h1>
-              <p className="text-slate-500 text-sm">Obliczenia astronomiczne · Swiss Ephemeris · Interpretacja AI</p>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>Obliczenia astronomiczne · Swiss Ephemeris · Interpretacja Astrei</p>
             </motion.div>
 
             {/* History selector */}
             {session && !loadingHistory && readings.length > 0 && (
-              <div className="rounded-2xl px-4 py-3 mb-4" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)", backdropFilter: "blur(18px)" }}>
+              <div className="rounded-2xl px-4 py-3 mb-4" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)", backdropFilter: "blur(18px)" }}>
                 <HistorySelector
                   items={selectorItems}
                   selectedId={selectedId}
@@ -452,8 +432,8 @@ export default function CosmogramPage() {
             )}
 
             {loadingHistory && (
-              <div className="rounded-2xl p-10 text-center mb-6" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)" }}>
-                <div className="w-8 h-8 rounded-full animate-spin border-t-2 mx-auto mb-3" style={{ borderColor: "transparent", borderTopColor: "#D4AF37" }} />
+              <div className="rounded-2xl p-10 text-center mb-6" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}>
+                <div className="w-8 h-8 rounded-full animate-spin border-t-2 mx-auto mb-3" style={{ borderColor: "transparent", borderTopColor: "#E0B566" }} />
                 <p className="text-slate-500 text-sm">Wczytuję kosmogramy…</p>
               </div>
             )}
@@ -485,7 +465,7 @@ export default function CosmogramPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 className="rounded-2xl p-5 mb-8"
-                style={{ background: "rgba(5,4,14,0.72)", border: "0.5px solid rgba(212,175,55,0.18)", backdropFilter: "blur(24px)" }}
+                style={{ background: "rgba(11,9,18,0.72)", border: "0.5px solid rgba(224,181,102,0.18)", backdropFilter: "blur(24px)" }}
               >
                 <BirthForm onSubmit={handleFormSubmit} loading={chartLoading} onDateChange={handleDateChange} />
                 {error && (
@@ -495,8 +475,8 @@ export default function CosmogramPage() {
             )}
 
             {chartLoading && (
-              <div className="rounded-2xl p-16 text-center mb-8" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)" }}>
-                <div className="w-14 h-14 rounded-full animate-spin border-2 mx-auto mb-4" style={{ borderColor: "rgba(212,175,55,0.15)", borderTopColor: "#D4AF37" }} />
+              <div className="rounded-2xl p-16 text-center mb-8" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}>
+                <div className="w-14 h-14 rounded-full animate-spin border-2 mx-auto mb-4" style={{ borderColor: "rgba(224,181,102,0.15)", borderTopColor: "#E0B566" }} />
                 <p className="text-slate-400 text-sm">Obliczam pozycje planet…</p>
               </div>
             )}
@@ -510,14 +490,14 @@ export default function CosmogramPage() {
                     { Icon: MapPin,       label: chart.birthData.place },
                     ...(!chart.birthData.timeUnknown ? [{ Icon: Globe, label: chart.birthData.timezone }] : []),
                   ] as { Icon: React.ElementType; label: string }[]).map(({ Icon, label }) => (
-                    <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full max-w-[240px] truncate" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
-                      <Icon className="w-3 h-3 shrink-0" style={{ color: "rgba(212,175,55,0.55)" }} />
+                    <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full max-w-[240px] truncate" style={{ background: "rgba(224,181,102,0.07)", border: "0.5px solid rgba(224,181,102,0.18)" }}>
+                      <Icon className="w-3 h-3 shrink-0" style={{ color: "rgba(224,181,102,0.55)" }} />
                       {label}
                     </span>
                   ))}
                 </div>
                 {chart.birthData.timeUnknown && (
-                  <p className="text-center text-xs" style={{ color: "rgba(212,175,55,0.55)" }}>Bez godziny urodzenia — wyniki bez Ascendentu, MC i domów.</p>
+                  <p className="text-center text-xs" style={{ color: "rgba(224,181,102,0.55)" }}>Bez godziny urodzenia — wyniki bez Ascendentu, MC i domów.</p>
                 )}
                 <div className="space-y-6">
                   <NatalChartAltarView chart={chart} />
@@ -527,10 +507,12 @@ export default function CosmogramPage() {
                 {selectedId && (() => {
                   const r = readings.find(x => x.id === selectedId);
                   return r ? (
-                    <KartaZawodnika
-                      reading={r}
-                      isPremiumUser={isPro}
-                    />
+                    <div id="interpretacja" style={{ scrollMarginTop: 96 }}>
+                      <KartaZawodnika
+                        reading={r}
+                        isPremiumUser={isPro}
+                      />
+                    </div>
                   ) : null;
                 })()}
 
@@ -539,8 +521,8 @@ export default function CosmogramPage() {
                     <button
                       onClick={() => setShowShare(true)}
                       className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm transition-all duration-300"
-                      style={{ border: "0.5px solid rgba(212,175,55,0.35)", color: "#F3E5AB" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(212,175,55,0.08)"; }}
+                      style={{ border: "0.5px solid rgba(224,181,102,0.35)", color: "#E9DCC0" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(224,181,102,0.08)"; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                     >
                       <Share2 className="w-4 h-4" />
@@ -607,14 +589,14 @@ export default function CosmogramPage() {
             )}
 
             {loadingChildren && (
-              <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)" }}>
+              <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}>
                 <div className="w-8 h-8 rounded-full animate-spin border-2 mx-auto mb-3" style={{ borderColor: "rgba(16,185,129,0.2)", borderTopColor: "#6ee7b7" }} />
                 <p className="text-slate-500 text-sm">Wczytuję karty…</p>
               </div>
             )}
 
             {!loadingChildren && children.length === 0 && (
-              <div className="rounded-2xl p-12 text-center" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(16,185,129,0.15)" }}>
+              <div className="rounded-2xl p-12 text-center" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(16,185,129,0.15)" }}>
                 <Baby className="w-12 h-12 text-green-400/30 mx-auto mb-4" />
                 <h3 className="text-white font-semibold mb-2 font-brand">Brak kart dzieci</h3>
                 <p className="text-slate-500 text-sm mb-6 max-w-xs mx-auto">
@@ -651,7 +633,7 @@ export default function CosmogramPage() {
             )}
 
             {!session && (
-              <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(16,185,129,0.15)" }}>
+              <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(16,185,129,0.15)" }}>
                 <Baby className="w-10 h-10 text-green-400/40 mx-auto mb-3" />
                 <p className="text-slate-400 text-sm mb-1">Zaloguj się, żeby dodać kartę dziecka</p>
                 <p className="text-slate-600 text-xs">Historia kart jest zapisywana w Twoim koncie</p>

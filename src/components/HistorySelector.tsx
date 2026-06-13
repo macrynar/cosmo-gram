@@ -47,7 +47,7 @@ export default function HistorySelector({
   function cancelEdit() { setEditingId(null); }
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin" style={{ scrollbarColor: "rgba(212,175,55,0.25) transparent" }}>
+    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin" style={{ scrollbarColor: "rgba(224,181,102,0.25) transparent" }}>
       {items.map((item) => {
         const isSelected = item.id === selectedId;
         const isEditing  = item.id === editingId;
@@ -58,24 +58,24 @@ export default function HistorySelector({
             onClick={() => !isEditing && onSelect(item.id)}
             className="group flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm whitespace-nowrap shrink-0 cursor-pointer transition-all duration-300"
             style={isSelected ? {
-              background: "rgba(212,175,55,0.14)",
-              border: "0.5px solid rgba(212,175,55,0.45)",
-              color: "#F3E5AB",
+              background: "rgba(224,181,102,0.14)",
+              border: "0.5px solid rgba(224,181,102,0.45)",
+              color: "#E9DCC0",
             } : {
-              background: "rgba(212,175,55,0.04)",
-              border: "0.5px solid rgba(212,175,55,0.15)",
-              color: "#64748b",
+              background: "rgba(224,181,102,0.04)",
+              border: "0.5px solid rgba(224,181,102,0.15)",
+              color: "#877FA0",
             }}
             onMouseEnter={e => {
               if (!isSelected) {
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(212,175,55,0.35)";
-                (e.currentTarget as HTMLElement).style.color = "#F3E5AB";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(224,181,102,0.35)";
+                (e.currentTarget as HTMLElement).style.color = "#E9DCC0";
               }
             }}
             onMouseLeave={e => {
               if (!isSelected) {
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(212,175,55,0.15)";
-                (e.currentTarget as HTMLElement).style.color = "#64748b";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(224,181,102,0.15)";
+                (e.currentTarget as HTMLElement).style.color = "#877FA0";
               }
             }}
           >
@@ -132,16 +132,16 @@ export default function HistorySelector({
         className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm whitespace-nowrap shrink-0 transition-all duration-300"
         style={{
           background: "transparent",
-          border: "0.5px dashed rgba(212,175,55,0.22)",
-          color: "#64748b",
+          border: "0.5px dashed rgba(224,181,102,0.22)",
+          color: "#877FA0",
         }}
         onMouseEnter={e => {
-          (e.currentTarget as HTMLElement).style.borderColor = "rgba(212,175,55,0.45)";
-          (e.currentTarget as HTMLElement).style.color = "#F3E5AB";
+          (e.currentTarget as HTMLElement).style.borderColor = "rgba(224,181,102,0.45)";
+          (e.currentTarget as HTMLElement).style.color = "#E9DCC0";
         }}
         onMouseLeave={e => {
-          (e.currentTarget as HTMLElement).style.borderColor = "rgba(212,175,55,0.22)";
-          (e.currentTarget as HTMLElement).style.color = "#64748b";
+          (e.currentTarget as HTMLElement).style.borderColor = "rgba(224,181,102,0.22)";
+          (e.currentTarget as HTMLElement).style.color = "#877FA0";
         }}
       >
         <Plus className="w-3.5 h-3.5" />

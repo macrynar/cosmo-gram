@@ -24,9 +24,10 @@ const MODULE_ICON: Record<string, LucideIcon> = {
 };
 
 function meterGradient(value: number): string {
-  if (value >= 80) return "linear-gradient(to right, #5B2C8F, #D4AF37)";
-  if (value >= 55) return "linear-gradient(to right, #3b1f6e, #8b5cf6)";
-  return "linear-gradient(to right, #1e1433, #4c3080)";
+  // monochrom złoty — w obrębie palety DS
+  if (value >= 80) return "linear-gradient(to right, rgba(224,181,102,0.55), var(--accent))";
+  if (value >= 55) return "linear-gradient(to right, rgba(135,127,160,0.40), var(--accent-deep))";
+  return "linear-gradient(to right, var(--line), rgba(135,127,160,0.55))";
 }
 
 const LS_READ = "cosmo_modules_read";
@@ -142,8 +143,8 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
       transition={{ delay: index * 0.07, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className="relative rounded-2xl"
       style={{
-        background:     "rgba(5,4,14,0.65)",
-        border:         `0.5px solid rgba(212,175,55,${isLocked ? "0.09" : "0.18"})`,
+        background:     "rgba(11,9,18,0.65)",
+        border:         `0.5px solid rgba(224,181,102,${isLocked ? "0.09" : "0.18"})`,
         backdropFilter: "blur(18px)",
       }}
     >
@@ -154,14 +155,14 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1.5">
-              <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: "rgba(212,175,55,0.70)" }} />
-              <p className="text-[10px] uppercase tracking-[0.24em] font-medium" style={{ color: "rgba(212,175,55,0.60)" }}>
+              <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: "rgba(224,181,102,0.70)" }} />
+              <p className="text-[10px] uppercase tracking-[0.24em] font-medium" style={{ color: "rgba(224,181,102,0.60)" }}>
                 {module.title}
               </p>
             </div>
             <p
               className="text-xl sm:text-2xl text-white/90 italic leading-snug"
-              style={{ fontFamily: "var(--font-cormorant), serif" }}
+              style={{ fontFamily: "var(--font-fraunces), serif" }}
             >
               &ldquo;{module.quote}&rdquo;
             </p>
@@ -170,7 +171,7 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
             <div
               className="shrink-0 mt-0.5 text-[9px] px-2 py-0.5 rounded-full whitespace-nowrap"
               title={`Pewność interpretacji: ${module.confidenceScore}%. Podanie godziny urodzenia podwyższy wynik.`}
-              style={{ background: "rgba(212,175,55,0.07)", color: "rgba(212,175,55,0.45)", border: "0.5px solid rgba(212,175,55,0.18)", cursor: "help" }}
+              style={{ background: "rgba(224,181,102,0.07)", color: "rgba(224,181,102,0.45)", border: "0.5px solid rgba(224,181,102,0.18)", cursor: "help" }}
             >
               {module.confidenceScore}%
             </div>
@@ -180,12 +181,12 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
         {/* Source chips */}
         {sourceChips && sourceChips.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[9px] uppercase tracking-[0.18em]" style={{ color: "rgba(148,163,184,0.40)" }}>Na podstawie:</span>
+            <span className="text-[9px] uppercase tracking-[0.18em]" style={{ color: "rgba(135,127,160,0.40)" }}>Na podstawie:</span>
             {sourceChips.map(chip => (
               <span
                 key={chip}
                 className="px-2 py-0.5 rounded text-[10px]"
-                style={{ background: "rgba(148,163,184,0.06)", border: "0.5px solid rgba(148,163,184,0.14)", color: "rgba(148,163,184,0.60)" }}
+                style={{ background: "rgba(135,127,160,0.06)", border: "0.5px solid rgba(135,127,160,0.14)", color: "rgba(135,127,160,0.60)" }}
               >
                 {chip}
               </span>
@@ -194,7 +195,7 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
         )}
 
         {/* Gold divider */}
-        <div className="h-px" style={{ background: "linear-gradient(to right, transparent, rgba(212,175,55,0.18), transparent)" }} />
+        <div className="h-px" style={{ background: "linear-gradient(to right, transparent, rgba(224,181,102,0.18), transparent)" }} />
 
         {/* Visual Meters */}
         <div className="space-y-3.5">
@@ -203,7 +204,7 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
               <div key={i}>
                 <div className="flex justify-between items-baseline mb-1.5">
                   <span className="text-xs text-slate-400">{meter.label}</span>
-                  <span className="text-[10px] tabular-nums" style={{ color: "rgba(212,175,55,0.50)" }}>{meter.value}</span>
+                  <span className="text-[10px] tabular-nums" style={{ color: "rgba(224,181,102,0.50)" }}>{meter.value}</span>
                 </div>
                 <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
                   <motion.div
@@ -226,7 +227,7 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
             <span
               key={tag}
               className="px-2.5 py-0.5 rounded-full text-[11px] font-medium"
-              style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.26)", color: "#F3E5AB" }}
+              style={{ background: "rgba(224,181,102,0.07)", border: "0.5px solid rgba(224,181,102,0.26)", color: "#E9DCC0" }}
             >
               {tag}
             </span>
@@ -256,7 +257,7 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
           <button
             onClick={handleExpand}
             className="flex items-center gap-1.5 text-xs transition-colors"
-            style={{ color: "rgba(212,175,55,0.70)" }}
+            style={{ color: "rgba(224,181,102,0.70)" }}
           >
             <ChevronDown className="w-3.5 h-3.5" />
             czytaj dalej
@@ -268,17 +269,17 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
 
         {/* Footer: feedback + chat bridge — visible when expanded */}
         {(!isMobileCollapsed || isExpanded) && (
-          <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: "rgba(212,175,55,0.08)" }}>
+          <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: "rgba(224,181,102,0.08)" }}>
             {/* Feedback */}
             <div className="flex items-center gap-3">
-              <span className="text-[10px]" style={{ color: "rgba(148,163,184,0.40)" }}>Trafione?</span>
+              <span className="text-[10px]" style={{ color: "rgba(135,127,160,0.40)" }}>Trafione?</span>
               <button
                 onClick={() => handleFeedback("up")}
                 className="flex items-center gap-1 transition-opacity"
                 style={{ opacity: feedback === "down" ? 0.3 : 1 }}
                 title="Tak, trafiło"
               >
-                <ThumbsUp className="w-3.5 h-3.5" style={{ color: feedback === "up" ? "rgba(212,175,55,0.85)" : "rgba(148,163,184,0.40)" }} />
+                <ThumbsUp className="w-3.5 h-3.5" style={{ color: feedback === "up" ? "rgba(224,181,102,0.85)" : "rgba(135,127,160,0.40)" }} />
               </button>
               <button
                 onClick={() => handleFeedback("down")}
@@ -286,7 +287,7 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
                 style={{ opacity: feedback === "up" ? 0.3 : 1 }}
                 title="Nie trafiło"
               >
-                <ThumbsDown className="w-3.5 h-3.5" style={{ color: feedback === "down" ? "#e05c5c" : "rgba(148,163,184,0.40)" }} />
+                <ThumbsDown className="w-3.5 h-3.5" style={{ color: feedback === "down" ? "#E2654A" : "rgba(135,127,160,0.40)" }} />
               </button>
             </div>
 
@@ -294,9 +295,9 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
             <Link
               href={`/app/chat?context=${encodeURIComponent(`Chcę pogłębić temat: ${module.title}`)}`}
               className="text-[10px] transition-colors"
-              style={{ color: "rgba(148,163,184,0.45)" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "rgba(212,175,55,0.70)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(148,163,184,0.45)"; }}
+              style={{ color: "rgba(135,127,160,0.45)" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "rgba(224,181,102,0.70)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(135,127,160,0.45)"; }}
             >
               Pogłęb w Cosmo Chat →
             </Link>
@@ -311,25 +312,25 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl cursor-pointer"
-          style={{ background: "rgba(5,4,14,0.82)", backdropFilter: "blur(6px)" }}
+          style={{ background: "rgba(11,9,18,0.82)", backdropFilter: "blur(6px)" }}
           onClick={onPaywall}
         >
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ background: "rgba(212,175,55,0.12)", border: "0.5px solid rgba(212,175,55,0.38)" }}
+            style={{ background: "rgba(224,181,102,0.12)", border: "0.5px solid rgba(224,181,102,0.38)" }}
           >
-            <Lock className="w-4 h-4" style={{ color: "#D4AF37" }} />
+            <Lock className="w-4 h-4" style={{ color: "#E0B566" }} />
           </div>
           <p
             className="text-base font-medium"
-            style={{ color: "#F3E5AB", fontFamily: "var(--font-cormorant), serif" }}
+            style={{ color: "#E9DCC0", fontFamily: "var(--font-fraunces), serif" }}
           >
             {module.title}
           </p>
           <p className="text-xs text-slate-500">Dostępne w planie Plus</p>
           <div
             className="mt-1 px-4 py-1.5 rounded-full text-xs font-semibold"
-            style={{ background: "rgba(212,175,55,0.12)", border: "0.5px solid rgba(212,175,55,0.35)", color: "#D4AF37" }}
+            style={{ background: "rgba(224,181,102,0.12)", border: "0.5px solid rgba(224,181,102,0.35)", color: "#E0B566" }}
           >
             Odblokuj →
           </div>

@@ -218,8 +218,8 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
 
       {/* ── Cache loading spinner ── */}
       {cacheLoading && !generated && !loading && (
-        <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)" }}>
-          <div className="w-8 h-8 rounded-full animate-spin border-t-2 mx-auto" style={{ borderColor: "transparent", borderTopColor: "#D4AF37" }} />
+        <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}>
+          <div className="w-8 h-8 rounded-full animate-spin border-t-2 mx-auto" style={{ borderColor: "transparent", borderTopColor: "#E0B566" }} />
         </div>
       )}
 
@@ -231,8 +231,8 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="rounded-2xl p-8 sm:p-10 text-center"
           style={{
-            background:    "radial-gradient(ellipse at 50% 0%, rgba(91,44,143,0.15) 0%, rgba(5,4,14,0.70) 100%)",
-            border:        "0.5px solid rgba(212,175,55,0.18)",
+            background:    "radial-gradient(ellipse at 50% 0%, rgba(91,44,143,0.15) 0%, rgba(11,9,18,0.70) 100%)",
+            border:        "0.5px solid rgba(224,181,102,0.18)",
             backdropFilter: "blur(18px)",
           }}
         >
@@ -242,17 +242,17 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
             transition={{ delay: 0.15, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5"
             style={{
-              background: "linear-gradient(135deg, rgba(212,175,55,0.22), rgba(91,44,143,0.28))",
-              border:     "0.5px solid rgba(212,175,55,0.40)",
-              boxShadow:  "0 0 32px rgba(212,175,55,0.12)",
+              background: "linear-gradient(135deg, rgba(224,181,102,0.22), rgba(91,44,143,0.28))",
+              border:     "0.5px solid rgba(224,181,102,0.40)",
+              boxShadow:  "0 0 32px rgba(224,181,102,0.12)",
             }}
           >
-            <Sparkles className="w-6 h-6" style={{ color: "#D4AF37" }} />
+            <Sparkles className="w-6 h-6" style={{ color: "#E0B566" }} />
           </motion.div>
 
           <h3
             className="text-2xl font-medium text-white mb-2"
-            style={{ fontFamily: "var(--font-cormorant), serif" }}
+            style={{ fontFamily: "var(--font-fraunces), serif" }}
           >
             Karta Astrologiczna
           </h3>
@@ -273,13 +273,13 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
 
           <motion.button
             onClick={handleGenerate}
-            whileHover={{ boxShadow: "0 0 32px rgba(212,175,55,0.32), 0 0 64px rgba(212,175,55,0.10)", y: -1 }}
+            whileHover={{ boxShadow: "0 0 32px rgba(224,181,102,0.32), 0 0 64px rgba(224,181,102,0.10)", y: -1 }}
             whileTap={{ scale: 0.98 }}
             className="px-8 py-3.5 rounded-2xl text-sm font-semibold tracking-wide"
             style={{
-              background: "linear-gradient(135deg, rgba(212,175,55,0.92), rgba(197,160,89,0.92))",
-              color:      "#050508",
-              border:     "0.5px solid rgba(212,175,55,0.65)",
+              background: "linear-gradient(135deg, rgba(224,181,102,0.92), rgba(224,181,102,0.92))",
+              color:      "#0B0912",
+              border:     "0.5px solid rgba(224,181,102,0.65)",
             }}
           >
             {isPremiumUser ? "Generuj Kartę Astrologiczną" : "Generuj 3 moduły"}
@@ -291,11 +291,11 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
       {loading && (
         <div
           className="rounded-2xl p-16 text-center"
-          style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)" }}
+          style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}
         >
           <div
             className="w-12 h-12 rounded-full animate-spin border-2 mx-auto mb-4"
-            style={{ borderColor: "rgba(212,175,55,0.12)", borderTopColor: "#D4AF37" }}
+            style={{ borderColor: "rgba(224,181,102,0.12)", borderTopColor: "#E0B566" }}
           />
           <p className="text-slate-400 text-sm mb-1">Generuję Twoją Kartę Astrologiczną…</p>
           <p className="text-slate-600 text-xs">
@@ -320,7 +320,7 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
               animate={{ opacity: 1 }}
               className="text-center mb-2"
             >
-              <p className="text-[10px] uppercase tracking-[0.28em]" style={{ color: "rgba(212,175,55,0.45)" }}>
+              <p className="text-[10px] uppercase tracking-[0.28em]" style={{ color: "rgba(224,181,102,0.45)" }}>
                 8 rozdziałów o Tobie
               </p>
             </motion.div>
@@ -368,17 +368,17 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
                 className="rounded-2xl p-5 text-center"
-                style={{ background: "rgba(212,175,55,0.05)", border: "0.5px solid rgba(212,175,55,0.18)" }}
+                style={{ background: "rgba(224,181,102,0.05)", border: "0.5px solid rgba(224,181,102,0.18)" }}
               >
                 <p className="text-sm text-slate-400 mb-3">
-                  Odblokuj <span style={{ color: "#D4AF37" }}>5 pozostałych modułów</span> — Miłość, Karierę, Cienie, Korzenie i Misję życia.
+                  Odblokuj <span style={{ color: "#E0B566" }}>5 pozostałych modułów</span> — Miłość, Karierę, Cienie, Korzenie i Misję życia.
                 </p>
                 <button
                   onClick={() => setShowPaywall(true)}
                   className="px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200"
                   style={{
-                    background: "linear-gradient(135deg, rgba(212,175,55,0.85), rgba(197,160,89,0.85))",
-                    color: "#050508",
+                    background: "linear-gradient(135deg, rgba(224,181,102,0.85), rgba(224,181,102,0.85))",
+                    color: "#0B0912",
                   }}
                 >
                   Przejdź na Plus →
