@@ -213,7 +213,7 @@ export default function DayPanel({
       fetch("/api/day-interpretation", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ date }),
+        body: JSON.stringify({ date, reading_id: readingId }),
       }).then(async r => {
         if (r.ok) { const { content } = await r.json() as { content: string }; setSigContent(content); }
       }).catch(() => {})
@@ -294,7 +294,7 @@ export default function DayPanel({
       const res = await fetch("/api/day-interpretation", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ date }),
+        body: JSON.stringify({ date, reading_id: readingId }),
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error ?? "Błąd"); }
       const { content } = await res.json() as { content: string };
