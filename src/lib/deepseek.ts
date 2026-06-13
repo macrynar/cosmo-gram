@@ -187,8 +187,12 @@ export async function correctModuleWithHaiku(
 // Best-effort — always returns the original text on error.
 
 const CALENDAR_CORRECTION_SYSTEM = `Jesteś korektorem tekstu astrologicznego po polsku.
-Popraw WYŁĄCZNIE: błędy deklinacyjne (np. "w Baran" → "w Baranie"), rusycyzmy i formy rodzajowe w 2. osobie.
-Nie zmieniaj sensu ani struktury. Zwróć TYLKO poprawiony tekst, zero komentarzy.`;
+Popraw WYŁĄCZNIE poniższe błędy — nie zmieniaj sensu ani struktury:
+1. Błędy deklinacyjne (np. "w Baran" → "w Baranie", "w Byk" → "w Byku")
+2. Błędne formy gramatyczne (np. "robi się elektryczne" → "robi się elektrycznie", "robi się głośne" → "robi się głośno")
+3. Rusycyzmy i kalki językowe
+4. Formy rodzajowe w 2. osobie (np. "jesteś gotowy/gotowa" → "jesteś w gotowości")
+Zwróć TYLKO poprawiony tekst, zero komentarzy.`;
 
 export async function correctCalendarText(text: string, task: string): Promise<string> {
   if (process.env.AI_DISABLED === "true" || process.env.AI_MOCK === "true") return text;
