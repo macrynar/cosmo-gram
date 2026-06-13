@@ -41,17 +41,19 @@ export default function SectionModules() {
       {/* Featured card */}
       <div
         data-reveal
-        className="landing-card"
-        style={{
-          position:"relative", display:"grid", gridTemplateColumns:"1.1fr .9fr", gap:48,
-          alignItems:"center", background:"var(--bg-elevated)", border:"1px solid var(--line)",
-          borderRadius:16, padding:56, marginBottom:24, overflow:"hidden",
-          transition:"border-color .25s cubic-bezier(.22,1,.36,1)",
-        }}
+        className="landing-card featured-card"
         onMouseEnter={e => (e.currentTarget.style.borderColor = "#3A3258")}
         onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--line)")}
       >
         <SpotlightOverlay />
+        {/* image: top on mobile, right on desktop (CSS order swap) */}
+        <div className="featured-img" aria-hidden="true">
+          <img
+            src="/assets/landing/ill-kosmogram.png"
+            alt=""
+            style={{ width:"100%",maxWidth:340,borderRadius:12,border:"1px solid var(--line-soft)",display:"block" }}
+          />
+        </div>
         <div style={{ position:"relative",zIndex:1 }}>
           <span style={{ fontSize:26,color:"var(--accent)",display:"inline-block",marginBottom:18 }}>☉</span>
           <h3 style={{ fontSize:26,fontWeight:700,letterSpacing:"-.01em",marginBottom:12 }}>Kosmogram</h3>
@@ -61,13 +63,6 @@ export default function SectionModules() {
           <Link href="/app/cosmogram" style={{ color:"var(--accent-deep)",textDecoration:"none",fontSize:15.5,fontWeight:500 }}>
             Zobacz przykładowy kosmogram →
           </Link>
-        </div>
-        <div style={{ display:"flex",justifyContent:"center",position:"relative",zIndex:1 }} aria-hidden="true">
-          <img
-            src="/assets/landing/ill-kosmogram.png"
-            alt=""
-            style={{ width:300,maxWidth:"100%",borderRadius:12,border:"1px solid var(--line-soft)" }}
-          />
         </div>
       </div>
 
@@ -129,7 +124,36 @@ export default function SectionModules() {
       </div>
 
       <style>{`
-        @media (max-width:900px) { .featured-mod-grid { grid-template-columns: 1fr !important; padding: 36px !important; } }
+        /* Featured card — desktop: text left, image right */
+        .featured-card {
+          position: relative;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          grid-template-areas: "text img";
+          gap: 48px;
+          align-items: center;
+          background: var(--bg-elevated);
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          padding: 56px;
+          margin-bottom: 24px;
+          overflow: hidden;
+          transition: border-color .25s cubic-bezier(.22,1,.36,1);
+        }
+        .featured-card > div:last-child { grid-area: text; }
+        .featured-img { grid-area: img; display: flex; justify-content: center; position: relative; z-index: 1; }
+
+        /* Mobile: single column, image on top */
+        @media (max-width: 768px) {
+          .featured-card {
+            grid-template-columns: 1fr;
+            grid-template-areas: "img" "text";
+            gap: 28px;
+            padding: 28px;
+          }
+          .featured-img img { max-width: 100% !important; border-radius: 10px; }
+        }
+
         .landing-card::before {
           content:''; position:absolute; inset:0; opacity:0; transition:opacity .3s; pointer-events:none;
           background:radial-gradient(360px circle at var(--mx,50%) var(--my,50%), rgba(255,174,61,.07), transparent 65%);
