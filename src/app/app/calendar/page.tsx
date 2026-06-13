@@ -259,6 +259,7 @@ export default function CalendarPage() {
     id:       r.id,
     name:     r.name || `${r.birth_place.split(",")[0]} · ${r.birth_date}`,
     subtitle: r.birth_date,
+    sunSign:  r.chart_data?.planets?.find(p => p.name === "Słońce")?.sign,
   }));
 
   const emptyState = !loadingHistory && readings.length === 0;

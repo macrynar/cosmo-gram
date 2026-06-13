@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ALL_MODULE_IDS, type ModuleId } from "@/lib/schemas/astroModule";
 
-const SHORT_NAMES: Record<ModuleId, string> = {
+const DEFAULT_SHORT_NAMES: Record<string, string> = {
   core:        "Rdzeń",
   superpowers: "Supermoce",
   childhood:   "Korzenie",
@@ -29,11 +29,17 @@ function saveRead(ids: Set<string>) {
 }
 
 interface Props {
-  visibleIds: ModuleId[];
+  visibleIds: string[];
+  /** Full ordered set of module IDs to display. Defaults to ALL_MODULE_IDS (adult set). */
+  allIds?: string[];
+  /** Short display names keyed by module id. Merged over DEFAULT_SHORT_NAMES. */
+  shortNames?: Record<string, string>;
 }
 
-export default function ModuleNav({ visibleIds }: Props) {
-  const [activeId, setActiveId]   = useState<ModuleId | null>(null);
+export default function ModuleNav({ visibleIds, allIds, shortNames }: Props) {
+  const ids        = allIds    ?? (ALL_MODULE_IDS as string[]);
+  const namesMap   = shortNames ? { ...DEFAULT_SHORT_NAMES, ...shortNames } : DEFAULT_SHORT_NAMES;
+  const [activeId, setActiveId]   = useState<string | null>(null);
   const [readIds,  setReadIds]    = useState<Set<string>>(new Set());
   const [underline, setUnderline] = useState<{ left: number; width: number } | null>(null);
   const buttonRefs   = useRef<Map<string, HTMLButtonElement>>(new Map());
@@ -72,7 +78,7 @@ export default function ModuleNav({ visibleIds }: Props) {
             (max, [k, v]) => v > max[1] ? [k, v] : max,
             ["", 0]
           );
-          if (best[1] > 0) setActiveId(best[0] as ModuleId);
+          if (best[1] > 0) setActiveId(best[0]);
         },
         { threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] }
       );
@@ -83,7 +89,7 @@ export default function ModuleNav({ visibleIds }: Props) {
     return () => observers.forEach(o => o.disconnect());
   }, [visibleIds]);
 
-  function scrollTo(id: ModuleId) {
+  function scrollTo(id: string) {
     const el = document.getElementById(`module-${id}`);
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -138,7 +144,7 @@ export default function ModuleNav({ visibleIds }: Props) {
 
       {/* Chapter tabs */}
       <div ref={navRef} className="flex items-center gap-1 overflow-x-auto scrollbar-none max-w-[70ch] mx-auto">
-        {ALL_MODULE_IDS.map((id, i) => {
+        {ids.map((id, i) => {
           const isVisible = visibleIds.includes(id);
           const isActive  = id === activeId;
           const isRead    = readIds.has(id);
@@ -148,7 +154,7 @@ export default function ModuleNav({ visibleIds }: Props) {
               key={id}
               ref={el => { if (el) buttonRefs.current.set(id, el); else buttonRefs.current.delete(id); }}
               onClick={() => isVisible && scrollTo(id)}
-              title={SHORT_NAMES[id]}
+              title={namesMap[id] ?? id}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full whitespace-nowrap transition-all duration-300 shrink-0"
               style={
                 isActive ? {
@@ -170,7 +176,7 @@ export default function ModuleNav({ visibleIds }: Props) {
                 <span style={{ fontSize: "8px", color: "rgba(224,181,102,0.45)" }}>✓</span>
               )}
               <span style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.04em" }}>
-                {i + 1}. {SHORT_NAMES[id]}
+                {i + 1}. {namesMap[id] ?? id}
               </span>
             </button>
           );

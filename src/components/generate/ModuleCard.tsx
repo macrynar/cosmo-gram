@@ -72,11 +72,12 @@ interface Props {
   index:         number;
   sourceChips?:  string[];
   onPaywall?:    () => void;
+  iconOverride?: LucideIcon;
 }
 
-export default function ModuleCard({ module, isPremiumUser, index, sourceChips, onPaywall }: Props) {
+export default function ModuleCard({ module, isPremiumUser, index, sourceChips, onPaywall, iconOverride }: Props) {
   const isLocked = module.isPremium && !isPremiumUser;
-  const Icon     = MODULE_ICON[module.id] ?? Star;
+  const Icon     = iconOverride ?? MODULE_ICON[module.id] ?? Star;
 
   const [isExpanded,        setIsExpanded]        = useState(true);
   const [isMobileCollapsed, setIsMobileCollapsed] = useState(false);

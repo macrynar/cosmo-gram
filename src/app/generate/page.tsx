@@ -246,9 +246,10 @@ export default function GeneratePage() {
   }
 
   const selectorItems: HistoryItem[] = readings.map(r => ({
-    id: r.id,
-    name: r.name || `${r.birth_place.split(",")[0]} · ${r.birth_date}`,
+    id:      r.id,
+    name:    r.name || `${r.birth_place.split(",")[0]} · ${r.birth_date}`,
     subtitle: r.birth_date,
+    sunSign: r.chart_data?.planets?.find((p: { name: string }) => p.name === "Słońce")?.sign,
   }));
 
   const hasResults = chart && !chartLoading;
