@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Clock, Flame, GitCompare, X, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, GitCompare, X, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
@@ -25,7 +25,6 @@ import {
   type Season,
   type SkyEvent,
 } from "@/lib/astro/layers";
-import { useStreak } from "@/lib/useStreak";
 import { supabase } from "@/lib/supabase";
 import type { NatalChart } from "@/lib/astro-types";
 import { ROUTES } from "@/lib/routes";
@@ -76,7 +75,6 @@ export default function CalendarPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { session, loading: authLoading } = useAuth();
-  const { current: streakDays } = useStreak();
   const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
 
   const now = new Date();
@@ -255,12 +253,6 @@ export default function CalendarPage() {
             <h1 className="text-3xl sm:text-4xl font-semibold text-white font-brand">
               Cosmo <span className="gradient-text text-glow">Kalendarz</span>
             </h1>
-            {streakDays >= 2 && (
-              <Link href={ROUTES.app.diary.path} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-900/30 border border-orange-700/40 text-orange-300 text-xs font-semibold hover:bg-orange-900/50 transition-colors">
-                <Flame className="w-3.5 h-3.5 text-orange-400" />
-                {streakDays}d
-              </Link>
-            )}
           </div>
         </div>
 

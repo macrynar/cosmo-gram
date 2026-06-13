@@ -11,7 +11,8 @@ import { z } from "zod";
 export const runtime = "nodejs";
 
 const BodySchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date:       z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  reading_id: z.string().uuid(),
 });
 
 const SYSTEM_PROMPT = `Jesteś astrolożką opisującą energię konkretnego dnia dla danej osoby.
@@ -33,25 +34,24 @@ export async function POST(req: NextRequest) {
   const body = BodySchema.safeParse(await req.json().catch(() => ({})));
   if (!body.success) return NextResponse.json({ error: "Nieprawidłowa data" }, { status: 400 });
 
-  const { date: dateStr } = body.data;
+  const { date: dateStr, reading_id: readingId } = body.data;
 
-  // Cache check
+  // Cache check — keyed by (reading_id, date) to avoid cross-reading contamination
   const { data: cached } = await supabaseAdmin
     .from("day_interpretations")
     .select("content")
-    .eq("user_id", user.id)
+    .eq("reading_id", readingId)
     .eq("date", dateStr)
     .maybeSingle();
 
   if (cached) return NextResponse.json({ content: cached.content, cached: true });
 
-  // Get natal chart
+  // Get natal chart for the specified reading (verify ownership)
   const { data: reading } = await supabaseAdmin
     .from("readings")
     .select("chart_data")
+    .eq("id", readingId)
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
     .maybeSingle();
 
   if (!reading?.chart_data) return NextResponse.json({ error: "Brak kosmogramu" }, { status: 404 });
@@ -89,12 +89,13 @@ export async function POST(req: NextRequest) {
     if (!content) return NextResponse.json({ error: "Błąd jakości AI" }, { status: 500 });
 
     await supabaseAdmin.from("day_interpretations").upsert({
-      user_id:      user.id,
-      date:         dateStr,
+      user_id:       user.id,
+      reading_id:    readingId,
+      date:          dateStr,
       content,
-      day_class:    "significant",
+      day_class:     "significant",
       transits_used: top3,
-      model:        "claude-haiku-4-5-20251001",
+      model:         "claude-haiku-4-5-20251001",
     });
 
     return NextResponse.json({ content, cached: false });
