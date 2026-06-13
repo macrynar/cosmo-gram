@@ -2,6 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import TodayBar from "@/components/calendar/TodayBar";
+import WhenBest from "@/components/calendar/WhenBest";
 import { ASPECT_LABEL_PL } from "@/lib/i18n/astro";
 import type { NatalChart } from "@/lib/astro-types";
 import type { TransitWindow, SkyEvent } from "@/lib/astro/layers";
@@ -37,6 +38,8 @@ export default function TodayView({
         skyEvents={skyEvents}
         onWindowClick={onWindowClick}
       />
+
+      <WhenBest chart={chart} isPremium={isPremium} />
 
       {isPremium && upcomingWindows.length > 0 && (
         <div className="glass-card rounded-2xl p-4">
