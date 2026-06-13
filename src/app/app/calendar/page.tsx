@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Sparkles } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
 import HorizonSwitcher, { type Horizon } from "@/components/calendar/HorizonSwitcher";
@@ -87,7 +87,8 @@ function useOnboarding() {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function CalendarPage() {
-  const router = useRouter();
+  const router       = useRouter();
+  const pathname     = usePathname();
   const searchParams = useSearchParams();
   const { session, loading: authLoading } = useAuth();
   const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
@@ -415,6 +416,16 @@ export default function CalendarPage() {
                     isPremium={isPremium}
                     readingId={selectedId}
                     year={year}
+                    chart={selectedReading?.chart_data ?? null}
+                    onDayClick={(date) => {
+                      const d = new Date(date + "T12:00:00Z");
+                      setYear(d.getUTCFullYear());
+                      setMonth(d.getUTCMonth() + 1);
+                      setSelectedDate(date);
+                      const p = new URLSearchParams(searchParams.toString());
+                      p.set("h", "month");
+                      router.replace(`${pathname}?${p.toString()}`);
+                    }}
                   />
                 )}
               </>

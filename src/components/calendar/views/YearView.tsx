@@ -2,18 +2,39 @@
 
 import SeasonsCard from "@/components/calendar/SeasonsCard";
 import YearReadingCard from "@/components/calendar/YearReadingCard";
+import YearWheel from "@/components/calendar/YearWheel";
 import type { Season } from "@/lib/astro/layers";
+import type { NatalChart } from "@/lib/astro-types";
 
 type Props = {
   seasons:   Season[];
   isPremium: boolean;
   readingId: string | null;
   year:      number;
+  chart:     NatalChart | null;
+  onDayClick?: (date: string) => void;
 };
 
-export default function YearView({ seasons, isPremium, readingId, year }: Props) {
+export default function YearView({ seasons, isPremium, readingId, year, chart, onDayClick }: Props) {
   return (
     <div className="space-y-4">
+      {/* Year wheel */}
+      {chart && (
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
+            Koło roku {year}
+          </p>
+          <YearWheel
+            year={year}
+            seasons={seasons}
+            chart={chart}
+            isPremium={isPremium}
+            onDayClick={onDayClick}
+          />
+        </div>
+      )}
+
+      {/* Seasons list */}
       {seasons.length > 0 ? (
         <SeasonsCard
           seasons={seasons}
@@ -31,14 +52,6 @@ export default function YearView({ seasons, isPremium, readingId, year }: Props)
       {readingId && (
         <YearReadingCard year={year} readingId={readingId} isPremium={isPremium} />
       )}
-
-      {/* YearWheel placeholder — Faza 5 */}
-      <div
-        className="glass-card rounded-2xl p-6 flex items-center justify-center"
-        style={{ minHeight: 180, border: "0.5px dashed rgba(255,174,61,0.15)" }}
-      >
-        <p className="text-xs text-slate-600">Koło roku — wkrótce</p>
-      </div>
     </div>
   );
 }
