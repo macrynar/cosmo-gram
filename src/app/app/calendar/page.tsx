@@ -414,6 +414,7 @@ export default function CalendarPage() {
                     seasons={shownSeasons}
                     isPremium={isPremium}
                     readingId={selectedId}
+                    year={year}
                   />
                 )}
               </>
