@@ -363,11 +363,6 @@ export default function AstroMatchPage() {
                   border: "1px solid #2B2540", borderRadius: "22px",
                   background: "#14101F", padding: "24px",
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
-                    <h3 style={{ fontSize: "12px", letterSpacing: ".2em", textTransform: "uppercase", color: "#E0B566" }}>
-                      Osoba 1
-                    </h3>
-                  </div>
                   <PersonBirthForm
                     label="Osoba 1"
                     accent="#FFAE3D"
@@ -382,11 +377,6 @@ export default function AstroMatchPage() {
                   border: "1px solid #2B2540", borderRadius: "22px",
                   background: "#14101F", padding: "24px",
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
-                    <h3 style={{ fontSize: "12px", letterSpacing: ".2em", textTransform: "uppercase", color: "#E0B566" }}>
-                      Osoba 2
-                    </h3>
-                  </div>
                   <PersonBirthForm
                     label="Osoba 2"
                     accent="#E0B566"
