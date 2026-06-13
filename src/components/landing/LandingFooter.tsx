@@ -21,16 +21,15 @@ export default function LandingFooter() {
         <div style={{ display:"flex", gap:56, flexWrap:"wrap" }}>
           <div>
             <h4 style={{ fontSize:13,letterSpacing:".1em",textTransform:"uppercase",color:"var(--text-muted)",marginBottom:14 }}>Produkt</h4>
-            <Link href="/app/cosmogram" style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Kosmogram</Link>
-            <Link href="/app/match"     style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Cosmo Match</Link>
-            <Link href="/app/calendar"  style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Kalendarz</Link>
-            <Link href="/app/chat"      style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Cosmo Chat</Link>
-            <a href="#s6"               style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Cennik</a>
+            <Link href="/cosmogram"  style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Kosmogram</Link>
+            <Link href="/match"      style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Cosmo Match</Link>
+            <Link href="/calendar"   style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Kalendarz</Link>
+            <Link href="/cosmo-chat" style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Cosmo Chat</Link>
+            <Link href="/pricing"    style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Cennik</Link>
           </div>
           <div>
             <h4 style={{ fontSize:13,letterSpacing:".1em",textTransform:"uppercase",color:"var(--text-muted)",marginBottom:14 }}>Poznaj</h4>
             <Link href="/app/cosmogram" style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Przykładowy kosmogram</Link>
-            <a href="#s7"               style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>FAQ</a>
           </div>
           <div>
             <h4 style={{ fontSize:13,letterSpacing:".1em",textTransform:"uppercase",color:"var(--text-muted)",marginBottom:14 }}>Formalności</h4>
