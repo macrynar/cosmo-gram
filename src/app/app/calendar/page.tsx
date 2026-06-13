@@ -25,7 +25,7 @@ import {
   type Season,
   type SkyEvent,
 } from "@/lib/astro/layers";
-import { selectShownSeasons, selectUpcoming } from "@/lib/astro/calendarSelectors";
+import { selectShownSeasons, selectUpcoming, selectGridBands } from "@/lib/astro/calendarSelectors";
 import { supabase } from "@/lib/supabase";
 import type { NatalChart } from "@/lib/astro-types";
 import { ROUTES } from "@/lib/routes";
@@ -141,7 +141,10 @@ export default function CalendarPage() {
     return getFastWindows(selectedReading.chart_data, year, month);
   }, [isPremium, selectedReading, year, month]);
 
-  const windowDateMap = useMemo(() => buildWindowDateMap(fastWindows), [fastWindows]);
+  const windowDateMap = useMemo(() => {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    return buildWindowDateMap(selectGridBands(fastWindows, daysInMonth));
+  }, [fastWindows, year, month]);
 
   // ── Layer 1: Seasons ──
   const seasons = useMemo<Season[]>(() => {
