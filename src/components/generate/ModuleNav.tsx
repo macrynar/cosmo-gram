@@ -101,16 +101,16 @@ export default function ModuleNav({ visibleIds }: Props) {
     <div
       className="sticky top-16 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 mb-6"
       style={{
-        background:   "rgba(5,4,14,0.92)",
-        borderBottom: "0.5px solid rgba(212,175,55,0.10)",
+        background:   "rgba(11,9,18,0.92)",
+        borderBottom: "0.5px solid rgba(224,181,102,0.10)",
         backdropFilter: "blur(16px)",
       }}
     >
       {/* Reading progress line */}
-      <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "rgba(212,175,55,0.07)" }}>
+      <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "rgba(224,181,102,0.07)" }}>
         <div
           className="h-full transition-all duration-500"
-          style={{ width: `${progress}%`, background: "rgba(212,175,55,0.38)" }}
+          style={{ width: `${progress}%`, background: "rgba(224,181,102,0.38)" }}
         />
       </div>
 
@@ -129,9 +129,9 @@ export default function ModuleNav({ visibleIds }: Props) {
               className="flex items-center gap-1 px-2.5 py-1 rounded-full whitespace-nowrap transition-all duration-300 shrink-0"
               style={
                 isActive ? {
-                  background: "rgba(212,175,55,0.14)",
-                  border:     "0.5px solid rgba(212,175,55,0.42)",
-                  color:      "rgba(212,175,55,0.95)",
+                  background: "rgba(224,181,102,0.14)",
+                  border:     "0.5px solid rgba(224,181,102,0.42)",
+                  color:      "rgba(224,181,102,0.95)",
                 } : isVisible ? {
                   border:  "0.5px solid transparent",
                   color:   "rgba(100,116,139,0.80)",
@@ -144,7 +144,7 @@ export default function ModuleNav({ visibleIds }: Props) {
               }
             >
               {isRead && !isActive && (
-                <span style={{ fontSize: "8px", color: "rgba(212,175,55,0.45)" }}>✓</span>
+                <span style={{ fontSize: "8px", color: "rgba(224,181,102,0.45)" }}>✓</span>
               )}
               <span style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.04em" }}>
                 {i + 1}. {SHORT_NAMES[id]}
