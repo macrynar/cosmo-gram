@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kosmogram Dziecka — redesign v3 · mockup</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-base:#0B0912;--bg-elevated:#14101F;--text-primary:#F4F1EA;--text-secondary:#B6AFC6;
+  --text-muted:#877FA0;--accent:#FFAE3D;--accent-deep:#E0B566;--voice:#E9DCC0;
+  --line:#2B2540;--line-soft:rgba(182,175,198,.14);--tense:#E2654A;--ease:cubic-bezier(.22,1,.36,1);
+}
+*{margin:0;box-sizing:border-box}
+body{background:radial-gradient(120% 90% at 50% 0%,#1A1530 0%,#0B0912 70%) fixed var(--bg-base);
+  color:var(--text-primary);font-family:'General Sans',system-ui,sans-serif;padding-bottom:80px}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:70;opacity:.045;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.nav{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,9,18,.7);backdrop-filter:blur(10px);z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600}
+.tabs{display:flex;gap:4px}.tab{padding:8px 15px;border-radius:999px;color:var(--text-muted);font-size:14px;text-decoration:none}
+.tab.on{color:var(--voice);background:rgba(224,181,102,.10);border:1px solid var(--line)}
+.ava{width:33px;height:33px;border-radius:50%;border:1px solid var(--accent-deep);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--accent-deep)}
+
+.wrap{max-width:1040px;margin:0 auto;padding:34px 22px 0}
+.center{text-align:center}
+.mode{display:inline-flex;padding:5px;border-radius:13px;background:var(--bg-elevated);border:1px solid var(--line);margin:0 auto 22px}
+.mode button{border:none;background:none;color:var(--text-muted);font-size:14.5px;padding:9px 22px;border-radius:9px;cursor:pointer;transition:.2s var(--ease)}
+.mode button.on{background:rgba(224,181,102,.12);color:var(--voice);box-shadow:inset 0 0 0 1px var(--line)}
+h1{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(32px,4.6vw,46px);letter-spacing:.01em;margin-bottom:6px}
+h1 .hl{background:linear-gradient(110deg,#FFF8EC 0%,#FFD9A0 55%,#E8BE78 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:var(--text-muted);font-size:14.5px;max-width:540px;margin:0 auto 26px;line-height:1.55}
+
+/* pasek-przełącznik (wspólny z dorosłym) */
+.rail{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;margin-bottom:24px}
+.pp{display:flex;align-items:center;gap:11px;padding:9px 16px 9px 9px;border-radius:14px;border:1px solid var(--line);background:var(--bg-elevated);cursor:pointer;white-space:nowrap;flex:0 0 auto;transition:border-color .2s var(--ease),box-shadow .25s var(--ease)}
+.pp:hover{border-color:var(--accent-deep)}.pp.on{border-color:var(--accent-deep);box-shadow:0 0 30px rgba(255,174,61,.1)}
+.pp .av{width:40px;height:40px;border-radius:10px;overflow:hidden;border:1px solid var(--line-soft);flex:0 0 auto}
+.pp .av img{width:100%;height:100%;object-fit:cover}
+.pp .nm{font-size:15px;font-weight:600}.pp .mt{font-size:12px;color:var(--text-muted)}
+.pp.add{padding:9px 18px;border-style:dashed;color:var(--accent-deep);align-self:center}
+
+/* ── ALTAR (koło + Wielka Trójka) — z adult-podglądu ── */
+.altar{background:radial-gradient(ellipse at 50% 0%,rgba(26,21,48,.55) 0%,var(--bg-base) 70%);border:1px solid var(--line);border-radius:24px;padding:30px 24px;position:relative;overflow:hidden}
+.altar::before{content:'';position:absolute;inset:0;pointer-events:none;border-radius:24px;background:radial-gradient(80% 60% at 70% 12%,rgba(94,72,162,.18) 0,transparent 60%),radial-gradient(60% 50% at 18% 85%,rgba(38,99,138,.12) 0,transparent 60%)}
+.kicker{position:relative;z-index:1;text-align:center;margin-bottom:18px}
+.kicker .eb{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--accent-deep)}
+.kicker h2{font-family:'Fraunces',serif;font-weight:500;font-size:26px;margin-top:4px}
+.grid{position:relative;z-index:1;display:grid;grid-template-columns:176px minmax(0,1fr) 176px;grid-template-rows:auto auto;column-gap:28px;row-gap:24px;align-items:center;justify-items:center}
+.card{position:relative;cursor:pointer;background:var(--bg-elevated);border:1px solid var(--line);border-radius:16px;padding:16px;width:176px;text-align:center;transition:border-color .25s var(--ease),box-shadow .3s var(--ease)}
+.card:hover{border-color:var(--accent-deep);box-shadow:0 0 48px rgba(255,174,61,.14)}
+.card .portrait{position:relative;width:100%;aspect-ratio:1;border-radius:12px;overflow:hidden;border:1px solid var(--line-soft)}
+.card .portrait img{width:100%;height:100%;object-fit:cover;transition:transform .3s var(--ease)}.card:hover .portrait img{transform:scale(1.02)}
+.card .lab{margin-top:14px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-deep)}
+.card .sign{margin-top:5px;font-weight:600;font-size:21px;color:var(--text-primary)}
+.card .meta{margin-top:3px;font-size:14px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.tip{position:absolute;left:50%;margin-left:-120px;width:240px;z-index:60;pointer-events:none;text-align:center;padding:14px 16px;border-radius:14px;background:var(--bg-elevated);border:1px solid var(--line);box-shadow:0 12px 48px rgba(0,0,0,.55);opacity:0;visibility:hidden;transition:opacity .22s var(--ease),transform .22s var(--ease)}
+.tip.above{bottom:calc(100% + 12px);transform:translateY(4px)}.tip.below{top:calc(100% + 12px);transform:translateY(-4px)}
+.card:hover .tip{opacity:1;visibility:visible;transform:translateY(0)}
+.tip .te{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-deep);margin-bottom:8px}
+.tip .tq{font-family:'Fraunces',serif;font-style:italic;font-size:13px;line-height:1.45;color:var(--voice);margin-bottom:8px}
+.tip .td{font-size:11.5px;line-height:1.5;color:var(--text-muted)}
+.chips{position:relative;z-index:1;margin-top:24px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.cchip{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--bg-elevated);border:1px solid var(--line)}
+.cchip .l,.cchip{font-size:11px}
+.cchip .l{font-weight:600;letter-spacing:.06em;font-size:10px;color:var(--accent-deep)}
+.cchip .v{font-size:11px;color:var(--text-secondary);font-variant-numeric:tabular-nums}
+.micro{position:relative;z-index:1;text-align:center;color:var(--text-muted);font-size:11px;margin-top:16px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+
+/* ── moduły ── */
+.modwrap{margin-top:34px}
+.modnav{position:relative;max-width:680px;margin:0 auto 22px;border-bottom:.5px solid rgba(224,181,102,.10)}
+.modnav .row{display:flex;align-items:center;gap:3px;justify-content:flex-start;overflow-x:auto;padding-bottom:9px;scrollbar-width:none}
+.modnav .row::-webkit-scrollbar{display:none}
+.mnav{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;white-space:nowrap;border:.5px solid transparent;background:none;font-size:11px;font-weight:500;letter-spacing:.04em;font-family:inherit;cursor:default;transition:.25s var(--ease);flex:0 0 auto}
+.mnav .ck{font-size:8px;color:rgba(224,181,102,.45)}
+.mnav.locked{color:rgba(135,127,160,.30)}
+.mnav.vis{color:rgba(182,175,198,.80);cursor:pointer}
+.mnav.on{background:rgba(224,181,102,.14);border-color:rgba(224,181,102,.42);color:rgba(224,181,102,.95)}
+.modnav .ul{position:absolute;bottom:-.5px;left:0;width:0;height:1.5px;background:rgba(224,181,102,.70);transition:left .4s var(--ease),width .4s var(--ease)}
+.modlist{display:flex;flex-direction:column;gap:16px;max-width:760px;margin:0 auto}
+.modcard{position:relative;border:1px solid var(--line);border-radius:18px;background:var(--bg-elevated);padding:24px;overflow:hidden}
+.modcard .mh{display:flex;align-items:center;gap:8px;margin-bottom:10px}.modcard .mh svg{width:15px;height:15px;color:var(--accent-deep)}
+.modcard .mh .et{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-deep)}
+.modcard .q{font-family:'Fraunces',serif;font-style:italic;font-size:19px;line-height:1.4;color:var(--voice);margin-bottom:14px}
+.modcard .meters{display:flex;flex-direction:column;gap:11px;margin-bottom:16px}
+.modcard .mr{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-secondary);margin-bottom:5px}.modcard .mr b{color:var(--accent-deep);font-variant-numeric:tabular-nums}
+.modcard .bar{height:6px;border-radius:999px;background:rgba(182,175,198,.08);overflow:hidden}.modcard .bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(to right,rgba(224,181,102,.6),var(--accent))}
+.modcard p{color:var(--text-secondary);font-size:15px;line-height:1.7;margin-bottom:10px}
+.modcard .tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.modcard .tags span{font-size:11.5px;color:var(--accent-deep);border:1px solid var(--line);border-radius:999px;padding:4px 11px;background:rgba(224,181,102,.05)}
+.modcard.locked{min-height:180px;background:rgba(11,9,18,.50);border-color:rgba(224,181,102,.08);padding:0}
+.modcard.locked .fake{padding:24px;filter:blur(3px);opacity:.4;user-select:none;pointer-events:none}
+.modcard.locked .fake .s{height:11px;border-radius:999px;margin-bottom:13px}
+.lockov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;background:rgba(11,9,18,.78);backdrop-filter:blur(6px);border-radius:18px}
+.lockov .ic{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:.5px solid rgba(224,181,102,.38);background:rgba(224,181,102,.12)}.lockov .ic svg{width:16px;height:16px;color:var(--accent-deep)}
+.lockov b{font-family:'Fraunces',serif;font-weight:500;font-size:16px;color:var(--voice)}.lockov span{font-size:12px;color:var(--text-muted)}
+.lockov a{margin-top:3px;padding:6px 16px;border-radius:999px;border:.5px solid rgba(224,181,102,.35);background:rgba(224,181,102,.12);color:var(--accent-deep);font-size:12px;font-weight:600;text-decoration:none}
+</style></head>
+<body>
+<nav class="nav">
+  <div class="brand"><svg width="22" height="22" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>cosmogram</div>
+  <div class="tabs"><a class="tab on">Kosmogram</a><a class="tab">Kalendarz</a><a class="tab">Cosmo Match</a><a class="tab">Cosmo Chat</a></div>
+  <div class="ava">MR</div>
+</nav>
+<div class="wrap">
+  <div class="center">
+    <div class="mode"><button id="mAdult">Twój kosmogram</button><button id="mChild" class="on">Kosmogram dziecka</button></div>
+    <h1>Kosmogram <span class="hl">Dziecka</span></h1>
+    <p class="sub">Temperament, potrzeby emocjonalne i wskazówki dla rodzica — dla dzieci poniżej 13 lat.</p>
+  </div>
+  <div class="rail" id="rail"></div>
+
+  <section class="altar">
+    <div class="kicker"><div class="eb">Kosmogram natalny</div><h2 id="altHead"></h2></div>
+    <div class="grid">
+      <div style="grid-column:2;grid-row:1"><div class="card" id="c-sun"></div></div>
+      <div style="grid-column:1;grid-row:2"><div class="card" id="c-asc"></div></div>
+      <div style="grid-column:2;grid-row:2;width:100%;position:relative">
+        <div id="backdrop" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:92%;max-width:520px;aspect-ratio:1;border-radius:50%;opacity:.9;overflow:hidden;pointer-events:none"></div>
+        <svg id="wheel" viewBox="0 0 600 600" style="position:relative;width:100%;display:block" aria-label="Koło kosmogramu dziecka"></svg>
+      </div>
+      <div style="grid-column:3;grid-row:2"><div class="card" id="c-moon"></div></div>
+    </div>
+    <div class="chips" id="chips"></div>
+    <p class="micro">Najedź na kartę lub planetę po dodatkowe informacje · kliknij planetę po aspekty</p>
+  </section>
+
+  <div class="modwrap">
+    <div class="center" style="margin-bottom:18px"><div style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-deep);margin-bottom:6px" id="modEb"></div><h2 style="font-family:'Fraunces',serif;font-weight:500;font-size:26px" id="modHead"></h2></div>
+    <div class="modnav"><div class="row" id="modrow"></div><span class="ul" id="modul"></span></div>
+    <div class="modlist" id="modlist"></div>
+  </div>
+</div>
+
+<script>
+const CDN="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/";
+const POR={aquarius:CDN+"hf_20260612_203213_cd197183-adea-43cc-aa31-d33b4798e97e.png",
+ scorpio:CDN+"hf_20260612_203155_3e74c744-13f9-4271-b6fe-ed46156c5da2.png",
+ leo:CDN+"hf_20260612_203135_9bb395cd-4395-4540-8bd8-108da9104cde.png",
+ capricorn:CDN+"hf_20260612_203210_6fe0a235-4da0-4d16-a6da-a6f9ecc1ef90.png"};
+const KEYS=["aries","taurus","gemini","cancer","leo","virgo","libra","scorpio","sagittarius","capricorn","aquarius","pisces"];
+const PL=["Baran","Byk","Bliźnięta","Rak","Lew","Panna","Waga","Skorpion","Strzelec","Koziorożec","Wodnik","Ryby"];
+const PLN={aquarius:"Wodnik",scorpio:"Skorpion",leo:"Lew",capricorn:"Koziorożec"};
+const ELN={aquarius:"Powietrze",scorpio:"Woda",leo:"Ogień",capricorn:"Ziemia"};
+const G={
+ aries:'<path d="M12 20V8 M12 8C12 4.6 9.6 3.4 7.9 4.7C6.1 6.1 6.2 9 7.9 10.7 M12 8C12 4.6 14.4 3.4 16.1 4.7C17.9 6.1 17.8 9 16.1 10.7"/>',
+ taurus:'<path d="M5.5 4C7 7.4 9.3 8.8 12 8.8C14.7 8.8 17 7.4 18.5 4"/><circle cx="12" cy="14.2" r="5.2"/>',
+ gemini:'<path d="M9 6.8V17.2 M15 6.8V17.2 M5.2 4.6C8 6.4 16 6.4 18.8 4.6 M5.2 19.4C8 17.6 16 17.6 18.8 19.4"/>',
+ cancer:'<circle cx="8.1" cy="9.3" r="2.6"/><circle cx="15.9" cy="14.7" r="2.6"/><path d="M8.1 6.7C13 6.7 16.9 8.4 18.7 11 M15.9 17.3C11 17.3 7.1 15.6 5.3 13"/>',
+ leo:'<circle cx="7.4" cy="15.8" r="2.5"/><path d="M7.4 13.3C7.4 8.2 9.8 5.4 12.8 5.4C15.7 5.4 17.2 7.6 17.2 9.8C17.2 12.4 15.2 13.8 15.2 16.4C15.2 18.2 16.4 19 17.9 18.5"/>',
+ virgo:'<path d="M4.4 6.2C5.7 6.2 6.5 7.1 6.5 8.6V16.8 M6.5 8.6C6.5 6.9 7.6 6 8.8 6C10.1 6 10.9 7 10.9 8.6V16.8 M10.9 8.6C10.9 6.9 12 6 13.2 6C14.5 6 15.3 7 15.3 8.6V14.2C15.3 17.6 17.2 19 19.6 18.4 M18.9 12.9C16.8 13.8 15.6 15.9 15.3 19.6"/>',
+ libra:'<path d="M4.8 18.6H19.2 M4.8 14.6H8.6C8.6 11 9.9 8.4 12 8.4C14.1 8.4 15.4 11 15.4 14.6H19.2"/>',
+ scorpio:'<path d="M4.4 6.2C5.7 6.2 6.5 7.1 6.5 8.6V16.8 M6.5 8.6C6.5 6.9 7.6 6 8.8 6C10.1 6 10.9 7 10.9 8.6V16.8 M10.9 8.6C10.9 6.9 12 6 13.2 6C14.5 6 15.3 7 15.3 8.6V13.6C15.3 16.5 16.9 18.2 19.6 18.2 M19.6 18.2L17.5 16.5 M19.6 18.2L17.6 19.9"/>',
+ sagittarius:'<path d="M5.4 18.6L18.6 5.4 M18.6 5.4H13.9 M18.6 5.4V10.1 M8.6 11.6L12.4 15.4"/>',
+ capricorn:'<path d="M4.2 6.6C5.6 4.9 7.7 5.4 8.2 7.5C8.9 10.4 9.7 13.3 10.5 15.6 M10.5 15.6C11.2 12.1 12.2 8.2 13.7 7C15.2 5.9 16.4 6.9 16.4 8.6C16.4 10.3 15.1 11.1 15.1 13.1C15.1 15.4 16.7 16.4 18.1 15.7C19.6 15 19.8 12.9 18.6 12"/>',
+ aquarius:'<path d="M4.6 9.6L8.1 6.6L11.6 9.6L15.1 6.6L18.6 9.6 M4.6 16.8L8.1 13.8L11.6 16.8L15.1 13.8L18.6 16.8"/>',
+ pisces:'<path d="M7.2 4.6C9.9 7.6 9.9 16.4 7.2 19.4 M16.8 4.6C14.1 7.6 14.1 16.4 16.8 19.4 M5.6 12H18.4"/>'};
+const ICONS={
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/>',
+ moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>',
+ sprout:'<path d="M7 20h10M12 20V11M12 11C12 7.5 9.5 6 6 6.5 6 10 8.5 11.5 12 11M12 11c0-2.8 2-4.5 5-4 0 2.8-2 4.5-5 4"/>',
+ star:'<path d="M12 3.5l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 9.2l5.4-.8z"/>',
+ heart:'<path d="M12 20.3l-1.3-1.2C6 14.8 3.5 12.5 3.5 9.4 3.5 7 5.4 5.2 7.7 5.2c1.3 0 2.6.6 3.4 1.6.8-1 2.1-1.6 3.4-1.6 2.3 0 4.2 1.8 4.2 4.2 0 3.1-2.5 5.4-7.2 9.7L12 20.3z"/>',
+ users:'<circle cx="9" cy="8" r="3"/><path d="M3.5 20c0-3.3 2.4-5 5.5-5s5.5 1.7 5.5 5"/><circle cx="17.5" cy="9.5" r="2.2"/><path d="M16.5 14.2c2.7 0 4 1.4 4 3.8"/>'};
+const ic=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]}</svg>`;
+const lock=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`;
+const MODULES=[
+ {ic:'sun',t:'Temperament',sn:'Temperament',free:true,meters:[['Ciekawość',82],['Wrażliwość',74]],tags:['ciekawski','niezależny','wrażliwy']},
+ {ic:'moon',t:'Świat emocji',sn:'Emocje'},
+ {ic:'sprout',t:'Jak poznaje świat',sn:'Poznawanie'},
+ {ic:'star',t:'Talenty i mocne strony',sn:'Talenty'},
+ {ic:'heart',t:'Wskazówki dla rodzica',sn:'Rodzic'},
+ {ic:'users',t:'Relacje z rówieśnikami',sn:'Rówieśnicy'}];
+
+const KIDS=[
+ {name:'Eryk',age:'5 lat',place:'Białystok',asc:122,mc:32,
+  sun:{sign:'aquarius',deg:6},ascl:{sign:'leo',deg:2},moon:{sign:'scorpio',deg:24},
+  P:[{n:'Słońce',s:'☉',lon:306},{n:'Księżyc',s:'☽',lon:234},{n:'Merkury',s:'☿',lon:314},{n:'Wenus',s:'♀',lon:322},{n:'Mars',s:'♂',lon:176},{n:'Jowisz',s:'♃',lon:70},{n:'Saturn',s:'♄',lon:318}],
+  lead:'„Mały odkrywca z gorącym sercem — myśli po swojemu, a czuje głębiej, niż pokazuje.”',
+  body:'<p>Eryk łączy niezależny, ciekawski umysł (Słońce w Wodniku) z intensywnym światem emocji (Księżyc w Skorpionie). Na zewnątrz bywa pewny siebie i błyskotliwy, w środku przeżywa mocno — choć nie zawsze to pokazuje.</p><p>Dla rodzica: dawaj mu przestrzeń na własne „dlaczego” i pomysły, ale nie przegap chwil, gdy milknie — wtedy najbardziej potrzebuje bliskości i nazwania uczuć.</p>'},
+ {name:'Hania',age:'4 lata',place:'Kraków',asc:272,mc:182,
+  sun:{sign:'scorpio',deg:24},ascl:{sign:'capricorn',deg:5},moon:{sign:'aquarius',deg:11},
+  P:[{n:'Słońce',s:'☉',lon:234},{n:'Księżyc',s:'☽',lon:311},{n:'Merkury',s:'☿',lon:240},{n:'Wenus',s:'♀',lon:222},{n:'Mars',s:'♂',lon:95},{n:'Jowisz',s:'♃',lon:18},{n:'Saturn',s:'♄',lon:300}],
+  lead:'„Cicha siła — obserwuje, zanim zaufa, i kocha całą sobą.”',
+  body:'<p>Hania czuje świat intensywnie (Słońce w Skorpionie), ale przetwarza go z dystansem i logiką (Księżyc w Wodniku). Potrzebuje czasu, by się otworzyć — i poczucia, że jej granice są szanowane.</p><p>Dla rodzica: stałość i przewidywalność dają jej oparcie; nie naciskaj na „bądź bardziej otwarta” — zaufanie przychodzi u niej powoli, ale na zawsze.</p>'}];
+
+const CX=300,CY=300,FE="︎",NS="http://www.w3.org/2000/svg";
+const R_OUTER=278,R_ZODIAC=242,R_SIGN=260,R_HOUT=218,R_HIN=196,R_HNUM=207,R_PL=172,R_HUB=92,R_ASP=150;
+function el(t,at){const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);return e;}
+function drawWheel(asc,mc,P){
+  const W=document.getElementById('wheel');W.innerHTML='';
+  const ang=lon=>Math.PI-((lon-asc+360)%360)*Math.PI/180, xy=(a,r)=>[CX+r*Math.cos(a),CY+r*Math.sin(a)];
+  const occ=new Set(P.map(p=>Math.floor(((p.lon%360)+360)%360/30)));
+  const defs=el('defs');defs.innerHTML='<radialGradient id="hub"><stop offset="55%" stop-color="rgba(255,174,61,0)"/><stop offset="100%" stop-color="rgba(255,174,61,.08)"/></radialGradient><radialGradient id="disc"><stop offset="0%" stop-color="#14101F"/><stop offset="100%" stop-color="#0B0912"/></radialGradient>';W.appendChild(defs);
+  for(let i=0;i<12;i+=2){const sA=ang(i*30),eA=ang((i+1)*30);const[a,b]=xy(sA,R_OUTER),[c,d]=xy(eA,R_OUTER),[e2,f]=xy(eA,R_ZODIAC),[g2,h]=xy(sA,R_ZODIAC);
+   W.appendChild(el('path',{fill:'rgba(224,181,102,.03)',d:`M ${a} ${b} A ${R_OUTER} ${R_OUTER} 0 0 0 ${c} ${d} L ${e2} ${f} A ${R_ZODIAC} ${R_ZODIAC} 0 0 1 ${g2} ${h} Z`}));}
+  [[R_OUTER,'rgba(224,181,102,.30)'],[R_ZODIAC,'#2B2540'],[R_HOUT,'rgba(43,37,64,.7)'],[R_HIN,'rgba(43,37,64,.55)']].forEach(([r,st])=>W.appendChild(el('circle',{cx:CX,cy:CY,r,fill:'none',stroke:st,'stroke-width':1})));
+  for(let d=0;d<360;d+=5){if(d%30===0)continue;const a=ang(d),L=d%10===0?9:5;const[x1,y1]=xy(a,R_ZODIAC),[x2,y2]=xy(a,R_ZODIAC-L);W.appendChild(el('line',{x1,y1,x2,y2,stroke:'#2B2540','stroke-width':.8,opacity:.55}));}
+  for(let i=0;i<12;i++){const a=ang(i*30);const[x1,y1]=xy(a,R_OUTER),[x2,y2]=xy(a,R_ZODIAC);W.appendChild(el('line',{x1,y1,x2,y2,stroke:'#2B2540','stroke-width':1,opacity:.7}));
+   const[gx,gy]=xy(ang(i*30+15),R_SIGN);const on=occ.has(i);const sv=el('svg',{x:gx-11,y:gy-11,width:22,height:22,viewBox:'0 0 24 24',fill:'none'});
+   sv.style.color=on?'#E0B566':'#877FA0';sv.style.opacity=on?1:.65;sv.innerHTML=`<g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none">${G[KEYS[i]]}</g>`;W.appendChild(sv);}
+  for(let k=0;k<12;k++){const lon=(asc+k*30)%360,a=ang(lon);const[x1,y1]=xy(a,R_ZODIAC-2),[x2,y2]=xy(a,R_HUB+2);const angular=[0,3,6,9].includes(k);
+   W.appendChild(el('line',{x1,y1,x2,y2,stroke:angular?'rgba(224,181,102,.28)':'rgba(43,37,64,.55)','stroke-width':angular?1:.6,'stroke-dasharray':angular?'':'3 5'}));
+   const[nx,ny]=xy(ang(lon+15),R_HNUM);const t=el('text',{x:nx,y:ny,'text-anchor':'middle','dominant-baseline':'central','font-size':10.5,fill:'#877FA0','fill-opacity':angular?.9:.55});t.style.fontFamily="'General Sans',sans-serif";t.textContent=k+1;W.appendChild(t);}
+  W.appendChild(el('circle',{cx:CX,cy:CY,r:R_HUB+26,fill:'url(#hub)'}));W.appendChild(el('circle',{cx:CX,cy:CY,r:R_HUB,fill:'url(#disc)',stroke:'#2B2540','stroke-width':1}));
+  const brand=el('g',{transform:`translate(${CX},${CY}) scale(.42)`,fill:'#E0B566',opacity:.2});brand.innerHTML='<path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/>';W.appendChild(brand);
+  const byN=Object.fromEntries(P.map(p=>[p.n,p]));
+  [['Słońce','Merkury','h'],['Księżyc','Wenus','h'],['Saturn','Mars','t']].forEach(([a1,a2,t])=>{const p=byN[a1],q=byN[a2];if(!p||!q)return;const[x1,y1]=xy(ang(p.lon),R_ASP),[x2,y2]=xy(ang(q.lon),R_ASP);W.appendChild(el('line',{x1,y1,x2,y2,stroke:t==='h'?'#E0B566':'#E2654A','stroke-width':1.1,opacity:.45,'stroke-dasharray':t==='t'?'4 3':''}));});
+  P.forEach(p=>{const a=ang(p.lon);const[gx,gy]=xy(a,R_PL),[dx,dy]=xy(a,R_PL-22),[lx,ly]=xy(a,R_PL-44);
+   const halo=el('circle',{cx:gx,cy:gy,r:11,fill:'#FFAE3D',opacity:.2});halo.style.filter='blur(3.2px)';W.appendChild(halo);
+   W.appendChild(el('circle',{cx:dx,cy:dy,r:3.4,fill:'#FFAE3D'}));
+   const g=el('text',{x:gx,y:gy,'text-anchor':'middle','dominant-baseline':'central','font-size':16,fill:'#E9DCC0'});g.style.fontFamily="system-ui,'Segoe UI Symbol',sans-serif";g.textContent=p.s+FE;W.appendChild(g);
+   const deg=Math.floor(((p.lon%360)+360)%360%30);const lt=el('text',{x:lx,y:ly,'text-anchor':'middle','dominant-baseline':'central','font-size':10,fill:'#877FA0'});lt.style.fontFamily="'General Sans',sans-serif";lt.textContent=deg+'°';W.appendChild(lt);});
+  function axis(lon,lab,strong){const a=ang(lon);const[x1,y1]=xy(a,R_OUTER+2),[x2,y2]=xy(a,R_HUB),[lx,ly]=xy(a,R_OUTER+18);
+   W.appendChild(el('line',{x1,y1,x2,y2,stroke:'#E0B566','stroke-width':1.5,'stroke-opacity':strong?.7:.28,'stroke-dasharray':strong?'':'5 4'}));
+   const t=el('text',{x:lx,y:ly,'text-anchor':'middle','dominant-baseline':'central','font-size':11,fill:'#877FA0','fill-opacity':strong?1:.55});t.style.fontFamily="'General Sans',sans-serif";t.style.letterSpacing='.08em';t.textContent=lab;W.appendChild(t);}
+  axis(asc,'ASC',true);axis((asc+180)%360,'DSC',false);axis(mc,'MC',true);axis((mc+180)%360,'IC',false);
+}
+function card(id,lab,sign,deg,side,tipDesc){
+ document.getElementById(id).innerHTML=`<div class="portrait"><img src="${POR[sign]}" alt="${PLN[sign]}"></div>
+  <div class="lab">${lab}</div><div class="sign">${PLN[sign]}</div><div class="meta">${deg}° · ${ELN[sign]}</div>
+  <div class="tip ${side}"><div class="te">${lab} w ${PLN[sign]}</div><div class="td">${tipDesc}</div></div>`;}
+function glyphSvg(i,c){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="color:${c}"><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none">${G[KEYS[i]]}</g></svg>`;}
+
+let sel=0;
+function render(){
+  const k=KIDS[sel];
+  document.getElementById('rail').innerHTML=KIDS.map((x,i)=>`<div class="pp ${i===sel?'on':''}" data-i="${i}"><div class="av"><img src="${POR[x.sun.sign]}" alt=""></div><div><div class="nm">${x.name}</div><div class="mt">${x.age} · ${x.place}</div></div></div>`).join('')+'<div class="pp add">＋ Dodaj dziecko</div>';
+  document.querySelectorAll('.pp[data-i]').forEach(p=>p.onclick=()=>{sel=+p.dataset.i;render();window.scrollTo({top:0,behavior:'smooth'})});
+  document.getElementById('altHead').textContent='Wielka Trójka — '+k.name;
+  drawWheel(k.asc,k.mc,k.P);
+  card('c-sun','Słońce',k.sun.sign,k.sun.deg,'below','Pokazuje rdzeń dziecka — kim jest z natury i co je napędza.');
+  card('c-asc','Ascendent',k.ascl.sign,k.ascl.deg,'above','Pierwsze wrażenie i instynktowna reakcja na świat.');
+  card('c-moon','Księżyc',k.moon.sign,k.moon.deg,'above','Świat emocji i to, czego potrzebuje, by czuć się bezpiecznie.');
+  const ci=s=>KEYS.indexOf(s);
+  document.getElementById('chips').innerHTML=[['ASC',k.ascl.sign,k.ascl.deg],['SŁOŃCE',k.sun.sign,k.sun.deg],['KSIĘŻYC',k.moon.sign,k.moon.deg]]
+    .map(([l,s,d])=>`<div class="cchip">${glyphSvg(ci(s),'#E0B566')}<span class="l">${l}</span><span class="v">${d}° ${PLN[s]}</span></div>`).join('');
+  document.getElementById('backdrop').innerHTML='<img src="../../public/assets/landing/wheel-backdrop.png" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">';
+  document.getElementById('modEb').textContent='Karta dziecka';
+  document.getElementById('modHead').textContent='Co mówi niebo o '+k.name;
+  document.getElementById('modrow').innerHTML=MODULES.map((m,i)=>{
+    const cls=i===0?'on':'locked';
+    return `<button class="mnav ${cls}" data-i="${i}"><span>${i+1}. ${m.sn}</span></button>`;}).join('');
+  // ruchoma kreska pod aktywną pozycją (jak u dorosłego)
+  requestAnimationFrame(()=>{const act=document.querySelector('.mnav.on'),nav=document.querySelector('.modnav'),ul=document.getElementById('modul');
+    if(act&&nav&&ul){const r=act.getBoundingClientRect(),n=nav.getBoundingClientRect();ul.style.left=(r.left-n.left)+'px';ul.style.width=r.width+'px';}});
+  document.getElementById('modlist').innerHTML=MODULES.map(m=>{
+    if(m.free) return `<div class="modcard"><div class="mh">${ic(m.ic)}<span class="et">${m.t}</span></div><div class="q">${k.lead}</div>
+      <div class="meters">${m.meters.map(x=>`<div><div class="mr"><span>${x[0]}</span><b>${x[1]}</b></div><div class="bar"><i style="width:${x[1]}%"></i></div></div>`).join('')}</div>
+      ${k.body}<div class="tags">${m.tags.map(t=>`<span>${t}</span>`).join('')}</div></div>`;
+    return `<div class="modcard locked">
+      <div class="fake"><div class="s" style="width:33%;background:rgba(224,181,102,.25)"></div><div class="s" style="width:66%;height:15px;background:rgba(255,255,255,.10)"></div><div class="s" style="width:100%;background:rgba(255,255,255,.06)"></div><div class="s" style="width:84%;background:rgba(255,255,255,.06)"></div><div class="s" style="width:78%;background:rgba(255,255,255,.06)"></div></div>
+      <div class="lockov"><div class="ic">${lock}</div><b>${m.t}</b><span>Dostępne w planie Plus</span><a href="#">Odblokuj →</a></div></div>`;
+  }).join('');
+}
+render();
+const a=document.getElementById('mAdult'),c=document.getElementById('mChild');
+a.onclick=()=>{a.classList.add('on');c.classList.remove('on')};c.onclick=()=>{c.classList.add('on');a.classList.remove('on')};
+</script>
+</body></html>

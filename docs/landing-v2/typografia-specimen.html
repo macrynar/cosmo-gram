@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cosmogram — specimen typograficzny (tokeny v1)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=switzer@400,500,600&f[]=cabinet-grotesk@500,700,800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-base:#0B0912; --bg-elevated:#14101F;
+    --text-primary:#F4F1EA; --text-secondary:#B6AFC6; --text-muted:#877FA0;
+    --accent:#FFAE3D; --accent-deep:#E0B566; --on-accent:#201405;
+    --voice:#E9DCC0; --line:#2B2540;
+  }
+  *{margin:0;box-sizing:border-box}
+  body{
+    background:radial-gradient(120% 90% at 50% 0%, #1A1530 0%, #0B0912 70%) fixed var(--bg-base);
+    color:var(--text-primary); padding:64px 24px 128px;
+    font-family:'General Sans', system-ui, sans-serif;
+  }
+  .wrap{max-width:1140px;margin:0 auto}
+  h1.page{font-family:'Space Grotesk';font-size:28px;font-weight:700;letter-spacing:-.01em}
+  .lede{color:var(--text-secondary);margin:8px 0 64px;font-size:17px;line-height:1.6}
+  section{border-top:1px solid var(--line);padding:48px 0}
+  .label{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-deep);margin-bottom:24px;display:flex;align-items:center;gap:12px}
+  .badge{font-size:11px;letter-spacing:.05em;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--text-muted)}
+  .badge.ok{color:#7ED9A0;border-color:#2C4A38}
+  .badge.bad{color:#E2654A;border-color:#5A2B22}
+  .h1demo{font-size:64px;line-height:1.05;letter-spacing:-.02em;font-weight:700;margin-bottom:16px}
+  .glyphs{font-size:40px;letter-spacing:.02em;color:var(--text-secondary);margin:8px 0 4px}
+  .meta{font-size:14px;color:var(--text-muted)}
+  .sub{font-size:19px;line-height:1.6;color:var(--text-secondary);max-width:680px;margin-bottom:12px}
+  .quote{font-size:32px;line-height:1.35;color:var(--voice);max-width:760px;margin-bottom:12px}
+  .sg{font-family:'Space Grotesk'} .gs{font-family:'General Sans'} .sw{font-family:'Switzer'}
+  .cg{font-family:'Cabinet Grotesk'} .fr{font-family:'Fraunces'} .sp{font-family:'Spectral'}
+  /* Pairing demo — mini hero */
+  .hero{
+    background:var(--bg-elevated);border:1px solid var(--line);border-radius:16px;
+    padding:96px 48px;text-align:center;position:relative;overflow:hidden;
+  }
+  .hero::after{content:'';position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 55%, rgba(5,4,10,.55) 100%)}
+  .hero h2{font-family:'Space Grotesk';font-size:56px;line-height:1.05;letter-spacing:-.02em;font-weight:700;max-width:820px;margin:0 auto 24px}
+  .hero p{font-family:'General Sans';font-size:19px;line-height:1.6;color:var(--text-secondary);max-width:640px;margin:0 auto 40px}
+  .cta{
+    display:inline-block;font-family:'General Sans';font-weight:600;font-size:17px;
+    background:var(--accent);color:var(--on-accent);padding:18px 36px;border-radius:999px;
+    text-decoration:none;box-shadow:0 0 48px rgba(255,174,61,.18);position:relative;z-index:1;
+  }
+  .micro{font-family:'General Sans';font-size:14px;color:var(--text-muted);margin-top:16px;position:relative;z-index:1}
+  .heroquote{font-family:'Fraunces';font-style:italic;font-size:24px;color:var(--voice);margin-top:56px;position:relative;z-index:1}
+  .num{font-variant-numeric:tabular-nums;color:var(--accent-deep)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="page">Cosmogram · specimen typograficzny</h1>
+  <p class="lede">Tokeny kolorów v1 jako tło testu. Badge przy każdym foncie = automatyczny test polskich glifów (ą ć ę ł ń ó ś ź ż — jeśli „FALLBACK", przeglądarka podmienia znaki na inny krój i font odpada). Zmruż oczy przy każdym H1: który ma charakter Cosmogramu?</p>
+
+  <section>
+    <div class="label">Display A — Space Grotesk <span class="badge" data-font="Space Grotesk">test…</span></div>
+    <div class="h1demo sg">Horoskop, który naprawdę jest o&nbsp;Tobie.</div>
+    <div class="glyphs sg">ĄĆĘŁŃÓŚŹŻ ąćęłńóśźż — „Zażółć gęślą jaźń" — 19°54′ <span class="num">23:47</span></div>
+    <div class="meta">geometryczno-techniczny charakter, kosmiczny vibe, pewny latin-ext</div>
+  </section>
+
+  <section>
+    <div class="label">Display B — Cabinet Grotesk <span class="badge" data-font="Cabinet Grotesk">test…</span></div>
+    <div class="h1demo cg" style="font-weight:800">Horoskop, który naprawdę jest o&nbsp;Tobie.</div>
+    <div class="glyphs cg">ĄĆĘŁŃÓŚŹŻ ąćęłńóśźż — „Zażółć gęślą jaźń" — 19°54′</div>
+    <div class="meta">cieplejszy, bardziej editorial; sprawdź badge — Fontshare bywa kapryśny z ogonkami</div>
+  </section>
+
+  <section>
+    <div class="label">Display C — General Sans 700 (gdyby jeden font na wszystko) <span class="badge" data-font="General Sans">test…</span></div>
+    <div class="h1demo gs">Horoskop, który naprawdę jest o&nbsp;Tobie.</div>
+    <div class="glyphs gs">ĄĆĘŁŃÓŚŹŻ ąćęłńóśźż — „Zażółć gęślą jaźń" — 19°54′</div>
+  </section>
+
+  <section>
+    <div class="label">Body A — General Sans <span class="badge" data-font="General Sans">test…</span></div>
+    <p class="sub gs">Cosmogram łączy dane astronomiczne NASA z wiedzą astrologiczną gromadzoną od tysięcy lat. AI zamienia je w Twój osobisty portret — taki, w którym rozpoznasz siebie, a nie jedną dwunastą ludzkości.</p>
+  </section>
+
+  <section>
+    <div class="label">Body B — Switzer <span class="badge" data-font="Switzer">test…</span></div>
+    <p class="sub sw">Cosmogram łączy dane astronomiczne NASA z wiedzą astrologiczną gromadzoną od tysięcy lat. AI zamienia je w Twój osobisty portret — taki, w którym rozpoznasz siebie, a nie jedną dwunastą ludzkości.</p>
+  </section>
+
+  <section>
+    <div class="label">Głos produktu A — Fraunces <span class="badge" data-font="Fraunces">test…</span></div>
+    <p class="quote fr" style="font-style:italic">„Twoja siła nie jest głośna. I&nbsp;właśnie dlatego działa."</p>
+  </section>
+
+  <section>
+    <div class="label">Głos produktu B — Spectral <span class="badge" data-font="Spectral">test…</span></div>
+    <p class="quote sp" style="font-style:italic">„Twoja siła nie jest głośna. I&nbsp;właśnie dlatego działa."</p>
+  </section>
+
+  <section>
+    <div class="label">Para rekomendowana w akcji — Space Grotesk + General Sans + Fraunces</div>
+    <div class="hero">
+      <h2>Horoskop, który naprawdę jest o&nbsp;Tobie.</h2>
+      <p>Cosmogram łączy dane astronomiczne NASA z wiedzą astrologiczną gromadzoną od tysięcy lat. AI zamienia je w Twój osobisty portret — taki, w którym rozpoznasz siebie, a&nbsp;nie jedną dwunastą ludzkości.</p>
+      <a class="cta" href="#">Odkryj swój kosmogram&ensp;→</a>
+      <div class="micro">Za darmo · bez karty · wystarczy data i&nbsp;miejsce urodzenia</div>
+      <div class="heroquote">„Twoja siła nie jest głośna. I&nbsp;właśnie dlatego działa."</div>
+    </div>
+  </section>
+</div>
+
+<script>
+// Test polskich glifów: porównujemy szerokość znaku przy dwóch różnych fallbackach.
+// Jeśli glif istnieje w foncie — szerokości są identyczne; jeśli nie — fallback je różnicuje.
+const CHARS = 'ąćęłńóśźżĄĆĘŁŃÓŚŹŻ';
+function glyphsOk(font){
+  const c = document.createElement('canvas').getContext('2d');
+  for(const ch of CHARS){
+    c.font = `64px "${font}", serif`;    const a = c.measureText(ch).width;
+    c.font = `64px "${font}", monospace`; const b = c.measureText(ch).width;
+    if(Math.abs(a-b) > .5) return false;
+  }
+  return true;
+}
+document.fonts.ready.then(()=> setTimeout(()=>{
+  document.querySelectorAll('.badge[data-font]').forEach(el=>{
+    const f = el.dataset.font;
+    const loaded = document.fonts.check(`16px "${f}"`);
+    const ok = loaded && glyphsOk(f);
+    el.textContent = !loaded ? 'NIE ZAŁADOWANY' : ok ? 'PL ✓' : 'FALLBACK ✗';
+    el.classList.add(ok && loaded ? 'ok' : 'bad');
+  });
+}, 400));
+</script>
+</body>
+</html>

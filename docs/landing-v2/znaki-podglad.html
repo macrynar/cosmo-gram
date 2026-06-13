@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cosmogram — portrety znaków zodiaku</title>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B0912;--el:#14101F;--t:#F4F1EA;--ts:#B6AFC6;--tm:#877FA0;--ad:#E0B566;--l:#2B2540;--ls:rgba(182,175,198,.14)}
+*{margin:0;box-sizing:border-box}
+body{background:radial-gradient(120% 90% at 50% 0%,#1A1530 0%,#0B0912 70%) fixed var(--bg);color:var(--t);
+font-family:'General Sans',system-ui,sans-serif;padding:64px 24px 96px}
+.wrap{max-width:1140px;margin:0 auto}
+h1{font-size:28px;font-weight:700;letter-spacing:-.01em}
+h2{font-size:20px;font-weight:600;margin:72px 0 28px;color:var(--ts)}
+p.lede{color:var(--ts);margin:8px 0 48px}
+.trio{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;max-width:860px}
+.tcard{background:var(--el);border:1px solid var(--l);border-radius:16px;padding:20px;text-align:center;
+transition:border-color .25s,box-shadow .25s,transform .25s}
+.tcard:hover{border-color:var(--ad);box-shadow:0 0 48px rgba(255,174,61,.14);transform:translateY(-3px)}
+.tcard img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;border:1px solid var(--ls);margin-bottom:16px}
+.tcard .lab{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ad);margin-bottom:6px}
+.tcard .sign{font-size:21px;font-weight:600;letter-spacing:-.01em}
+.tcard .meta{font-size:14px;color:var(--tm);font-variant-numeric:tabular-nums;margin-top:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
+figure{background:var(--el);border:1px solid var(--l);border-radius:16px;padding:14px;transition:border-color .25s}
+figure:hover{border-color:var(--ad)}
+figure img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
+figcaption{font-size:14px;color:var(--ts);padding:12px 4px 2px;display:flex;justify-content:space-between}
+figcaption span{color:var(--tm);font-size:12.5px}
+</style></head><body><div class="wrap">
+<h1>Portrety znaków zodiaku · zestaw v1</h1>
+<p class="lede">Styl: ryt złotą linią + konstelacje (kotwica zestawu ilustracji). Niżej mockup kart Wielkiej Trójki w docelowym układzie.</p>
+<h2>Wielka Trójka — tak będzie wyglądać w aplikacji</h2>
+<div class="trio">
+  <div class="tcard"><img src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203210_6fe0a235-4da0-4d16-a6da-a6f9ecc1ef90.png" alt="Koziorożec">
+    <div class="lab">Słońce</div><div class="sign">Koziorożec</div><div class="meta">6° · Ziemia</div></div>
+  <div class="tcard"><img src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203157_74b184ad-a380-46da-b751-3437ff7aa853.png" alt="Strzelec">
+    <div class="lab">Ascendent</div><div class="sign">Strzelec</div><div class="meta">2° · Ogień</div></div>
+  <div class="tcard"><img src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203155_3e74c744-13f9-4271-b6fe-ed46156c5da2.png" alt="Skorpion">
+    <div class="lab">Księżyc</div><div class="sign">Skorpion</div><div class="meta">24° · Woda</div></div></div>
+<h2>Pełny zestaw 12 znaków</h2>
+<div class="grid">
+  <figure><img loading="lazy" src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203113_2a5ebee5-7494-4b0c-9747-8e9fdf983590.png" alt="Baran"><figcaption>Baran <span>sign-aries</span></figcaption></figure>
+  <figure><img loading="lazy" src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203127_8ee44864-5f50-4edc-8adf-28cd10fc0aa8.png" alt="Byk"><figcaption>Byk <span>sign-taurus</span></figcaption></figure>
+  <figure><img loading="lazy" src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203130_dc7818ab-0354-4e4d-89a8-7d3a516888b6.png" alt="Bliźnięta"><figcaption>Bliźnięta <span>sign-gemini</span></figcaption></figure>
+  <figure><img loading="lazy" src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203133_88b159f4-771f-4b8a-be07-6d369fb602d8.png" alt="Rak"><figcaption>Rak <span>sign-cancer</span></figcaption></figure>
+  <figure><img loading="lazy" src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203135_9bb395cd-4395-4540-8bd8-108da9104cde.png" alt="Lew"><figcaption>Lew <span>sign-leo</span></figcaption></figure>
+  <figure><img loading="lazy" src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203149_4c2942fd-68ac-4f86-bf14-40b942a656fb.png" alt="Panna"><figcaption>Panna <span>sign-virgo</span></figcaption></figure>
+  <figure><img loading="lazy" src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203152_641b30a6-3498-4c74-b6b4-34de8d67ceda.png" alt="Waga"><figcaption>Waga <span>sign-libra</span></figcaption></figure>
+  <figure><img loading="lazy" src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203155_3e74c744-13f9-4271-b6fe-ed46156c5da2.png" alt="Skorpion"><figcaption>Skorpion <span>sign-scorpio</span></figcaption></figure>
+  <figure><img loading="lazy" src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203157_74b184ad-a380-46da-b751-3437ff7aa853.png" alt="Strzelec"><figcaption>Strzelec <span>sign-sagittarius</span></figcaption></figure>
+  <figure><img loading="lazy" src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203210_6fe0a235-4da0-4d16-a6da-a6f9ecc1ef90.png" alt="Koziorożec"><figcaption>Koziorożec <span>sign-capricorn</span></figcaption></figure>
+  <figure><img loading="lazy" src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203213_cd197183-adea-43cc-aa31-d33b4798e97e.png" alt="Wodnik"><figcaption>Wodnik <span>sign-aquarius</span></figcaption></figure>
+  <figure><img loading="lazy" src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260612_203215_a25eaa9d-ae34-463f-9475-583d2c78722e.png" alt="Ryby"><figcaption>Ryby <span>sign-pisces</span></figcaption></figure></div>
+</div></body></html>

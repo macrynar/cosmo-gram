@@ -25,6 +25,7 @@
 
   --font-display: var(--font-cormorant);
   --font-sans: var(--font-montserrat);
+  --font-fraunces-var: var(--font-fraunces);
 }
 
 @layer base {

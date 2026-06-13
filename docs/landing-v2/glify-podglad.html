@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cosmogram — glify zodiaku v1</title>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B0912;--el:#14101F;--t:#F4F1EA;--ts:#B6AFC6;--tm:#877FA0;--a:#FFAE3D;--ad:#E0B566;--l:#2B2540}
+*{margin:0;box-sizing:border-box}
+body{background:radial-gradient(120% 90% at 50% 0%,#1A1530 0%,#0B0912 70%) fixed var(--bg);color:var(--t);
+font-family:'General Sans',system-ui,sans-serif;padding:64px 24px}
+.wrap{max-width:1140px;margin:0 auto}
+h1{font-size:28px;font-weight:700;letter-spacing:-.01em}
+p.lede{color:var(--ts);margin:8px 0 48px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:20px}
+.g{background:var(--el);border:1px solid var(--l);border-radius:16px;padding:28px 20px;text-align:center;
+transition:border-color .25s,box-shadow .25s}
+.g:hover{border-color:var(--ad);box-shadow:0 0 32px rgba(224,181,102,.12)}
+.big{width:64px;height:64px;color:var(--ad);display:block;margin:0 auto 18px;filter:drop-shadow(0 0 10px rgba(224,181,102,.35))}
+.row{display:flex;gap:14px;justify-content:center;margin-bottom:14px}
+.sm{width:20px;height:20px;color:var(--a)}
+.sm.dim{color:var(--tm)}
+.g span{font-size:14px;color:var(--ts)}
+</style></head><body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+<!-- Cosmogram · autorski zestaw glifów zodiaku v1
+     Siatka 24×24 · stroke 1.6 · round caps/joins · kolor przez currentColor
+     Użycie: <svg class="zsym"><use href="#zg-aries"/></svg> -->
+<defs>
+<g id="zg-base" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</defs>
+<symbol id="zg-aries" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 20V8 M12 8C12 4.6 9.6 3.4 7.9 4.7C6.1 6.1 6.2 9 7.9 10.7 M12 8C12 4.6 14.4 3.4 16.1 4.7C17.9 6.1 17.8 9 16.1 10.7"/>
+</g></symbol>
+<symbol id="zg-taurus" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M5.5 4C7 7.4 9.3 8.8 12 8.8C14.7 8.8 17 7.4 18.5 4"/><circle cx="12" cy="14.2" r="5.2"/>
+</g></symbol>
+<symbol id="zg-gemini" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M9 6.8V17.2 M15 6.8V17.2 M5.2 4.6C8 6.4 16 6.4 18.8 4.6 M5.2 19.4C8 17.6 16 17.6 18.8 19.4"/>
+</g></symbol>
+<symbol id="zg-cancer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="8.1" cy="9.3" r="2.6"/><circle cx="15.9" cy="14.7" r="2.6"/>
+  <path d="M8.1 6.7C13 6.7 16.9 8.4 18.7 11 M15.9 17.3C11 17.3 7.1 15.6 5.3 13"/>
+</g></symbol>
+<symbol id="zg-leo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="7.4" cy="15.8" r="2.5"/>
+  <path d="M7.4 13.3C7.4 8.2 9.8 5.4 12.8 5.4C15.7 5.4 17.2 7.6 17.2 9.8C17.2 12.4 15.2 13.8 15.2 16.4C15.2 18.2 16.4 19 17.9 18.5"/>
+</g></symbol>
+<symbol id="zg-virgo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4.4 6.2C5.7 6.2 6.5 7.1 6.5 8.6V16.8 M6.5 8.6C6.5 6.9 7.6 6 8.8 6C10.1 6 10.9 7 10.9 8.6V16.8 M10.9 8.6C10.9 6.9 12 6 13.2 6C14.5 6 15.3 7 15.3 8.6V14.2C15.3 17.6 17.2 19 19.6 18.4 M18.9 12.9C16.8 13.8 15.6 15.9 15.3 19.6"/>
+</g></symbol>
+<symbol id="zg-libra" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4.8 18.6H19.2 M4.8 14.6H8.6C8.6 11 9.9 8.4 12 8.4C14.1 8.4 15.4 11 15.4 14.6H19.2"/>
+</g></symbol>
+<symbol id="zg-scorpio" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4.4 6.2C5.7 6.2 6.5 7.1 6.5 8.6V16.8 M6.5 8.6C6.5 6.9 7.6 6 8.8 6C10.1 6 10.9 7 10.9 8.6V16.8 M10.9 8.6C10.9 6.9 12 6 13.2 6C14.5 6 15.3 7 15.3 8.6V13.6C15.3 16.5 16.9 18.2 19.6 18.2 M19.6 18.2L17.5 16.5 M19.6 18.2L17.6 19.9"/>
+</g></symbol>
+<symbol id="zg-sagittarius" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M5.4 18.6L18.6 5.4 M18.6 5.4H13.9 M18.6 5.4V10.1 M8.6 11.6L12.4 15.4"/>
+</g></symbol>
+<symbol id="zg-capricorn" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4.2 6.6C5.6 4.9 7.7 5.4 8.2 7.5C8.9 10.4 9.7 13.3 10.5 15.6 M10.5 15.6C11.2 12.1 12.2 8.2 13.7 7C15.2 5.9 16.4 6.9 16.4 8.6C16.4 10.3 15.1 11.1 15.1 13.1C15.1 15.4 16.7 16.4 18.1 15.7C19.6 15 19.8 12.9 18.6 12"/>
+</g></symbol>
+<symbol id="zg-aquarius" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4.6 9.6L8.1 6.6L11.6 9.6L15.1 6.6L18.6 9.6 M4.6 16.8L8.1 13.8L11.6 16.8L15.1 13.8L18.6 16.8"/>
+</g></symbol>
+<symbol id="zg-pisces" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M7.2 4.6C9.9 7.6 9.9 16.4 7.2 19.4 M16.8 4.6C14.1 7.6 14.1 16.4 16.8 19.4 M5.6 12H18.4"/>
+</g></symbol>
+</svg>
+
+<div class="wrap">
+<h1>Glify zodiaku · zestaw autorski v1</h1>
+<p class="lede">64 px (karta znaku / Wielka Trójka) · 20 px (koło, chipy — wariant aktywny i wygaszony). Stroke 1.6, currentColor — kolor sterowany tokenami.</p>
+<div class="grid">
+  <div class="g">
+    <svg class="big"><use href="#zg-aries"/></svg>
+    <div class="row"><svg class="sm"><use href="#zg-aries"/></svg><svg class="sm dim"><use href="#zg-aries"/></svg></div>
+    <span>Baran</span>
+  </div>
+  <div class="g">
+    <svg class="big"><use href="#zg-taurus"/></svg>
+    <div class="row"><svg class="sm"><use href="#zg-taurus"/></svg><svg class="sm dim"><use href="#zg-taurus"/></svg></div>
+    <span>Byk</span>
+  </div>
+  <div class="g">
+    <svg class="big"><use href="#zg-gemini"/></svg>
+    <div class="row"><svg class="sm"><use href="#zg-gemini"/></svg><svg class="sm dim"><use href="#zg-gemini"/></svg></div>
+    <span>Bliźnięta</span>
+  </div>
+  <div class="g">
+    <svg class="big"><use href="#zg-cancer"/></svg>
+    <div class="row"><svg class="sm"><use href="#zg-cancer"/></svg><svg class="sm dim"><use href="#zg-cancer"/></svg></div>
+    <span>Rak</span>
+  </div>
+  <div class="g">
+    <svg class="big"><use href="#zg-leo"/></svg>
+    <div class="row"><svg class="sm"><use href="#zg-leo"/></svg><svg class="sm dim"><use href="#zg-leo"/></svg></div>
+    <span>Lew</span>
+  </div>
+  <div class="g">
+    <svg class="big"><use href="#zg-virgo"/></svg>
+    <div class="row"><svg class="sm"><use href="#zg-virgo"/></svg><svg class="sm dim"><use href="#zg-virgo"/></svg></div>
+    <span>Panna</span>
+  </div>
+  <div class="g">
+    <svg class="big"><use href="#zg-libra"/></svg>
+    <div class="row"><svg class="sm"><use href="#zg-libra"/></svg><svg class="sm dim"><use href="#zg-libra"/></svg></div>
+    <span>Waga</span>
+  </div>
+  <div class="g">
+    <svg class="big"><use href="#zg-scorpio"/></svg>
+    <div class="row"><svg class="sm"><use href="#zg-scorpio"/></svg><svg class="sm dim"><use href="#zg-scorpio"/></svg></div>
+    <span>Skorpion</span>
+  </div>
+  <div class="g">
+    <svg class="big"><use href="#zg-sagittarius"/></svg>
+    <div class="row"><svg class="sm"><use href="#zg-sagittarius"/></svg><svg class="sm dim"><use href="#zg-sagittarius"/></svg></div>
+    <span>Strzelec</span>
+  </div>
+  <div class="g">
+    <svg class="big"><use href="#zg-capricorn"/></svg>
+    <div class="row"><svg class="sm"><use href="#zg-capricorn"/></svg><svg class="sm dim"><use href="#zg-capricorn"/></svg></div>
+    <span>Koziorożec</span>
+  </div>
+  <div class="g">
+    <svg class="big"><use href="#zg-aquarius"/></svg>
+    <div class="row"><svg class="sm"><use href="#zg-aquarius"/></svg><svg class="sm dim"><use href="#zg-aquarius"/></svg></div>
+    <span>Wodnik</span>
+  </div>
+  <div class="g">
+    <svg class="big"><use href="#zg-pisces"/></svg>
+    <div class="row"><svg class="sm"><use href="#zg-pisces"/></svg><svg class="sm dim"><use href="#zg-pisces"/></svg></div>
+    <span>Ryby</span>
+  </div></div>
+</div></body></html>

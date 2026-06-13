@@ -35,6 +35,22 @@ type Props = {
 const BASE = "w-full px-3.5 py-3 rounded-xl text-sm text-white placeholder-slate-700 focus:outline-none transition-all duration-300 [color-scheme:dark]";
 const ST: React.CSSProperties = { background: "rgba(5,4,14,0.55)", border: "0.5px solid rgba(212,175,55,0.18)" };
 
+type FocusInputProps = React.InputHTMLAttributes<HTMLInputElement> & { icon: React.ReactNode; accent: string };
+function FocusInput({ icon, accent, ...props }: FocusInputProps) {
+  const [focused, setFocused] = useState(false);
+  const style: React.CSSProperties = {
+    ...ST,
+    ...(focused ? { borderColor: `${accent}80`, boxShadow: `0 0 16px ${accent}12` } : {}),
+  };
+  return (
+    <div className="relative">
+      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">{icon}</div>
+      <input {...props} className={`${BASE} pl-10`} style={style}
+        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} />
+    </div>
+  );
+}
+
 export default function PersonBirthForm({ label, accent, onChange, disabled, savedReadings = [] }: Props) {
   const [mode, setMode] = useState<"saved" | "manual">(savedReadings.length > 0 ? "saved" : "manual");
   const [selectedReadingId, setSelectedReadingId] = useState<string | null>(null);
@@ -117,22 +133,6 @@ export default function PersonBirthForm({ label, accent, onChange, disabled, sav
     setSuggestions([]);
   }
 
-  const inputStyle = (focused: boolean): React.CSSProperties => ({
-    ...ST,
-    ...(focused ? { borderColor: `${accent}80`, boxShadow: `0 0 16px ${accent}12` } : {}),
-  });
-
-  function FocusInput({ icon, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { icon: React.ReactNode }) {
-    const [focused, setFocused] = useState(false);
-    return (
-      <div className="relative">
-        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">{icon}</div>
-        <input {...props} className={`${BASE} pl-10`} style={inputStyle(focused)}
-          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} />
-      </div>
-    );
-  }
-
   const selectedReading = savedReadings.find(r => r.id === selectedReadingId);
 
   return (
@@ -213,6 +213,7 @@ export default function PersonBirthForm({ label, accent, onChange, disabled, sav
         <div className="space-y-3">
           {/* Name */}
           <FocusInput
+            accent={accent}
             icon={<User className="w-3.5 h-3.5 text-slate-500" />}
             type="text" value={name} onChange={e => setName(e.target.value)}
             placeholder="Imię (opcjonalne)" disabled={disabled}
@@ -220,6 +221,7 @@ export default function PersonBirthForm({ label, accent, onChange, disabled, sav
 
           {/* Date */}
           <FocusInput
+            accent={accent}
             icon={<Calendar className="w-3.5 h-3.5 text-slate-500" />}
             type="date" value={date} onChange={e => setDate(e.target.value)}
             required max={new Date().toISOString().split("T")[0]} disabled={disabled}
@@ -243,6 +245,7 @@ export default function PersonBirthForm({ label, accent, onChange, disabled, sav
               </div>
             ) : (
               <FocusInput
+                accent={accent}
                 icon={<Clock className="w-3.5 h-3.5 text-slate-500" />}
                 type="time" value={time} onChange={e => setTime(e.target.value)}
                 required={!timeUnknown} disabled={disabled}

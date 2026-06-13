@@ -21,9 +21,12 @@ export type SynastryScores = {
   overall:       number; // 30–95
   communication: number;
   passion:       number;
+  emotional:     number;
   values:        number;
+  independence:  number;
   challenge:     number;
   longevity:     number;
+  destiny:       number;
 };
 
 export type SynastryResult = {
@@ -165,7 +168,8 @@ function clamp(v: number, lo: number, hi: number) {
 }
 
 export function getSynastryScore(aspects: SynastryAspect[]): SynastryScores {
-  let overall = 50, communication = 50, passion = 50, values = 50, challenge = 50, longevity = 50;
+  let overall = 50, communication = 50, passion = 50, emotional = 50,
+      values = 50, independence = 50, challenge = 50, longevity = 50, destiny = 50;
 
   for (const a of aspects) {
     const sign = a.harmony === "tense" ? -1 : 1;
@@ -173,34 +177,61 @@ export function getSynastryScore(aspects: SynastryAspect[]): SynastryScores {
 
     overall += c * 0.5;
 
+    // Communication: Mercury + Sun/Moon cross-aspects
     if (a.planet_a === "Merkury" || a.planet_b === "Merkury") communication += c * 1.3;
     if (["Słońce","Księżyc"].includes(a.planet_a) && ["Słońce","Księżyc"].includes(a.planet_b))
       communication += c * 0.5;
 
+    // Passion/attraction: Venus-Mars, Pluto-Venus
     if (["Wenus","Mars"].includes(a.planet_a) || ["Wenus","Mars"].includes(a.planet_b))
       passion += c * 1.4;
 
+    // Emotional bond: Moon-Moon, Moon-Venus, Moon-Sun, Venus-Venus
+    if (["Księżyc","Wenus"].includes(a.planet_a) && ["Księżyc","Wenus"].includes(a.planet_b))
+      emotional += c * 1.5;
+    if (
+      (a.planet_a === "Słońce" && a.planet_b === "Księżyc") ||
+      (a.planet_a === "Księżyc" && a.planet_b === "Słońce")
+    ) emotional += c * 1.2;
+
+    // Values/direction: Jupiter, Saturn, Sun
     if (["Jowisz","Saturn","Słońce"].includes(a.planet_a) || ["Jowisz","Saturn","Słońce"].includes(a.planet_b))
       values += c * 1.1;
 
+    // Independence: Uranus aspects with personal planets
+    if (a.planet_a === "Uran" || a.planet_b === "Uran") {
+      const personal = ["Wenus","Księżyc","Słońce","Mars"];
+      const wgt = personal.includes(a.planet_a) || personal.includes(a.planet_b) ? 1.1 : 0.6;
+      independence += c * wgt;
+    }
+
+    // Challenges: tension
     if (a.harmony === "tense") challenge += c * 1.5;
     else challenge -= Math.abs(c) * 0.3;
 
+    // Longevity: Saturn, Sun-Moon, harmonious aspects
     if (a.planet_a === "Saturn" || a.planet_b === "Saturn") longevity += c * 1.2;
     if (
       (a.planet_a === "Słońce" && a.planet_b === "Księżyc") ||
       (a.planet_a === "Księżyc" && a.planet_b === "Słońce")
     ) longevity += c * 1.5;
     if (a.harmony === "harmonious") longevity += c * 0.4;
+
+    // Destiny/karma: Pluto, Saturn deep cross-aspects
+    if (a.planet_a === "Pluton" || a.planet_b === "Pluton") destiny += c * 1.1;
+    if (a.planet_a === "Saturn" || a.planet_b === "Saturn") destiny += c * 0.5;
   }
 
   return {
     overall:       clamp(Math.round(overall), 30, 95),
     communication: clamp(Math.round(communication), 30, 95),
     passion:       clamp(Math.round(passion), 30, 95),
+    emotional:     clamp(Math.round(emotional), 30, 95),
     values:        clamp(Math.round(values), 30, 95),
+    independence:  clamp(Math.round(independence), 30, 95),
     challenge:     clamp(Math.round(challenge), 30, 95),
     longevity:     clamp(Math.round(longevity), 30, 95),
+    destiny:       clamp(Math.round(destiny), 30, 95),
   };
 }
 
