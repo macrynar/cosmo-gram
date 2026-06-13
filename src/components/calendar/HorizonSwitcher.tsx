@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export type Horizon = "today" | "week" | "month" | "year";
 
@@ -16,14 +16,11 @@ interface Props {
 }
 
 export default function HorizonSwitcher({ value }: Props) {
-  const router       = useRouter();
-  const pathname     = usePathname();
-  const searchParams = useSearchParams();
+  const router   = useRouter();
+  const pathname = usePathname();
 
   function setHorizon(h: Horizon) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("h", h);
-    router.replace(`${pathname}?${params.toString()}`);
+    router.replace(`${pathname}?h=${h}`);
   }
 
   return (

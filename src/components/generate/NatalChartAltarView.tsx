@@ -199,7 +199,7 @@ export default function NatalChartAltarView({ chart }: Props) {
 
         {/* ════ MOBILE — trzy karty NAD kołem ════ */}
         <div className="sm:hidden space-y-6">
-          <motion.div {...enter(0.18)} className="grid grid-cols-3 gap-3">
+          <motion.div {...enter(0.18)} className="grid grid-cols-3 gap-1.5">
             {!timeUnknown
               ? <PortraitCard body="asc" sign={ascSign} degree={ascDegree} tipSide="below" onScroll={scrollToInterpretation} />
               : <AscUnknownCard />}
@@ -252,6 +252,13 @@ export default function NatalChartAltarView({ chart }: Props) {
         .p3-tip-kw { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
         .p3-tip-kw span { font-size: 9.5px; padding: 2px 8px; border-radius: 999px;
           color: var(--accent-deep); border: 1px solid var(--line); background: rgba(224,181,102,0.06); }
+
+        @media (max-width: 639px) {
+          .p3-card { padding: 8px; }
+          .p3-eyebrow { font-size: 9px; letter-spacing: .09em; margin-top: 8px; }
+          .p3-sign { font-size: 14px; margin-top: 3px; overflow-wrap: break-word; word-break: break-word; }
+          .p3-meta { font-size: 11px; margin-top: 2px; }
+        }
       `}</style>
     </div>
   );
