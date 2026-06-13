@@ -15,9 +15,9 @@ const PLANETS_W = [
   { g: "♄", n: "Saturn",  d: 255 },
 ];
 
-const ASPECTS = [
+const ASPECTS: [number, number, string][] = [
   [0,6,"harm"],[0,4,"harm"],[1,3,"tense"],[3,4,"tense"],[1,2,"tense"],[5,0,"harm"],[2,3,"harm"]
-] as [number, number, string][];
+];
 
 function pt(r: number, deg: number): [number, number] {
   const a = (deg - 90) * Math.PI / 180;
@@ -25,14 +25,16 @@ function pt(r: number, deg: number): [number, number] {
 }
 
 export default function NatalWheelDemo() {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const wheelRef = useRef<SVGSVGElement>(null);
+  const wrapRef    = useRef<HTMLDivElement>(null);
+  const wheelRef   = useRef<SVGSVGElement>(null);
+  const backdropRef = useRef<HTMLImageElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const svg = wheelRef.current;
+    const svg     = wheelRef.current;
     const wrapper = wrapRef.current;
-    const wtip = tooltipRef.current;
+    const wtip    = tooltipRef.current;
+    const backdrop = backdropRef.current;
     if (!svg || !wrapper || !wtip) return;
 
     const NS = "http://www.w3.org/2000/svg";
@@ -42,192 +44,243 @@ export default function NatalWheelDemo() {
       return e;
     };
 
-    // defs
+    // ── initial state — wheel hidden, rotated ──
+    svg.style.cssText = `
+      position:relative;z-index:1;width:100%;height:100%;display:block;
+      transform:rotate(-12deg) scale(.97);opacity:0;
+      transition:transform 1.4s cubic-bezier(.22,1,.36,1),opacity .9s cubic-bezier(.22,1,.36,1);
+    `;
+
+    // ── defs ──
     const defs = el("defs");
-    defs.innerHTML = `<radialGradient id="hubg"><stop offset="55%" stop-color="rgba(255,174,61,0)"/>
-      <stop offset="100%" stop-color="rgba(255,174,61,.06)"/></radialGradient>
-      <filter id="halo" x="-300%" y="-300%" width="700%" height="700%"><feGaussianBlur stdDeviation="3.2"/></filter>`;
+    defs.innerHTML = `
+      <radialGradient id="hubg">
+        <stop offset="55%" stop-color="rgba(255,174,61,0)"/>
+        <stop offset="100%" stop-color="rgba(255,174,61,.08)"/>
+      </radialGradient>
+      <filter id="halo" x="-300%" y="-300%" width="700%" height="700%">
+        <feGaussianBlur stdDeviation="3.2"/>
+      </filter>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="2" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>`;
     svg.appendChild(defs);
 
-    // zodiac wedge fills (every 2nd)
+    // ── Zodiac alternate wedge fill ──
     for (let i = 0; i < 12; i += 2) {
-      const a1 = i*30, a2=(i+1)*30;
-      const [x1,y1]=pt(250,a1),[x2,y2]=pt(292,a1),[x3,y3]=pt(292,a2),[x4,y4]=pt(250,a2);
+      const [x1,y1]=pt(250,i*30),[x2,y2]=pt(292,i*30),[x3,y3]=pt(292,(i+1)*30),[x4,y4]=pt(250,(i+1)*30);
       svg.appendChild(el("path",{ fill:"rgba(224,181,102,.03)", stroke:"none",
         d:`M${x1},${y1} L${x2},${y2} A292,292 0 0 1 ${x3},${y3} L${x4},${y4} A250,250 0 0 0 ${x1},${y1} Z`}));
     }
 
-    // rings
-    [[292,"#3A3258"],[250,"#3A3258"],[212,"var(--line)"]].forEach(([r,st])=>{
-      const len = 2 * Math.PI * Number(r);
-      const c = el("circle",{ fill:"none", stroke:String(st), "stroke-width":"1", cx:"0", cy:"0", r:String(r),
+    // ── Rings with draw animation ──
+    const RINGS = [[292,"#3A3258"],[250,"#3A3258"],[212,"var(--line)"]] as [number,string][];
+    RINGS.forEach(([r,stroke],idx)=>{
+      const len = 2 * Math.PI * r;
+      const c = el("circle",{ fill:"none", stroke, "stroke-width":"1", cx:"0", cy:"0", r:String(r),
         "stroke-dasharray":String(len), "stroke-dashoffset":String(len) });
-      c.style.transition = "stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1)";
+      c.style.transition = `stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1) ${idx*0.05}s`;
       svg.appendChild(c);
     });
 
-    // hub + brand mark
+    // ── Hub glow + hub ring ──
     svg.appendChild(el("circle",{ cx:"0", cy:"0", r:"118", fill:"url(#hubg)" }));
     const hub = el("circle",{ fill:"none", stroke:"var(--line)", "stroke-width":"1", cx:"0", cy:"0", r:"56",
       "stroke-dasharray":String(2*Math.PI*56), "stroke-dashoffset":String(2*Math.PI*56) });
-    hub.style.transition = "stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1) .1s";
+    hub.style.transition = "stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1) .15s";
     svg.appendChild(hub);
 
-    // brand glyph at center
-    const moon = el("g",{ transform:"translate(-1,0) scale(.42)", fill:"#E0B566", opacity:".22" });
-    moon.innerHTML = '<path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/>';
-    svg.appendChild(moon);
+    // ── Brand mark at center ──
+    const brand = el("g",{ transform:"translate(-1,0) scale(.42)", fill:"#E0B566", opacity:".22" });
+    brand.innerHTML = '<path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/>';
+    svg.appendChild(brand);
 
-    // ticks
+    // ── Degree ticks ──
     for (let d = 0; d < 360; d += 5) {
       if (d%30===0) continue;
-      const len = d%10===0 ? 9 : 5;
-      const [x1,y1] = pt(250-len,d), [x2,y2] = pt(250,d);
-      svg.appendChild(el("line",{ stroke:"var(--line)", "stroke-width":"1", opacity:".55", x1:String(x1),y1:String(y1),x2:String(x2),y2:String(y2) }));
+      const len2 = d%10===0 ? 9 : 5;
+      const [x1,y1]=pt(250-len2,d),[x2,y2]=pt(250,d);
+      svg.appendChild(el("line",{ stroke:"var(--line)", "stroke-width":"1", opacity:".55",
+        x1:String(x1),y1:String(y1),x2:String(x2),y2:String(y2) }));
     }
 
-    // sign segments + glyphs
+    // ── Sign segment lines + zodiac glyphs ──
     const occupied = new Set(PLANETS_W.map(p=>Math.floor(p.d/30)));
     for (let i = 0; i < 12; i++) {
-      const [x1,y1] = pt(250,i*30), [x2,y2] = pt(292,i*30);
+      const [x1,y1]=pt(250,i*30),[x2,y2]=pt(292,i*30);
       const segLen = 42;
       const seg = el("line",{ stroke:"var(--line)", "stroke-width":"1", opacity:".7",
         x1:String(x1),y1:String(y1),x2:String(x2),y2:String(y2),
         "stroke-dasharray":String(segLen), "stroke-dashoffset":String(segLen) });
-      seg.style.transition = `stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1) ${0.02*i}s`;
+      seg.style.transition = `stroke-dashoffset 0.9s cubic-bezier(.22,1,.36,1) ${0.02*i}s`;
       svg.appendChild(seg);
 
-      const [gx,gy] = pt(271, i*30+15);
-      const use = el("use",{
+      const [gx,gy]=pt(271,i*30+15);
+      svg.appendChild(el("use",{
         href:`#zg-${ZODIAC_IDS[i]}`,
-        x:String(gx-11), y:String(gy-11),
-        width:"22", height:"22",
-        fill:"none", stroke:occupied.has(i)?"var(--accent-deep)":"var(--text-muted)",
-        "stroke-width":"1.6", "stroke-linecap":"round", "stroke-linejoin":"round",
-        opacity: occupied.has(i) ? "1" : "0.65",
+        x:String(gx-11),y:String(gy-11),width:"22",height:"22",
+        fill:"none",
+        stroke: occupied.has(i)?"var(--accent-deep)":"var(--text-muted)",
+        "stroke-width":"1.6","stroke-linecap":"round","stroke-linejoin":"round",
+        opacity: occupied.has(i)?"1":"0.55",
         style:"cursor:pointer;transition:stroke .3s,opacity .3s",
-      });
-      svg.appendChild(use);
+      }));
     }
 
-    // aspect lines
+    // ── Aspect lines ──
+    const aspectEls: SVGElement[] = [];
     ASPECTS.forEach(([i,j,t])=>{
-      const [x1,y1] = pt(200,PLANETS_W[i].d), [x2,y2] = pt(200,PLANETS_W[j].d);
+      const [x1,y1]=pt(200,PLANETS_W[i].d),[x2,y2]=pt(200,PLANETS_W[j].d);
       const len = Math.hypot(x2-x1,y2-y1);
       const ln = el("line",{
         x1:String(x1),y1:String(y1),x2:String(x2),y2:String(y2),
-        fill:"none",
-        stroke: t==="harm" ? "#E0B566" : "#E2654A",
-        "stroke-width":"1.2",
-        opacity:"0",
-        "stroke-dasharray":String(len), "stroke-dashoffset":String(len),
+        fill:"none", stroke:t==="harm"?"#E0B566":"#E2654A",
+        "stroke-width":"1.2", opacity:"0",
+        "stroke-dasharray":String(len),"stroke-dashoffset":String(len),
       });
-      ln.style.transition = "stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1) .3s, opacity .6s .3s";
+      ln.style.transition="stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1) .4s,opacity .5s .4s";
       svg.appendChild(ln);
+      aspectEls.push(ln);
     });
 
-    // planet groups
+    // ── Planet groups ──
+    const planetGroups: SVGElement[] = [];
     PLANETS_W.forEach((p,idx)=>{
-      const grp = el("g",{ style:"cursor:pointer;transition:opacity .35s" });
-      grp.setAttribute("opacity","0");
-      const [dx,dy] = pt(206,p.d), [gx,gy] = pt(230,p.d);
+      const grp = el("g",{ style:"cursor:pointer;transition:opacity .35s,filter .3s" });
+      grp.style.opacity="0";
+      const [dx,dy]=pt(206,p.d),[gx,gy]=pt(230,p.d);
 
-      const halo = el("circle",{ cx:String(dx),cy:String(dy),r:"10",fill:"var(--accent)",opacity:".3" });
-      halo.style.filter = "blur(3.2px)";
+      const halo = el("circle",{ cx:String(dx),cy:String(dy),r:"11",fill:"var(--accent)",opacity:".25" });
+      halo.style.filter="blur(3.2px)";
       grp.appendChild(halo);
       grp.appendChild(el("circle",{ cx:String(dx),cy:String(dy),r:"4",fill:"var(--accent)" }));
 
       const glyph = el("text",{ x:String(gx),y:String(gy),"text-anchor":"middle","dominant-baseline":"central",
-        "font-size":"17",fill:"var(--voice)",style:"font-family:system-ui" });
-      glyph.textContent = p.g;
+        "font-size":"17",fill:"var(--voice)",style:"font-family:system-ui;transition:fill .2s" });
+      glyph.textContent=p.g;
       grp.appendChild(glyph);
 
-      // degree label
-      const [lx,ly] = pt(180,p.d);
-      const deg = el("text",{ x:String(lx),y:String(ly),"text-anchor":"middle","dominant-baseline":"central",
+      const [lx,ly]=pt(180,p.d);
+      const degLbl = el("text",{ x:String(lx),y:String(ly),"text-anchor":"middle","dominant-baseline":"central",
         "font-size":"10.5",fill:"var(--text-muted)","font-variant-numeric":"tabular-nums",
         style:"font-family:'General Sans',sans-serif" });
-      deg.textContent = `${p.d%30}°`;
-      grp.appendChild(deg);
+      degLbl.textContent=`${p.d%30}°`;
+      grp.appendChild(degLbl);
 
+      // hover: glow + tooltip
       grp.addEventListener("mouseenter",()=>{
+        grp.style.filter="drop-shadow(0 0 6px rgba(255,174,61,.5))";
+        glyph.setAttribute("fill","var(--accent)");
         if(wtip){
-          const wRect = wrapper.getBoundingClientRect(), svgRect = svg!.getBoundingClientRect();
-          const scale = svgRect.width / 600;
-          const svgX = gx * scale + svgRect.width/2;
-          const svgY = gy * scale + svgRect.height/2;
+          const wRect=wrapper.getBoundingClientRect(),svgRect=svg.getBoundingClientRect();
+          const sc=svgRect.width/600;
           wtip.innerHTML=`<b style="color:var(--accent-deep)">${p.g}</b> ${p.n} · ${p.d%30}° ${ZODIAC_IDS[Math.floor(p.d/30)]}`;
-          wtip.style.left = (svgRect.left - wRect.left + svgX + 14) + "px";
-          wtip.style.top  = (svgRect.top  - wRect.top  + svgY - 28) + "px";
+          wtip.style.left=(svgRect.left-wRect.left+gx*sc+svgRect.width/2+12)+"px";
+          wtip.style.top =(svgRect.top -wRect.top +gy*sc+svgRect.height/2-28)+"px";
           wtip.style.opacity="1"; wtip.style.transform="translateY(0)";
         }
       });
       grp.addEventListener("mouseleave",()=>{
-        if(wtip){wtip.style.opacity="0"; wtip.style.transform="translateY(4px)";}
+        grp.style.filter="none";
+        glyph.setAttribute("fill","var(--voice)");
+        if(wtip){wtip.style.opacity="0";wtip.style.transform="translateY(4px)";}
       });
       svg.appendChild(grp);
+      planetGroups.push(grp);
     });
 
-    // trigger inview animation
+    // ── Wrapper hover: subtle parallax tilt ──
+    const onWrapMove = (e: MouseEvent) => {
+      const r = wrapper.getBoundingClientRect();
+      const dx = ((e.clientX - r.left) / r.width  - 0.5) * 6;
+      const dy = ((e.clientY - r.top ) / r.height - 0.5) * 4;
+      svg.style.transform = `rotate(${-dx * 0.3}deg) scale(1.015) translate(${dx}px,${dy}px)`;
+      if (backdrop) backdrop.style.transform = `translate(-50%,-50%) translate(${dx*0.5}px,${dy*0.5}px)`;
+    };
+    const onWrapLeave = () => {
+      svg.style.transform = "none";
+      if (backdrop) backdrop.style.transform = "translate(-50%,-50%)";
+    };
+    wrapper.addEventListener("mousemove", onWrapMove);
+    wrapper.addEventListener("mouseleave", onWrapLeave);
+
+    // ── IntersectionObserver: trigger all draw animations ──
     const observer = new IntersectionObserver(entries=>{
       if(!entries[0].isIntersecting) return;
-      // animate circles
-      svg.querySelectorAll("circle[stroke-dashoffset], line[stroke-dashoffset]").forEach(el=>{
-        (el as SVGElement).style.strokeDashoffset="0";
+
+      // 1. Wheel reveal
+      svg.style.transform = "none";
+      svg.style.opacity   = "1";
+
+      // 2. Ring draw-in
+      svg.querySelectorAll<SVGElement>("circle[stroke-dasharray]").forEach(c=>{
+        c.style.strokeDashoffset="0";
       });
-      // animate aspect lines + planets
-      setTimeout(()=>{
-        svg.querySelectorAll("line").forEach(l=>{ l.style.strokeDashoffset="0"; });
-        svg.querySelectorAll("[opacity='0']").forEach((g,idx)=>{
-          setTimeout(()=>{ (g as SVGElement).setAttribute("opacity","1"); },idx*80);
-        });
-      },300);
+      svg.querySelectorAll<SVGElement>("line[stroke-dasharray]").forEach(l=>{
+        l.style.strokeDashoffset="0";
+      });
+
+      // 3. Aspect lines (delayed)
+      aspectEls.forEach(ln=>{
+        ln.style.strokeDashoffset="0";
+        ln.setAttribute("opacity","0.5");
+      });
+
+      // 4. Planets staggered fade-in
+      planetGroups.forEach((g,i)=>{
+        setTimeout(()=>{ g.style.opacity="1"; }, 500+i*90);
+      });
+
       observer.disconnect();
     },{threshold:0.2});
     observer.observe(wrapper);
 
-    return () => observer.disconnect();
+    return ()=>{
+      observer.disconnect();
+      wrapper.removeEventListener("mousemove", onWrapMove);
+      wrapper.removeEventListener("mouseleave", onWrapLeave);
+    };
   }, []);
 
   return (
     <section
       id="s2"
-      style={{
-        maxWidth: 1140,
-        margin: "0 auto",
-        padding: "160px 24px 0",
-        display: "grid",
-        gridTemplateColumns: "1.05fr 1fr",
-        gap: 72,
-        alignItems: "center",
-      }}
+      style={{ maxWidth:1140, margin:"0 auto", padding:"160px 24px 0",
+        display:"grid", gridTemplateColumns:"1.05fr 1fr", gap:72, alignItems:"center" }}
       className="s2-grid"
     >
       {/* wheel */}
       <div ref={wrapRef} style={{ position:"relative", aspectRatio:"1", maxWidth:580, margin:"0 auto", width:"100%" }}>
+        {/* backdrop: centered via translate, not inset */}
         <img
+          ref={backdropRef}
           src="/assets/landing/wheel-backdrop.png"
-          alt=""
-          aria-hidden="true"
-          style={{ position:"absolute", inset:"-4%", width:"108%", height:"108%", objectFit:"cover", borderRadius:"50%", opacity:.9 }}
+          alt="" aria-hidden="true"
+          style={{
+            position:"absolute", top:"50%", left:"50%",
+            transform:"translate(-50%,-50%)",
+            width:"110%", height:"110%",
+            objectFit:"cover", borderRadius:"50%", opacity:.85,
+            transition:"transform .4s cubic-bezier(.22,1,.36,1)",
+            pointerEvents:"none",
+          }}
         />
         <svg
           ref={wheelRef}
           viewBox="-300 -300 600 600"
           aria-label="Przykładowe koło kosmogramu"
-          style={{ position:"relative", zIndex:1, width:"100%", height:"100%", display:"block" }}
         />
         <div ref={tooltipRef} style={{
-          position:"absolute", zIndex:5, pointerEvents:"none", whiteSpace:"nowrap",
-          background:"var(--bg-elevated)", border:"1px solid var(--line)", borderRadius:999,
-          fontSize:13.5, color:"var(--text-secondary)", padding:"6px 14px",
-          opacity:0, transform:"translateY(4px)", transition:"opacity .2s, transform .2s",
-        }} />
+          position:"absolute",zIndex:5,pointerEvents:"none",whiteSpace:"nowrap",
+          background:"var(--bg-elevated)",border:"1px solid var(--line)",borderRadius:999,
+          fontSize:13.5,color:"var(--text-secondary)",padding:"6px 14px",
+          opacity:0,transform:"translateY(4px)",transition:"opacity .2s,transform .2s",
+        }}/>
 
-        {/* hidden zodiac SVG defs */}
-        <svg style={{ display:"none" }}>
+        {/* hidden zodiac symbol defs */}
+        <svg style={{ display:"none" }} aria-hidden="true">
           <defs>
-            <g id="zg-base" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
             <symbol id="zg-aries"       viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20V8 M12 8C12 4.6 9.6 3.4 7.9 4.7C6.1 6.1 6.2 9 7.9 10.7 M12 8C12 4.6 14.4 3.4 16.1 4.7C17.9 6.1 17.8 9 16.1 10.7"/></g></symbol>
             <symbol id="zg-taurus"      viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5.5 4C7 7.4 9.3 8.8 12 8.8C14.7 8.8 17 7.4 18.5 4"/><circle cx="12" cy="14.2" r="5.2"/></g></symbol>
             <symbol id="zg-gemini"      viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6.8V17.2 M15 6.8V17.2 M5.2 4.6C8 6.4 16 6.4 18.8 4.6 M5.2 19.4C8 17.6 16 17.6 18.8 19.4"/></g></symbol>
@@ -262,15 +315,10 @@ export default function NatalWheelDemo() {
         <p data-reveal style={{ fontSize:18,color:"var(--text-primary)",marginBottom:34 }}>
           Obiecujemy jedno: w&nbsp;pierwszych trzech akapitach przeczytasz o&nbsp;sobie rzeczy, które czujesz od lat — a&nbsp;których nikt dotąd nie nazwał.
         </p>
-        <Link
-          href="/app/cosmogram"
-          data-reveal
-          style={{
-            fontSize:16.5, padding:"15px 30px", display:"inline-block",
-            color:"var(--text-primary)", textDecoration:"none",
-            border:"1px solid var(--line)", borderRadius:999,
-          }}
-        >
+        <Link href="/app/cosmogram" data-reveal
+          style={{ fontSize:16.5,padding:"15px 30px",display:"inline-block",
+            color:"var(--text-primary)",textDecoration:"none",
+            border:"1px solid var(--line)",borderRadius:999 }}>
           Zobacz przykładowy kosmogram →
         </Link>
       </div>
