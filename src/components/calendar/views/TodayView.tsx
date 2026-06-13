@@ -1,22 +1,23 @@
 "use client";
 
-import Link from "next/link";
-import TodayHoroscopeCard from "@/components/calendar/TodayHoroscopeCard";
-import WhenBest from "@/components/calendar/WhenBest";
-import { ASPECT_LABEL_PL } from "@/lib/i18n/astro";
-import { DOMAIN_META, windowToDomain } from "@/lib/astro/domains";
+import { useState, useEffect, useCallback } from "react";
+import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits";
 import type { NatalChart } from "@/lib/astro-types";
 import type { TransitWindow, SkyEvent } from "@/lib/astro/layers";
-
-const MONTH_SHORT: Record<number, string> = {
-  1: "sty", 2: "lut", 3: "mar", 4: "kwi", 5: "maj", 6: "cze",
-  7: "lip", 8: "sie", 9: "wrz", 10: "paź", 11: "lis", 12: "gru",
-};
-
-function formatPeak(iso: string): string {
-  const d = new Date(iso + "T12:00:00Z");
-  return `${d.getUTCDate()} ${MONTH_SHORT[d.getUTCMonth() + 1]}`;
-}
+import {
+  PgWeatherZone,
+  PgTimelineDay,
+  PgNarrZone,
+  PgWhenBest,
+  PgWindowsList,
+  type ProgInterpretation,
+  PROGNOZA_STYLES,
+  moodImg,
+  intensityChar,
+  dayWeatherKind,
+  MONTH_SHORT,
+  WEEK_DAY_FULL,
+} from "./prognoza-shared";
 
 type Props = {
   chart:           NatalChart;
@@ -25,84 +26,133 @@ type Props = {
   skyEvents:       SkyEvent[];
   upcomingWindows: TransitWindow[];
   onWindowClick:   () => void;
+  readingId?:      string;
+  session?:        { access_token: string } | null;
 };
 
 export default function TodayView({
-  chart, isPremium, skyEvents, upcomingWindows,
+  chart, isPremium, upcomingWindows, readingId, session,
 }: Props) {
-  return (
-    <div className="space-y-4">
+  const now     = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
 
-      {/* ── 1. HOROSKOP DZIENNY — primary content ── */}
-      <TodayHoroscopeCard
-        chart={chart}
-        isPremium={isPremium}
-        skyEvents={skyEvents}
+  // Compute day weather from transits
+  const transits   = getTransitsForDate(chart, now);
+  const weather    = getDayWeather(transits);
+  const kind       = dayWeatherKind(weather.character, transits[0]?.transitPlanet ?? "");
+  const { intensity, character } = intensityChar(weather);
+  const orbSrc     = moodImg(kind);
+
+  // Build day title
+  const d = now;
+  const dayName  = WEEK_DAY_FULL[d.getDay()];
+  const dayNum   = d.getDate();
+  const monthName = MONTH_SHORT[d.getMonth() + 1];
+  const eyebrow  = `Pogoda · Dziś`;
+  const title    = `${dayName}, ${dayNum} ${monthName}`;
+
+  // AI interpretation
+  const [interp, setInterp] = useState<ProgInterpretation | null>(null);
+  const [interpLoading, setInterpLoading] = useState(false);
+  const [activeChip, setActiveChip] = useState<string | null>(null);
+
+  const fetchInterp = useCallback(async () => {
+    if (!readingId || !session || !isPremium) return;
+    setInterpLoading(true);
+    try {
+      const res = await fetch("/api/prognoza-interpretation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ reading_id: readingId, zoom: "dzis", date: todayStr }),
+      });
+      if (res.ok) {
+        const data = await res.json() as ProgInterpretation;
+        setInterp(data);
+      }
+    } finally {
+      setInterpLoading(false);
+    }
+  }, [readingId, session, isPremium, todayStr]);
+
+  useEffect(() => { fetchInterp(); }, [fetchInterp]);
+
+  // Build windows list from upcomingWindows
+  const winItems = upcomingWindows.slice(0, 5).map(w => ({
+    label:     `${w.transitPlanet} – ${w.natalPoint}`,
+    character: w.character,
+    favorable: w.favorable,
+    dateRange: `peak ${w.peak.slice(5, 10).replace("-", " ")}`,
+    desc:      w.character === "wspierające" ? "Sprzyjający czas" : "Wymagający czas",
+  }));
+
+  // Day timeline transits (top 4 by score)
+  const topTransits = transits.slice(0, 4);
+
+  const PLANET_GLYPH: Record<string, string> = {
+    "Słońce": "☉", "Księżyc": "☽", "Merkury": "☿", "Wenus": "♀", "Mars": "♂",
+    "Jowisz": "♃", "Saturn": "♄", "Uran": "♅", "Neptun": "♆", "Pluton": "♇",
+  };
+
+  const nowHour = now.getHours() + now.getMinutes() / 60;
+  const nowPct  = Math.round((nowHour / 24) * 100);
+
+  const dayMoments = topTransits.map((t, i) => {
+    const spreadPcts = [20, 38, 58, 76];
+    return {
+      x:    spreadPcts[i] ?? 20 + i * 18,
+      glyph: PLANET_GLYPH[t.transitPlanet] ?? t.transitPlanet[0],
+      kind:  (t.favorable ? "harm" : "tense") as "harm" | "tense",
+      word:  t.favorable ? "wsparcie" : "napięcie",
+      desc:  `${t.transitPlanet} ${t.aspectType} ${t.natalPoint} — orb ${t.orbDegrees.toFixed(1)}°`,
+    };
+  });
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: PROGNOZA_STYLES }} />
+
+      <PgWeatherZone
+        eyebrow={eyebrow}
+        theme={interp?.theme ?? title}
+        desc={interp?.summary ?? "Analizuję dzisiejsze transity…"}
+        sub={`☾ Księżyc · ${weather.element}`}
+        intensity={intensity}
+        character={character}
+        kind={kind}
+        orbSrc={orbSrc}
       />
 
-      {/* ── 2. KIEDY NAJLEPIEJ — secondary ── */}
-      <WhenBest chart={chart} isPremium={isPremium} />
-
-      {/* ── 3. NADCHODZĄCE — tertiary, premium only ── */}
-      {isPremium && upcomingWindows.length > 0 && (
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-            Nadchodzące
-          </p>
-          <div className="divide-y divide-white/5">
-            {upcomingWindows.map((w, i) => {
-              const domain = windowToDomain(w);
-              const color  = domain ? DOMAIN_META[domain].color : (w.favorable ? "#E0B566" : "#E07055");
-              return (
-                <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                  <div
-                    className="w-1 h-10 rounded-full shrink-0"
-                    style={{ background: color, opacity: w.favorable ? 0.7 : 0.45 }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white font-medium leading-snug">
-                      {w.transitPlanet}{" "}
-                      <span className="text-slate-400 font-normal">
-                        {ASPECT_LABEL_PL[w.aspectType] ?? w.aspectType} do
-                      </span>{" "}
-                      {w.natalPoint}
-                    </p>
-                    <p className="text-xs mt-0.5" style={{ color: `${color}99` }}>
-                      {w.character === "wspierające" ? "sprzyja" : "napięcie"} · peak {formatPeak(w.peak)}
-                    </p>
-                  </div>
-                  <span
-                    className="text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0"
-                    style={{
-                      background: `${color}15`,
-                      color,
-                      border: `0.5px solid ${color}30`,
-                    }}
-                  >
-                    {formatPeak(w.peak)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+      <section className="pg-timeline">
+        <div className="pg-tl-head">
+          <b>{title}</b>
         </div>
-      )}
+        <PgTimelineDay moments={dayMoments} nowPct={nowPct} />
+        <div className="pg-hint">Złoto = wsparcie · terakota = napięcie · najedź po szczegół</div>
+      </section>
 
-      {/* ── 4. FREE UPSELL ── */}
-      {!isPremium && (
-        <Link
-          href="/pricing"
-          className="block glass-card rounded-2xl p-5 text-center transition-colors hover:bg-white/5"
-          style={{ border: "0.5px solid rgba(255,174,61,0.20)" }}
-        >
-          <p className="text-sm text-slate-300 mb-1 font-medium">
-            Odblokuj prognozy okien i sezonów
-          </p>
-          <p className="text-xs text-slate-500">
-            Aktywuj Premium →
-          </p>
-        </Link>
-      )}
-    </div>
+      <PgNarrZone
+        narr={interp?.narr ?? null}
+        sources={interp?.sources ?? []}
+        reflection={interp?.reflection ?? null}
+        loading={interpLoading}
+        isPremium={isPremium}
+      />
+
+      <PgWhenBest
+        whenBest={interp?.whenBest ?? null}
+        activeChip={activeChip}
+        onChip={setActiveChip}
+        isPremium={isPremium}
+      />
+
+      <PgWindowsList
+        title="Nadchodzące okna"
+        items={winItems}
+        isPremium={isPremium}
+      />
+    </>
   );
 }
