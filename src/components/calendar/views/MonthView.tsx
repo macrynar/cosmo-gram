@@ -78,12 +78,14 @@ export default function MonthView({
   // AI interpretation
   const [interp, setInterp] = useState<ProgInterpretation | null>(null);
   const [interpLoading, setInterpLoading] = useState(false);
+  const [interpError, setInterpError] = useState(false);
   const [activeChip, setActiveChip] = useState<string | null>(null);
 
   const fetchInterp = useCallback(async () => {
     if (!readingId || !session || !isPremium) return;
     setInterpLoading(true);
     setInterp(null);
+    setInterpError(false);
     const dateKey = `${year}-${String(month).padStart(2, "0")}-01`;
     try {
       const res = await fetch("/api/prognoza-interpretation", {
@@ -94,7 +96,13 @@ export default function MonthView({
         },
         body: JSON.stringify({ reading_id: readingId, zoom: "miesiac", date: dateKey }),
       });
-      if (res.ok) setInterp(await res.json() as ProgInterpretation);
+      if (res.ok) {
+        setInterp(await res.json() as ProgInterpretation);
+      } else {
+        setInterpError(true);
+      }
+    } catch {
+      setInterpError(true);
     } finally {
       setInterpLoading(false);
     }
@@ -121,7 +129,13 @@ export default function MonthView({
       <PgWeatherZone
         eyebrow={eyebrow}
         theme={interp?.theme ?? `${monthName} ${year}`}
-        desc={interp?.summary ?? "Analizuję energię miesiąca…"}
+        desc={
+          interp?.summary ??
+          (interpLoading ? "Generuję interpretację miesiąca…" :
+           interpError   ? "Interpretacja chwilowo niedostępna." :
+           !isPremium    ? "Interpretacja AI dostępna w planie Plus." :
+                           "Ładowanie…")
+        }
         sub={`${fastWindows.length} aktywnych okien`}
         intensity={intensity}
         character={character}
