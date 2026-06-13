@@ -36,8 +36,9 @@ export default function ModuleNav({ visibleIds }: Props) {
   const [activeId, setActiveId]   = useState<ModuleId | null>(null);
   const [readIds,  setReadIds]    = useState<Set<string>>(new Set());
   const [underline, setUnderline] = useState<{ left: number; width: number } | null>(null);
-  const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
-  const navRef     = useRef<HTMLDivElement>(null);
+  const buttonRefs   = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const navRef       = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setReadIds(loadRead());
@@ -95,17 +96,16 @@ export default function ModuleNav({ visibleIds }: Props) {
     document.dispatchEvent(new CustomEvent("cosmo-module-expanded", { detail: { id } }));
   }
 
-  // Compute underline position centered on active button
+  // Compute underline position relative to the sticky container
   useEffect(() => {
     const currentId = activeId ?? visibleIds[0] ?? null;
-    if (!currentId || !navRef.current) { setUnderline(null); return; }
+    if (!currentId || !containerRef.current) { setUnderline(null); return; }
     const btn = buttonRefs.current.get(currentId);
-    const nav = navRef.current;
     if (!btn) { setUnderline(null); return; }
-    const navRect = nav.getBoundingClientRect();
-    const btnRect = btn.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const btnRect       = btn.getBoundingClientRect();
     setUnderline({
-      left:  btnRect.left - navRect.left + nav.scrollLeft,
+      left:  btnRect.left - containerRect.left,
       width: btnRect.width,
     });
   }, [activeId, visibleIds]);
@@ -114,6 +114,7 @@ export default function ModuleNav({ visibleIds }: Props) {
 
   return (
     <div
+      ref={containerRef}
       className="sticky top-16 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 mb-6"
       style={{
         background:     "rgba(11,9,18,0.92)",
