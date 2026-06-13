@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const NAV_LINKS = [
-  ["Kosmogram", "#s4"],
-  ["Cosmo Match", "#s4"],
-  ["Cosmo Chat", "#s4"],
-  ["Cennik", "#s6"],
+  ["Kosmogram", "/cosmogram"],
+  ["Cosmo Match", "/match"],
+  ["Cosmo Chat", "/cosmo-chat"],
+  ["Cennik", "/pricing"],
 ] as const;
 
 export default function LandingNav() {
@@ -58,9 +58,9 @@ export default function LandingNav() {
         <ul className="landing-desktop-menu" style={{ display: "flex", gap: 8, listStyle: "none", margin: 0, padding: 0 }}>
           {NAV_LINKS.map(([label, href]) => (
             <li key={label}>
-              <a href={href} style={{ fontSize: 15.5, color: "var(--text-secondary)", textDecoration: "none", padding: "8px 12px", display: "block" }}>
+              <Link href={href} style={{ fontSize: 15.5, color: "var(--text-secondary)", textDecoration: "none", padding: "8px 12px", display: "block" }}>
                 {label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
@@ -115,7 +115,7 @@ export default function LandingNav() {
         aria-hidden={!open}
       >
         {NAV_LINKS.map(([label, href]) => (
-          <a
+          <Link
             key={label}
             href={href}
             onClick={close}
@@ -125,7 +125,7 @@ export default function LandingNav() {
             }}
           >
             {label}
-          </a>
+          </Link>
         ))}
         <div style={{ height: 24 }} />
         <Link
