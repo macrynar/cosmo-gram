@@ -2,295 +2,434 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Lock, MessageCircle, Flame, Heart, Zap, Clock } from "lucide-react";
+import { Lock } from "lucide-react";
 import type { CompatibilityResult, CompatibilityCategory } from "@/app/api/astro-match/route";
-import SynastryWheel from "@/components/match/SynastryWheel";
 
-// ─── Score ring ───────────────────────────────────────────────────────────────
+// ─── CSS animations (injected via style tag — bypasses Turbopack CSS class issues) ──
 
-function ScoreRing({ score, size = 140, animate = true }: { score: number; size?: number; animate?: boolean }) {
-  const [displayed, setDisplayed] = useState(animate ? 0 : score);
-  const r    = (size - 16) / 2;
-  const circ = 2 * Math.PI * r;
-
-  useEffect(() => {
-    if (!animate) return;
-    const start = Date.now();
-    const dur   = 1200;
-    const tick  = () => {
-      const t = Math.min((Date.now() - start) / dur, 1);
-      const ease = 1 - Math.pow(1 - t, 3);
-      setDisplayed(Math.round(ease * score));
-      if (t < 1) requestAnimationFrame(tick);
-    };
-    const id = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(id);
-  }, [score, animate]);
-
-  const offset = circ - (displayed / 100) * circ;
-  const color  = displayed >= 75 ? "#FFAE3D" : displayed >= 50 ? "#E0B566" : "#877FA0";
-
-  return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(43,37,64,0.5)" strokeWidth={8} />
-        <circle
-          cx={size / 2} cy={size / 2} r={r}
-          fill="none" stroke={color} strokeWidth={8}
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          style={{ transition: "stroke-dashoffset 0.1s linear, stroke 0.3s ease" }}
-        />
-      </svg>
-      <div className="absolute text-center">
-        <div className="text-3xl font-bold text-white font-brand">{displayed}</div>
-        <div className="text-xs text-slate-400">/ 100</div>
-      </div>
-    </div>
-  );
+const MATCH_STYLES = `
+@keyframes mx-spin    { to { transform: rotate(360deg); } }
+@keyframes mx-spinr   { to { transform: rotate(-360deg); } }
+@keyframes mx-breathe { 0%,100% { transform:scale(1); } 50% { transform:scale(1.04); } }
+.mx-img   { animation: mx-spin 160s linear infinite, mx-breathe 9s ease-in-out infinite; transition: opacity .5s; }
+.mx-ring1 { animation: mx-spin 70s linear infinite; }
+.mx-ring2 { animation: mx-spinr 95s linear infinite; }
+.mx-orb1  { animation: mx-spin 30s linear infinite; }
+.mx-orb2  { animation: mx-spinr 44s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .mx-img,.mx-ring1,.mx-ring2,.mx-orb1,.mx-orb2 { animation: none!important; }
 }
+`;
 
-// ─── Category card ────────────────────────────────────────────────────────────
+// ─── Tier mapping ─────────────────────────────────────────────────────────────
 
-const CATEGORY_ICON: Record<string, React.ReactNode> = {
-  "Komunikacja":      <MessageCircle className="w-3.5 h-3.5" />,
-  "Namiętność":       <Flame         className="w-3.5 h-3.5" />,
-  "Wspólne wartości": <Heart         className="w-3.5 h-3.5" />,
-  "Wyzwania":         <Zap           className="w-3.5 h-3.5" />,
-  "Długoterminowość": <Clock         className="w-3.5 h-3.5" />,
+const TIERS = [
+  { min: 90, label: "Splecione gwiazdy",  img: "/assets/match/bond-90-splecione.png",   bond: "#E0B566" },
+  { min: 75, label: "Silne przyciąganie", img: "/assets/match/bond-75-przyciaganie.png", bond: "#E0B566" },
+  { min: 60, label: "Rosnąca więź",       img: "/assets/match/bond-60-rosnaca.png",      bond: "#E0B566" },
+  { min: 45, label: "Nauka przez tarcie", img: "/assets/match/bond-45-tarcie.png",       bond: "#E2654A" },
+  { min:  0, label: "Dwa różne nieba",    img: "/assets/match/bond-0-rozne-nieba.png",   bond: "#E2654A" },
+];
+
+const TIER_SUMMARY: Record<string, string> = {
+  "Splecione gwiazdy":  "Wasza relacja to rzadkie, magnetyczne przyciąganie — dwa nieba, które rozumieją się niemal bez słów.",
+  "Silne przyciąganie": "Wasza relacja opiera się na silnym magnetycznym przyciąganiu i głębokim wzajemnym zrozumieniu.",
+  "Rosnąca więź":       "Wiele was łączy, reszty trzeba się nauczyć — to więź, która rośnie gdy dacie jej przestrzeń.",
+  "Nauka przez tarcie": "Spotkanie przez kontrast — uczycie się siebie nawzajem, czasem pod górę, ale zawsze coś zostaje.",
+  "Dwa różne nieba":    "Dwa bardzo różne nieba — przyciąganie miesza się z tarciem, a relacja-lekcja potrafi wiele nauczyć.",
 };
 
-function CategoryCard({ cat, locked, onPaywall, delay = 0 }: {
-  cat: CompatibilityCategory;
-  locked?: boolean;
+function tierFor(score: number) {
+  return TIERS.find(t => score >= t.min) ?? TIERS[TIERS.length - 1];
+}
+
+// ─── 8 module definitions ─────────────────────────────────────────────────────
+
+const MODULE_DEFS = [
+  { name: "Komunikacja i zrozumienie",         icon: "◇", keys: ["Komunikacja"] },
+  { name: "Przyciąganie i chemia",             icon: "♡", keys: ["Przyciąganie", "Namiętność"] },
+  { name: "Więź emocjonalna i bezpieczeństwo", icon: "☾", keys: ["Więź"] },
+  { name: "Wartości i wspólny kierunek",       icon: "◈", keys: ["Wartości"] },
+  { name: "Niezależność i bliskość",           icon: "✧", keys: ["Niezależność"] },
+  { name: "Wyzwania i napięcia",               icon: "✦", keys: ["Wyzwania"] },
+  { name: "Trwałość i przyszłość",             icon: "∞", keys: ["Trwałość", "Długoterminowość"] },
+  { name: "Przeznaczenie i lekcja",            icon: "✷", keys: ["Przeznaczenie"] },
+] as const;
+
+function findCat(categories: CompatibilityCategory[], keys: readonly string[], fullName: string) {
+  return categories.find(c =>
+    c.name === fullName ||
+    keys.some(k => c.name.includes(k))
+  ) ?? null;
+}
+
+// Split text: first sentence → lead (Fraunces italic), rest → body
+function splitLead(text: string): [string, string] {
+  const m = text.match(/^([^.!?]+[.!?])\s*/);
+  if (!m) return [text, ""];
+  return [m[1], text.slice(m[0].length)];
+}
+
+// ─── Score count-up ───────────────────────────────────────────────────────────
+
+function useCountUp(target: number, animate: boolean) {
+  const [val, setVal] = useState(animate ? 0 : target);
+  const rafRef = useRef(0);
+  useEffect(() => {
+    if (!animate) { setVal(target); return; }
+    const start = Date.now();
+    const dur = 1200;
+    const tick = () => {
+      const t = Math.min((Date.now() - start) / dur, 1);
+      setVal(Math.round((1 - Math.pow(1 - t, 3)) * target));
+      if (t < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [target, animate]);
+  return val;
+}
+
+// ─── Module card ──────────────────────────────────────────────────────────────
+
+function ModuleCard({
+  def, cat, locked, onPaywall, delay = 0,
+}: {
+  def: typeof MODULE_DEFS[number];
+  cat: CompatibilityCategory | null;
+  locked: boolean;
   onPaywall?: () => void;
   delay?: number;
 }) {
-  const isChallenge    = cat.name === "Wyzwania";
-  const effectiveScore = isChallenge ? 100 - cat.score : cat.score;
-  const barColor       = effectiveScore >= 70 ? "#FFAE3D" : effectiveScore >= 50 ? "#E0B566" : "#877FA0";
-  const barGlow        = effectiveScore >= 70
-    ? "0 0 10px rgba(255,174,61,0.35)"
-    : effectiveScore >= 50
-    ? "0 0 10px rgba(224,181,102,0.28)"
-    : "none";
+  const [lead, body] = cat ? splitLead(cat.interpretation) : ["", ""];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="relative glass-card rounded-2xl overflow-hidden"
-      style={{ border: "0.5px solid rgba(255,174,61,0.10)" }}
+      style={{
+        position: "relative",
+        border: "1px solid #2B2540",
+        borderRadius: "20px",
+        background: "#14101F",
+        padding: "22px",
+        minHeight: "200px",
+        overflow: "hidden",
+      }}
     >
-      <div className={locked ? "blur-sm select-none pointer-events-none p-5 space-y-4" : "p-5 space-y-4"}>
-
+      {/* Content — blurred when locked */}
+      <div style={locked ? { filter: "blur(7px)", opacity: .5, userSelect: "none", pointerEvents: "none" } : {}}>
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+          <h3 style={{
+            fontSize: "15px", fontWeight: 600, color: "#F4F1EA",
+            display: "flex", alignItems: "center", gap: "8px",
+          }}>
+            <span style={{ color: "#E0B566" }}>{def.icon}</span>
+            {def.name}
+          </h3>
+          {cat && (
+            <span style={{ fontSize: "13px", color: "#877FA0", whiteSpace: "nowrap" }}>
+              <b style={{ color: "#E0B566", fontSize: "16px", fontVariantNumeric: "tabular-nums" }}>{cat.score}</b>/100
+            </span>
+          )}
+        </div>
+
+        {/* Score bar */}
+        {cat && (
+          <div style={{
+            height: "6px", borderRadius: "999px",
+            background: "rgba(182,175,198,.08)",
+            marginBottom: "16px", overflow: "hidden",
+          }}>
+            <motion.div
               style={{
-                background: "rgba(255,174,61,0.10)",
-                border: "0.5px solid rgba(255,174,61,0.22)",
-                color: "#FFAE3D",
+                height: "100%", borderRadius: "999px",
+                background: "linear-gradient(to right,rgba(224,181,102,.6),#FFAE3D)",
               }}
-            >
-              {CATEGORY_ICON[cat.name] ?? null}
-            </div>
-            <span className="text-sm font-semibold text-white">{cat.name}</span>
+              initial={{ width: 0 }}
+              animate={{ width: `${cat.score}%` }}
+              transition={{ delay: delay + 0.2, duration: 0.7, ease: "easeOut" }}
+            />
           </div>
-          <div className="text-right">
-            <span className="text-2xl font-bold font-brand" style={{ color: barColor }}>{cat.score}</span>
-            <span className="text-xs ml-0.5" style={{ color: "rgba(255,255,255,0.25)" }}>/100</span>
-          </div>
-        </div>
+        )}
 
-        {/* Progress bar */}
-        <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
-          <motion.div
-            className="h-full rounded-full"
-            style={{ background: barColor, boxShadow: barGlow }}
-            initial={{ width: 0 }}
-            animate={{ width: `${effectiveScore}%` }}
-            transition={{ delay: delay + 0.2, duration: 0.7, ease: "easeOut" }}
-          />
-        </div>
-
-        {/* Interpretation */}
-        <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
-          {cat.interpretation}
-        </p>
-
-        {/* Insight callout */}
-        <div
-          className="rounded-lg px-3 py-2.5"
-          style={{
-            background: "rgba(255,174,61,0.06)",
-            borderLeft: "2px solid rgba(255,174,61,0.40)",
-          }}
-        >
-          <p className="text-xs leading-relaxed" style={{ color: "#E0B566" }}>
-            {cat.insight}
+        {/* Lead — Fraunces italic */}
+        {lead && (
+          <p style={{
+            fontFamily: "'Fraunces', serif", fontStyle: "italic",
+            fontSize: "15px", color: "#E9DCC0",
+            lineHeight: 1.55, marginBottom: "10px",
+          }}>
+            {lead}
           </p>
-        </div>
+        )}
+
+        {/* Body */}
+        {body && (
+          <p style={{ fontSize: "14px", lineHeight: 1.65, color: "#B6AFC6" }}>{body}</p>
+        )}
+
+        {/* Fallback when no cat data */}
+        {!cat && (
+          <p style={{ fontSize: "14px", color: "#B6AFC6", fontStyle: "italic" }}>
+            Analiza dostępna po wygenerowaniu nowego matcha.
+          </p>
+        )}
+
+        {/* Insight */}
+        {cat?.insight && (
+          <div style={{
+            marginTop: "12px", fontSize: "13px", lineHeight: 1.55,
+            color: "#E0B566", borderTop: "1px solid #2B2540", paddingTop: "12px",
+          }}>
+            → {cat.insight}
+          </div>
+        )}
       </div>
 
+      {/* Lock overlay */}
       {locked && (
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 cursor-pointer rounded-2xl"
-          style={{ background: "rgba(5,4,14,0.82)", backdropFilter: "blur(8px)" }}
           onClick={onPaywall}
+          style={{
+            position: "absolute", inset: 0, cursor: "pointer",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center", gap: "8px",
+          }}
         >
-          <div
-            className="w-9 h-9 rounded-full flex items-center justify-center"
-            style={{ background: "rgba(255,174,61,0.10)", border: "0.5px solid rgba(255,174,61,0.30)" }}
-          >
-            <Lock className="w-4 h-4" style={{ color: "#FFAE3D" }} />
+          <div style={{
+            width: "42px", height: "42px", borderRadius: "50%",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            border: "1px solid #2B2540", background: "rgba(224,181,102,.08)",
+          }}>
+            <Lock size={18} style={{ color: "#E0B566" }} />
           </div>
-          <p className="text-sm font-semibold" style={{ color: "#E0B566" }}>{cat.name}</p>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>Dostępne w planie Plus</p>
-          <div
-            className="mt-1 px-4 py-1.5 rounded-full text-xs font-semibold"
-            style={{ background: "rgba(255,174,61,0.10)", border: "0.5px solid rgba(255,174,61,0.28)", color: "#FFAE3D" }}
+          <b style={{ fontSize: "15px", fontWeight: 600, color: "#F4F1EA", textAlign: "center", padding: "0 16px" }}>
+            {def.name}
+          </b>
+          <span style={{ fontSize: "12.5px", color: "#877FA0" }}>Dostępne w planie Plus</span>
+          <button
+            onClick={e => { e.stopPropagation(); onPaywall?.(); }}
+            style={{
+              marginTop: "6px", padding: "8px 18px",
+              borderRadius: "999px", border: "1px solid #E0B566",
+              color: "#E9DCC0", fontSize: "13px",
+              background: "transparent", cursor: "pointer", fontFamily: "inherit",
+            }}
           >
             Odblokuj →
-          </div>
+          </button>
         </div>
       )}
     </motion.div>
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Main export ──────────────────────────────────────────────────────────────
 
 type Props = {
-  result:         CompatibilityResult;
-  person1Name:    string;
-  person2Name:    string;
-  isPremiumUser?: boolean;
-  onPaywall?:     () => void;
-  animate?:       boolean; // false in ?reveal=instant mode
+  result:          CompatibilityResult;
+  person1Name:     string;
+  person2Name:     string;
+  isPremiumUser?:  boolean;
+  onPaywall?:      () => void;
+  animate?:        boolean;
+  selectedMatchId?: string | null;
+  onShare?:        () => void;
 };
 
 export default function CompatibilityResultView({
-  result,
-  person1Name,
-  person2Name,
-  isPremiumUser = false,
-  onPaywall,
-  animate = true,
+  result, person1Name, person2Name,
+  isPremiumUser = false, onPaywall,
+  animate = true, selectedMatchId, onShare,
 }: Props) {
-  const label1 = person1Name || "Osoba 1";
-  const label2 = person2Name || "Osoba 2";
-
-  const overallLabel =
-    result.overallScore >= 80 ? "Silna kompatybilność" :
-    result.overallScore >= 60 ? "Dobra kompatybilność" :
-    result.overallScore >= 40 ? "Umiarkowana kompatybilność" :
-    "Wymagająca kompatybilność";
-
-  const hasWheel = !!(result.aspects?.length && result.planetPositions);
-
-  // FAZA 3 reveal timing:
-  // 0.0s  — wheel card fades in, planets A stagger (~2s internally)
-  // 2.5s  — score card appears
-  // 3.5s  — overall label + summary
-  // 4.5s+ — category cards stagger
-  const wheelDelay    = 0;
-  const scoreDelay    = animate ? 2.5 : 0;
-  const summaryDelay  = animate ? 3.5 : 0;
-  const catBaseDelay  = animate ? 4.5 : 0;
+  const tier    = tierFor(result.overallScore);
+  const label1  = person1Name || "Osoba 1";
+  const label2  = person2Name || "Osoba 2";
+  const summary = result.summary || TIER_SUMMARY[tier.label] || "";
+  const score   = useCountUp(result.overallScore, animate);
 
   return (
-    <div className="space-y-8">
-      {/* ── Synastry wheel first (if available) ── */}
-      {hasWheel && (
-        <motion.div
-          className="glass-card rounded-3xl p-6"
-          initial={animate ? { opacity: 0, y: 16 } : false}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: wheelDelay, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <p className="text-xs text-slate-500 uppercase tracking-widest mb-5 text-center">
-            Mapa aspektów
-          </p>
-          <SynastryWheel
-            planetsA={result.planetPositions!.a}
-            planetsB={result.planetPositions!.b}
-            aspects={result.aspects!}
-            nameA={label1}
-            nameB={label2}
-            animate={animate}
-          />
-        </motion.div>
-      )}
+    <div>
+      <style dangerouslySetInnerHTML={{ __html: MATCH_STYLES }} />
 
-      {/* ── Overall score ── */}
-      <motion.div
-        className="glass-card rounded-3xl p-8 text-center"
-        initial={animate ? { opacity: 0, scale: 0.97 } : false}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: hasWheel ? scoreDelay : 0, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">Kompatybilność</p>
-        <h2 className="text-lg font-semibold text-white mb-6 font-brand">
-          {label1} <span className="text-amber-400">×</span> {label2}
-        </h2>
-
-        <ScoreRing score={result.overallScore} animate={animate} />
-
-        <motion.div
-          initial={animate ? { opacity: 0 } : false}
-          animate={{ opacity: 1 }}
-          transition={{ delay: hasWheel ? summaryDelay : 0.4, duration: 0.5 }}
-        >
-          <p className="mt-4 text-sm font-medium text-amber-300">{overallLabel}</p>
-          {result.summary && (
-            <p className="mt-3 text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
-              {result.summary}
-            </p>
-          )}
-        </motion.div>
-      </motion.div>
-
-      {/* ── 5 category cards ── */}
-      {result.categories.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {result.categories.map((cat, i) => (
-            <CategoryCard
-              key={cat.name}
-              cat={cat}
-              locked={!isPremiumUser && i > 0}
-              onPaywall={onPaywall}
-              delay={catBaseDelay + i * 0.12}
-            />
-          ))}
+      {/* ── Bond hero ── */}
+      <div style={{
+        position: "relative", border: "1px solid #2B2540", borderRadius: "28px",
+        overflow: "hidden", padding: "30px 24px 40px",
+        background: "radial-gradient(ellipse at 50% 0%, rgba(26,21,48,.55), #0B0912 72%)",
+        textAlign: "center", marginBottom: "0",
+      }}>
+        <div style={{ fontSize: "11px", letterSpacing: ".3em", textTransform: "uppercase", color: "#877FA0", marginBottom: "4px" }}>
+          Kompatybilność
         </div>
-      )}
+        <div style={{ fontSize: "14px", color: "#B6AFC6", marginBottom: "18px" }}>
+          <b style={{ color: "#F4F1EA" }}>{label1}</b>
+          <span style={{ color: "#E0B566", margin: "0 8px" }}>×</span>
+          <b style={{ color: "#F4F1EA" }}>{label2}</b>
+        </div>
 
-      {/* ── Paywall nudge for free users ── */}
-      {!isPremiumUser && result.categories.length > 0 && (
-        <motion.div
-          className="rounded-2xl p-5 text-center"
-          style={{ background: "rgba(255,174,61,0.04)", border: "0.5px solid rgba(255,174,61,0.14)" }}
-          initial={animate ? { opacity: 0 } : false}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.4 }}
-        >
-          <p className="text-sm text-slate-400 mb-3">
-            Odblokuj <span style={{ color: "#FFAE3D" }}>Namiętność, Wspólne wartości, Wyzwania i Długoterminowość</span> — pełna analiza synastrii w planie Plus.
-          </p>
-          <button
-            onClick={onPaywall}
-            className="px-6 py-2.5 rounded-full text-sm font-semibold"
-            style={{ background: "var(--grad-ember, linear-gradient(110deg,#F4A93D,#E07A2F))", color: "var(--on-accent, #201405)" }}
+        {/* ── Bond visual ── */}
+        <div style={{
+          position: "relative", width: "min(420px,86vw)",
+          aspectRatio: "1", margin: "0 auto 14px",
+        }}>
+          {/* Background graphic */}
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              key={tier.img}
+              className="mx-img"
+              src={tier.img}
+              alt=""
+              style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: "50%", opacity: .92 }}
+            />
+          </div>
+          {/* Ring 1 */}
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className="mx-ring1" style={{
+              position: "absolute", width: "70%", height: "70%",
+              borderRadius: "50%", border: "1px solid rgba(224,181,102,.16)",
+            }} />
+          </div>
+          {/* Ring 2 */}
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className="mx-ring2" style={{
+              position: "absolute", width: "54%", height: "54%",
+              borderRadius: "50%", border: "1px dashed rgba(43,37,64,.9)",
+            }} />
+          </div>
+          {/* Orbit 1 */}
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className="mx-orb1" style={{ position: "absolute", width: "84%", height: "84%", borderRadius: "50%" }}>
+              <b style={{
+                position: "absolute", top: "-4px", left: "50%",
+                width: "8px", height: "8px", marginLeft: "-4px",
+                borderRadius: "50%", background: tier.bond,
+                boxShadow: `0 0 12px 2px ${tier.bond}`, display: "block",
+              }} />
+            </div>
+          </div>
+          {/* Orbit 2 */}
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className="mx-orb2" style={{ position: "absolute", width: "64%", height: "64%", borderRadius: "50%" }}>
+              <b style={{
+                position: "absolute", top: "-3px", left: "50%",
+                width: "6px", height: "6px", marginLeft: "-3px",
+                borderRadius: "50%", background: tier.bond,
+                boxShadow: `0 0 8px 1px ${tier.bond}`, display: "block",
+              }} />
+            </div>
+          </div>
+          {/* Scrim */}
+          <div style={{
+            position: "absolute", left: "50%", top: "50%",
+            width: "64%", height: "64%", transform: "translate(-50%,-50%)",
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(11,9,18,.82) 0, rgba(11,9,18,.45) 48%, transparent 70%)",
+          }} />
+          {/* Score */}
+          <div style={{
+            position: "absolute", left: "50%", top: "50%",
+            transform: "translate(-50%,-50%)", textAlign: "center",
+          }}>
+            <div style={{
+              fontSize: "64px", fontWeight: 700, lineHeight: 1,
+              letterSpacing: "-.02em", color: "#F4F1EA",
+              fontVariantNumeric: "tabular-nums",
+            }}>
+              {score}
+            </div>
+            <div style={{ fontSize: "14px", color: "#877FA0", marginTop: "2px" }}>/ 100</div>
+          </div>
+        </div>
+
+        {/* Tier label */}
+        <div style={{
+          fontFamily: "'Fraunces', serif", fontStyle: "italic",
+          fontSize: "22px", color: "#E9DCC0", margin: "8px 0 14px",
+        }}>
+          {tier.label}
+        </div>
+
+        {/* Summary */}
+        <p style={{ maxWidth: "620px", margin: "0 auto 26px", color: "#B6AFC6", fontSize: "15.5px", lineHeight: 1.7 }}>
+          {summary}
+        </p>
+
+        {/* ── 8 module cards ── */}
+        <div style={{
+          display: "grid", gridTemplateColumns: "1fr 1fr",
+          gap: "18px", textAlign: "left",
+        }}>
+          {MODULE_DEFS.map((def, i) => {
+            const cat    = findCat(result.categories, def.keys, def.name);
+            const isFirst = i === 0;
+            const locked  = !isFirst && !isPremiumUser;
+            return (
+              <ModuleCard
+                key={def.name}
+                def={def}
+                cat={cat}
+                locked={locked}
+                onPaywall={onPaywall}
+                delay={animate ? 0.05 + i * 0.06 : 0}
+              />
+            );
+          })}
+        </div>
+
+        {/* ── Paywall ── */}
+        {!isPremiumUser && (
+          <motion.div
+            initial={animate ? { opacity: 0 } : false}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.0, duration: 0.4 }}
+            style={{
+              marginTop: "26px", border: "1px solid #2B2540", borderRadius: "20px",
+              padding: "24px", textAlign: "center",
+              background: "radial-gradient(ellipse at 50% 0%, rgba(94,72,162,.12), transparent 70%), #14101F",
+            }}
           >
-            Przejdź na Plus →
-          </button>
-        </motion.div>
-      )}
+            <p style={{ color: "#B6AFC6", fontSize: "15px", marginBottom: "16px" }}>
+              Odblokuj <span style={{ color: "#E9DCC0" }}>7 modułów pełnej analizy synastrii</span> — przyciąganie, więź emocjonalną, wartości, niezależność, wyzwania, przyszłość i przeznaczenie — w planie Plus.
+            </p>
+            <button
+              onClick={onPaywall}
+              style={{
+                display: "inline-block", padding: "13px 28px", borderRadius: "999px",
+                background: "linear-gradient(135deg,#FFC56B 0%,#FFAE3D 45%,#F08F2E 100%)",
+                color: "#201405", fontWeight: 600, border: "none",
+                cursor: "pointer", boxShadow: "0 0 40px rgba(255,174,61,.18)",
+                fontSize: "15px", fontFamily: "inherit",
+              }}
+            >
+              Przejdź na Plus →
+            </button>
+          </motion.div>
+        )}
+
+        {/* ── Share ── */}
+        {selectedMatchId && onShare && (
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "24px" }}>
+            <button
+              onClick={onShare}
+              style={{
+                display: "inline-flex", gap: "8px", alignItems: "center",
+                padding: "11px 22px", borderRadius: "999px",
+                border: "1px solid #2B2540", background: "transparent",
+                color: "#E9DCC0", fontSize: "14px", cursor: "pointer", fontFamily: "inherit",
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#E0B566"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#2B2540"; }}
+            >
+              ⤴ Udostępnij wynik
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { HeartHandshake, Share2, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { Loader2, Plus, Share2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import PersonBirthForm, { type PersonData, type SavedReadingOption } from "@/components/astro-match/PersonBirthForm";
 import CompatibilityResultView from "@/components/astro-match/CompatibilityResult";
 import PaywallModal from "@/components/astro-match/PaywallModal";
 import ShareModal from "@/components/ShareModal";
-import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
 import { useAuth } from "@/components/AuthContext";
 import { useSubscription } from "@/components/SubscriptionContext";
 import { track } from "@/components/PostHogProvider";
@@ -43,7 +42,7 @@ export default function AstroMatchPage() {
   const [error, setError]       = useState("");
   const [showPaywall, setShowPaywall] = useState(false);
   const [showShare, setShowShare]     = useState(false);
-  const [showForm, setShowForm]       = useState(false);
+  const [view, setView] = useState<"setup" | "result">("setup");
 
   const authHeader: Record<string, string> = session
     ? { Authorization: `Bearer ${session.access_token}` }
@@ -60,15 +59,13 @@ export default function AstroMatchPage() {
       const { matches: matchData }    = await matchRes.json()   as { matches: SavedMatch[] };
       const { readings: readingData } = await readingRes.json() as { readings: SavedReadingOption[] };
 
-      setMatches(matchData);
+      setMatches(matchData ?? []);
       setSavedReadings(readingData ?? []);
 
-      if (matchData.length > 0 && !selectedId) {
+      if (matchData?.length > 0) {
         setSelectedId(matchData[0].id);
         displayMatch(matchData[0]);
-        setShowForm(false);
-      } else {
-        setShowForm(true);
+        setView("result");
       }
     } finally {
       setLoadingHistory(false);
@@ -77,7 +74,6 @@ export default function AstroMatchPage() {
   }, [session]);
 
   useEffect(() => {
-    if (!session) { setShowForm(true); return; }
     loadAll();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
@@ -88,36 +84,26 @@ export default function AstroMatchPage() {
     setResultNames({ p1: m.person1_name, p2: m.person2_name });
   }
 
-  function handleSelect(id: string) {
+  function handleSelectMatch(id: string) {
     setSelectedId(id);
-    setShowForm(false);
     setError("");
     const m = matches.find(m => m.id === id);
-    if (m) displayMatch(m);
+    if (m) { displayMatch(m); setView("result"); }
   }
 
-  async function handleDelete(id: string) {
+  async function handleDeleteMatch(id: string) {
     await fetch(`/api/delete-match?id=${id}`, { method: "DELETE", headers: authHeader });
     const updated = matches.filter(m => m.id !== id);
     setMatches(updated);
     if (id === selectedId) {
       if (updated.length > 0) { setSelectedId(updated[0].id); displayMatch(updated[0]); }
-      else { setSelectedId(null); setResult(null); setShowForm(true); }
+      else { setSelectedId(null); setResult(null); setView("setup"); }
     }
-  }
-
-  async function handleRename(id: string, name: string) {
-    await fetch("/api/rename-match", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", ...authHeader },
-      body: JSON.stringify({ id, name }),
-    });
-    setMatches(prev => prev.map(m => m.id === id ? { ...m, name } : m));
   }
 
   function handleNew() {
     setSelectedId(null); setResult(null); setError("");
-    setShowForm(true); setPerson1(null); setPerson2(null);
+    setPerson1(null); setPerson2(null); setView("setup");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -144,7 +130,7 @@ export default function AstroMatchPage() {
       setResultIsPremium(isPaidUser);
       setResultNames({ p1: person1.name || "Osoba 1", p2: person2.name || "Osoba 2" });
       track("match_revealed", { score: matchResult.overallScore });
-      setShowForm(false);
+      setView("result");
 
       if (session) {
         const saveRes = await fetch("/api/save-match", {
@@ -161,9 +147,11 @@ export default function AstroMatchPage() {
         if (saveRes.ok) {
           const { id } = await saveRes.json() as { id: string };
           const newEntry: SavedMatch = {
-            id, name: `${person1.name || "Osoba 1"} × ${person2.name || "Osoba 2"}`,
+            id,
+            name: `${person1.name || "Osoba 1"} × ${person2.name || "Osoba 2"}`,
             person1_name: person1.name, person2_name: person2.name,
-            overall_score: matchResult.overallScore, compatibility_data: matchResult,
+            overall_score: matchResult.overallScore,
+            compatibility_data: matchResult,
             created_at: new Date().toISOString(),
           };
           setMatches(prev => [newEntry, ...prev]);
@@ -177,226 +165,265 @@ export default function AstroMatchPage() {
     }
   }
 
-  const selectorItems: HistoryItem[] = matches.map(m => ({
-    id: m.id,
-    name: m.name || `${m.person1_name || "Osoba 1"} × ${m.person2_name || "Osoba 2"}`,
-    subtitle: `${m.overall_score}/100`,
-  }));
-
   const canSubmit = !!person1 && !!person2 && !loading;
 
+  // ─── Render ───────────────────────────────────────────────────────────────
+
   return (
-    <div className="min-h-screen text-white" style={{ background: "#0B0912" }}>
-      <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
-      {/* Aurora ambient — barely visible */}
-      <div
-        aria-hidden="true"
-        className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] pointer-events-none"
-        style={{
-          background: "radial-gradient(ellipse at 50% 0%, rgba(94,72,162,.10) 0%, transparent 70%)",
-          opacity: 0.6,
-        }}
-      />
+    <div style={{
+      minHeight: "100vh",
+      background: "radial-gradient(130% 90% at 50% -5%, #1A1530 0%, #0B0912 62%) fixed #0B0912",
+      color: "#F4F1EA",
+      fontFamily: "'General Sans', system-ui, sans-serif",
+    }}>
+      {/* Grain */}
+      <div aria-hidden="true" style={{
+        position: "fixed", inset: 0, pointerEvents: "none", zIndex: 70, opacity: .045,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")`,
+      }} />
 
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
       <Navbar />
 
-      <main className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pt-24 pb-20">
+      <main style={{ position: "relative", zIndex: 10, maxWidth: "1040px", margin: "0 auto", padding: "88px 24px 80px" }}>
 
-        {/* Header */}
+        {/* ── Header ── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-8 text-center"
+          style={{ textAlign: "center", marginBottom: "26px" }}
         >
-          <div
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium mb-5"
-            style={{
-              color: "#E0B566",
-              background: "rgba(224,181,102,0.08)",
-              border: "0.5px solid rgba(224,181,102,0.25)",
-            }}
-          >
-            <HeartHandshake className="w-3.5 h-3.5" />
-            Analiza kompatybilności
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-            Cosmo{" "}
-            <span style={{
-              background: "linear-gradient(110deg, #F4F1EA 30%, #E0B566 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}>
-              Match
-            </span>
+          <h1 style={{
+            fontFamily: "'Fraunces', serif", fontWeight: 500,
+            fontSize: "clamp(34px, 5vw, 52px)", margin: "0 0 6px",
+            background: "linear-gradient(110deg,#FFF8EC 0%,#FFD9A0 55%,#E8BE78 100%)",
+            WebkitBackgroundClip: "text", backgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}>
+            Cosmo Match
           </h1>
-          <p className="text-sm" style={{ color: "#877FA0" }}>
-            Porównanie kosmogramów · Synastria · Interpretacja AI
+          <p style={{ color: "#877FA0", fontSize: "15px" }}>
+            Porównanie kosmogramów · Synastria · Interpretacja Astrei
           </p>
         </motion.div>
 
-        {/* History selector */}
-        {session && !loadingHistory && matches.length > 0 && (
-          <div
-            className="rounded-2xl px-4 py-3 mb-5"
-            style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)", backdropFilter: "blur(18px)" }}
-          >
-            <HistorySelector
-              items={selectorItems}
-              selectedId={selectedId}
-              onSelect={handleSelect}
-              onDelete={handleDelete}
-              onRename={handleRename}
-              onNew={handleNew}
-              newLabel="Nowy match"
-            />
-          </div>
-        )}
-
-        {loadingHistory && (
-          <div
-            className="rounded-2xl p-10 text-center mb-5"
-            style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.14)" }}
-          >
-            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3" style={{ color: "#FFAE3D", opacity: 0.5 }} />
-            <p className="text-sm" style={{ color: "#877FA0" }}>Wczytuję historię matchów…</p>
-          </div>
-        )}
-
-        {/* Result */}
-        {result && !showForm && (
-          <>
-            <CompatibilityResultView
-              result={result}
-              person1Name={resultNames.p1}
-              person2Name={resultNames.p2}
-              isPremiumUser={resultIsPremium}
-              onPaywall={() => setShowPaywall(true)}
-              animate={animate}
-            />
-            {selectedId && (
-              <div className="flex justify-center mt-6">
+        {/* ── Match history chips ── */}
+        {(loadingHistory || matches.length > 0) && (
+          <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap", marginBottom: "22px" }}>
+            {loadingHistory ? (
+              <div style={{ padding: "10px 18px", borderRadius: "999px", border: "1px solid #2B2540", background: "#14101F", color: "#877FA0", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+                <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> Wczytuję…
+              </div>
+            ) : (
+              <>
+                {matches.map(m => {
+                  const isActive = m.id === selectedId;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => handleSelectMatch(m.id)}
+                      style={{
+                        padding: "10px 18px", borderRadius: "999px", fontSize: "14px",
+                        cursor: "pointer", fontFamily: "inherit", transition: ".2s ease",
+                        border: `1px solid ${isActive ? "#E0B566" : "#2B2540"}`,
+                        background: isActive ? "rgba(224,181,102,.10)" : "#14101F",
+                        color: isActive ? "#E9DCC0" : "#B6AFC6",
+                      }}
+                    >
+                      {m.name || `${m.person1_name} × ${m.person2_name}`}
+                    </button>
+                  );
+                })}
                 <button
-                  onClick={() => { track("match_shared"); setShowShare(true); }}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm transition-all duration-200"
-                  style={{ border: "0.5px solid rgba(212,175,55,0.28)", color: "#E0B566" }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(212,175,55,0.06)"}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
+                  onClick={handleNew}
+                  style={{
+                    padding: "10px 18px", borderRadius: "999px",
+                    border: "1px dashed #2B2540", background: "transparent",
+                    color: "#877FA0", fontSize: "14px", cursor: "pointer",
+                    fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+                    transition: ".2s ease",
+                  }}
+                  onMouseEnter={e => { const b = e.currentTarget; b.style.borderColor = "#E0B566"; b.style.color = "#E0B566"; }}
+                  onMouseLeave={e => { const b = e.currentTarget; b.style.borderColor = "#2B2540"; b.style.color = "#877FA0"; }}
                 >
-                  <Share2 className="w-4 h-4" />
-                  Udostępnij wynik
+                  <Plus size={13} /> Nowy match
                 </button>
-              </div>
+              </>
             )}
-          </>
+          </div>
         )}
 
-        {/* Loading overlay */}
-        {loading && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="rounded-3xl p-16 text-center"
-            style={{ background: "rgba(5,4,14,0.65)", border: "0.5px solid rgba(212,175,55,0.12)" }}
-          >
-            <div className="w-14 h-14 rounded-full mx-auto mb-5 flex items-center justify-center"
-              style={{ border: "1.5px solid rgba(212,175,55,0.20)" }}>
-              <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#FFAE3D", opacity: 0.7 }} />
-            </div>
-            <p className="text-sm font-medium" style={{ color: "#E0B566" }}>Odczytujemy połączenia…</p>
-            <p className="text-xs mt-2" style={{ color: "#877FA0" }}>Obliczamy aspekty synastrii i generujemy interpretację</p>
-          </motion.div>
-        )}
 
-        {/* Form */}
-        {!loadingHistory && !loading && showForm && (
-          <motion.form
-            onSubmit={handleSubmit}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-              <div
-                className="rounded-2xl p-6"
-                style={{ background: "rgba(5,4,14,0.72)", border: "0.5px solid rgba(212,175,55,0.18)", backdropFilter: "blur(24px)" }}
-              >
-                <PersonBirthForm
-                  label="Osoba 1"
-                  accent="#FFAE3D"
-                  onChange={setPerson1}
-                  disabled={loading}
-                  savedReadings={savedReadings}
-                />
+        {/* ── Loading AI ── */}
+        <AnimatePresence>
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{
+                borderRadius: "24px", padding: "64px 24px", textAlign: "center",
+                background: "rgba(20,16,31,.65)", border: "1px solid #2B2540",
+                backdropFilter: "blur(18px)", marginBottom: "24px",
+              }}
+            >
+              <div style={{
+                width: "56px", height: "56px", borderRadius: "50%", margin: "0 auto 20px",
+                border: "1.5px solid rgba(224,181,102,.20)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Loader2 size={24} style={{ color: "#FFAE3D", opacity: .7, animation: "spin 1s linear infinite" }} />
               </div>
+              <p style={{ fontSize: "14px", fontWeight: 500, color: "#E0B566" }}>Odczytujemy połączenia…</p>
+              <p style={{ fontSize: "12px", marginTop: "8px", color: "#877FA0" }}>Obliczamy aspekty synastrii i generujemy interpretację</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-              <div className="md:hidden flex items-center justify-center">
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 w-16" style={{ background: "linear-gradient(to right, transparent, rgba(212,175,55,0.20))" }} />
-                  <HeartHandshake className="w-5 h-5" style={{ color: "rgba(212,175,55,0.35)" }} />
-                  <div className="h-px flex-1 w-16" style={{ background: "linear-gradient(to left, transparent, rgba(212,175,55,0.20))" }} />
+        {/* ── Result view ── */}
+        <AnimatePresence mode="wait">
+          {view === "result" && result && !loading && (
+            <motion.div
+              key="result"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {result.summary?.includes("chwilowo niedostępna") && (
+                <div style={{
+                  marginBottom: "16px", padding: "12px 18px", borderRadius: "14px",
+                  background: "rgba(224,181,102,.07)", border: "1px solid rgba(224,181,102,.22)",
+                  display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
+                }}>
+                  <span style={{ fontSize: "13px", color: "#E0B566" }}>
+                    Ta analiza pochodzi ze starszej wersji i nie ma jeszcze interpretacji AI.
+                  </span>
+                  <button onClick={handleNew} style={{
+                    padding: "6px 14px", borderRadius: "999px", fontSize: "12px",
+                    background: "rgba(224,181,102,.15)", border: "1px solid rgba(224,181,102,.35)",
+                    color: "#E0B566", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                  }}>
+                    Nowy match →
+                  </button>
+                </div>
+              )}
+              <CompatibilityResultView
+                result={result}
+                person1Name={resultNames.p1}
+                person2Name={resultNames.p2}
+                isPremiumUser={resultIsPremium}
+                onPaywall={() => setShowPaywall(true)}
+                animate={animate}
+                selectedMatchId={selectedId}
+                onShare={() => { track("match_shared"); setShowShare(true); }}
+              />
+            </motion.div>
+          )}
+
+          {/* ── Setup view ── */}
+          {view === "setup" && !loading && (
+            <motion.form
+              key="setup"
+              onSubmit={handleSubmit}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div style={{
+                display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px",
+                marginBottom: "20px",
+              }}>
+                {/* Panel Osoba 1 */}
+                <div style={{
+                  border: "1px solid #2B2540", borderRadius: "22px",
+                  background: "#14101F", padding: "24px",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
+                    <h3 style={{ fontSize: "12px", letterSpacing: ".2em", textTransform: "uppercase", color: "#E0B566" }}>
+                      Osoba 1
+                    </h3>
+                  </div>
+                  <PersonBirthForm
+                    label="Osoba 1"
+                    accent="#FFAE3D"
+                    onChange={setPerson1}
+                    disabled={loading}
+                    savedReadings={savedReadings}
+                  />
+                </div>
+
+                {/* Panel Osoba 2 */}
+                <div style={{
+                  border: "1px solid #2B2540", borderRadius: "22px",
+                  background: "#14101F", padding: "24px",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
+                    <h3 style={{ fontSize: "12px", letterSpacing: ".2em", textTransform: "uppercase", color: "#E0B566" }}>
+                      Osoba 2
+                    </h3>
+                  </div>
+                  <PersonBirthForm
+                    label="Osoba 2"
+                    accent="#E0B566"
+                    onChange={setPerson2}
+                    disabled={loading}
+                    savedReadings={savedReadings}
+                  />
                 </div>
               </div>
 
-              <div
-                className="rounded-2xl p-6"
-                style={{ background: "rgba(5,4,14,0.72)", border: "0.5px solid rgba(212,175,55,0.12)", backdropFilter: "blur(24px)" }}
-              >
-                <PersonBirthForm
-                  label="Osoba 2"
-                  accent="#E0B566"
-                  onChange={setPerson2}
-                  disabled={loading}
-                  savedReadings={savedReadings}
-                />
-              </div>
-            </div>
+              {error && (
+                <div style={{
+                  marginBottom: "16px", padding: "12px 16px", borderRadius: "14px",
+                  fontSize: "14px", textAlign: "center",
+                  background: "rgba(226,101,74,.08)", border: ".5px solid rgba(226,101,74,.22)",
+                  color: "#fca5a5",
+                }}>
+                  {error}
+                </div>
+              )}
 
-            {error && (
-              <div
-                className="mb-4 p-3 rounded-xl text-sm text-center"
-                style={{ background: "rgba(239,68,68,0.08)", border: "0.5px solid rgba(239,68,68,0.22)", color: "#fca5a5" }}
-              >
-                {error}
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <button
+                  type="submit"
+                  disabled={!canSubmit}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: "10px",
+                    padding: "14px 32px", borderRadius: "999px",
+                    fontSize: "15px", fontWeight: 600, fontFamily: "inherit",
+                    border: "none", cursor: canSubmit ? "pointer" : "not-allowed",
+                    transition: "box-shadow .3s, opacity .2s",
+                    ...(canSubmit ? {
+                      background: "linear-gradient(135deg,#FFC56B 0%,#FFAE3D 45%,#F08F2E 100%)",
+                      color: "#201405",
+                      boxShadow: "0 0 40px rgba(255,174,61,.22)",
+                    } : {
+                      background: "rgba(255,255,255,.04)",
+                      color: "#475569",
+                    }),
+                  }}
+                  onMouseEnter={e => canSubmit && ((e.currentTarget as HTMLElement).style.boxShadow = "0 0 60px rgba(255,174,61,.32)")}
+                  onMouseLeave={e => canSubmit && ((e.currentTarget as HTMLElement).style.boxShadow = "0 0 40px rgba(255,174,61,.22)")}
+                >
+                  ♡ Porównaj kosmogramy →
+                </button>
               </div>
-            )}
-
-            <div className="text-center">
-              <button
-                type="submit"
-                disabled={!canSubmit}
-                className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full text-sm font-semibold transition-all duration-300"
-                style={canSubmit ? {
-                  background: "linear-gradient(135deg, #FFC56B 0%, #FFAE3D 45%, #F08F2E 100%)",
-                  color: "#201405",
-                  boxShadow: "0 0 32px rgba(255,174,61,0.22)",
-                } : {
-                  background: "rgba(255,255,255,0.04)",
-                  color: "#475569",
-                  cursor: "not-allowed",
-                }}
-                onMouseEnter={e => canSubmit && ((e.currentTarget as HTMLElement).style.boxShadow = "0 0 48px rgba(255,174,61,0.32)")}
-                onMouseLeave={e => canSubmit && ((e.currentTarget as HTMLElement).style.boxShadow = "0 0 32px rgba(255,174,61,0.22)")}
-              >
-                <HeartHandshake className="w-4 h-4" />
-                Analizuj kompatybilność
-              </button>
 
               {!session && (
-                <p className="mt-3 text-xs" style={{ color: "#877FA0" }}>
+                <p style={{ marginTop: "12px", fontSize: "12px", color: "#877FA0", textAlign: "center" }}>
                   Match bezpłatny · Zaloguj się żeby zapisać historię
                 </p>
               )}
               {session && !isPro && (
-                <p className="mt-3 text-xs" style={{ color: "#877FA0" }}>
-                  Score + koło synastrii bezpłatnie · Pełna analiza 5 wymiarów w planie Plus
+                <p style={{ marginTop: "12px", fontSize: "12px", color: "#877FA0", textAlign: "center" }}>
+                  Score + 1 moduł bezpłatnie · Pełna analiza 8 wymiarów w planie Plus
                 </p>
               )}
-            </div>
-          </motion.form>
-        )}
+            </motion.form>
+          )}
+        </AnimatePresence>
+
       </main>
 
       {showShare && selectedId && (
