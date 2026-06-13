@@ -268,10 +268,32 @@ export const WEEK_DAY_FULL  = ["Niedziela", "Poniedziałek", "Wtorek", "Środa",
 
 export type WeatherKind = "good" | "tense" | "calm";
 
-export function dayWeatherKind(character: string, dominantPlanet: string): WeatherKind {
+export function dayWeatherKind(character: string, _dominantPlanet: string): WeatherKind {
   const c = character.toLowerCase();
-  if (dominantPlanet === "Uran" || c.includes("nieoczek") || c.includes("niespod")) return "good"; // electric mapped to good icon
-  if (c.includes("nap") || c.includes("wymagaj") || c.includes("trud") || c.includes("konflik")) return "tense";
+  // Tense / unfavorable / intense
+  if (
+    c.includes("nap")       || // napięty
+    c.includes("wymagaj")   || // wymagający
+    c.includes("trud")      || // trudny
+    c.includes("konflik")   || // konfliktowy
+    c.includes("niesp")     || // niespodziewany
+    c.includes("nieoczek")  || // nieoczekiwany
+    c.includes("transform") || // transformacyjny
+    c.includes("intensyw")  || // intensywny
+    c.includes("chaotycz")  || // chaotyczny
+    c.includes("nadmiar")      // nadmiarowy
+  ) return "tense";
+  // Good / favorable / harmonious
+  if (
+    c.includes("harmoni")   || // harmonijny
+    c.includes("ekspans")   || // ekspansywny
+    c.includes("dynamicz")  || // dynamiczny
+    c.includes("wyraz")     || // wyrazisty
+    c.includes("koncentr")  || // koncentracyjny
+    c.includes("analitycz") || // analityczny
+    c.includes("sprzyjaj")     // sprzyjający
+  ) return "good";
+  // Default: calm (spokojny, emocjonalny, refleksyjny…)
   return "calm";
 }
 
