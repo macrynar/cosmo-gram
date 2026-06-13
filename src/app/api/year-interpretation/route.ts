@@ -14,6 +14,7 @@ export const runtime = "nodejs";
 const BodySchema = z.object({
   year:       z.number().int().min(2020).max(2050),
   reading_id: z.string().uuid(),
+  check_only: z.boolean().optional(),
 });
 
 const QUARTERS = [
@@ -50,9 +51,9 @@ export async function POST(req: NextRequest) {
   const body = BodySchema.safeParse(await req.json().catch(() => ({})));
   if (!body.success) return NextResponse.json({ error: "Nieprawidłowe dane" }, { status: 400 });
 
-  const { year, reading_id: readingId } = body.data;
+  const { year, reading_id: readingId, check_only } = body.data;
 
-  // Cache check
+  // Cache check — always performed first
   const { data: cached } = await supabaseAdmin
     .from("year_interpretations")
     .select("content")
@@ -61,6 +62,8 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
 
   if (cached) return NextResponse.json({ content: cached.content, cached: true });
+  // check_only: return null content without generating
+  if (check_only) return NextResponse.json({ content: null, cached: false });
 
   // Verify ownership + get natal chart
   const { data: reading } = await supabaseAdmin

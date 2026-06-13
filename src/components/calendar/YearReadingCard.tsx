@@ -12,6 +12,10 @@ type Props = {
   isPremium: boolean;
 };
 
+function sessionKey(readingId: string, year: number) {
+  return `year_interp_${readingId}_${year}`;
+}
+
 function Skeleton() {
   return (
     <div className="space-y-2 py-1 animate-pulse">
@@ -24,7 +28,10 @@ function Skeleton() {
 
 export default function YearReadingCard({ year, readingId, isPremium }: Props) {
   const { session } = useAuth();
-  const [content,  setContent]  = useState<string | null>(null);
+  const [content,  setContent]  = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem(sessionKey(readingId, year));
+  });
   const [loading,  setLoading]  = useState(false);
   const [checking, setChecking] = useState(false);
   const [error,    setError]    = useState("");
@@ -33,16 +40,29 @@ export default function YearReadingCard({ year, readingId, isPremium }: Props) {
     ? { Authorization: `Bearer ${session.access_token}` }
     : {};
 
+  // On mount: check DB cache only — never auto-generate
   useEffect(() => {
+    const key = sessionKey(readingId, year);
+    const cached = typeof window !== "undefined" ? sessionStorage.getItem(key) : null;
+    if (cached) { setContent(cached); return; }
+
     setContent(null); setError("");
     if (!session || !isPremium) return;
     setChecking(true);
     fetch("/api/year-interpretation", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeader },
-      body: JSON.stringify({ year, reading_id: readingId }),
+      body: JSON.stringify({ year, reading_id: readingId, check_only: true }),
     })
-      .then(async r => { if (r.ok) { const d = await r.json(); setContent(d.content); } })
+      .then(async r => {
+        if (r.ok) {
+          const d = await r.json() as { content: string | null };
+          if (d.content) {
+            setContent(d.content);
+            sessionStorage.setItem(key, d.content);
+          }
+        }
+      })
       .catch(() => {})
       .finally(() => setChecking(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -57,9 +77,10 @@ export default function YearReadingCard({ year, readingId, isPremium }: Props) {
         headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({ year, reading_id: readingId }),
       });
-      if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error ?? "Błąd"); }
+      if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error((b as { error?: string }).error ?? "Błąd"); }
       const { content: c } = await res.json() as { content: string };
       setContent(c);
+      sessionStorage.setItem(sessionKey(readingId, year), c);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Nieznany błąd");
     } finally { setLoading(false); }
