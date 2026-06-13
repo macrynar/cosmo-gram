@@ -21,3 +21,18 @@ export const POWER_WINDOWS_PER_MONTH = 5;
 
 /** Sanity cap: nigdy więcej niż tyle ★ w miesiącu */
 export const POWER_DAY_SANITY_CAP = 8;
+
+/** Ile sezonów wyświetlać w YearView / SeasonsCard */
+export const MAX_SEASONS_SHOWN = 3;
+
+/** Ile nadchodzących okien w TodayView "Co przed Tobą" */
+export const MAX_UPCOMING_ITEMS = 3;
+
+/** Maks. znaków nagłówka dnia w DayPanel */
+export const DAY_HEADLINE_MAX_CHARS = 120;
+
+/** Maks. pokrycie kalendarza przez bandy (stosunek dni z oknem do wszystkich dni widoku) */
+export const MAX_BAND_COVERAGE = 0.40;
+
+/** Maks. kart w DayPanel (wyświetlane okna) */
+export const MAX_DAY_PANEL_CARDS = 2;
