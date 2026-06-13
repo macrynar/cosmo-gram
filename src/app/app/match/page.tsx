@@ -185,7 +185,7 @@ export default function AstroMatchPage() {
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
       <Navbar />
 
-      <main style={{ position: "relative", zIndex: 10, maxWidth: "1040px", margin: "0 auto", padding: "44px 24px 80px" }}>
+      <main style={{ position: "relative", zIndex: 10, maxWidth: "1040px", margin: "0 auto", padding: "88px 24px 80px" }}>
 
         {/* ── Header ── */}
         <motion.div
