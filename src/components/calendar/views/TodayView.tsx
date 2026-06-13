@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import TodayBar from "@/components/calendar/TodayBar";
+import TodayHoroscopeCard from "@/components/calendar/TodayHoroscopeCard";
 import WhenBest from "@/components/calendar/WhenBest";
 import { ASPECT_LABEL_PL } from "@/lib/i18n/astro";
 import { DOMAIN_META, windowToDomain } from "@/lib/astro/domains";
@@ -28,24 +28,22 @@ type Props = {
 };
 
 export default function TodayView({
-  chart, isPremium, todayWindow, skyEvents, upcomingWindows, onWindowClick,
+  chart, isPremium, skyEvents, upcomingWindows,
 }: Props) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
 
-      {/* Today bar */}
-      <TodayBar
+      {/* ── 1. HOROSKOP DZIENNY — primary content ── */}
+      <TodayHoroscopeCard
         chart={chart}
         isPremium={isPremium}
-        activeWindow={todayWindow}
         skyEvents={skyEvents}
-        onWindowClick={onWindowClick}
       />
 
-      {/* Kiedy najlepiej */}
+      {/* ── 2. KIEDY NAJLEPIEJ — secondary ── */}
       <WhenBest chart={chart} isPremium={isPremium} />
 
-      {/* Co przed Tobą — premium only */}
+      {/* ── 3. NADCHODZĄCE — tertiary, premium only ── */}
       {isPremium && upcomingWindows.length > 0 && (
         <div className="glass-card rounded-2xl p-4">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
@@ -57,12 +55,10 @@ export default function TodayView({
               const color  = domain ? DOMAIN_META[domain].color : (w.favorable ? "#E0B566" : "#E07055");
               return (
                 <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                  {/* Color accent */}
                   <div
                     className="w-1 h-10 rounded-full shrink-0"
                     style={{ background: color, opacity: w.favorable ? 0.7 : 0.45 }}
                   />
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-white font-medium leading-snug">
                       {w.transitPlanet}{" "}
@@ -75,7 +71,6 @@ export default function TodayView({
                       {w.character === "wspierające" ? "sprzyja" : "napięcie"} · peak {formatPeak(w.peak)}
                     </p>
                   </div>
-                  {/* Peak badge */}
                   <span
                     className="text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0"
                     style={{
@@ -93,7 +88,7 @@ export default function TodayView({
         </div>
       )}
 
-      {/* Free upsell — only if no premium content visible */}
+      {/* ── 4. FREE UPSELL ── */}
       {!isPremium && (
         <Link
           href="/pricing"
