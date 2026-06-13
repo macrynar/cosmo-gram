@@ -372,6 +372,8 @@ export default function CalendarPage() {
                     skyEvents={skyEvents}
                     upcomingWindows={upcomingWindows}
                     onWindowClick={() => setSelectedDate(todayStr)}
+                    readingId={selectedReading.id}
+                    session={session}
                   />
                 )}
 
@@ -389,6 +391,7 @@ export default function CalendarPage() {
                     onSelect={(date) => setSelectedDate(prev => prev === date ? null : date)}
                     onPrevWeek={prevWeek}
                     onNextWeek={nextWeek}
+                    session={session}
                   />
                 )}
 
@@ -410,6 +413,7 @@ export default function CalendarPage() {
                     onPrevMonth={prevMonth}
                     onNextMonth={nextMonth}
                     timeUnknown={timeUnknown}
+                    session={session}
                   />
                 )}
 
@@ -420,6 +424,7 @@ export default function CalendarPage() {
                     readingId={selectedId}
                     year={year}
                     chart={selectedReading?.chart_data ?? null}
+                    session={session}
                     onDayClick={(date) => {
                       const d = new Date(date + "T12:00:00Z");
                       setYear(d.getUTCFullYear());

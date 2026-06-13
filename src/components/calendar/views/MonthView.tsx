@@ -1,172 +1,221 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import Link from "next/link";
-import CalendarGrid from "@/components/calendar/CalendarGrid";
-import MonthSummary from "@/components/calendar/MonthSummary";
-import DayPanel from "@/components/calendar/DayPanel";
-import { ROUTES } from "@/lib/routes";
+import { useState, useEffect, useCallback } from "react";
+import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits";
 import type { NatalChart } from "@/lib/astro-types";
 import type { TransitWindow, SkyEvent } from "@/lib/astro/layers";
 import type { DayData } from "@/lib/chart-engine";
+import {
+  PgWeatherZone,
+  PgNarrZone,
+  PgWhenBest,
+  PgWindowsList,
+  DayIcon,
+  PROGNOZA_STYLES,
+  moodImgByCharacter,
+  dayWeatherKind,
+  intensityChar,
+  MONTH_SHORT,
+  type ProgInterpretation,
+  type WeatherKind,
+} from "./prognoza-shared";
 
-const MONTH_NAMES = [
-  "Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec",
-  "Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień",
-];
-
-type Props = {
-  year:               number;
-  month:              number;
-  days:               DayData[];
-  chart:              NatalChart;
-  readingId:          string;
-  isPremium:          boolean;
-  fastWindows:        TransitWindow[];
-  windowDateMap:      Map<string, TransitWindow[]>;
-  exactDays:          Set<string>;
-  moonSignChangeDates:Set<string>;
-  skyEvents:          SkyEvent[];
-  selectedDate:       string | null;
-  onSelect:           (date: string) => void;
-  onPrevMonth:        () => void;
-  onNextMonth:        () => void;
-  timeUnknown:        boolean;
+const MONTH_FULL: Record<number, string> = {
+  1: "Styczeń", 2: "Luty", 3: "Marzec", 4: "Kwiecień", 5: "Maj", 6: "Czerwiec",
+  7: "Lipiec", 8: "Sierpień", 9: "Wrzesień", 10: "Październik", 11: "Listopad", 12: "Grudzień",
 };
 
+type Props = {
+  year:                number;
+  month:               number;
+  days:                DayData[];
+  chart:               NatalChart;
+  readingId:           string;
+  isPremium:           boolean;
+  fastWindows:         TransitWindow[];
+  windowDateMap:       Map<string, TransitWindow[]>;
+  exactDays:           Set<string>;
+  moonSignChangeDates: Set<string>;
+  skyEvents:           SkyEvent[];
+  selectedDate:        string | null;
+  onSelect:            (date: string) => void;
+  onPrevMonth:         () => void;
+  onNextMonth:         () => void;
+  timeUnknown:         boolean;
+  session?:            { access_token: string } | null;
+};
+
+const GRID_HEADERS = ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"];
+
 export default function MonthView({
-  year, month, days, chart, readingId, isPremium,
-  fastWindows, windowDateMap, exactDays, moonSignChangeDates, skyEvents,
-  selectedDate, onSelect, onPrevMonth, onNextMonth, timeUnknown,
+  year, month, chart, readingId, isPremium,
+  fastWindows, windowDateMap, onSelect, onPrevMonth, onNextMonth,
+  session,
 }: Props) {
   const todayStr = new Date().toISOString().slice(0, 10);
-  const selectedDayData = days.find(d => d.date === selectedDate);
-  const selectedWindow  = selectedDate ? windowDateMap.get(selectedDate)?.[0] : undefined;
-  const isExact         = !!selectedDate && exactDays.has(selectedDate);
+
+  const monthName  = MONTH_FULL[month];
+  const eyebrow    = `Pogoda · ${monthName}`;
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  // Compute month-level weather from midmonth (15th)
+  const midDate = new Date(Date.UTC(year, month - 1, 15, 12, 0, 0));
+  const midTransits = getTransitsForDate(chart, midDate);
+  const monthWeather = getDayWeather(midTransits);
+  const { intensity, character } = intensityChar(monthWeather);
+  const monthKind = dayWeatherKind(monthWeather.character, midTransits[0]?.transitPlanet ?? "");
+  const orbSrc    = moodImgByCharacter(monthWeather.character, midTransits[0]?.transitPlanet ?? "");
+
+  // Per-day weather (compute for each day)
+  const dayWeatherMap = new Map<number, WeatherKind>();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date     = new Date(Date.UTC(year, month - 1, d, 12, 0, 0));
+    const transits = getTransitsForDate(chart, date);
+    const weather  = getDayWeather(transits);
+    dayWeatherMap.set(d, dayWeatherKind(weather.character, transits[0]?.transitPlanet ?? "") as WeatherKind);
+  }
+
+  // AI interpretation
+  const [interp, setInterp] = useState<ProgInterpretation | null>(null);
+  const [interpLoading, setInterpLoading] = useState(false);
+  const [interpError, setInterpError] = useState(false);
+  const [activeChip, setActiveChip] = useState<string | null>(null);
+
+  const fetchInterp = useCallback(async () => {
+    if (!readingId || !session || !isPremium) return;
+    setInterpLoading(true);
+    setInterp(null);
+    setInterpError(false);
+    const dateKey = `${year}-${String(month).padStart(2, "0")}-01`;
+    try {
+      const res = await fetch("/api/prognoza-interpretation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ reading_id: readingId, zoom: "miesiac", date: dateKey }),
+      });
+      if (res.ok) {
+        setInterp(await res.json() as ProgInterpretation);
+      } else {
+        setInterpError(true);
+      }
+    } catch {
+      setInterpError(true);
+    } finally {
+      setInterpLoading(false);
+    }
+  }, [readingId, session, isPremium, year, month]);
+
+  useEffect(() => { fetchInterp(); }, [fetchInterp]);
+
+  // Grid offset: first day of month (ISO — 0=Sun, 1=Mon...) → offset so week starts Mon
+  const firstDay = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const offset   = firstDay === 0 ? 6 : firstDay - 1; // Mon=0..Sun=6
+
+  const winItems = fastWindows.slice(0, 6).map(w => ({
+    label:     `${w.transitPlanet} – ${w.natalPoint}`,
+    character: w.character,
+    favorable: w.favorable,
+    dateRange: `${w.start.slice(8, 10)}–${w.end.slice(8, 10)} ${MONTH_SHORT[parseInt(w.peak.slice(5, 7))]}`,
+    desc:      w.character === "wspierające" ? "Sprzyjający czas" : "Wymagający czas",
+  }));
 
   return (
-    <div className={`${selectedDate ? "lg:flex lg:gap-5 lg:items-start" : ""}`}>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: PROGNOZA_STYLES }} />
 
-      {/* Left column */}
-      <div className={`${selectedDate ? "lg:flex-1 lg:min-w-0" : ""} space-y-4`}>
+      <PgWeatherZone
+        eyebrow={eyebrow}
+        theme={interp?.theme ?? `${monthName} ${year}`}
+        desc={
+          interp?.summary ??
+          (interpLoading ? "Generuję interpretację miesiąca…" :
+           interpError   ? "Interpretacja chwilowo niedostępna." :
+           !isPremium    ? "Interpretacja AI dostępna w planie Plus." :
+                           "Ładowanie…")
+        }
+        sub={`${fastWindows.length} aktywnych okien`}
+        intensity={intensity}
+        character={character}
+        kind={monthKind}
+        orbSrc={orbSrc}
+      />
 
-        {/* No birth time CTA */}
-        {timeUnknown && (
-          <div
-            className="glass-card rounded-2xl px-4 py-3 flex items-center gap-3"
-            style={{ border: "0.5px solid rgba(148,163,184,0.15)" }}
-          >
-            <Clock className="w-4 h-4 text-slate-400 shrink-0" />
-            <p className="text-sm text-slate-400 flex-1 leading-snug">
-              Uzupełnij godzinę urodzenia, żeby odblokować domy natalne i pełnię kalendarza.
-            </p>
-            <Link
-              href={ROUTES.app.cosmogram.path}
-              className="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors shrink-0"
-            >
-              Uzupełnij →
-            </Link>
-          </div>
-        )}
-
-        {/* Month navigator + grid */}
-        <div className="glass-card rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={onPrevMonth}
-              className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <h2 className="text-base font-semibold text-white">
-              {MONTH_NAMES[month - 1]} {year}
-            </h2>
-            <button
-              onClick={onNextMonth}
-              className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-
-          {days.length > 0 ? (
-            <CalendarGrid
-              year={year}
-              month={month}
-              days={days}
-              selectedDate={selectedDate}
-              onSelect={(date) => onSelect(date)}
-              isPremium={isPremium}
-              fastWindows={fastWindows}
-              windowDateMap={windowDateMap}
-              exactDays={exactDays}
-              skyEvents={skyEvents}
-              moonSignChangeDates={moonSignChangeDates}
-            />
-          ) : (
-            <div className="text-center py-8 text-slate-500 text-sm">
-              Wczytuję dane…
-            </div>
-          )}
-        </div>
-
-        {/* Month summary */}
-        <MonthSummary
-          year={year}
-          month={month}
-          isPremium={isPremium}
-          readingId={readingId}
-          skyEvents={skyEvents}
-          onWindowClick={(peakDate) => {
-            const d = new Date(peakDate + "T12:00:00Z");
-            if (d.getUTCFullYear() !== year || d.getUTCMonth() + 1 !== month) return;
-            onSelect(peakDate);
-          }}
-        />
-      </div>
-
-      {/* Right column: Day Panel (desktop) */}
-      {selectedDate && (
-        <div className="hidden lg:block lg:w-[420px] lg:shrink-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
-          <DayPanel
-            date={selectedDate}
-            dayData={selectedDayData}
-            chart={chart}
-            readingId={readingId}
-            isPremium={isPremium}
-            activeWindow={selectedWindow}
-            isExactDay={isExact}
-            skyEvents={skyEvents}
-            onClose={() => onSelect(selectedDate)}
-          />
-        </div>
-      )}
-
-      {/* Mobile bottom sheet */}
-      {selectedDate && (
-        <div className="lg:hidden fixed inset-0 z-50 flex items-end">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => onSelect(selectedDate)}
-          />
-          <div className="relative w-full max-h-[85vh] overflow-y-auto rounded-t-2xl bg-[#07050f] border-t border-white/10 shadow-2xl">
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full bg-white/20" />
-            </div>
-            <DayPanel
-              date={selectedDate}
-              dayData={selectedDayData}
-              chart={chart}
-              readingId={readingId}
-              isPremium={isPremium}
-              activeWindow={selectedWindow}
-              isExactDay={isExact}
-              skyEvents={skyEvents}
-              onClose={() => onSelect(selectedDate)}
-            />
+      <section className="pg-timeline">
+        <div className="pg-tl-head">
+          <b>{monthName} {year}</b>
+          <div className="pg-tl-nav">
+            <button onClick={onPrevMonth}>‹</button>
+            <button onClick={onNextMonth}>›</button>
           </div>
         </div>
-      )}
-    </div>
+
+        <div className="pg-month">
+          {GRID_HEADERS.map(h => (
+            <div key={h} className="pg-mh">{h}</div>
+          ))}
+
+          {/* Empty cells for offset */}
+          {Array.from({ length: offset }).map((_, i) => (
+            <div key={`offset-${i}`} />
+          ))}
+
+          {/* Day cells */}
+          {Array.from({ length: daysInMonth }).map((_, idx) => {
+            const d       = idx + 1;
+            const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+            const isToday = dateStr === todayStr;
+            const kind    = dayWeatherMap.get(d) ?? "calm";
+
+            return (
+              <div
+                key={d}
+                className={`pg-mc act${isToday ? " today" : ""}`}
+                onClick={() => {
+                  onSelect(dateStr);
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("h", "today");
+                  url.searchParams.set("date", dateStr);
+                  window.location.href = url.toString();
+                }}
+              >
+                <span className="pg-dnum">{d}</span>
+                <span className="pg-mic"><DayIcon kind={kind} size={18} /></span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="pg-legend">
+          <span><DayIcon kind="good" size={14} /> dzień sprzyjający</span>
+          <span><DayIcon kind="tense" size={14} /> dzień napięty</span>
+          <span><DayIcon kind="calm" size={14} /> spokojny</span>
+        </div>
+        <div className="pg-hint">Kliknij dzień → szczegóły dnia</div>
+      </section>
+
+      <PgNarrZone
+        narr={interp?.narr ?? null}
+        sources={interp?.sources ?? []}
+        reflection={interp?.reflection ?? null}
+        loading={interpLoading}
+        isPremium={isPremium}
+      />
+
+      <PgWhenBest
+        whenBest={interp?.whenBest ?? null}
+        activeChip={activeChip}
+        onChip={setActiveChip}
+        isPremium={isPremium}
+      />
+
+      <PgWindowsList
+        title={`Okna w ${monthName.toLowerCase()}`}
+        items={winItems}
+        isPremium={isPremium}
+      />
+    </>
   );
 }

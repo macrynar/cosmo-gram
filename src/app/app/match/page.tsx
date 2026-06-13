@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Plus, Share2 } from "lucide-react";
+import { Loader2, Plus, Share2, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import PersonBirthForm, { type PersonData, type SavedReadingOption } from "@/components/astro-match/PersonBirthForm";
@@ -43,6 +43,7 @@ export default function AstroMatchPage() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [showShare, setShowShare]     = useState(false);
   const [view, setView] = useState<"setup" | "result">("setup");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const authHeader: Record<string, string> = session
     ? { Authorization: `Bearer ${session.access_token}` }
@@ -219,20 +220,43 @@ export default function AstroMatchPage() {
               <>
                 {matches.map(m => {
                   const isActive = m.id === selectedId;
+                  const label    = m.name || `${m.person1_name} × ${m.person2_name}`;
                   return (
-                    <button
+                    <div
                       key={m.id}
-                      onClick={() => handleSelectMatch(m.id)}
                       style={{
-                        padding: "10px 18px", borderRadius: "999px", fontSize: "14px",
-                        cursor: "pointer", fontFamily: "inherit", transition: ".2s ease",
+                        display: "inline-flex", alignItems: "center", gap: "4px",
+                        borderRadius: "999px", transition: ".2s ease",
                         border: `1px solid ${isActive ? "#E0B566" : "#2B2540"}`,
                         background: isActive ? "rgba(224,181,102,.10)" : "#14101F",
-                        color: isActive ? "#E9DCC0" : "#B6AFC6",
                       }}
                     >
-                      {m.name || `${m.person1_name} × ${m.person2_name}`}
-                    </button>
+                      <button
+                        onClick={() => handleSelectMatch(m.id)}
+                        style={{
+                          padding: "10px 14px 10px 18px", borderRadius: "999px 0 0 999px",
+                          fontSize: "14px", cursor: "pointer", fontFamily: "inherit",
+                          background: "transparent", border: "none",
+                          color: isActive ? "#E9DCC0" : "#B6AFC6",
+                        }}
+                      >
+                        {label}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(m.id); }}
+                        title="Usuń match"
+                        style={{
+                          padding: "8px 12px 8px 4px", background: "transparent", border: "none",
+                          cursor: "pointer", display: "flex", alignItems: "center",
+                          color: isActive ? "rgba(224,181,102,.50)" : "rgba(135,127,160,.40)",
+                          borderRadius: "0 999px 999px 0", transition: ".2s ease",
+                        }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "#E07055"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = isActive ? "rgba(224,181,102,.50)" : "rgba(135,127,160,.40)"; }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   );
                 })}
                 <button
@@ -339,11 +363,6 @@ export default function AstroMatchPage() {
                   border: "1px solid #2B2540", borderRadius: "22px",
                   background: "#14101F", padding: "24px",
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
-                    <h3 style={{ fontSize: "12px", letterSpacing: ".2em", textTransform: "uppercase", color: "#E0B566" }}>
-                      Osoba 1
-                    </h3>
-                  </div>
                   <PersonBirthForm
                     label="Osoba 1"
                     accent="#FFAE3D"
@@ -358,11 +377,6 @@ export default function AstroMatchPage() {
                   border: "1px solid #2B2540", borderRadius: "22px",
                   background: "#14101F", padding: "24px",
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
-                    <h3 style={{ fontSize: "12px", letterSpacing: ".2em", textTransform: "uppercase", color: "#E0B566" }}>
-                      Osoba 2
-                    </h3>
-                  </div>
                   <PersonBirthForm
                     label="Osoba 2"
                     accent="#E0B566"
@@ -429,6 +443,76 @@ export default function AstroMatchPage() {
       {showShare && selectedId && (
         <ShareModal type="match" matchId={selectedId} onClose={() => setShowShare(false)} />
       )}
+
+      {/* ── Confirm delete modal ── */}
+      {confirmDeleteId && (() => {
+        const m = matches.find(x => x.id === confirmDeleteId);
+        const label = m ? (m.name || `${m.person1_name} × ${m.person2_name}`) : "ten match";
+        return (
+          <div
+            style={{
+              position: "fixed", inset: 0, zIndex: 200,
+              background: "rgba(5,4,14,0.80)",
+              backdropFilter: "blur(12px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: "24px",
+            }}
+            onClick={() => setConfirmDeleteId(null)}
+          >
+            <div
+              style={{
+                background: "#14101F",
+                border: "1px solid #2B2540",
+                borderRadius: "20px",
+                padding: "28px 28px 24px",
+                maxWidth: "340px",
+                width: "100%",
+                boxShadow: "0 24px 60px rgba(0,0,0,.6)",
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <p style={{ fontSize: "12px", color: "#877FA0", textTransform: "uppercase", letterSpacing: ".15em", marginBottom: "10px" }}>
+                Potwierdź usunięcie
+              </p>
+              <p style={{ fontSize: "16px", fontWeight: 600, color: "#E9DCC0", marginBottom: "6px" }}>
+                Usunąć „{label}"?
+              </p>
+              <p style={{ fontSize: "13px", color: "#877FA0", lineHeight: 1.5, marginBottom: "24px" }}>
+                Tej operacji nie można cofnąć. Analiza i wyniki zostaną trwale usunięte.
+              </p>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  style={{
+                    flex: 1, padding: "11px", borderRadius: "12px",
+                    border: "1px solid #2B2540", background: "transparent",
+                    color: "#B6AFC6", fontSize: "14px", cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Anuluj
+                </button>
+                <button
+                  onClick={async () => {
+                    await handleDeleteMatch(confirmDeleteId);
+                    setConfirmDeleteId(null);
+                  }}
+                  style={{
+                    flex: 1, padding: "11px", borderRadius: "12px",
+                    border: "1px solid rgba(224,107,85,.40)",
+                    background: "rgba(224,107,85,.12)",
+                    color: "#E07055", fontSize: "14px", fontWeight: 600,
+                    cursor: "pointer", fontFamily: "inherit",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                  }}
+                >
+                  <Trash2 size={13} /> Usuń
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
