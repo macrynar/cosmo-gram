@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Montserrat, Cormorant_Garamond } from "next/font/google";
+import { Montserrat, Cormorant_Garamond, Fraunces } from "next/font/google";
 import "./globals.css";
+import "@/styles/landing-tokens.css";
 import "leaflet/dist/leaflet.css";
 import { AuthProvider } from "@/components/AuthContext";
 import BottomNav from "@/components/BottomNav";
@@ -20,6 +21,13 @@ const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   display: "swap",
   weight: ["400", "500", "600", "700"],
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  display: "swap",
+  style: ["normal", "italic"],
 });
 
 export const viewport: Viewport = {
@@ -59,7 +67,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pl">
-      <body className={`${montserrat.variable} ${cormorant.variable} antialiased`}>
+      <link rel="preconnect" href="https://api.fontshare.com" />
+      <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet" />
+      <body className={`${montserrat.variable} ${cormorant.variable} ${fraunces.variable} antialiased`}>
         <PostHogProvider>
           <AuthProvider>
             <SubscriptionProvider>
