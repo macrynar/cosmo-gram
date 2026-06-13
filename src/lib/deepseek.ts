@@ -182,6 +182,42 @@ export async function correctModuleWithHaiku(
   }
 }
 
+// ─── correctCalendarText (Haiku correction pass for plain text) ───────────────
+// Lightweight version of correctModuleWithHaiku for calendar free-text strings.
+// Best-effort — always returns the original text on error.
+
+const CALENDAR_CORRECTION_SYSTEM = `Jesteś korektorem tekstu astrologicznego po polsku.
+Popraw WYŁĄCZNIE poniższe błędy — nie zmieniaj sensu ani struktury:
+1. Błędy deklinacyjne (np. "w Baran" → "w Baranie", "w Byk" → "w Byku")
+2. Błędne formy gramatyczne (np. "robi się elektryczne" → "robi się elektrycznie", "robi się głośne" → "robi się głośno")
+3. Rusycyzmy i kalki językowe
+4. Formy rodzajowe w 2. osobie (np. "jesteś gotowy/gotowa" → "jesteś w gotowości")
+Zwróć TYLKO poprawiony tekst, zero komentarzy.`;
+
+export async function correctCalendarText(text: string, task: string): Promise<string> {
+  if (process.env.AI_DISABLED === "true" || process.env.AI_MOCK === "true") return text;
+  if (!text.trim()) return text;
+
+  const model = "claude-haiku-4-5-20251001";
+  const t0    = Date.now();
+  try {
+    const corrected = await aiComplete({
+      model,
+      system:    CALENDAR_CORRECTION_SYSTEM,
+      messages:  [{ role: "user", content: text }],
+      maxTokens: Math.min(Math.ceil(text.length * 1.2 / 4), 800),
+      task:      `cal-correction:${task}`,
+    });
+    if (!corrected || corrected.length > text.length * 2) return text; // sanity
+    return corrected;
+  } catch (err) {
+    const latency_ms = Date.now() - t0;
+    const errMsg = err instanceof Error ? err.message : String(err);
+    logAiCall({ task: `cal-correction:${task}`, model, latency_ms, status: "error", error_msg: errMsg.slice(0, 200) });
+    return text;
+  }
+}
+
 // ─── aiComplete (Claude Haiku 4.5 — all other AI calls) ────────────────────
 // apiKey param kept for backward compat — ignored; reads ANTHROPIC_API_KEY from env
 

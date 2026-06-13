@@ -125,6 +125,7 @@ export default function DayPanel({
   const { session } = useAuth();
   const today      = new Date().toISOString().slice(0, 10);
   const isToday    = date === today;
+  const isFuture   = date > today;
   const isPeak     = !!activeWindow && activeWindow.peak === date;
   const isClosing  = !!activeWindow && !isPeak && date > activeWindow.peak;
 
@@ -213,7 +214,7 @@ export default function DayPanel({
       fetch("/api/day-interpretation", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ date }),
+        body: JSON.stringify({ date, reading_id: readingId }),
       }).then(async r => {
         if (r.ok) { const { content } = await r.json() as { content: string }; setSigContent(content); }
       }).catch(() => {})
@@ -294,7 +295,7 @@ export default function DayPanel({
       const res = await fetch("/api/day-interpretation", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ date }),
+        body: JSON.stringify({ date, reading_id: readingId }),
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error ?? "Błąd"); }
       const { content } = await res.json() as { content: string };
@@ -522,6 +523,8 @@ export default function DayPanel({
           peakChecking ? <Spinner /> :
           peakText ? (
             <p className="text-sm text-slate-300 leading-relaxed">{peakText}</p>
+          ) : isFuture ? (
+            <p className="text-xs text-slate-600 italic">Odczyt dostępny w dniu okna.</p>
           ) : (
             <div className="space-y-2">
               {peakError && <p className="text-xs text-red-400">{peakError}</p>}
@@ -545,6 +548,8 @@ export default function DayPanel({
           sigChecking ? <Spinner /> :
           sigContent ? (
             <p className="text-sm text-slate-300 leading-relaxed">{sigContent}</p>
+          ) : isFuture ? (
+            <p className="text-xs text-slate-600 italic">Odczyt dostępny w tym dniu.</p>
           ) : (
             <>
               <motion.button

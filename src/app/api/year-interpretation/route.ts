@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { hasActiveSubscription } from "@/lib/subscription";
-import { getTransitsForDate } from "@/lib/astro/transits";
+import { getSeasons } from "@/lib/astro/layers";
 import { aiComplete, correctCalendarText, AiDisabledError } from "@/lib/deepseek";
-import { ASPECT_LABEL_PL, inSign, PLANET_GENITIVE } from "@/lib/i18n/astro";
+import { ASPECT_LABEL_PL, inSign } from "@/lib/i18n/astro";
 import { containsForeignScript, endsWithSentence, containsPlanetOrSign } from "@/lib/text-validation";
 import { STYLE_BLOCK } from "@/lib/moduleSpecs";
 import type { NatalChart } from "@/lib/astro-types";
@@ -12,14 +12,28 @@ import { z } from "zod";
 export const runtime = "nodejs";
 
 const BodySchema = z.object({
-  date:       z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  year:       z.number().int().min(2020).max(2050),
   reading_id: z.string().uuid(),
+  check_only: z.boolean().optional(),
 });
 
-const SYSTEM_PROMPT = `Jesteś astrolożką opisującą energię konkretnego dnia dla danej osoby.
-Napisz 3–4 zdania: co dzieje się w kosmogramie tej osoby tego dnia, na co warto to skierować.
-Bądź konkretna — cytuj planety i znaki z podanego kontekstu. Pisz w drugiej osobie.
-Zakaz żargonu w warstwie wniosku. Zakaz clichés. Tylko czysty tekst, bez nagłówków.
+const QUARTERS = [
+  { name: "Zima/Wiosna", months: "sty–mar" },
+  { name: "Wiosna/Lato", months: "kwi–cze" },
+  { name: "Lato/Jesień",  months: "lip–wrz" },
+  { name: "Jesień/Zima", months: "paź–gru" },
+];
+
+const SYSTEM_PROMPT = `Jesteś astrolożką. Opisz charakter roku w 5–6 zdaniach.
+
+ZASADY (bezwzględne):
+- Pisz w 2. osobie czasu teraźniejszego: "masz", "czujesz", "możesz"
+- Każde zdanie = jeden konkretny fakt lub praktyczna rada — bez metafor
+- Cytuj planety i aspekty z podanego kontekstu
+- Poprawna polszczyzna: używaj przysłówków tam gdzie trzeba (elektrycznie, chaotycznie — nie: elektryczne)
+- Unikaj poetyckości: zakaz fraz "drga jak struna", "rozpuszcza się w mgle", "dwa głosy nerwów"
+- Zakaz pytań retorycznych i ozdobników
+- Pisz jak dobry dziennikarz — jasno, bez owijania w bawełnę
 
 ${STYLE_BLOCK}`;
 
@@ -35,21 +49,23 @@ export async function POST(req: NextRequest) {
   if (!isPremium) return NextResponse.json({ error: "Premium required" }, { status: 402 });
 
   const body = BodySchema.safeParse(await req.json().catch(() => ({})));
-  if (!body.success) return NextResponse.json({ error: "Nieprawidłowa data" }, { status: 400 });
+  if (!body.success) return NextResponse.json({ error: "Nieprawidłowe dane" }, { status: 400 });
 
-  const { date: dateStr, reading_id: readingId } = body.data;
+  const { year, reading_id: readingId, check_only } = body.data;
 
-  // Cache check — keyed by (reading_id, date) to avoid cross-reading contamination
+  // Cache check — always performed first
   const { data: cached } = await supabaseAdmin
-    .from("day_interpretations")
+    .from("year_interpretations")
     .select("content")
     .eq("reading_id", readingId)
-    .eq("date", dateStr)
+    .eq("year", year)
     .maybeSingle();
 
   if (cached) return NextResponse.json({ content: cached.content, cached: true });
+  // check_only: return null content without generating
+  if (check_only) return NextResponse.json({ content: null, cached: false });
 
-  // Get natal chart for the specified reading (verify ownership)
+  // Verify ownership + get natal chart
   const { data: reading } = await supabaseAdmin
     .from("readings")
     .select("chart_data")
@@ -60,47 +76,49 @@ export async function POST(req: NextRequest) {
   if (!reading?.chart_data) return NextResponse.json({ error: "Brak kosmogramu" }, { status: 404 });
 
   const chart   = reading.chart_data as NatalChart;
-  const date    = new Date(`${dateStr}T12:00:00Z`);
-  const transits = getTransitsForDate(chart, date);
-  const top3     = transits.slice(0, 3);
+  const midYear = new Date(Date.UTC(year, 6, 1)); // July 1st for scan anchor
+  const seasons = getSeasons(chart, midYear)
+    .filter(s => s.start.startsWith(`${year}`) || s.end.startsWith(`${year}`));
 
-  if (top3.length === 0) return NextResponse.json({ error: "Brak aktywnych tranzytów" }, { status: 404 });
+  const seasonLines = seasons
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map(s =>
+      `${s.transitPlanet} ${inSign(s.transitSign)} ${ASPECT_LABEL_PL[s.aspectType] ?? s.aspectType} do ${s.natalPoint} ${inSign(s.natalSign)} — ${s.start} do ${s.end} (${s.phase}, ${s.favorable ? "wspierający" : "wymagający"})`
+    )
+    .join("\n");
 
-  const transitLines = top3.map(t =>
-    `${t.transitPlanet} ${inSign(t.transitSign)} ${ASPECT_LABEL_PL[t.aspectType] ?? t.aspectType} do natalnego ${PLANET_GENITIVE[t.natalPoint] ?? t.natalPoint} ${inSign(t.natalSign)} (orb ${t.orbDegrees.toFixed(1)}°, ${t.applying ? "aplikacyjny" : "separacyjny"}, ${t.favorable ? "sprzyjający" : "napięciowy"})`
-  ).join("\n");
-
-  const context = `Dzień: ${dateStr}\nAktywne tranzyty:\n${transitLines}`;
+  const quarterLines = QUARTERS.map(q => q.name + " (" + q.months + ")").join(", ");
+  const context = `Rok: ${year}\nKwartały: ${quarterLines}\nAktywne sezony:\n${seasonLines || "brak dużych sezonów w tym roku"}`;
 
   try {
-    const userMsg = `Opisz energię tego dnia:\n\n${context}`;
     let content = "";
     const models = ["claude-haiku-4-5-20251001", "claude-haiku-4-5-20251001", "claude-sonnet-4-6"];
     for (const model of models) {
       const candidate = await aiComplete({
         model,
         system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMsg }],
-        maxTokens: 400,
-        task: "day-interpretation",
+        messages: [{ role: "user", content: `Opisz charakter roku dla tej osoby:\n\n${context}` }],
+        maxTokens: 700,
+        task: "year-interpretation",
       });
       if (!containsForeignScript(candidate) && endsWithSentence(candidate) && containsPlanetOrSign(candidate)) {
         content = candidate;
         break;
       }
     }
-    if (content) {
-      content = await correctCalendarText(content, "day-interpretation");
-    }
+    if (content) content = await correctCalendarText(content, "year-interpretation");
     if (!content) return NextResponse.json({ error: "Błąd jakości AI" }, { status: 500 });
 
-    await supabaseAdmin.from("day_interpretations").upsert({
+    const seasonsUsed = seasons.map(s => `${s.transitPlanet}-${s.aspectType}-${s.natalPoint}`);
+
+    await supabaseAdmin.from("year_interpretations").upsert({
       user_id:       user.id,
       reading_id:    readingId,
-      date:          dateStr,
+      year,
       content,
-      day_class:     "significant",
-      transits_used: top3,
+      seasons_used:  seasonsUsed,
+      prompt_version: "1",
       model:         "claude-haiku-4-5-20251001",
     });
 
