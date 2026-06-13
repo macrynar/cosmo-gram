@@ -1,18 +1,20 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Star, Share2, Baby, Plus, RefreshCw, CalendarDays, Clock, MapPin, Globe } from "lucide-react";
+import { Star, Share2, Baby, Plus, CalendarDays, Clock, MapPin, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import BirthForm from "@/components/generate/BirthForm";
 import NatalChartAltarView from "@/components/generate/NatalChartAltarView";
 import PlanetTable from "@/components/generate/PlanetTable";
 import KartaZawodnika from "@/components/generate/KartaZawodnika";
+import KartaDziecka from "@/components/generate/KartaDziecka";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
 import AddChildModal, { type ChildFormData } from "@/components/children/AddChildModal";
-import ChildCard from "@/components/children/ChildCard";
 import { NatalChart } from "@/lib/astro-types";
 import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
+import type { ChildModule } from "@/lib/schemas/childModule";
+import { SIGN_TO_KEY } from "@/components/astro/zodiacGlyphs";
 import { useAuth } from "@/components/AuthContext";
 import { useSubscription } from "@/components/SubscriptionContext";
 import { track } from "@/components/PostHogProvider";
@@ -43,6 +45,20 @@ function ageFromDate(dateStr: string): number | null {
   let age = now.getFullYear() - birth.getFullYear();
   if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) age--;
   return age;
+}
+
+/** Extract Sun sign key from chart_data for portrait thumbnail. */
+function sunSignKey(chart: NatalChart | null | undefined): string | undefined {
+  if (!chart) return undefined;
+  const sun = chart.planets.find(p => p.name === "Słońce");
+  if (!sun?.sign) return undefined;
+  return SIGN_TO_KEY[sun.sign] ?? undefined;
+}
+
+/** Polish sign name from chart for portraitSrc. */
+function sunSignName(chart: NatalChart | null | undefined): string | undefined {
+  if (!chart) return undefined;
+  return chart.planets.find(p => p.name === "Słońce")?.sign;
 }
 
 export default function CosmogramPage() {
@@ -95,7 +111,7 @@ export default function CosmogramPage() {
   const [showChildModal, setShowChildModal] = useState(false);
   const [generatingChild, setGeneratingChild] = useState(false);
   const [childError, setChildError] = useState("");
-  const [regenProgress, setRegenProgress] = useState<{ current: number; total: number } | null>(null);
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
 
   const authHeader: Record<string, string> = session
     ? { Authorization: `Bearer ${session.access_token}` }
@@ -129,7 +145,11 @@ export default function CosmogramPage() {
     try {
       const res = await fetch("/api/get-children", { headers: authHeader });
       const { children: data } = await res.json() as { children: SavedChild[] };
-      setChildren(data ?? []);
+      const loaded = data ?? [];
+      setChildren(loaded);
+      if (loaded.length > 0 && !selectedChildId) {
+        setSelectedChildId(loaded[0].id);
+      }
     } finally {
       setLoadingChildren(false);
     }
@@ -147,11 +167,7 @@ export default function CosmogramPage() {
   // ── Age nudge ────────────────────────────────────────────────────────────
   function handleDateChange(dateStr: string) {
     const age = ageFromDate(dateStr);
-    if (age !== null && age < 13) {
-      setChildNudge(true);
-    } else {
-      setChildNudge(false);
-    }
+    setChildNudge(age !== null && age < 13);
   }
 
   function switchToChildTab() {
@@ -205,9 +221,7 @@ export default function CosmogramPage() {
     name: string; date: string; time: string; place: string; lat: number; lng: number; timeUnknown: boolean;
   }) {
     const age = ageFromDate(data.date);
-    if (age !== null && age < 13) {
-      setChildNudge(true);
-    }
+    if (age !== null && age < 13) setChildNudge(true);
 
     if (session && !subLoading && !isPro && readings.length >= 1) { setShowPaywall(true); return; }
 
@@ -258,30 +272,40 @@ export default function CosmogramPage() {
         body: JSON.stringify({ date: data.date, time: data.time, lat: data.lat, lng: data.lng, place: data.place }),
       });
       if (!chartRes.ok) throw new Error("Błąd obliczania kosmogramu");
-      const { chart, promptContext, placements, aspects, nodes } = await chartRes.json() as {
-        chart: NatalChart; promptContext: string;
+      const { chart, placements, aspects, nodes } = await chartRes.json() as {
+        chart: NatalChart;
         placements: ChartPlacement[]; aspects: NatalAspect[]; nodes: ChartNodes;
       };
 
       const aiRes = await fetch("/api/ai-child", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: data.name, birthDate: data.date, promptContext, placements, aspects, nodes }),
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ name: data.name, birthDate: data.date, placements, aspects, nodes }),
       });
       if (!aiRes.ok) throw new Error("Błąd generowania interpretacji");
-      const interpretation = await aiRes.text();
+      const { modules } = await aiRes.json() as { modules: ChildModule[] };
+      if (!modules || modules.length === 0) throw new Error("Błąd generowania interpretacji");
+
+      // Store modules as JSON string in interpretation column (v2 format)
+      const interpretation = JSON.stringify(modules);
 
       const saveRes = await fetch("/api/save-child", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({
           name: data.name, birthDate: data.date, birthTime: data.time, birthPlace: data.place,
-          lat: data.lat, lng: data.lng, timezone: chart.birthData.timezone, chartData: chart, interpretation,
+          lat: data.lat, lng: data.lng, timezone: chart.birthData.timezone,
+          chartData: chart, modules, promptVersion: "child-v2.0",
         }),
       });
       if (!saveRes.ok) throw new Error("Błąd zapisu");
       const { id } = await saveRes.json() as { id: string };
-      setChildren(prev => [{ id, name: data.name, birth_date: data.date, birth_time: data.time, birth_place: data.place, age_at_creation: 0, chart_data: chart, interpretation, created_at: new Date().toISOString() }, ...prev]);
+      const newChild: SavedChild = {
+        id, name: data.name, birth_date: data.date, birth_time: data.time, birth_place: data.place,
+        age_at_creation: 0, chart_data: chart, interpretation, created_at: new Date().toISOString(),
+      };
+      setChildren(prev => [newChild, ...prev]);
+      setSelectedChildId(id);
       track("child_chart_added", { birth_date: data.date, birth_place: data.place });
       setShowChildModal(false);
     } catch (err) {
@@ -291,58 +315,36 @@ export default function CosmogramPage() {
     }
   }
 
-  async function handleRegenAll() {
-    if (!session || children.length === 0) return;
-    setRegenProgress({ current: 0, total: children.length }); setChildError("");
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      const bd = child.chart_data.birthData;
-      try {
-        const chartRes = await fetch("/api/chart", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ date: bd.date, time: bd.time, lat: bd.lat, lng: bd.lng, place: bd.place }),
-        });
-        if (!chartRes.ok) throw new Error("chart");
-        const { promptContext, placements, aspects, nodes } = await chartRes.json() as {
-          promptContext: string;
-          placements: ChartPlacement[]; aspects: NatalAspect[]; nodes: ChartNodes;
-        };
-        const aiRes = await fetch("/api/ai-child", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: child.name, birthDate: child.birth_date, promptContext, placements, aspects, nodes }),
-        });
-        if (!aiRes.ok) throw new Error("ai");
-        const interpretation = await aiRes.text();
-        await fetch("/api/update-child", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeader },
-          body: JSON.stringify({ id: child.id, interpretation }),
-        });
-        setChildren(prev => prev.map(c => c.id === child.id ? { ...c, interpretation } : c));
-      } catch {
-        setChildError(`Blad przy regeneracji karty ${child.name}`);
-      }
-      setRegenProgress({ current: i + 1, total: children.length });
-    }
-    setRegenProgress(null);
-  }
-
   async function handleDeleteChild(id: string) {
     await fetch(`/api/delete-child?id=${id}`, { method: "DELETE", headers: authHeader });
-    setChildren(prev => prev.filter(c => c.id !== id));
+    setChildren(prev => {
+      const updated = prev.filter(c => c.id !== id);
+      if (id === selectedChildId) {
+        setSelectedChildId(updated.length > 0 ? updated[0].id : null);
+      }
+      return updated;
+    });
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // ── Derived data ─────────────────────────────────────────────────────────
   const selectorItems: HistoryItem[] = readings.map(r => ({
-    id: r.id,
-    name: r.name || `${r.birth_place.split(",")[0]} · ${r.birth_date}`,
+    id:       r.id,
+    name:     r.name || `${r.birth_place.split(",")[0]} · ${r.birth_date}`,
     subtitle: r.birth_date,
+    sunSign:  sunSignName(r.chart_data),
   }));
 
+  const childSelectorItems: HistoryItem[] = children.map(c => ({
+    id:       c.id,
+    name:     c.name,
+    subtitle: c.birth_date,
+    sunSign:  sunSignName(c.chart_data),
+  }));
+
+  const displayedChild = children.find(c => c.id === selectedChildId) ?? null;
   const hasResults = chart && !chartLoading;
 
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen text-white" style={{ background: "var(--bg-base)" }}>
       <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
@@ -355,37 +357,35 @@ export default function CosmogramPage() {
 
       <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-24 pb-20">
 
-        {/* ── Tab bar ── */}
+        {/* ── Tab bar (DS — amber only, no green) ── */}
         <div
-          className="flex items-center justify-center gap-1 p-1 rounded-2xl w-fit mx-auto mb-8"
-          style={{ background: "rgba(11,9,18,0.70)", border: "0.5px solid rgba(224,181,102,0.14)" }}
+          className="flex items-center p-1 rounded-[13px] w-fit mx-auto mb-8 gap-0.5"
+          style={{ background: "var(--bg-elevated)", border: "0.5px solid var(--line)" }}
         >
           <button
             onClick={() => setActiveTab("natal")}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
+            className="px-5 py-2.5 rounded-[10px] text-sm font-medium transition-all duration-300"
             style={activeTab === "natal" ? {
-              background: "rgba(224,181,102,0.14)",
-              border: "0.5px solid rgba(224,181,102,0.38)",
-              color: "#E9DCC0",
-            } : { color: "#877FA0" }}
+              background: "rgba(224,181,102,0.12)",
+              border:     "0.5px solid rgba(224,181,102,0.30) inset",
+              color:      "var(--voice)",
+            } : { color: "var(--text-muted)", border: "0.5px solid transparent" }}
           >
-            <Star className="w-3.5 h-3.5" />
             Twój kosmogram
           </button>
           <button
             ref={childTabRef}
             onClick={() => { setActiveTab("child"); setChildNudge(false); }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300${childNudge && activeTab !== "child" ? " animate-pulse" : ""}`}
+            className={`px-5 py-2.5 rounded-[10px] text-sm font-medium transition-all duration-300${childNudge && activeTab !== "child" ? " animate-pulse" : ""}`}
             style={activeTab === "child" ? {
-              background: "rgba(16,185,129,0.12)",
-              border: "0.5px solid rgba(16,185,129,0.30)",
-              color: "#6ee7b7",
+              background: "rgba(224,181,102,0.12)",
+              border:     "0.5px solid rgba(224,181,102,0.30) inset",
+              color:      "var(--voice)",
             } : childNudge ? {
-              color: "#6ee7b7",
-              border: "0.5px solid rgba(16,185,129,0.35)",
-            } : { color: "#877FA0" }}
+              color:  "var(--voice)",
+              border: "0.5px solid rgba(224,181,102,0.35)",
+            } : { color: "var(--text-muted)", border: "0.5px solid transparent" }}
           >
-            <Baby className="w-3.5 h-3.5" />
             Kosmogram dziecka
           </button>
         </div>
@@ -438,21 +438,21 @@ export default function CosmogramPage() {
               </div>
             )}
 
-            {/* Child nudge banner */}
+            {/* Child nudge banner — DS amber, no green */}
             {childNudge && activeTab === "natal" && (
               <div
                 onClick={switchToChildTab}
                 className="mb-4 flex items-start gap-3 p-4 rounded-2xl cursor-pointer transition-all duration-300 group"
-                style={{ background: "rgba(16,185,129,0.08)", border: "0.5px solid rgba(16,185,129,0.25)" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(16,185,129,0.12)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(16,185,129,0.08)"; }}
+                style={{ background: "rgba(224,181,102,0.07)", border: "0.5px solid rgba(224,181,102,0.22)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(224,181,102,0.11)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(224,181,102,0.07)"; }}
               >
-                <Baby className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
+                <Baby className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "#E0B566" }} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-green-200 text-sm font-medium">Wygląda na datę urodzenia dziecka (poniżej 13 lat)</p>
-                  <p className="text-green-400/70 text-xs mt-0.5">
+                  <p className="text-sm font-medium" style={{ color: "#E9DCC0" }}>Wygląda na datę urodzenia dziecka (poniżej 13 lat)</p>
+                  <p className="text-xs mt-0.5" style={{ color: "rgba(224,181,102,0.65)" }}>
                     Kosmogram dziecka zawiera interpretację skupioną na temperamencie, potrzebach emocjonalnych i wskazówkach dla rodzica.
-                    <span className="ml-1 underline group-hover:text-green-300 transition-colors">Przejdź do zakładki →</span>
+                    <span className="ml-1 underline group-hover:text-amber-300 transition-colors">Przejdź do zakładki →</span>
                   </p>
                 </div>
               </div>
@@ -503,15 +503,11 @@ export default function CosmogramPage() {
                   <NatalChartAltarView chart={chart} />
                   <PlanetTable chart={chart} />
                 </div>
-                {/* ── Karta Astrologiczna (zastępuje stary Interpretation) ── */}
                 {selectedId && (() => {
                   const r = readings.find(x => x.id === selectedId);
                   return r ? (
                     <div id="interpretacja" style={{ scrollMarginTop: 96 }}>
-                      <KartaZawodnika
-                        reading={r}
-                        isPremiumUser={isPro}
-                      />
+                      <KartaZawodnika reading={r} isPremiumUser={isPro} />
                     </div>
                   ) : null;
                 })()}
@@ -541,66 +537,90 @@ export default function CosmogramPage() {
         {/* ── CHILD TAB ─────────────────────────────────────────────────── */}
         {activeTab === "child" && (
           <>
-            <div className="mb-8 text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full border border-green-500/30 bg-green-900/20 text-green-300 text-xs font-medium">
-                <Baby className="w-3.5 h-3.5" />
-                Karta urodzeniowa dziecka
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 font-brand">
-                Kosmogram <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">Dziecka</span>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              className="mb-8 text-center"
+            >
+              <h1
+                className="text-3xl sm:text-4xl font-bold mb-2"
+                style={{ fontFamily: "var(--font-fraunces), serif", color: "var(--text-primary)" }}
+              >
+                Kosmogram{" "}
+                <span style={{
+                  background: "var(--grad-text)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}>
+                  {displayedChild ? displayedChild.name : "dziecka"}
+                </span>
               </h1>
-              <p className="text-slate-500 text-sm max-w-md mx-auto">
-                Interpretacja skupiona na temperamencie, potrzebach emocjonalnych i wskazówkach dla rodzica — dla dzieci poniżej 13 lat.
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                Temperament, potrzeby emocjonalne i wskazówki dla rodzica — dla dzieci poniżej 13 lat
               </p>
-            </div>
+            </motion.div>
 
-            {/* Add button (always visible) */}
+            {childError && (
+              <div className="mb-4 p-3 rounded-xl text-sm text-center" style={{ background: "rgba(239,68,68,0.08)", border: "0.5px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}>
+                {childError}
+              </div>
+            )}
+
+            {/* ── Children selector bar ── */}
             {session && (
-              <div className="flex items-center justify-between mb-5">
-                <span className="text-slate-600 text-xs">{children.length > 0 ? `${children.length} ${children.length === 1 ? "karta" : children.length < 5 ? "karty" : "kart"}` : ""}</span>
-                <div className="flex items-center gap-2">
-                  {children.length > 0 && (
-                    <button
-                      onClick={handleRegenAll}
-                      disabled={!!regenProgress || generatingChild}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-slate-700 text-slate-500 hover:text-white hover:border-slate-500 text-xs transition-all disabled:opacity-40"
-                    >
-                      <RefreshCw className={`w-3 h-3 ${regenProgress ? "animate-spin" : ""}`} />
-                      {regenProgress ? `${regenProgress.current}/${regenProgress.total}` : "Regeneruj"}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
+              <div className="rounded-2xl px-4 py-3 mb-6" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)", backdropFilter: "blur(18px)" }}>
+                {loadingChildren ? (
+                  <div className="flex items-center gap-2 py-2">
+                    <div className="w-5 h-5 rounded-full animate-spin border-t-2 shrink-0" style={{ borderColor: "transparent", borderTopColor: "#E0B566" }} />
+                    <span className="text-sm" style={{ color: "var(--text-muted)" }}>Wczytuję karty…</span>
+                  </div>
+                ) : (
+                  <HistorySelector
+                    items={childSelectorItems}
+                    selectedId={selectedChildId}
+                    onSelect={setSelectedChildId}
+                    onDelete={handleDeleteChild}
+                    onNew={() => {
                       if (subLoading) return;
                       if (!isPro) { setShowPaywall(true); return; }
                       setChildError(""); setShowChildModal(true);
                     }}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-semibold shadow-lg shadow-green-900/40 hover:scale-[1.02] transition-all"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Dodaj dziecko
-                  </button>
-                </div>
+                    newLabel="Dodaj dziecko"
+                  />
+                )}
               </div>
             )}
 
-            {childError && (
-              <div className="mb-4 p-3 rounded-xl bg-red-900/20 border border-red-700/30 text-red-300 text-sm text-center">{childError}</div>
-            )}
-
-            {loadingChildren && (
+            {/* ── Loading children ── */}
+            {loadingChildren && children.length === 0 && (
               <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}>
-                <div className="w-8 h-8 rounded-full animate-spin border-2 mx-auto mb-3" style={{ borderColor: "rgba(16,185,129,0.2)", borderTopColor: "#6ee7b7" }} />
-                <p className="text-slate-500 text-sm">Wczytuję karty…</p>
+                <div className="w-8 h-8 rounded-full animate-spin border-2 mx-auto mb-3" style={{ borderColor: "rgba(224,181,102,0.15)", borderTopColor: "#E0B566" }} />
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>Wczytuję karty…</p>
               </div>
             )}
 
-            {!loadingChildren && children.length === 0 && (
-              <div className="rounded-2xl p-12 text-center" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(16,185,129,0.15)" }}>
-                <Baby className="w-12 h-12 text-green-400/30 mx-auto mb-4" />
-                <h3 className="text-white font-semibold mb-2 font-brand">Brak kart dzieci</h3>
-                <p className="text-slate-500 text-sm mb-6 max-w-xs mx-auto">
-                  Dodaj pierwsze dziecko, żeby wygenerować interpretację jego karty urodzeniowej — temperament, potrzeby, wskazówki.
+            {/* ── Empty state ── */}
+            {!loadingChildren && children.length === 0 && session && (
+              <div
+                className="rounded-2xl p-12 text-center"
+                style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}
+              >
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+                  style={{ background: "rgba(224,181,102,0.08)", border: "0.5px solid rgba(224,181,102,0.22)" }}
+                >
+                  <Baby className="w-7 h-7" style={{ color: "rgba(224,181,102,0.50)" }} />
+                </div>
+                <h3
+                  className="font-medium mb-2"
+                  style={{ color: "var(--text-primary)", fontFamily: "var(--font-fraunces), serif" }}
+                >
+                  Brak kart dzieci
+                </h3>
+                <p className="text-sm mb-6 max-w-xs mx-auto" style={{ color: "var(--text-muted)" }}>
+                  Dodaj pierwsze dziecko, żeby wygenerować interpretację jego kosmogramu — temperament, potrzeby i wskazówki dla Ciebie.
                 </p>
                 <button
                   onClick={() => {
@@ -608,7 +628,14 @@ export default function CosmogramPage() {
                     if (!isPro) { setShowPaywall(true); return; }
                     setChildError(""); setShowChildModal(true);
                   }}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-semibold shadow-lg shadow-green-900/50 hover:scale-[1.02] transition-all"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200"
+                  style={{
+                    background: "rgba(224,181,102,0.92)",
+                    color:      "#0B0912",
+                    border:     "0.5px solid rgba(224,181,102,0.65)",
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(224,181,102,1)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(224,181,102,0.92)"; }}
                 >
                   <Plus className="w-4 h-4" />
                   Dodaj pierwsze dziecko
@@ -616,27 +643,48 @@ export default function CosmogramPage() {
               </div>
             )}
 
-            {!loadingChildren && children.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {children.map(child => (
-                  <ChildCard
-                    key={child.id}
-                    id={child.id}
-                    name={child.name}
-                    birthDate={child.birth_date}
-                    birthPlace={child.birth_place}
-                    chartData={child.chart_data}
-                    onDelete={handleDeleteChild}
-                  />
-                ))}
+            {/* ── Child chart (same anatomy as adult) ── */}
+            {!loadingChildren && displayedChild && (
+              <div className="space-y-6">
+                {/* Birth data chips */}
+                <div className="flex flex-wrap items-center justify-center gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
+                  {([
+                    { Icon: CalendarDays, label: displayedChild.chart_data.birthData.date },
+                    { Icon: Clock,        label: displayedChild.chart_data.birthData.timeUnknown ? "godzina nieznana" : displayedChild.chart_data.birthData.time },
+                    { Icon: MapPin,       label: displayedChild.chart_data.birthData.place },
+                    ...(!displayedChild.chart_data.birthData.timeUnknown ? [{ Icon: Globe, label: displayedChild.chart_data.birthData.timezone }] : []),
+                  ] as { Icon: React.ElementType; label: string }[]).map(({ Icon, label }) => (
+                    <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full max-w-[240px] truncate" style={{ background: "rgba(224,181,102,0.07)", border: "0.5px solid rgba(224,181,102,0.18)" }}>
+                      <Icon className="w-3 h-3 shrink-0" style={{ color: "rgba(224,181,102,0.55)" }} />
+                      {label}
+                    </span>
+                  ))}
+                </div>
+                {displayedChild.chart_data.birthData.timeUnknown && (
+                  <p className="text-center text-xs" style={{ color: "rgba(224,181,102,0.55)" }}>Bez godziny urodzenia — wyniki bez Ascendentu, MC i domów.</p>
+                )}
+
+                {/* Natal chart wheel + Big Three — reuse 1:1 */}
+                <NatalChartAltarView chart={displayedChild.chart_data} />
+                <PlanetTable chart={displayedChild.chart_data} />
+
+                {/* Child interpretation modules */}
+                <KartaDziecka
+                  child={displayedChild}
+                  isPremiumUser={isPro}
+                  onChildUpdated={(childId, interpretation) => {
+                    setChildren(prev => prev.map(c => c.id === childId ? { ...c, interpretation } : c));
+                  }}
+                />
               </div>
             )}
 
+            {/* ── Not logged in ── */}
             {!session && (
-              <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(16,185,129,0.15)" }}>
-                <Baby className="w-10 h-10 text-green-400/40 mx-auto mb-3" />
-                <p className="text-slate-400 text-sm mb-1">Zaloguj się, żeby dodać kartę dziecka</p>
-                <p className="text-slate-600 text-xs">Historia kart jest zapisywana w Twoim koncie</p>
+              <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}>
+                <Baby className="w-10 h-10 mx-auto mb-3" style={{ color: "rgba(224,181,102,0.30)" }} />
+                <p className="text-sm mb-1" style={{ color: "var(--text-secondary)" }}>Zaloguj się, żeby dodać kartę dziecka</p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>Historia kart jest zapisywana w Twoim koncie</p>
               </div>
             )}
           </>
@@ -644,7 +692,7 @@ export default function CosmogramPage() {
 
       </main>
 
-      {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} reason="Karty dzieci sa dostepne w planie Plus." />}
+      {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} reason="Karty dzieci są dostępne w planie Plus." />}
       {showShare && selectedId && <ShareModal type="natal" readingId={selectedId} onClose={() => setShowShare(false)} />}
       {showChildModal && (
         <AddChildModal

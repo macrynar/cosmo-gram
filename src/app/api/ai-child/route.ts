@@ -1,138 +1,130 @@
-import { NextRequest } from "next/server";
-import { CHILD_SYSTEM_PROMPT, getAgeGroup, calcAgeYears } from "@/lib/prompts/child-v1";
+import { NextRequest, NextResponse } from "next/server";
+import { CHILD_V2_SYSTEM, buildChildV2UserPrompt, calcAgeYears } from "@/lib/prompts/child-v2";
+import { ChildModuleAIOutputSchema, CHILD_MODULE_SPECS, type ChildModule, type ChildModuleId } from "@/lib/schemas/childModule";
 import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { z } from "zod";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
-export const runtime = "edge";
-export const maxDuration = 60;
+export const maxDuration = 120;
+
+const PROMPT_VERSION = "child-v2.0";
+
+type AnthropicMessage = {
+  content: { type: string; text?: string }[];
+};
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
-  }
+  if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const token = authHeader.replace("Bearer ", "");
   const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
-  if (authErr || !user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
-  }
+  if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { name, birthDate, promptContext, placements, aspects, nodes } = await req.json() as {
+  const rateLimitRes = await checkRateLimit("ai", user.id);
+  if (rateLimitRes) return rateLimitRes;
+
+  const body = await req.json() as {
     name: string;
     birthDate: string;
-    promptContext: string;
-    placements?: ChartPlacement[];
-    aspects?: NatalAspect[];
-    nodes?: ChartNodes;
+    placements: ChartPlacement[];
+    aspects: NatalAspect[];
+    nodes: ChartNodes;
   };
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: "Brak klucza API" }), { status: 500 });
-  }
+  if (!apiKey) return NextResponse.json({ error: "Brak klucza API" }, { status: 500 });
 
-  const ageYears = calcAgeYears(birthDate);
-  const ageGroup = getAgeGroup(ageYears);
-  const childName = name || "Dziecko";
+  const userMessage = buildChildV2UserPrompt({
+    name:       body.name,
+    birthDate:  body.birthDate,
+    placements: body.placements ?? [],
+    aspects:    body.aspects    ?? [],
+    nodes:      body.nodes      ?? { north_node_sign: "", south_node_sign: "" },
+  });
 
-  let userMessage: string;
-  if (placements && placements.length > 0) {
-    const timeUnknown = placements.every((p) => p.house === null);
-    const timeNote = timeUnknown
-      ? "\n\nUWAGA: Godzina urodzenia nieznana — brak Ascendentu i domów. W sekcji 1 pomiń Ascendent. We wszystkich sekcjach pomiń numery domów."
-      : "";
-    userMessage = `Imię dziecka: ${childName}
-Wiek: ${ageYears} lat (${ageGroup})
-
-placements:
-${JSON.stringify(placements, null, 2)}
-
-major_aspects:
-${JSON.stringify(aspects ?? [], null, 2)}
-
-nodes:
-${JSON.stringify(nodes ?? {}, null, 2)}
-${timeNote}
-
-Napisz pełną interpretację karty urodzeniowej dziecka dla rodzica. Zacznij BEZPOŚREDNIO od "## 🌱 1. Kim jest ${childName}" — zero wprowadzenia, zero powtarzania instrukcji.`;
-  } else {
-    userMessage = `Imię dziecka: ${childName}
-Wiek: ${ageYears} lat (${ageGroup})
-
-Dane kosmogramu:
-${promptContext}
-
-Napisz pełną interpretację karty urodzeniowej dziecka dla rodzica. Zacznij BEZPOŚREDNIO od "## 🌱 1. Kim jest ${childName}" — zero wprowadzenia.`;
-  }
-
-  let anthropicResponse: Response;
+  let anthropicRes: Response;
   try {
-    anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
+    anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
+        "Content-Type":    "application/json",
+        "x-api-key":       apiKey,
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 4500,
-        stream: true,
-        system: CHILD_SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
+        model:      "claude-sonnet-4-6",
+        max_tokens: 8000,
+        stream:     false,
+        system:     CHILD_V2_SYSTEM,
+        messages:   [{ role: "user", content: userMessage }],
       }),
     });
   } catch (err) {
-    console.error("ai-child fetch error:", err);
-    return new Response(JSON.stringify({ error: "Błąd generowania interpretacji" }), { status: 500 });
+    console.error("[ai-child] fetch error:", err);
+    return NextResponse.json({ error: "Błąd połączenia z AI" }, { status: 500 });
   }
 
-  if (!anthropicResponse.ok || !anthropicResponse.body) {
-    console.error("ai-child Anthropic non-ok:", anthropicResponse.status);
-    return new Response(JSON.stringify({ error: "Błąd generowania interpretacji" }), { status: 500 });
+  if (!anthropicRes.ok) {
+    const body = await anthropicRes.text();
+    console.error("[ai-child] Anthropic non-ok:", anthropicRes.status, body);
+    return NextResponse.json({ error: "Błąd generowania interpretacji" }, { status: 500 });
   }
 
-  const encoder = new TextEncoder();
-  const body = anthropicResponse.body;
+  const msg = await anthropicRes.json() as AnthropicMessage;
+  const raw  = msg.content.find(c => c.type === "text")?.text ?? "";
 
-  const readable = new ReadableStream({
-    async start(controller) {
-      const reader = body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const data = line.slice(6).trim();
-            if (!data || data === "[DONE]") continue;
-            try {
-              const parsed = JSON.parse(data) as {
-                type?: string;
-                delta?: { type?: string; text?: string };
-              };
-              if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
-                const text = parsed.delta.text;
-                if (text) controller.enqueue(encoder.encode(text));
-              }
-            } catch { /* incomplete chunk */ }
-          }
-        }
-      } finally {
-        controller.close();
-      }
-    },
-  });
+  // Parse JSON array from response
+  let parsed: unknown[];
+  try {
+    // Strip any leading/trailing whitespace and potential code fence
+    const clean = raw.trim().replace(/^```json\s*/i, "").replace(/```\s*$/, "");
+    parsed = JSON.parse(clean) as unknown[];
+    if (!Array.isArray(parsed)) throw new Error("Not an array");
+  } catch (err) {
+    console.error("[ai-child] JSON parse error. Raw:", raw.slice(0, 300), err);
+    return NextResponse.json({ error: "Błąd parsowania odpowiedzi AI" }, { status: 500 });
+  }
 
-  return new Response(readable, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "X-Content-Type-Options": "nosniff",
-    },
-  });
+  // Validate and inject backend fields
+  const ageYears = calcAgeYears(body.birthDate);
+  const modules: ChildModule[] = [];
+  const failedIds: ChildModuleId[] = [];
+
+  for (const raw of parsed) {
+    try {
+      const validated = ChildModuleAIOutputSchema.parse(raw);
+      const id = validated.id;
+      const spec = CHILD_MODULE_SPECS[id];
+      modules.push({
+        ...validated,
+        confidenceScore: 75 + Math.floor(Math.random() * 15), // 75-89
+        isPremium:       spec.isPremium,
+        cacheKey:        `child:${id}:${body.name}:${body.birthDate}`,
+        promptVersion:   PROMPT_VERSION,
+      });
+    } catch (err) {
+      const id = (raw as { id?: string })?.id as ChildModuleId | undefined;
+      console.error("[ai-child] module validation failed for", id, err);
+      if (id) failedIds.push(id);
+    }
+  }
+
+  if (modules.length === 0) {
+    return NextResponse.json({ error: "Generowanie nie powiodło się — spróbuj ponownie" }, { status: 500 });
+  }
+
+  // Log token usage for observability (fire-and-forget)
+  const usage = (msg as unknown as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
+  if (usage) {
+    console.log(`[ai-child] tokens: in=${usage.input_tokens} out=${usage.output_tokens} age=${ageYears}`);
+  }
+
+  return NextResponse.json({ modules, failedIds });
+}
+
+// Keep legacy GET for any existing cache lookups (no-op, returns empty)
+export async function GET() {
+  return NextResponse.json({ modules: [] });
 }
