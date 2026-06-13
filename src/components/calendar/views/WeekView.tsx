@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import DayPanel from "@/components/calendar/DayPanel";
+import WeekReadingCard from "@/components/calendar/WeekReadingCard";
 import type { NatalChart } from "@/lib/astro-types";
 import type { TransitWindow, SkyEvent } from "@/lib/astro/layers";
 import type { DayData } from "@/lib/chart-engine";
@@ -134,6 +135,9 @@ export default function WeekView({
           );
         })}
       </div>
+
+      {/* Week reading card */}
+      <WeekReadingCard weekStart={weekStart} readingId={readingId} isPremium={isPremium} />
 
       {/* Desktop side panel / mobile sheet */}
       {selectedDate && (
