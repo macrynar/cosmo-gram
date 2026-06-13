@@ -647,3 +647,119 @@ select:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(212, 175, 55, 0.45);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   COSMO CHAT — Astrea starfield
+   ══════════════════════════════════════════════════════════════ */
+
+@keyframes chat-spin    { to { transform: rotate(360deg); } }
+@keyframes chat-spinr   { to { transform: rotate(-360deg); } }
+@keyframes chat-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+@keyframes chat-tw      { 0%,100% { opacity: .12; } 50% { opacity: .9; } }
+@keyframes chat-pulse   {
+  0%,100% { box-shadow: 0 0 0 0 rgba(255,174,61,0), 0 0 40px rgba(255,174,61,.06); }
+  50%     { box-shadow: 0 0 0 0 rgba(255,174,61,0), 0 0 70px rgba(255,174,61,.16); }
+}
+
+/* Layout */
+.chat-layout {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  height: calc(100vh - 64px);
+}
+.chat-rail {
+  border-right: 1px solid var(--line);
+  background: rgba(11,9,18,.35);
+  position: relative;
+  z-index: 30;
+  overflow-y: auto;
+}
+@media (max-width: 860px) {
+  .chat-layout { grid-template-columns: 1fr; }
+  .chat-rail   { display: none; }
+}
+
+/* Starfield elements */
+.chat-nebula {
+  width: 74%; height: 74%;
+  object-fit: contain; border-radius: 50%; opacity: .9;
+  filter: drop-shadow(0 0 80px rgba(255,174,61,.10));
+  animation: chat-spin 150s linear infinite, chat-breathe 9s cubic-bezier(.22,1,.36,1) infinite;
+}
+.chat-ring-1 {
+  position: absolute; width: 46%; height: 46%; border-radius: 50%;
+  border: 1px dashed rgba(224,181,102,.14);
+  animation: chat-spin 70s linear infinite;
+}
+.chat-ring-2 {
+  position: absolute; width: 60%; height: 60%; border-radius: 50%;
+  border: 1px solid rgba(43,37,64,.9);
+  animation: chat-spinr 95s linear infinite;
+}
+.chat-ring-3 {
+  position: absolute; width: 33%; height: 33%; border-radius: 50%;
+  border: 1px solid rgba(224,181,102,.20);
+  animation: chat-spinr 55s linear infinite;
+}
+.chat-scan {
+  position: absolute; width: 60%; height: 60%; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 68%, rgba(255,174,61,.13) 84%, transparent 100%);
+  animation: chat-spin 18s linear infinite;
+}
+.chat-orbit-1 { position: absolute; width: 38%; height: 38%; border-radius: 50%; animation: chat-spin  26s linear infinite; }
+.chat-orbit-2 { position: absolute; width: 52%; height: 52%; border-radius: 50%; animation: chat-spinr 40s linear infinite; }
+.chat-orbit-3 { position: absolute; width: 64%; height: 64%; border-radius: 50%; animation: chat-spin  60s linear infinite; }
+.chat-star {
+  position: absolute; width: 2px; height: 2px; border-radius: 50%;
+  background: var(--voice);
+  animation: chat-tw var(--dur, 4s) ease-in-out infinite;
+}
+.chat-dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-deep);
+  animation: chat-tw 1.1s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.chat-coreglow {
+  position: absolute; left: 50%; top: 50%;
+  width: 340px; height: 340px;
+  transform: translate(-50%,-50%);
+  z-index: 1; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,174,61,.16) 0, rgba(255,174,61,.05) 38%, transparent 64%);
+  animation: chat-breathe 6s cubic-bezier(.22,1,.36,1) infinite;
+}
+.chat-orb-halo {
+  position: absolute; inset: -7px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,174,61,.20), transparent 68%);
+  animation: chat-breathe 5s cubic-bezier(.22,1,.36,1) infinite;
+}
+.chat-composer-pulse { animation: chat-pulse 6s cubic-bezier(.22,1,.36,1) infinite; }
+.chat-composer-pulse:focus-within {
+  animation: none;
+  box-shadow: 0 0 70px rgba(255,174,61,.20);
+  border-color: var(--accent-deep) !important;
+}
+
+/* Composer textarea — override global !important rules */
+.chat-composer-area {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.chat-composer-area:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Thread hover */
+.chat-thread { transition: background .2s cubic-bezier(.22,1,.36,1), border-color .2s; }
+.chat-thread:hover { background: rgba(182,175,198,.04); }
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-nebula, .chat-ring-1, .chat-ring-2, .chat-ring-3,
+  .chat-scan, .chat-orbit-1, .chat-orbit-2, .chat-orbit-3,
+  .chat-star, .chat-dot, .chat-coreglow, .chat-orb-halo,
+  .chat-composer-pulse { animation: none !important; }
+}
