@@ -107,7 +107,8 @@ export async function GET(req: NextRequest) {
   if (!isPremium) return NextResponse.json({ error: "Premium required" }, { status: 402 });
 
   const { searchParams } = new URL(req.url);
-  const dateStr = searchParams.get("date") ?? new Date().toISOString().slice(0, 10);
+  const dateStr   = searchParams.get("date") ?? new Date().toISOString().slice(0, 10);
+  const checkOnly = searchParams.get("check_only") === "true";
 
   // Try cache first
   const { data: cached } = await supabaseAdmin
@@ -131,6 +132,9 @@ export async function GET(req: NextRequest) {
       cached: true,
     });
   }
+
+  // check_only: return null without generating
+  if (checkOnly) return NextResponse.json({ headline: null, cached: false });
 
   // On-demand fallback — generate and cache
   const { data: reading } = await supabaseAdmin
