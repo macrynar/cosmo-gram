@@ -244,9 +244,11 @@ Napisz 8 modułów synastrii zgodnych z tymi scores. Każda interpretacja: 160�
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userMessage }],
         maxTokens: 5000,
+        model: "claude-sonnet-4-6",
       });
+      console.log("[astro-match] AI response length:", rawText.length, "chars");
     } catch (error) {
-      console.error("AI match error:", error);
+      console.error("[astro-match] AI call error:", error);
       const result = buildResult(mockResult(name1, name2, scores), topAspects, planetPositions);
       return NextResponse.json({ result, isPaidUser, charts: { person1: r1.chart, person2: r2.chart } });
     }
@@ -278,8 +280,9 @@ Napisz 8 modułów synastrii zgodnych z tymi scores. Każda interpretacja: 160�
           return { ...cat, score: scoreMap[cat.name] ?? cat.score };
         }),
       };
-    } catch {
-      console.error("JSON parse error in astro-match, raw:", rawText.slice(0, 500));
+    } catch (parseErr) {
+      console.error("[astro-match] JSON parse error:", parseErr);
+      console.error("[astro-match] raw (first 800 chars):", rawText.slice(0, 800));
       aiResult = mockResult(name1, name2, scores);
     }
 
