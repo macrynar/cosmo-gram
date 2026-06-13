@@ -9,6 +9,8 @@ import { useAuth } from "@/components/AuthContext";
 import { useSubscription } from "@/components/SubscriptionContext";
 import { track } from "@/components/PostHogProvider";
 import type { NatalChart } from "@/lib/astro-types";
+import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
+import type { ChildModule } from "@/lib/schemas/childModule";
 import PaywallModal from "@/components/PaywallModal";
 
 type SavedChild = {
@@ -71,16 +73,20 @@ export default function ChildrenPage() {
         body: JSON.stringify({ date: data.date, time: data.time, lat: data.lat, lng: data.lng, place: data.place }),
       });
       if (!chartRes.ok) throw new Error("Błąd obliczania kosmogramu");
-      const { chart, promptContext } = await chartRes.json() as { chart: NatalChart; promptContext: string };
+      const { chart, placements, aspects, nodes } = await chartRes.json() as {
+        chart: NatalChart; placements: ChartPlacement[]; aspects: NatalAspect[]; nodes: ChartNodes;
+      };
 
-      // 2. Generate AI interpretation (streaming)
+      // 2. Generate AI interpretation
       const aiRes = await fetch("/api/ai-child", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: data.name, birthDate: data.date, promptContext }),
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ name: data.name, birthDate: data.date, placements, aspects, nodes }),
       });
       if (!aiRes.ok) throw new Error("Błąd generowania interpretacji");
-      const interpretation = await aiRes.text();
+      const { modules } = await aiRes.json() as { modules: ChildModule[] };
+      if (!modules || modules.length === 0) throw new Error("Błąd generowania interpretacji");
+      const interpretation = JSON.stringify(modules);
 
       // 3. Save
       const saveRes = await fetch("/api/save-child", {
@@ -95,7 +101,8 @@ export default function ChildrenPage() {
           lng: data.lng,
           timezone: chart.birthData.timezone,
           chartData: chart,
-          interpretation,
+          modules,
+          promptVersion: "child-v2.0",
         }),
       });
       if (!saveRes.ok) throw new Error("Błąd zapisu");
@@ -137,20 +144,24 @@ export default function ChildrenPage() {
           body: JSON.stringify({ date: bd.date, time: bd.time, lat: bd.lat, lng: bd.lng, place: bd.place }),
         });
         if (!chartRes.ok) throw new Error("chart");
-        const { promptContext } = await chartRes.json() as { promptContext: string };
+        const { placements, aspects, nodes } = await chartRes.json() as {
+          placements: ChartPlacement[]; aspects: NatalAspect[]; nodes: ChartNodes;
+        };
 
         const aiRes = await fetch("/api/ai-child", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: child.name, birthDate: child.birth_date, promptContext }),
+          headers: { "Content-Type": "application/json", ...authHeader },
+          body: JSON.stringify({ name: child.name, birthDate: child.birth_date, placements, aspects, nodes }),
         });
         if (!aiRes.ok) throw new Error("ai");
-        const interpretation = await aiRes.text();
+        const { modules } = await aiRes.json() as { modules: ChildModule[] };
+        if (!modules || modules.length === 0) throw new Error("ai");
+        const interpretation = JSON.stringify(modules);
 
         await fetch("/api/update-child", {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeader },
-          body: JSON.stringify({ id: child.id, interpretation }),
+          body: JSON.stringify({ id: child.id, interpretation, modules }),
         });
 
         setChildren(prev => prev.map(c => c.id === child.id ? { ...c, interpretation } : c));
