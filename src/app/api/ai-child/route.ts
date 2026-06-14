@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 import { z } from "zod";
 import { checkRateLimit } from "@/lib/rateLimiter";
 
-export const maxDuration = 120;
+export const maxDuration = 180;
 
 const PROMPT_VERSION = "child-v2.0";
 
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model:      "claude-sonnet-4-6",
-        max_tokens: 5000,
+        max_tokens: 7000,
         stream:     false,
         system:     CHILD_V2_SYSTEM,
         messages:   [{ role: "user", content: userMessage }],
