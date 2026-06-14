@@ -95,15 +95,34 @@ const replySchema = z.object({
 });
 
 function parseReply(raw: string): { reply: string; suggested_followups: string[] } {
-  // Try to extract JSON object from response
-  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  const stripped = raw.trim().replace(/^```json\s*/i, "").replace(/```\s*$/, "");
+  const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+
   if (jsonMatch) {
+    // Attempt 1: direct parse
     try {
       const parsed = replySchema.parse(JSON.parse(jsonMatch[0]));
       return { reply: parsed.reply, suggested_followups: parsed.suggested_followups.slice(0, 2) };
-    } catch { /* fall through to plain text */ }
+    } catch { /* continue */ }
+
+    // Attempt 2: Haiku sometimes emits literal newlines inside string values.
+    // Replace bare CR/LF inside the matched block with \n escape sequences.
+    // We do this carefully: only replace newlines that appear BETWEEN two non-newline
+    // characters so we don't corrupt JSON structural whitespace.
+    try {
+      const fixed = jsonMatch[0].replace(/([^\n])\n([^\n])/g, "$1\\n$2");
+      const parsed = replySchema.parse(JSON.parse(fixed));
+      return { reply: parsed.reply, suggested_followups: parsed.suggested_followups.slice(0, 2) };
+    } catch { /* continue */ }
+
+    // Attempt 3: extract "reply" value with a targeted regex
+    const replyMatch = stripped.match(/"reply"\s*:\s*"([\s\S]*?)"\s*[,}]/);
+    if (replyMatch) {
+      return { reply: replyMatch[1].trim(), suggested_followups: [] };
+    }
   }
-  // Fallback: treat entire response as plain reply
+
+  // Final fallback: treat entire response as plain reply
   return { reply: raw, suggested_followups: [] };
 }
 
@@ -302,6 +321,8 @@ export async function POST(req: NextRequest) {
   const messages = [
     ...historyMessages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
     { role: "user" as const, content: content.trim() },
+    // Prefill forces the model to start its response with "{", guaranteeing valid JSON output.
+    { role: "assistant" as const, content: "{" },
   ];
 
   let raw = "";
@@ -312,6 +333,8 @@ export async function POST(req: NextRequest) {
       maxTokens: 1800,
       task: "chat_message",
     });
+    // Prepend the prefilled "{" that Anthropic omits from the response
+    raw = "{" + raw;
   } catch (error) {
     if ((error as Error)?.name === "AiDisabledError") {
       return NextResponse.json({ error: "AI tymczasowo niedostępne. Spróbuj za chwilę." }, { status: 503 });
