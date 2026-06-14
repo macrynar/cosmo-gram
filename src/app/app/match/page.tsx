@@ -354,10 +354,7 @@ export default function AstroMatchPage() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div style={{
-                display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px",
-                marginBottom: "20px",
-              }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
                 {/* Panel Osoba 1 */}
                 <div style={{
                   border: "1px solid #2B2540", borderRadius: "22px",
