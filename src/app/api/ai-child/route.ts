@@ -87,19 +87,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Błąd parsowania odpowiedzi AI" }, { status: 500 });
   }
 
-  // Validate and inject backend fields
+  // Sanitize and validate
   const ageYears = calcAgeYears(body.birthDate);
   const modules: ChildModule[] = [];
   const failedIds: ChildModuleId[] = [];
 
   for (const raw of parsed) {
     try {
-      const validated = ChildModuleAIOutputSchema.parse(raw);
+      // Sanitize before validation: strip trailing period from quote, coerce arrays
+      const item = raw as Record<string, unknown>;
+      if (typeof item.quote === "string") {
+        item.quote = item.quote.replace(/\.\s*$/, "").trim();
+      }
+      if (Array.isArray(item.tags)) {
+        item.tags = (item.tags as unknown[]).slice(0, 8);
+      }
+      if (Array.isArray(item.visualMeters)) {
+        item.visualMeters = (item.visualMeters as unknown[]).slice(0, 5);
+      }
+      if (Array.isArray(item.tactics)) {
+        item.tactics = (item.tactics as unknown[]).slice(0, 6);
+      }
+
+      const validated = ChildModuleAIOutputSchema.parse(item);
       const id = validated.id;
       const spec = CHILD_MODULE_SPECS[id];
       modules.push({
         ...validated,
-        confidenceScore: 75 + Math.floor(Math.random() * 15), // 75-89
+        confidenceScore: 75 + Math.floor(Math.random() * 15),
         isPremium:       spec.isPremium,
         cacheKey:        `child:${id}:${body.name}:${body.birthDate}`,
         promptVersion:   PROMPT_VERSION,
