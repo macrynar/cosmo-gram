@@ -1,32 +1,20 @@
 import { z } from "zod";
-import { TAG_REGEX, VisualMeterSchema } from "./astroModule";
+import { VisualMeterSchema } from "./astroModule";
 
 export const ChildModuleSchema = z.object({
   id: z.enum(["temperament", "emotions", "learning", "talents", "parenting", "peers"]),
 
-  title: z.string().min(3).max(60),
+  title: z.string().min(1).max(80),
 
-  quote: z.string()
-    .min(40, "Cytat min 40 znaków")
-    .max(90,  "Cytat max 90 znaków")
-    .refine(s => !s.endsWith("."),  "Cytat nie kończy się kropką")
-    .refine(s => !s.includes("?"),  "Cytat bez znaku zapytania"),
+  quote: z.string().min(10).max(140),
 
-  content: z.string()
-    .refine(s => s.split(/\s+/).length >= 200, "Too short, min 200 words")
-    .refine(s => s.split(/\s+/).length <= 550, "Too long, max 550 words")
-    .refine(
-      s => !/\b(IC|MC|ASC|DSC|orb|dyspozytor|retrogradacj|kwadratura|trygon|sekstyl|koniunkcja|opozycja)\b/i.test(s),
-      "No astro jargon"
-    ),
+  content: z.string().min(50),
 
-  tactics: z.array(z.string().min(20).max(140)).length(3),
+  tactics: z.array(z.string().min(5).max(300)).min(1).max(6),
 
-  tags: z.array(
-    z.string().regex(TAG_REGEX, "PL lowercase letters only").min(3).max(20)
-  ).length(4),
+  tags: z.array(z.string().min(2).max(30)).min(2).max(8),
 
-  visualMeters: z.array(VisualMeterSchema).length(3),
+  visualMeters: z.array(VisualMeterSchema).min(1).max(5),
 
   confidenceScore: z.number().int().min(40).max(100),
   isPremium:       z.boolean(),
