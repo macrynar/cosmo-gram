@@ -354,9 +354,10 @@ export default function AstroMatchPage() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", marginBottom: "20px" }}>
                 {/* Panel Osoba 1 */}
                 <div style={{
+                  flex: "1 1 260px", minWidth: 0,
                   border: "1px solid #2B2540", borderRadius: "22px",
                   background: "#14101F", padding: "24px",
                 }}>
@@ -371,6 +372,7 @@ export default function AstroMatchPage() {
 
                 {/* Panel Osoba 2 */}
                 <div style={{
+                  flex: "1 1 260px", minWidth: 0,
                   border: "1px solid #2B2540", borderRadius: "22px",
                   background: "#14101F", padding: "24px",
                 }}>

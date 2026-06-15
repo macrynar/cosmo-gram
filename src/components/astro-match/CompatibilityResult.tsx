@@ -19,6 +19,8 @@ const MATCH_STYLES = `
 @media (prefers-reduced-motion: reduce) {
   .mx-img,.mx-ring1,.mx-ring2,.mx-orb1,.mx-orb2 { animation: none!important; }
 }
+.mx-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; text-align:left; }
+@media (max-width:639px) { .mx-grid { grid-template-columns:1fr; } }
 `;
 
 // ─── Tier mapping ─────────────────────────────────────────────────────────────
@@ -360,10 +362,7 @@ export default function CompatibilityResultView({
         </p>
 
         {/* ── 8 module cards ── */}
-        <div style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: "18px", textAlign: "left",
-        }}>
+        <div className="mx-grid">
           {MODULE_DEFS.map((def, i) => {
             const cat    = findCat(result.categories, def.keys, def.name);
             const isFirst = i === 0;
