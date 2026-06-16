@@ -357,7 +357,7 @@ export default function AstroMatchPage() {
               <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", marginBottom: "20px" }}>
                 {/* Panel Osoba 1 */}
                 <div style={{
-                  flex: "1 1 260px", minWidth: 0,
+                  flex: "1 1 260px", minWidth: "260px",
                   border: "1px solid #2B2540", borderRadius: "22px",
                   background: "#14101F", padding: "24px",
                 }}>
@@ -372,7 +372,7 @@ export default function AstroMatchPage() {
 
                 {/* Panel Osoba 2 */}
                 <div style={{
-                  flex: "1 1 260px", minWidth: 0,
+                  flex: "1 1 260px", minWidth: "260px",
                   border: "1px solid #2B2540", borderRadius: "22px",
                   background: "#14101F", padding: "24px",
                 }}>

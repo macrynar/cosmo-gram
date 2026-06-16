@@ -2,10 +2,12 @@
 title: Cosmogram — Project Status
 type: project-status
 owner: Mac
-last_updated: 2026-06-11
+last_updated: 2026-06-14
 ---
 
 # Cosmogram — dokument statusu projektu
+
+Cosmogram to mobilna aplikacja AI + astrologia dla rynku polskiego, zbudowana jako PWA. Łączy kosmogram urodzeniowy, kalendarz tranzytów, dopasowanie relacyjne i chat astrologiczny, a monetyzacja opiera się o subskrypcję premium (Stripe) oraz retencję przez codzienne treści i email.
 
 ## Cel produktu
 
@@ -96,7 +98,7 @@ www.cosmo-gram.com
 
 ---
 
-## Wdrożone funkcje (stan na 2026-06-10)
+## Wdrożone funkcje (stan na 2026-06-14)
 
 ### ✅ Kosmogram natalny
 - Zbieranie danych: data, godzina (opcjonalna), miejsce (z geocodingiem)
@@ -300,6 +302,26 @@ NEXT_PUBLIC_POSTHOG_HOST=
 ---
 
 ## Release log
+
+### [2026-06-12 → 2026-06-14] Stabilizacja po redesignach + polish UX
+
+**Najważniejsze zmiany produktowe:**
+- Match (P1.2): duży redesign doświadczenia synastrii (hero bond, SynastryWheel, 5 wymiarów, redesign kart kategorii, animacje reveal, OG image), przejście modelu na Sonnet 4.6, lepsze surfowanie błędów AI i logi diagnostyczne.
+- Chat (P1.5): redesign Astrea (animacje, czystszy input, stabilne openery), pamięć sesji i kontekst tranzytów, poprawka parsera odpowiedzi JSON (naprawa przypadku z raw JSON przez nieucieczony newline).
+- Kalendarz/Prognoza (P1.4): wieloetapowy redesign warstwy prognozy (koło roku, 4 poziomy zoomu, przełącznik horyzontu, warstwa języka PL, odczyty per okres, caching, CTA i jakościowe poprawki UX), plus spójność nagłówków i ikon oraz fixy stanów ładowania.
+- Kosmogram natalny: redesign jakościowy kart i modułów, poprawki layoutu, source chips, partial failure handling, dopracowanie koła natalnego i aspektów.
+- Kosmogram dziecka: wersja modułów v2 (6 modułów), portrety w HistorySelector, poprawki avatarów, kompatybilność starego formatu odpowiedzi i zwiększenie limitów AI (`max_tokens` 7000, `maxDuration` 180s).
+- Landing: wdrożenie Landing v2 (HeroSky + NatalWheelDemo + sekcje DS), poprawki mobile (hamburger, responsywność featured card, animacje i reveal/parallax koła).
+- Ustawienia: redesign strony ustawień zgodny z design systemem + afordancje UX (kopiowanie ID, live hasło, usprawnienie wylogowania).
+- Email: dodane logo do maili powitalnych (`public/email/logo-cosmogram.png`).
+
+**Najważniejsze poprawki techniczne i testowe:**
+- Naprawa konwersji lokalnego czasu na UTC i pakiet testów regresji dla offsetów/stref czasowych.
+- Walidacje promptu i limitów wejścia w Match (m.in. zakaz cyrylicy w promptach, limity długości).
+- Drobne poprawki responsive/UI: 1 kolumna na mobile w Match, fix podkreślenia aktywnych tabów, usunięcie zdublowanych nagłówków, poprawa akcji usuwania z potwierdzeniem.
+
+**Efekt biznesowy tego etapu:**
+- Lepsza czytelność i „wow factor" modułów premium (Match, Chat, Prognoza), mniej błędów prezentacji odpowiedzi AI, wyższa gotowość produktu do dalszych testów retencji i konwersji.
 
 ### [2026-06-11] P1-1: Silnik tranzytów + przebudowa kalendarza
 
