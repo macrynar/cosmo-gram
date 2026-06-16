@@ -221,9 +221,11 @@ export async function correctCalendarText(text: string, task: string): Promise<s
 // ─── aiComplete (Claude Haiku 4.5 — all other AI calls) ────────────────────
 // apiKey param kept for backward compat — ignored; reads ANTHROPIC_API_KEY from env
 
+export type SystemBlock = { type: "text"; text: string; cache_control?: { type: "ephemeral" } };
+
 type AiCompleteParams = {
   apiKey?: string;
-  system?: string;
+  system?: string | SystemBlock[];
   messages: Array<{ role: "user" | "assistant"; content: string }>;
   maxTokens?: number;
   temperature?: number;

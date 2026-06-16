@@ -369,6 +369,7 @@ export default function CalendarPage() {
                   <TodayView
                     chart={selectedReading.chart_data}
                     isPremium={isPremium}
+                    dayWindows={windowDateMap.get(todayStr) ?? []}
                     todayWindow={todayWindow}
                     skyEvents={skyEvents}
                     upcomingWindows={upcomingWindows}
@@ -382,6 +383,8 @@ export default function CalendarPage() {
                   <WeekView
                     weekStart={weekStart}
                     days={days}
+                    year={year}
+                    month={month}
                     chart={selectedReading.chart_data}
                     readingId={selectedReading.id}
                     isPremium={isPremium}

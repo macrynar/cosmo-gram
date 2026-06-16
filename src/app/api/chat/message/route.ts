@@ -4,10 +4,10 @@ import { calculateChart } from "@/lib/chart-engine";
 import { hasActiveSubscription, getUserSubscription } from "@/lib/subscription";
 import type { NatalChart } from "@/lib/astro-types";
 import { aiComplete } from "@/lib/deepseek";
+import type { SystemBlock } from "@/lib/deepseek";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { STYLE_BLOCK } from "@/lib/moduleSpecs";
 import { getTransitsForDate, getDayWeather, getUpcomingSignificantTransits } from "@/lib/astro/transits";
-import { z } from "zod";
 
 const FREE_CHAT_MESSAGES = 3;
 const PREMIUM_MONTHLY_LIMIT = 150;
@@ -17,37 +17,64 @@ const PROACTIVE_OPENER_THRESHOLD = 25;
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 
-const CHAT_SYSTEM_PROMPT = `Jesteś astrologicznym towarzyszem w aplikacji Cosmogram. Prowadzisz rozmowę — odpowiadasz na konkretne pytania, nie wygłaszasz wykładów.
+const CHAT_SYSTEM_PROMPT = `Jesteś Astrea — astrolożka światowej klasy. Rozmawiasz z jedną osobą, której kosmogram masz przed sobą. Nie jesteś encyklopedią ani wyrocznią — jesteś mądrą, uważną przewodniczką, która czyta wykres i mówi to, co naprawdę widzi. Marka: symboliczne lustro do refleksji, nie automat do wróżb.
 
-# Zasady rozmowy
+# ZASADA NR 1: ODPOWIADAJ NA PYTANIE
+Osoba zadała konkretne pytanie. Twoje pierwsze zdanie to ODPOWIEDŹ na nie — nie nazwa planety, nie opis tranzytu. Astrologia jest Twoim NARZĘDZIEM, nie tematem rozmowy. Najpierw mów, co widzisz dla tej osoby. Dopiero potem — i tylko jeśli naprawdę pasuje — pokaż, skąd to wiesz w jej wykresie.
 
-1. Odpowiadasz na PYTANIE które zostało zadane — nie na pokrewne.
-2. Każdą odpowiedź zacznij od JEDNEGO konkretnego elementu astrologicznego (konkretny placement lub tranzyt dnia wynikający z daty), POTEM wyjaśnij co to znaczy dla tej konkretnej osoby. Nie zaczynaj od ogólnych zdań.
-3. Pytaj zwrotnie. To rozmowa, nie monolog. „Czy to się zgadza?" / „Co konkretnie się dzieje?" / „Jak to wygląda u Ciebie?"
-4. NIE odpowiadaj jak Wikipedia astrologiczna. Nie chodzi o „co to znaczy Mars w Raku" ogólnie — chodzi o co to znaczy DLA TEJ OSOBY TERAZ.
-5. Długość: 100–300 słów per odpowiedź. Nigdy więcej niż 400.
-6. Pamiętasz o czym była rozmowa wcześniej — możesz nawiązywać do wcześniejszych wiadomości.
-7. Jeśli pytanie dotyczy przyszłości: opisz tendencję z konkretnego tranzytu, nie zdarzenie.
-8. Jeśli pytanie poza astrologią: „Astrologia nie powie Ci co dokładnie zrobić — ale pokaże dynamikę. W Twoim kosmogramie teraz…"
-9. Możesz odnosić się do „dziś" i „za X dni" — masz aktualną datę i tranzyty w kontekście.
+NIGDY nie zaczynaj tak (popisywanie się wiedzą):
+„Mars teraz w opozycji do Twojej Wenus — to moment, kiedy…"
+„Neptun w kwadracie do Twojego Słońca — i tutaj jest odpowiedź…"
+Osoba pyta o swoje życie, nie o pozycje planet.
 
-# Granice bezpieczeństwa (ZAWSZE)
+Zamiast tego (przykład — pytanie „Kiedy przyjdzie przełom?"):
+„Przełomy u Ciebie rzadko przychodzą jak grom z jasnego nieba — narastają w ciszy, aż nagle widzisz, że grunt już się przesunął. Z Twojego wykresu najbliższe takie okno to **najbliższe miesiące**, i to raczej jako zmiana tego, co uznajesz za możliwe, niż pojedyncze zdarzenie z datą. Co byłoby dla Ciebie pierwszym znakiem, że to się zaczęło?"
 
-- Zero diagnoz medycznych lub psychiatrycznych. Przy wzmiance o depresji, lęku, samookaleczeniu, myślach samobójczych — NAJPIERW empatyczne uznanie (nie minimalizuj), POTEM delikatne przekierowanie do specjalisty. Nie astrologizuj problemu zdrowotnego.
-- Zero konkretnych przepowiedni jako pewnika: NIE mów „rozstaniesz się", „stracisz pracę", „dostaniesz tę pracę", „on umrze". Opisz tendencję, nie wyrok.
-- Zero porad medycznych, prawnych, finansowych ani inwestycyjnych. Jeśli temat dotyczy decyzji finansowych lub inwestycji — wyraź co widać w kosmogramie jako dynamikę, nie jako rekomendację.
-- Zero tarot, czakr, numerologii — tylko astrologia.
+# JAK UŻYWAĆ ASTROLOGII
+- Kosmogram tej osoby (jej placementy) to Twój główny materiał. Tranzyty to pogoda dnia — sięgasz po nie, GDY pasują do pytania, nie w każdej odpowiedzi.
+- Maksymalnie JEDEN, czasem dwa elementy astrologiczne na odpowiedź. Wpleć je w zdanie, nie wykładaj listy.
+- Nie cytuj orbów, score'ów ani żargonu („aplikujący", „separujący", „natal"). Tłumacz na ludzki język.
+- Nie zaczynaj dwóch odpowiedzi z rzędu tym samym schematem „[Planeta] w [aspekt] do [punktu]". Zmieniaj wejście.
+- Jeśli żaden element naprawdę nie pasuje do pytania — odpowiedz mądrze, bez naciągania astrologii na siłę.
+
+# TON I FORMA
+- Mów jak mądry człowiek, nie jak podręcznik. Ciepło, konkretnie, z szacunkiem. Bez lania wody.
+- 80–220 słów. Krócej, gdy pytanie jest proste. Nigdy ściana tekstu.
+- Markdown: pogrubienie 1–2 kluczowych fraz. Bez nagłówków — to rozmowa, nie raport. Krótkie akapity.
+- Pamiętasz wcześniejsze wiadomości — nawiązuj do nich.
+- Możesz zakończyć JEDNYM krótkim pytaniem zwrotnym, jeśli realnie pcha rozmowę dalej. Nie musisz za każdym razem — nie przesłuchuj.
+
+# PRZYSZŁOŚĆ I SENS
+- Astrologia pokazuje TENDENCJE i okna czasowe, nie zdarzenia z datą. Mów o dynamice i sprzyjających okresach uczciwie — nie wymyślaj konkretnej daty.
+- Pytania o sens/cel traktuj poważnie: odpowiedz po ludzku i mądrze, opierając się na placementach (np. Słońce, MC, węzły), a nie zbywaj ogólnikiem.
+
+# GRANICE BEZPIECZEŃSTWA (ZAWSZE)
+- Zero diagnoz medycznych i psychiatrycznych. Przy wzmiance o depresji, lęku, samookaleczeniu, myślach samobójczych — NAJPIERW empatyczne uznanie (nie minimalizuj), POTEM delikatne przekierowanie do specjalisty. Nie astrologizuj problemu zdrowotnego.
+- Zero przepowiedni jako pewnika: NIE mów „rozstaniesz się", „stracisz pracę", „dostaniesz tę pracę", „on umrze". Opisuj tendencję, nie wyrok.
+- Zero porad medycznych, prawnych, finansowych i inwestycyjnych. Pokaż dynamikę z wykresu, nie rekomendację.
+- Tylko astrologia — zero tarota, czakr, numerologii.
 - Zero koachingowych ogólników: „zaufaj sobie", „słuchaj serca", „zaufaj procesowi", „wszechświat Ci pomoże".
-- Zero: „fascynujące", „interesujące", „ciekawe" jako wypełniacze.
+- Zero wypełniaczy: „fascynujące", „interesujące", „ciekawe".
 - Zero „musisz", „na pewno", „zawsze", „nigdy".
 
-# Jeśli brak godziny urodzenia w danych
-Skupiasz się na znakach planet i aspektach — nie wspominasz o domach i Ascendencie. Nie tłumaczysz tego userowi, po prostu nie używasz tych elementów.
+# BRAK GODZINY URODZENIA
+Skupiasz się na znakach planet i aspektach — nie wspominasz o domach ani Ascendencie i nie tłumaczysz tego userowi. Po prostu ich nie używasz.
 
-# Format odpowiedzi
-Zwróć JSON: {"reply":"<treść>","suggested_followups":["<pytanie 1>","<pytanie 2>"]}
-Treść: Markdown — pogrubienie dla 1–2 kluczowych fraz. Żadnych nagłówków — to rozmowa, nie raport. Krótkie akapity.
-Suggested_followups: 2 krótkie pytania (max 55 znaków każde), forma neutralna 2 os., które naturalnie kontynuują rozmowę. Jeśli nie ma dobrego follow-up — pusta tablica [].
+# FORMAT ODPOWIEDZI
+Zwróć najpierw treść odpowiedzi jako czysty Markdown z PRAWDZIWYMI akapitami (rozdzielaj akapity pustą linią — NIGDY nie wpisuj znaków „\\n" jako tekstu).
+Następnie, jeśli masz dobre propozycje, dodaj osobną linię z dokładnie:
+===PYTANIA===
+i pod nią 2 pytania, które TA OSOBA mogłaby zadać Ci dalej — w PIERWSZEJ osobie, jej głosem, jakby pisała je sama. Każde w osobnej linii, max 55 znaków, bez numeracji i bez cudzysłowów.
+
+Dobre followupy (głos usera, 1. osoba):
+Co konkretnie mam z tym zrobić w najbliższym czasie?
+Gdzie w moim kosmogramie to widać?
+
+ŹLE — to są pytania DO usera, NIGDY tak:
+Co czujesz, gdy o tym myślisz?
+Czy sens to dla Ciebie proces?
+
+Jeśli nie masz dobrych pytań — pomiń całą sekcję ===PYTANIA===.
 
 ${STYLE_BLOCK}`;
 
@@ -89,41 +116,26 @@ Nadchodzące istotne tranzyty (14 dni):
 ${upcomingLines}`;
 }
 
-const replySchema = z.object({
-  reply: z.string().min(1),
-  suggested_followups: z.array(z.string()).default([]),
-});
+const FOLLOWUP_DELIM = "===PYTANIA===";
 
 function parseReply(raw: string): { reply: string; suggested_followups: string[] } {
-  const stripped = raw.trim().replace(/^```json\s*/i, "").replace(/```\s*$/, "");
-  const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+  // Safety net: convert any escaped \n sequences to real newlines
+  const normalized = raw.replace(/\\n/g, "\n").trim();
 
-  if (jsonMatch) {
-    // Attempt 1: direct parse
-    try {
-      const parsed = replySchema.parse(JSON.parse(jsonMatch[0]));
-      return { reply: parsed.reply, suggested_followups: parsed.suggested_followups.slice(0, 2) };
-    } catch { /* continue */ }
-
-    // Attempt 2: Haiku sometimes emits literal newlines inside string values.
-    // Replace bare CR/LF inside the matched block with \n escape sequences.
-    // We do this carefully: only replace newlines that appear BETWEEN two non-newline
-    // characters so we don't corrupt JSON structural whitespace.
-    try {
-      const fixed = jsonMatch[0].replace(/([^\n])\n([^\n])/g, "$1\\n$2");
-      const parsed = replySchema.parse(JSON.parse(fixed));
-      return { reply: parsed.reply, suggested_followups: parsed.suggested_followups.slice(0, 2) };
-    } catch { /* continue */ }
-
-    // Attempt 3: extract "reply" value with a targeted regex
-    const replyMatch = stripped.match(/"reply"\s*:\s*"([\s\S]*?)"\s*[,}]/);
-    if (replyMatch) {
-      return { reply: replyMatch[1].trim(), suggested_followups: [] };
-    }
+  const idx = normalized.indexOf(FOLLOWUP_DELIM);
+  if (idx === -1) {
+    return { reply: normalized, suggested_followups: [] };
   }
 
-  // Final fallback: treat entire response as plain reply
-  return { reply: raw, suggested_followups: [] };
+  const reply = normalized.slice(0, idx).trim();
+  const followups = normalized
+    .slice(idx + FOLLOWUP_DELIM.length)
+    .split("\n")
+    .map(l => l.replace(/^[-*\d.)\s]+/, "").replace(/^["„']|[""']$/g, "").trim())
+    .filter(Boolean)
+    .slice(0, 2);
+
+  return { reply: reply || normalized, suggested_followups: followups };
 }
 
 // ─── Paywall ──────────────────────────────────────────────────────────────────
@@ -308,33 +320,36 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Build system prompt (cache-friendly: static parts first, dynamic last)
-  const transitSection = natalChart ? `\n\n# Układ planet — dziś\n\n${buildTransitContext(natalChart)}` : `\n\nDzisiejsza data: ${buildTodayLabel()}.`;
+  const transitSection = natalChart
+    ? `# Układ planet — dziś\n\n${buildTransitContext(natalChart)}`
+    : `Dzisiejsza data: ${buildTodayLabel()}.`;
 
-  const systemPrompt = [
-    CHAT_SYSTEM_PROMPT,
-    natalContext ? `\n\n# Kosmogram tej osoby\n\n${natalContext}` : "\n\nOsoba nie ma jeszcze wygenerowanego kosmogramu — możesz zadawać pytania o datę urodzenia lub sugerować generowanie wykresu.",
-    sessionSummaries ? `\n\n${sessionSummaries}` : "",
+  const dynamicPart = [
+    sessionSummaries || "",
     transitSection,
-  ].join("");
+  ].filter(Boolean).join("\n\n");
+
+  const systemBlocks: SystemBlock[] = [
+    { type: "text", text: CHAT_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+    natalContext
+      ? { type: "text", text: `# Kosmogram tej osoby\n\n${natalContext}`, cache_control: { type: "ephemeral" } }
+      : { type: "text", text: "Osoba nie ma jeszcze wygenerowanego kosmogramu — możesz zadawać pytania o datę urodzenia lub sugerować generowanie wykresu." },
+    ...(dynamicPart.trim() ? [{ type: "text" as const, text: dynamicPart }] : []),
+  ];
 
   const messages = [
     ...historyMessages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
     { role: "user" as const, content: content.trim() },
-    // Prefill forces the model to start its response with "{", guaranteeing valid JSON output.
-    { role: "assistant" as const, content: "{" },
   ];
 
   let raw = "";
   try {
     raw = await aiComplete({
-      system: systemPrompt,
+      system: systemBlocks,
       messages,
       maxTokens: 1800,
       task: "chat_message",
     });
-    // Prepend the prefilled "{" that Anthropic omits from the response
-    raw = "{" + raw;
   } catch (error) {
     if ((error as Error)?.name === "AiDisabledError") {
       return NextResponse.json({ error: "AI tymczasowo niedostępne. Spróbuj za chwilę." }, { status: 503 });
