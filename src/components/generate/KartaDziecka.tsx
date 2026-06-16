@@ -25,9 +25,10 @@ type ChildData = {
 };
 
 interface Props {
-  child:            ChildData;
-  isPremiumUser:    boolean;
-  onChildUpdated?:  (childId: string, interpretation: string) => void;
+  child:                  ChildData;
+  isPremiumUser:          boolean;
+  interpretationLoading?: boolean;
+  onChildUpdated?:        (childId: string, interpretation: string) => void;
 }
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -85,7 +86,7 @@ function parseModules(interpretation: string): ChildModule[] | null {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function KartaDziecka({ child, isPremiumUser, onChildUpdated }: Props) {
+export default function KartaDziecka({ child, isPremiumUser, interpretationLoading, onChildUpdated }: Props) {
   const { session } = useAuth();
   const [showPaywall,   setShowPaywall]   = useState(false);
   const [localModules,  setLocalModules]  = useState<ChildModule[] | null>(null);
@@ -103,6 +104,9 @@ export default function KartaDziecka({ child, isPremiumUser, onChildUpdated }: P
   const visibleIds = isStructured
     ? modules.filter(m => !m.isPremium || isPremiumUser).map(m => m.id)
     : [];
+
+  const showSpinner = !isStructured && (generating || !!interpretationLoading);
+  const showCTA     = !isStructured && !generating && !interpretationLoading;
 
   // ── Generate v2 from legacy/empty record ─────────────────────────────────
 
@@ -229,8 +233,23 @@ export default function KartaDziecka({ child, isPremiumUser, onChildUpdated }: P
           </div>
         ))}
 
+        {/* ── LOADING spinner (chart-first flow OR manual retry) ── */}
+        {showSpinner && (
+          <div
+            className="rounded-2xl p-16 text-center"
+            style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}
+          >
+            <div
+              className="w-12 h-12 rounded-full animate-spin border-2 mx-auto mb-4"
+              style={{ borderColor: "rgba(224,181,102,0.12)", borderTopColor: "#E0B566" }}
+            />
+            <p className="text-slate-400 text-sm mb-1">Generuję Kartę dziecka…</p>
+            <p className="text-slate-600 text-xs">6 modułów · może zająć 20–40 s</p>
+          </div>
+        )}
+
         {/* ── LEGACY / EMPTY MODE — CTA to generate v2 ── */}
-        {!isStructured && !generating && (
+        {showCTA && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -286,21 +305,6 @@ export default function KartaDziecka({ child, isPremiumUser, onChildUpdated }: P
               Generuj Kartę dziecka
             </motion.button>
           </motion.div>
-        )}
-
-        {/* ── Generating spinner ── */}
-        {!isStructured && generating && (
-          <div
-            className="rounded-2xl p-16 text-center"
-            style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}
-          >
-            <div
-              className="w-12 h-12 rounded-full animate-spin border-2 mx-auto mb-4"
-              style={{ borderColor: "rgba(224,181,102,0.12)", borderTopColor: "#E0B566" }}
-            />
-            <p className="text-slate-400 text-sm mb-1">Generuję Kartę dziecka…</p>
-            <p className="text-slate-600 text-xs">6 modułów · może zająć 20–40 s</p>
-          </div>
         )}
       </div>
 

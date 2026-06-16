@@ -22,9 +22,13 @@ interface Props {
   }) => void;
   loading: boolean;
   onDateChange?: (date: string) => void;
+  requireName?: boolean;
+  maxAge?: number;
+  nameLabel?: string;
+  submitLabel?: string;
 }
 
-export default function BirthForm({ onSubmit, loading, onDateChange }: Props) {
+export default function BirthForm({ onSubmit, loading, onDateChange, requireName, maxAge, nameLabel, submitLabel }: Props) {
   const [name, setName]               = useState("");
   const [date, setDate]               = useState("");
   const [time, setTime]               = useState("");
@@ -34,6 +38,7 @@ export default function BirthForm({ onSubmit, loading, onDateChange }: Props) {
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [geocoding, setGeocoding]     = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [ageError, setAgeError]       = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrapperRef  = useRef<HTMLDivElement>(null);
 
@@ -88,10 +93,28 @@ export default function BirthForm({ onSubmit, loading, onDateChange }: Props) {
     setSuggestions([]);
   }
 
+  function handleDateChange(val: string) {
+    setDate(val);
+    onDateChange?.(val);
+    if (!maxAge || !val) { setAgeError(""); return; }
+    const birth = new Date(val);
+    const now = new Date();
+    if (birth > now) { setAgeError("Data nie może być w przyszłości"); return; }
+    let age = now.getFullYear() - birth.getFullYear();
+    const m = now.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+    if (age > maxAge) {
+      setAgeError(`Karta dziecka dotyczy dzieci do ${maxAge} lat`);
+    } else {
+      setAgeError("");
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!date) return;
     if (!timeUnknown && !time) return;
+    if (ageError) return;
 
     let loc = selected;
     if (!loc && placeQuery.length >= 2) {
@@ -120,7 +143,7 @@ export default function BirthForm({ onSubmit, loading, onDateChange }: Props) {
     });
   }
 
-  const isValid = !!date && (timeUnknown || !!time) && !!selected;
+  const isValid = !!date && (timeUnknown || !!time) && !!selected && !ageError && (!requireName || !!name.trim());
 
   const inputClass = [
     "w-full px-3 py-2.5 rounded-xl text-white text-sm [color-scheme:dark]",
@@ -133,7 +156,7 @@ export default function BirthForm({ onSubmit, loading, onDateChange }: Props) {
       {/* Name */}
       <div>
         <label className="flex items-center gap-1 text-xs font-medium text-slate-400 mb-1.5">
-          Imię osoby
+          {nameLabel ?? "Imię osoby"}
         </label>
         <input
           type="text"
@@ -154,11 +177,12 @@ export default function BirthForm({ onSubmit, loading, onDateChange }: Props) {
           <input
             type="date"
             value={date}
-            onChange={(e) => { setDate(e.target.value); onDateChange?.(e.target.value); }}
+            onChange={(e) => handleDateChange(e.target.value)}
             required
             max={new Date().toISOString().split("T")[0]}
             className={inputClass}
           />
+          {ageError && <p className="mt-1 text-xs text-red-400">{ageError}</p>}
         </div>
 
         {/* Time */}
@@ -257,7 +281,7 @@ export default function BirthForm({ onSubmit, loading, onDateChange }: Props) {
       >
         {loading
           ? <><Loader2 className="w-4 h-4 animate-spin" /> Liczę…</>
-          : <><CosmoIcon className="w-4 h-4" /> Generuj kosmogram</>
+          : <><CosmoIcon className="w-4 h-4" /> {submitLabel ?? "Generuj kosmogram"}</>
         }
       </button>
     </form>

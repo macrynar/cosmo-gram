@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Star, Share2, Baby, Plus, CalendarDays, Clock, MapPin, Globe } from "lucide-react";
+import { Star, Share2, Baby, Plus, CalendarDays, Clock, MapPin, Globe, X } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import BirthForm from "@/components/generate/BirthForm";
@@ -10,11 +10,9 @@ import PlanetTable from "@/components/generate/PlanetTable";
 import KartaZawodnika from "@/components/generate/KartaZawodnika";
 import KartaDziecka from "@/components/generate/KartaDziecka";
 import HistorySelector, { type HistoryItem } from "@/components/HistorySelector";
-import AddChildModal, { type ChildFormData } from "@/components/children/AddChildModal";
 import { NatalChart } from "@/lib/astro-types";
 import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
 import type { ChildModule } from "@/lib/schemas/childModule";
-import { SIGN_TO_KEY } from "@/components/astro/zodiacGlyphs";
 import { useAuth } from "@/components/AuthContext";
 import { useSubscription } from "@/components/SubscriptionContext";
 import { track } from "@/components/PostHogProvider";
@@ -37,6 +35,11 @@ type SavedChild = {
 
 type Tab = "natal" | "child";
 
+type BirthFormData = {
+  name: string; date: string; time: string; place: string;
+  lat: number; lng: number; timeUnknown: boolean;
+};
+
 function ageFromDate(dateStr: string): number | null {
   if (!dateStr) return null;
   const birth = new Date(dateStr);
@@ -47,15 +50,7 @@ function ageFromDate(dateStr: string): number | null {
   return age;
 }
 
-/** Extract Sun sign key from chart_data for portrait thumbnail. */
-function sunSignKey(chart: NatalChart | null | undefined): string | undefined {
-  if (!chart) return undefined;
-  const sun = chart.planets.find(p => p.name === "Słońce");
-  if (!sun?.sign) return undefined;
-  return SIGN_TO_KEY[sun.sign] ?? undefined;
-}
-
-/** Polish sign name from chart for portraitSrc. */
+/** Polish sign name from chart for portrait thumbnail. */
 function sunSignName(chart: NatalChart | null | undefined): string | undefined {
   if (!chart) return undefined;
   return chart.planets.find(p => p.name === "Słońce")?.sign;
@@ -92,10 +87,7 @@ export default function CosmogramPage() {
     if (!raw) return;
 
     try {
-      const pending = JSON.parse(raw) as {
-        name: string; date: string; time: string; timeUnknown: boolean;
-        place: string; lat: number; lng: number;
-      };
+      const pending = JSON.parse(raw) as BirthFormData;
       localStorage.removeItem("cosmogram_pending_chart");
       autoStartRef.current = true;
       handleFormSubmit(pending);
@@ -108,8 +100,9 @@ export default function CosmogramPage() {
   // ── Children state ───────────────────────────────────────────────────────
   const [children, setChildren] = useState<SavedChild[]>([]);
   const [loadingChildren, setLoadingChildren] = useState(false);
-  const [showChildModal, setShowChildModal] = useState(false);
-  const [generatingChild, setGeneratingChild] = useState(false);
+  const [showChildForm, setShowChildForm] = useState(false);
+  const [childChartLoading, setChildChartLoading] = useState(false);
+  const [childInterpretationLoadingId, setChildInterpretationLoadingId] = useState<string | null>(null);
   const [childError, setChildError] = useState("");
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
 
@@ -217,9 +210,7 @@ export default function CosmogramPage() {
     setSelectedId(null); setChart(null); setInterpretation(""); setError(""); setShowForm(true);
   }
 
-  async function handleFormSubmit(data: {
-    name: string; date: string; time: string; place: string; lat: number; lng: number; timeUnknown: boolean;
-  }) {
+  async function handleFormSubmit(data: BirthFormData) {
     const age = ageFromDate(data.date);
     if (age !== null && age < 13) setChildNudge(true);
 
@@ -262,9 +253,25 @@ export default function CosmogramPage() {
   }
 
   // ── Child handlers ───────────────────────────────────────────────────────
-  async function handleAddChild(data: ChildFormData) {
+  function handleSelectChild(id: string) {
+    setSelectedChildId(id);
+    setShowChildForm(false);
+    setChildError("");
+  }
+
+  function openChildForm() {
+    if (subLoading) return;
+    if (!isPro) { setShowPaywall(true); return; }
+    setChildError("");
+    setShowChildForm(true);
+  }
+
+  async function computeChildChart(data: BirthFormData) {
     if (!session) return;
-    setGeneratingChild(true); setChildError("");
+    setChildChartLoading(true);
+    setChildError("");
+    setShowChildForm(false);
+
     try {
       const chartRes = await fetch("/api/chart", {
         method: "POST",
@@ -273,48 +280,74 @@ export default function CosmogramPage() {
       });
       if (!chartRes.ok) throw new Error("Błąd obliczania kosmogramu");
       const { chart, placements, aspects, nodes } = await chartRes.json() as {
-        chart: NatalChart;
-        placements: ChartPlacement[]; aspects: NatalAspect[]; nodes: ChartNodes;
+        chart: NatalChart; placements: ChartPlacement[]; aspects: NatalAspect[]; nodes: ChartNodes;
       };
-
-      const aiRes = await fetch("/api/ai-child", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ name: data.name, birthDate: data.date, placements, aspects, nodes }),
-      });
-      if (!aiRes.ok) {
-        const e = await aiRes.json().catch(() => ({})) as { error?: string };
-        throw new Error(e.error ?? "Błąd generowania interpretacji");
-      }
-      const { modules } = await aiRes.json() as { modules: ChildModule[] };
-      if (!modules || modules.length === 0) throw new Error("Błąd generowania interpretacji");
-
-      // Store modules as JSON string in interpretation column (v2 format)
-      const interpretation = JSON.stringify(modules);
 
       const saveRes = await fetch("/api/save-child", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({
-          name: data.name, birthDate: data.date, birthTime: data.time, birthPlace: data.place,
+          name: data.name.trim(), birthDate: data.date, birthTime: data.time, birthPlace: data.place,
           lat: data.lat, lng: data.lng, timezone: chart.birthData.timezone,
-          chartData: chart, modules, promptVersion: "child-v2.0",
+          chartData: chart, interpretation: "", promptVersion: "child-v2.0",
         }),
       });
       if (!saveRes.ok) throw new Error("Błąd zapisu");
       const { id } = await saveRes.json() as { id: string };
+
       const newChild: SavedChild = {
-        id, name: data.name, birth_date: data.date, birth_time: data.time, birth_place: data.place,
-        age_at_creation: 0, chart_data: chart, interpretation, created_at: new Date().toISOString(),
+        id, name: data.name.trim(), birth_date: data.date, birth_time: data.time,
+        birth_place: data.place, age_at_creation: 0, chart_data: chart,
+        interpretation: "", created_at: new Date().toISOString(),
       };
       setChildren(prev => [newChild, ...prev]);
       setSelectedChildId(id);
-      track("child_chart_added", { birth_date: data.date, birth_place: data.place });
-      setShowChildModal(false);
+      setChildChartLoading(false);
+
+      // Fire AI interpretation without blocking chart display
+      void generateChildInterpretation(id, data.name.trim(), data.date, placements, aspects, nodes);
     } catch (err) {
-      setChildError(err instanceof Error ? err.message : "Nieznany błąd");
+      setChildError(err instanceof Error ? err.message : "Błąd obliczania kosmogramu");
+      setChildChartLoading(false);
+      setShowChildForm(true);
+    }
+  }
+
+  async function generateChildInterpretation(
+    childId: string,
+    name: string,
+    birthDate: string,
+    placements: ChartPlacement[],
+    aspects: NatalAspect[],
+    nodes: ChartNodes,
+  ) {
+    setChildInterpretationLoadingId(childId);
+    try {
+      const aiRes = await fetch("/api/ai-child", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ name, birthDate, placements, aspects, nodes }),
+      });
+      if (!aiRes.ok) {
+        const e = await aiRes.json().catch(() => ({})) as { error?: string };
+        throw new Error(e.error ?? "Błąd generowania karty");
+      }
+      const { modules } = await aiRes.json() as { modules: ChildModule[] };
+      if (!modules?.length) throw new Error("Błąd generowania karty — spróbuj ponownie");
+
+      const interpretation = JSON.stringify(modules);
+      await fetch("/api/update-child", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ id: childId, interpretation }),
+      });
+
+      setChildren(prev => prev.map(c => c.id === childId ? { ...c, interpretation } : c));
+      track("child_chart_added", { birth_date: birthDate });
+    } catch (err) {
+      setChildError(err instanceof Error ? err.message : "Błąd generowania karty");
     } finally {
-      setGeneratingChild(false);
+      setChildInterpretationLoadingId(null);
     }
   }
 
@@ -344,7 +377,7 @@ export default function CosmogramPage() {
     sunSign:  sunSignName(c.chart_data),
   }));
 
-  const displayedChild = children.find(c => c.id === selectedChildId) ?? null;
+  const displayedChild = showChildForm ? null : (children.find(c => c.id === selectedChildId) ?? null);
   const hasResults = chart && !chartLoading;
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -583,16 +616,52 @@ export default function CosmogramPage() {
                   <HistorySelector
                     items={childSelectorItems}
                     selectedId={selectedChildId}
-                    onSelect={setSelectedChildId}
+                    onSelect={handleSelectChild}
                     onDelete={handleDeleteChild}
-                    onNew={() => {
-                      if (subLoading) return;
-                      if (!isPro) { setShowPaywall(true); return; }
-                      setChildError(""); setShowChildModal(true);
-                    }}
+                    onNew={openChildForm}
                     newLabel="Dodaj dziecko"
                   />
                 )}
+              </div>
+            )}
+
+            {/* ── Inline child form ── */}
+            {showChildForm && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="rounded-2xl p-5 mb-6"
+                style={{ background: "rgba(11,9,18,0.72)", border: "0.5px solid rgba(224,181,102,0.18)", backdropFilter: "blur(24px)" }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-xs uppercase tracking-[0.22em]" style={{ color: "rgba(224,181,102,0.45)" }}>
+                    Nowa karta dziecka
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowChildForm(false)}
+                    className="text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <BirthForm
+                  onSubmit={computeChildChart}
+                  loading={childChartLoading}
+                  requireName
+                  maxAge={17}
+                  nameLabel="Imię dziecka"
+                  submitLabel="Oblicz kosmogram"
+                />
+              </motion.div>
+            )}
+
+            {/* ── Chart loading spinner ── */}
+            {childChartLoading && (
+              <div className="rounded-2xl p-16 text-center mb-6" style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}>
+                <div className="w-14 h-14 rounded-full animate-spin border-2 mx-auto mb-4" style={{ borderColor: "rgba(224,181,102,0.15)", borderTopColor: "#E0B566" }} />
+                <p className="text-slate-400 text-sm">Obliczam pozycje planet…</p>
               </div>
             )}
 
@@ -605,7 +674,7 @@ export default function CosmogramPage() {
             )}
 
             {/* ── Empty state ── */}
-            {!loadingChildren && children.length === 0 && session && (
+            {!loadingChildren && children.length === 0 && !showChildForm && session && (
               <div
                 className="rounded-2xl p-12 text-center"
                 style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}
@@ -626,11 +695,7 @@ export default function CosmogramPage() {
                   Dodaj pierwsze dziecko, żeby wygenerować interpretację jego kosmogramu — temperament, potrzeby i wskazówki dla Ciebie.
                 </p>
                 <button
-                  onClick={() => {
-                    if (subLoading) return;
-                    if (!isPro) { setShowPaywall(true); return; }
-                    setChildError(""); setShowChildModal(true);
-                  }}
+                  onClick={openChildForm}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200"
                   style={{
                     background: "rgba(224,181,102,0.92)",
@@ -675,6 +740,7 @@ export default function CosmogramPage() {
                 <KartaDziecka
                   child={displayedChild}
                   isPremiumUser={isPro}
+                  interpretationLoading={childInterpretationLoadingId === displayedChild.id}
                   onChildUpdated={(childId, interpretation) => {
                     setChildren(prev => prev.map(c => c.id === childId ? { ...c, interpretation } : c));
                   }}
@@ -697,14 +763,6 @@ export default function CosmogramPage() {
 
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} reason="Karty dzieci są dostępne w planie Plus." />}
       {showShare && selectedId && <ShareModal type="natal" readingId={selectedId} onClose={() => setShowShare(false)} />}
-      {showChildModal && (
-        <AddChildModal
-          onClose={() => !generatingChild && setShowChildModal(false)}
-          onSubmit={handleAddChild}
-          loading={generatingChild}
-          error={childError}
-        />
-      )}
     </div>
   );
 }
