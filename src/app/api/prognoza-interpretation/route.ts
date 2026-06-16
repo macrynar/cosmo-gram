@@ -123,11 +123,24 @@ export async function POST(req: NextRequest) {
       context += `Sezony roczne:\n${seasonLines || "brak aktywnych sezonów"}`;
     } else {
       const windows = getFastWindows(chart, year, month);
-      const top = windows.slice(0, 5);
+      let filtered = windows;
+
+      if (zoom === "dzis") {
+        // Only windows active on this specific day
+        filtered = windows.filter(w => w.start <= date && w.end >= date);
+      } else if (zoom === "tydzien") {
+        // Only windows overlapping with the 7-day week starting at `date`
+        const weekEnd = new Date(new Date(date + "T12:00:00Z").getTime() + 6 * 86400000)
+          .toISOString().slice(0, 10);
+        filtered = windows.filter(w => w.start <= weekEnd && w.end >= date);
+      }
+      // For "miesiac": all month windows (no additional filtering)
+
+      const top = filtered.slice(0, 5);
       const windowLines = top.map(w =>
         `${w.transitPlanet} ${transitPhrase(w)} (${w.character}, peak ${w.peak}, start ${w.start}, end ${w.end})`
       ).join("\n");
-      context += `Okna tranzytowe:\n${windowLines || "brak znaczących okien"}`;
+      context += `Okna tranzytowe (zakres: ${zoom}):\n${windowLines || "brak znaczących okien w tym okresie"}`;
     }
   } catch {
     context += "Brak danych tranzytowych.";

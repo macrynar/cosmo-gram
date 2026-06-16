@@ -10,6 +10,33 @@ export const maxDuration = 180;
 
 const PROMPT_VERSION = "child-v2.0";
 
+// Claude sometimes embeds literal newlines inside JSON string values (between paragraphs).
+// This scanner replaces them with \n so JSON.parse doesn't throw.
+function escapeNewlinesInStrings(json: string): string {
+  let result = "";
+  let inString = false;
+  let i = 0;
+  while (i < json.length) {
+    const ch = json[i];
+    if (ch === "\\" && inString) {
+      // Already-escaped sequence — pass through both chars
+      result += ch + (json[i + 1] ?? "");
+      i += 2;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      result += ch;
+    } else if (inString && (ch === "\n" || ch === "\r")) {
+      result += "\\n";
+    } else {
+      result += ch;
+    }
+    i++;
+  }
+  return result;
+}
+
 type AnthropicMessage = {
   content: { type: string; text?: string }[];
 };
@@ -76,26 +103,35 @@ export async function POST(req: NextRequest) {
   const rawText = msg.content.find(c => c.type === "text")?.text ?? "";
 
   // Robust JSON extraction — Claude sometimes adds preamble or wraps in ```json
+  // 1. Strip code fences
+  let clean = rawText.trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```\s*$/, "")
+    .trim();
+
+  // 2. If not starting with '[', extract first [...] block
+  if (!clean.startsWith("[")) {
+    const m = clean.match(/\[[\s\S]*\]/);
+    if (m) clean = m[0];
+  }
+
   let parsed: unknown[];
   try {
-    // 1. Strip code fences
-    let clean = rawText.trim()
-      .replace(/^```json\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/```\s*$/, "")
-      .trim();
-
-    // 2. If still not starting with '[', try to extract the first [...] block
-    if (!clean.startsWith("[")) {
-      const m = clean.match(/\[[\s\S]*\]/);
-      if (m) clean = m[0];
-    }
-
     parsed = JSON.parse(clean) as unknown[];
     if (!Array.isArray(parsed)) throw new Error("Not an array");
-  } catch (err) {
-    console.error("[ai-child] JSON parse error. Raw:", rawText.slice(0, 500), err);
-    return NextResponse.json({ error: "Błąd parsowania odpowiedzi AI" }, { status: 500 });
+  } catch (firstErr) {
+    // Fallback: Claude sometimes embeds literal newlines inside JSON string values
+    // (e.g. between content paragraphs). Escape them and retry.
+    try {
+      const fixed = escapeNewlinesInStrings(clean);
+      parsed = JSON.parse(fixed) as unknown[];
+      if (!Array.isArray(parsed)) throw new Error("Not an array");
+      console.warn("[ai-child] JSON parsed only after newline-escape fix");
+    } catch {
+      console.error("[ai-child] JSON parse error (both passes). Raw:", rawText.slice(0, 500), firstErr);
+      return NextResponse.json({ error: "Błąd parsowania odpowiedzi AI" }, { status: 500 });
+    }
   }
 
   // Sanitize and validate

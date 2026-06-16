@@ -21,7 +21,7 @@ const FALLBACK_CHIPS: Record<string, string[]> = {
   "Ryby":        ["Co mój kosmogram mówi o intuicji?", "Jak pracować z marzeniami?", "Gdzie leży moja wrażliwość?"],
 };
 
-const CHIPS_PROMPT = `Wygeneruj 3 krótkie pytania do astrologa (max 60 znaków każde), które mogłoby zadać ta osoba dziś, biorąc pod uwagę jej kosmogram i aktualny układ planet. Pisz formą neutralną 2 os. Pytania mają być konkretne i ciekawe, nie ogólnikowe. Zwróć TYLKO tablicę JSON, np.: ["Pytanie 1?","Pytanie 2?","Pytanie 3?"]`;
+const CHIPS_PROMPT = `Wygeneruj 3 krótkie pytania (max 60 znaków każde), które TA OSOBA mogłaby dziś zadać astrolożce — w PIERWSZEJ osobie, jej głosem (np. „Co mój kosmogram mówi o…?", „Gdzie teraz leży moja energia?"). Pytania konkretne i ciekawe, oparte na jej kosmogramie i dzisiejszym układzie planet — nie ogólnikowe. NIE pisz pytań skierowanych do usera (żadne „Co czujesz…?"). Zwróć TYLKO tablicę JSON, np.: ["Pytanie 1?","Pytanie 2?","Pytanie 3?"]`;
 
 export const maxDuration = 30;
 

@@ -46,7 +46,12 @@ kwadratura, trygon, sekstyl, koniunkcja, opozycja, dom 1–12 (jako cyfra + "dom
 
 ═══ MARKDOWN w content ═══
 • **pogrubienie** kluczowych konceptów (2-4x)
-• Krótkie akapity (40-80 słów), bez H1/H2/H3, bez list bullet`;
+• Krótkie akapity (40-80 słów), bez H1/H2/H3, bez list bullet
+
+═══ FORMAT JSON (KRYTYCZNE) ═══
+• W string values JSON NIE wstawiaj dosłownych znaków nowej linii
+• Separator akapitów zapisuj jako sekwencję \\n\\n (backslash + n, dwa razy) — NIE enter
+• Cały output to jedna linia lub kompaktowy JSON bez surowych enterów wewnątrz stringów`;
 
 const MODULE_INSTRUCTIONS: Record<string, string> = {
   temperament: `Opisz dominującą naturę dziecka jako INTEGRALNY obraz — nie listę cech. Jak przejawia się jego charakter w codziennych sytuacjach tego wieku? Zacznij od scenki którą rodzic zna. 200-350 słów.`,

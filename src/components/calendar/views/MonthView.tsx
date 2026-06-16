@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import type { NatalChart } from "@/lib/astro-types";
 import type { TransitWindow, SkyEvent } from "@/lib/astro/layers";
 import type { DayData } from "@/lib/chart-engine";
@@ -107,7 +107,7 @@ export default function MonthView({
     }
   }, [readingId, session, isPremium, year, month]);
 
-  useEffect(() => { fetchInterp(); }, [fetchInterp]);
+  // Interpretation generated on demand (no auto-fetch)
 
   // Grid offset: first day of month (ISO — 0=Sun, 1=Mon...) → offset so week starts Mon
   const firstDay = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
@@ -195,13 +195,37 @@ export default function MonthView({
         <div className="pg-hint">Kliknij dzień → szczegóły dnia</div>
       </section>
 
-      <PgNarrZone
-        narr={interp?.narr ?? null}
-        sources={interp?.sources ?? []}
-        reflection={interp?.reflection ?? null}
-        loading={interpLoading}
-        isPremium={isPremium}
-      />
+      {isPremium && !interp && !interpLoading && (
+        <section className="pg-narr">
+          <button
+            onClick={fetchInterp}
+            style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "11px 20px", borderRadius: 12, fontSize: 14, fontWeight: 600,
+              border: "1px solid rgba(224,181,102,.40)", background: "rgba(224,181,102,.06)",
+              color: "var(--pg-deep)", cursor: "pointer", transition: ".2s",
+              fontFamily: "inherit",
+            }}
+          >
+            Generuj interpretację miesiąca
+          </button>
+          {interpError && (
+            <p style={{ fontSize: 13, color: "var(--pg-tense)", marginTop: 10 }}>
+              Nie udało się wygenerować — spróbuj ponownie.
+            </p>
+          )}
+        </section>
+      )}
+
+      {isPremium && (interp || interpLoading) && (
+        <PgNarrZone
+          narr={interp?.narr ?? null}
+          sources={interp?.sources ?? []}
+          reflection={interp?.reflection ?? null}
+          loading={interpLoading}
+          isPremium={isPremium}
+        />
+      )}
 
       <PgWhenBest
         whenBest={interp?.whenBest ?? null}

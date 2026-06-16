@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import type { NatalChart } from "@/lib/astro-types";
 import type { TransitWindow, SkyEvent } from "@/lib/astro/layers";
 import type { DayData } from "@/lib/chart-engine";
+import DayPanel from "@/components/calendar/DayPanel";
 import {
   PgWeatherZone,
   PgNarrZone,
@@ -12,7 +13,6 @@ import {
   DayIcon,
   PROGNOZA_STYLES,
   summarizeWindows,
-  WEEK_DAY_SHORT,
   MONTH_SHORT,
   type ProgInterpretation,
   type WeatherKind,
@@ -30,6 +30,8 @@ function isoDate(d: Date): string {
 type Props = {
   weekStart:     string;
   days:          DayData[];
+  year:          number;
+  month:         number;
   chart:         NatalChart;
   readingId:     string;
   isPremium:     boolean;
@@ -51,9 +53,9 @@ const WEATHER_LABEL: Record<WeatherKind, string> = {
 };
 
 export default function WeekView({
-  weekStart, days, chart, readingId, isPremium,
-  windowDateMap, onSelect, onPrevWeek, onNextWeek,
-  session,
+  weekStart, days, year, month, chart, readingId, isPremium,
+  windowDateMap, exactDays, skyEvents, selectedDate, onSelect,
+  onPrevWeek, onNextWeek, session,
 }: Props) {
   const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -71,7 +73,7 @@ export default function WeekView({
   const headerLabel = `${startD.getUTCDate()} ${MONTH_SHORT[startD.getUTCMonth() + 1]} – ${endD.getUTCDate()} ${MONTH_SHORT[endD.getUTCMonth() + 1]} ${endD.getUTCFullYear()}`;
   const eyebrow = `Pogoda · Tydzień`;
 
-  // Windows for this week — computed first so week-level header uses same source as per-day icons
+  // Windows for this week
   const weekWindows = weekDates.flatMap(d => windowDateMap.get(d) ?? []);
   const uniqueWindows = Array.from(
     new Map(weekWindows.map(w => [`${w.transitPlanet}-${w.aspectType}-${w.natalPoint}`, w])).values()
@@ -79,7 +81,7 @@ export default function WeekView({
 
   const { intensity, character, kind: weekKind, orbSrc } = summarizeWindows(uniqueWindows);
 
-  // Per-day weather: use pre-computed windowDateMap (fast planets only) for natural daily variation
+  // Per-day weather from windowDateMap (same source as icons — consistent)
   const dayWeathers = weekDates.map(dateStr => {
     const wins = windowDateMap.get(dateStr);
     if (!wins || wins.length === 0) return { kind: "calm" as WeatherKind };
@@ -88,7 +90,7 @@ export default function WeekView({
     return { kind: (hasTense && !hasGood ? "tense" : hasGood ? "good" : "calm") as WeatherKind };
   });
 
-  // AI interpretation
+  // AI interpretation — on demand only (button triggers)
   const [interp, setInterp] = useState<ProgInterpretation | null>(null);
   const [interpLoading, setInterpLoading] = useState(false);
   const [interpError, setInterpError] = useState(false);
@@ -117,7 +119,12 @@ export default function WeekView({
     }
   }, [readingId, session, isPremium, weekStart]);
 
-  useEffect(() => { fetchInterp(); }, [fetchInterp]);
+  // DayPanel helpers
+  function getDayDataForDate(dateStr: string): DayData | undefined {
+    const d = new Date(dateStr + "T12:00:00Z");
+    if (d.getUTCFullYear() !== year || d.getUTCMonth() + 1 !== month) return undefined;
+    return days[d.getUTCDate() - 1];
+  }
 
   const winItems = uniqueWindows.map(w => ({
     label:     `${w.transitPlanet} – ${w.natalPoint}`,
@@ -137,9 +144,9 @@ export default function WeekView({
         desc={
           interp?.summary ??
           (interpLoading ? "Generuję interpretację tygodnia…" :
-           interpError   ? "Interpretacja chwilowo niedostępna." :
+           interpError   ? "Nie udało się wygenerować. Spróbuj ponownie." :
            !isPremium    ? "Interpretacja AI dostępna w planie Plus." :
-                           "Ładowanie…")
+                           "")
         }
         sub={uniqueWindows.length > 0 ? `${uniqueWindows.length} aktywnych okien` : "spokojny tydzień"}
         intensity={intensity}
@@ -164,20 +171,15 @@ export default function WeekView({
             const dn      = WEEKDAY_PL[wIdx];
             const dayNum  = d.getUTCDate();
             const isToday = dateStr === todayStr;
+            const isSelected = dateStr === selectedDate;
             const kind    = dayWeathers[i]?.kind ?? "calm";
 
             return (
               <div
                 key={dateStr}
-                className={`pg-wd${isToday ? " on" : ""}`}
-                onClick={() => {
-                  onSelect(dateStr);
-                  // Navigate to "dziś" for this day via URL
-                  const url = new URL(window.location.href);
-                  url.searchParams.set("h", "today");
-                  url.searchParams.set("date", dateStr);
-                  window.location.href = url.toString();
-                }}
+                className={`pg-wd${isToday ? " on" : ""}${isSelected ? " on" : ""}`}
+                onClick={() => onSelect(dateStr)}
+                style={isSelected ? { borderColor: "var(--pg-deep)", background: "rgba(224,181,102,.08)" } : undefined}
               >
                 <div className="pg-dn">{dn}</div>
                 <div className={`pg-dd${isToday ? " today" : ""}`}>{dayNum}</div>
@@ -190,13 +192,53 @@ export default function WeekView({
         <div className="pg-hint">Kliknij dzień, by zobaczyć szczegóły · Słońce = sprzyja · Piorun = napięcie · Księżyc = spokojnie</div>
       </section>
 
-      <PgNarrZone
-        narr={interp?.narr ?? null}
-        sources={interp?.sources ?? []}
-        reflection={interp?.reflection ?? null}
-        loading={interpLoading}
-        isPremium={isPremium}
-      />
+      {/* Day panel — shown inline when day selected */}
+      {selectedDate && weekDates.includes(selectedDate) && (
+        <DayPanel
+          date={selectedDate}
+          dayData={getDayDataForDate(selectedDate)}
+          chart={chart}
+          readingId={readingId}
+          isPremium={isPremium}
+          activeWindow={windowDateMap.get(selectedDate)?.[0]}
+          isExactDay={exactDays.has(selectedDate)}
+          skyEvents={skyEvents}
+          onClose={() => onSelect(selectedDate)}
+        />
+      )}
+
+      {/* Week interpretation — generated on demand */}
+      {isPremium && !interp && !interpLoading && (
+        <section className="pg-narr">
+          <button
+            onClick={fetchInterp}
+            style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "11px 20px", borderRadius: 12, fontSize: 14, fontWeight: 600,
+              border: "1px solid rgba(224,181,102,.40)", background: "rgba(224,181,102,.06)",
+              color: "var(--pg-deep)", cursor: "pointer", transition: ".2s",
+              fontFamily: "inherit",
+            }}
+          >
+            Generuj interpretację tygodnia
+          </button>
+          {interpError && (
+            <p style={{ fontSize: 13, color: "var(--pg-tense)", marginTop: 10 }}>
+              Nie udało się wygenerować — spróbuj ponownie.
+            </p>
+          )}
+        </section>
+      )}
+
+      {isPremium && (interp || interpLoading) && (
+        <PgNarrZone
+          narr={interp?.narr ?? null}
+          sources={interp?.sources ?? []}
+          reflection={interp?.reflection ?? null}
+          loading={interpLoading}
+          isPremium={isPremium}
+        />
+      )}
 
       <PgWhenBest
         whenBest={interp?.whenBest ?? null}
