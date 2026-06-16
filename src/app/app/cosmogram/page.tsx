@@ -282,7 +282,10 @@ export default function CosmogramPage() {
         headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({ name: data.name, birthDate: data.date, placements, aspects, nodes }),
       });
-      if (!aiRes.ok) throw new Error("Błąd generowania interpretacji");
+      if (!aiRes.ok) {
+        const e = await aiRes.json().catch(() => ({})) as { error?: string };
+        throw new Error(e.error ?? "Błąd generowania interpretacji");
+      }
       const { modules } = await aiRes.json() as { modules: ChildModule[] };
       if (!modules || modules.length === 0) throw new Error("Błąd generowania interpretacji");
 

@@ -73,17 +73,28 @@ export async function POST(req: NextRequest) {
   }
 
   const msg = await anthropicRes.json() as AnthropicMessage;
-  const raw  = msg.content.find(c => c.type === "text")?.text ?? "";
+  const rawText = msg.content.find(c => c.type === "text")?.text ?? "";
 
-  // Parse JSON array from response
+  // Robust JSON extraction — Claude sometimes adds preamble or wraps in ```json
   let parsed: unknown[];
   try {
-    // Strip any leading/trailing whitespace and potential code fence
-    const clean = raw.trim().replace(/^```json\s*/i, "").replace(/```\s*$/, "");
+    // 1. Strip code fences
+    let clean = rawText.trim()
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/```\s*$/, "")
+      .trim();
+
+    // 2. If still not starting with '[', try to extract the first [...] block
+    if (!clean.startsWith("[")) {
+      const m = clean.match(/\[[\s\S]*\]/);
+      if (m) clean = m[0];
+    }
+
     parsed = JSON.parse(clean) as unknown[];
     if (!Array.isArray(parsed)) throw new Error("Not an array");
   } catch (err) {
-    console.error("[ai-child] JSON parse error. Raw:", raw.slice(0, 300), err);
+    console.error("[ai-child] JSON parse error. Raw:", rawText.slice(0, 500), err);
     return NextResponse.json({ error: "Błąd parsowania odpowiedzi AI" }, { status: 500 });
   }
 
@@ -94,19 +105,29 @@ export async function POST(req: NextRequest) {
 
   for (const raw of parsed) {
     try {
-      // Sanitize before validation: strip trailing period from quote, coerce arrays
+      // Sanitize before validation
       const item = raw as Record<string, unknown>;
+
+      // Strip trailing period from quote
       if (typeof item.quote === "string") {
         item.quote = item.quote.replace(/\.\s*$/, "").trim();
       }
-      if (Array.isArray(item.tags)) {
-        item.tags = (item.tags as unknown[]).slice(0, 8);
-      }
+
+      // Trim arrays to safe lengths
+      if (Array.isArray(item.tags))         item.tags         = (item.tags as unknown[]).slice(0, 8);
+      if (Array.isArray(item.tactics))      item.tactics      = (item.tactics as unknown[]).slice(0, 6);
+
+      // Fix visualMeters: round floats, normalize category
+      const VALID_CATEGORIES = new Set(["action", "emotion", "mind", "soul", "social"]);
       if (Array.isArray(item.visualMeters)) {
-        item.visualMeters = (item.visualMeters as unknown[]).slice(0, 5);
-      }
-      if (Array.isArray(item.tactics)) {
-        item.tactics = (item.tactics as unknown[]).slice(0, 6);
+        item.visualMeters = (item.visualMeters as Record<string, unknown>[]).slice(0, 5).map(m => ({
+          ...m,
+          value: typeof m.value === "number" ? Math.round(m.value) : m.value,
+          // Normalize archetype to max 80 chars
+          archetype: typeof m.archetype === "string" ? m.archetype.slice(0, 80) : m.archetype,
+          // Default unknown category to "mind"
+          category: VALID_CATEGORIES.has(m.category as string) ? m.category : "mind",
+        }));
       }
 
       const validated = ChildModuleAIOutputSchema.parse(item);

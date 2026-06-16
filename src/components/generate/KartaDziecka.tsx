@@ -130,7 +130,10 @@ export default function KartaDziecka({ child, isPremiumUser, onChildUpdated }: P
         headers: { "Content-Type": "application/json", ...authHeader },
         body:    JSON.stringify({ name: child.name, birthDate: bd.date, placements, aspects, nodes }),
       });
-      if (!aiRes.ok) throw new Error("Błąd generowania interpretacji");
+      if (!aiRes.ok) {
+        const e = await aiRes.json().catch(() => ({})) as { error?: string };
+        throw new Error(e.error ?? "Błąd generowania interpretacji");
+      }
       const { modules: newModules } = await aiRes.json() as { modules: ChildModule[] };
       if (!newModules?.length) throw new Error("Brak wyników — spróbuj ponownie");
 
