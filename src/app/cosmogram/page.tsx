@@ -50,6 +50,30 @@ const FAQ_ITEMS = [
   },
 ];
 
+const JSON_WEBPAGE = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "Kosmogram natalny — mapa nieba z chwili urodzenia",
+  description: "Oblicz swój kosmogram natalny za darmo. Interpretacja AI po polsku, obliczenia Swiss Ephemeris.",
+  url: "https://www.cosmo-gram.com/cosmogram",
+  breadcrumb: {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Cosmogram", item: "https://www.cosmo-gram.com" },
+      { "@type": "ListItem", position: 2, name: "Kosmogram natalny", item: "https://www.cosmo-gram.com/cosmogram" },
+    ],
+  },
+};
+
+const JSON_APP = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Kosmogram natalny",
+  applicationCategory: "LifestyleApplication",
+  operatingSystem: "Web",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "PLN" },
+};
+
 const JSON_FAQ = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -154,14 +178,10 @@ export default function CosmogramPage() {
         minHeight: "100vh",
       }}
     >
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_FAQ) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_HOWTO) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_WEBPAGE) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_APP) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_FAQ) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_HOWTO) }} />
 
       <Navbar />
 
