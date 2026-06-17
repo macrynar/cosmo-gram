@@ -5,6 +5,7 @@ import Link from "next/link";
 
 const NAV_LINKS = [
   ["Kosmogram", "/cosmogram"],
+  ["Kalendarz", "/calendar"],
   ["Cosmo Match", "/match"],
   ["Cosmo Chat", "/cosmo-chat"],
   ["Cennik", "/pricing"],
@@ -58,7 +59,7 @@ export default function LandingNav() {
         <ul className="landing-desktop-menu" style={{ display: "flex", gap: 8, listStyle: "none", margin: 0, padding: 0 }}>
           {NAV_LINKS.map(([label, href]) => (
             <li key={label}>
-              <Link href={href} style={{ fontSize: 15.5, color: "var(--text-secondary)", textDecoration: "none", padding: "8px 12px", display: "block" }}>
+              <Link href={href} className="landing-nav-link" style={{ fontSize: 15.5, color: "var(--text-secondary)", textDecoration: "none", padding: "8px 12px", display: "block", borderRadius: 999, transition: "color .2s, background .2s" }}>
                 {label}
               </Link>
             </li>
@@ -149,6 +150,10 @@ export default function LandingNav() {
       </div>
 
       <style>{`
+        .landing-nav-link:hover {
+          color: #E9DCC0 !important;
+          background: rgba(224,181,102,.08) !important;
+        }
         @media (max-width: 768px) {
           .landing-desktop-menu { display: none !important; }
           .landing-desktop-right { display: none !important; }
