@@ -104,7 +104,14 @@ export async function POST(req: NextRequest) {
     }
 
     const input  = toolBlock.input as Record<string, unknown>;
-    rawModules   = Array.isArray(input.modules) ? (input.modules as unknown[]) : [];
+    if (Array.isArray(input.modules)) {
+      rawModules = input.modules as unknown[];
+    } else if (typeof input.modules === "string") {
+      // Claude sometimes stringifies the array despite schema saying type:array
+      try { rawModules = JSON.parse(input.modules as string) as unknown[]; } catch { rawModules = []; }
+    } else {
+      rawModules = [];
+    }
     const inputPreview = JSON.stringify(input).slice(0, 400);
     console.log("[ai-child] tool_use OK, modules:", rawModules.length,
       "stop_reason:", response.stop_reason,
