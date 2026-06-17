@@ -4,7 +4,15 @@ import { hasActiveSubscription, getUserSubscription } from "@/lib/subscription";
 
 const FREE_CHAT_MESSAGES = 3;
 const PREMIUM_MONTHLY_LIMIT = 150;
-const CHAT_PACK_BONUS = 100;
+
+async function getChatCredits(userId: string): Promise<number> {
+  const { data } = await supabaseAdmin
+    .from("user_preferences")
+    .select("chat_credit_balance")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return (data as { chat_credit_balance?: number } | null)?.chat_credit_balance ?? 0;
+}
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
@@ -29,12 +37,9 @@ export async function GET(req: NextRequest) {
       .in("conversation_id", convIds.length > 0 ? convIds : ["__none__"])
       .eq("role", "user");
     const used = count ?? 0;
-    return NextResponse.json({
-      isPaid: false,
-      limit: FREE_CHAT_MESSAGES,
-      used,
-      remaining: Math.max(0, FREE_CHAT_MESSAGES - used),
-    });
+    const remaining = Math.max(0, FREE_CHAT_MESSAGES - used);
+    const credits = await getChatCredits(user.id);
+    return NextResponse.json({ isPaid: false, limit: FREE_CHAT_MESSAGES, used, remaining, credits });
   }
 
   // Premium: use billing anniversary if available, else calendar month
@@ -42,7 +47,6 @@ export async function GET(req: NextRequest) {
   let periodStart: Date;
   if (sub?.current_period_start) {
     periodStart = new Date(sub.current_period_start);
-    // Roll period start to current billing cycle
     const now = new Date();
     while (periodStart <= now) {
       const next = new Date(periodStart);
@@ -51,7 +55,6 @@ export async function GET(req: NextRequest) {
       periodStart = next;
     }
   } else {
-    // Fallback: calendar month start
     periodStart = new Date();
     periodStart.setDate(1);
     periodStart.setHours(0, 0, 0, 0);
@@ -64,21 +67,9 @@ export async function GET(req: NextRequest) {
     .eq("role", "user")
     .gte("created_at", periodStart.toISOString());
 
-  // Check for chat_pack bonus
-  const { data: prefs } = await supabaseAdmin
-    .from("user_preferences")
-    .select("chat_pack_purchased")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const packBonus = (prefs as { chat_pack_purchased?: boolean } | null)?.chat_pack_purchased ? CHAT_PACK_BONUS : 0;
-  const limit = PREMIUM_MONTHLY_LIMIT + packBonus;
+  const credits = await getChatCredits(user.id);
   const used = count ?? 0;
+  const remaining = Math.max(0, PREMIUM_MONTHLY_LIMIT - used);
 
-  return NextResponse.json({
-    isPaid: true,
-    limit,
-    used,
-    remaining: Math.max(0, limit - used),
-  });
+  return NextResponse.json({ isPaid: true, limit: PREMIUM_MONTHLY_LIMIT, used, remaining, credits });
 }

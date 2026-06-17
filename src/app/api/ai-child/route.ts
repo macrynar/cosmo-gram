@@ -3,23 +3,23 @@ import { CHILD_V2_SYSTEM, buildChildV2UserPrompt, calcAgeYears } from "@/lib/pro
 import { ChildModuleAIOutputSchema, CHILD_MODULE_SPECS, type ChildModule, type ChildModuleId } from "@/lib/schemas/childModule";
 import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
 import { supabaseAdmin } from "@/lib/supabase-server";
-import { z } from "zod";
 import { checkRateLimit } from "@/lib/rateLimiter";
+import { aiComplete } from "@/lib/deepseek";
 
 export const maxDuration = 180;
 
 const PROMPT_VERSION = "child-v2.0";
 
-// Claude sometimes embeds literal newlines inside JSON string values (between paragraphs).
-// This scanner replaces them with \n so JSON.parse doesn't throw.
-function escapeNewlinesInStrings(json: string): string {
+// Escape ALL control characters (U+0000–U+001F) inside JSON string values.
+// Claude sometimes embeds literal newlines, tabs, or other control chars between paragraphs.
+function sanitizeJsonStrings(json: string): string {
   let result = "";
   let inString = false;
   let i = 0;
   while (i < json.length) {
     const ch = json[i];
     if (ch === "\\" && inString) {
-      // Already-escaped sequence — pass through both chars
+      // Already-escaped sequence — pass through both chars unchanged
       result += ch + (json[i + 1] ?? "");
       i += 2;
       continue;
@@ -27,8 +27,19 @@ function escapeNewlinesInStrings(json: string): string {
     if (ch === '"') {
       inString = !inString;
       result += ch;
-    } else if (inString && (ch === "\n" || ch === "\r")) {
-      result += "\\n";
+    } else if (inString) {
+      const code = ch.charCodeAt(0);
+      if (code < 0x20) {
+        // All control chars are invalid unescaped in JSON strings
+        switch (code) {
+          case 0x09: result += "\\t"; break;
+          case 0x0a: result += "\\n"; break;
+          case 0x0d: result += "\\r"; break;
+          default:   result += `\\u${code.toString(16).padStart(4, "0")}`; break;
+        }
+      } else {
+        result += ch;
+      }
     } else {
       result += ch;
     }
@@ -36,10 +47,6 @@ function escapeNewlinesInStrings(json: string): string {
   }
   return result;
 }
-
-type AnthropicMessage = {
-  content: { type: string; text?: string }[];
-};
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
@@ -60,9 +67,6 @@ export async function POST(req: NextRequest) {
     nodes: ChartNodes;
   };
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "Brak klucza API" }, { status: 500 });
-
   const userMessage = buildChildV2UserPrompt({
     name:       body.name,
     birthDate:  body.birthDate,
@@ -71,46 +75,38 @@ export async function POST(req: NextRequest) {
     nodes:      body.nodes      ?? { north_node_sign: "", south_node_sign: "" },
   });
 
-  let anthropicRes: Response;
+  let rawText: string;
   try {
-    anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type":    "application/json",
-        "x-api-key":       apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model:      "claude-sonnet-4-6",
-        max_tokens: 7000,
-        stream:     false,
-        system:     CHILD_V2_SYSTEM,
-        messages:   [{ role: "user", content: userMessage }],
-      }),
+    rawText = await aiComplete({
+      model:     "claude-sonnet-4-6",
+      system:    CHILD_V2_SYSTEM,
+      messages:  [{ role: "user", content: userMessage }],
+      maxTokens: 8000,
+      task:      "ai-child",
     });
   } catch (err) {
-    console.error("[ai-child] fetch error:", err);
-    return NextResponse.json({ error: "Błąd połączenia z AI" }, { status: 500 });
-  }
-
-  if (!anthropicRes.ok) {
-    const body = await anthropicRes.text();
-    console.error("[ai-child] Anthropic non-ok:", anthropicRes.status, body);
+    console.error("[ai-child] aiComplete error:", err);
     return NextResponse.json({ error: "Błąd generowania interpretacji" }, { status: 500 });
   }
 
-  const msg = await anthropicRes.json() as AnthropicMessage;
-  const rawText = msg.content.find(c => c.type === "text")?.text ?? "";
+  const isDev = process.env.NODE_ENV !== "production";
+  console.log("[ai-child] rawText length:", rawText.length, "| first 200:", rawText.slice(0, 200).replace(/[\n\r]/g, "↵"));
 
-  // Robust JSON extraction — Claude sometimes adds preamble or wraps in ```json
-  // 1. Strip code fences
+  if (!rawText) {
+    console.error("[ai-child] aiComplete returned empty string");
+    return NextResponse.json(
+      { error: "Błąd generowania interpretacji", ...(isDev ? { debug: "empty rawText" } : {}) },
+      { status: 500 },
+    );
+  }
+
+  // Strip code fences and extract JSON array
   let clean = rawText.trim()
     .replace(/^```json\s*/i, "")
     .replace(/^```\s*/i, "")
     .replace(/```\s*$/, "")
     .trim();
 
-  // 2. If not starting with '[', extract first [...] block
   if (!clean.startsWith("[")) {
     const m = clean.match(/\[[\s\S]*\]/);
     if (m) clean = m[0];
@@ -121,16 +117,18 @@ export async function POST(req: NextRequest) {
     parsed = JSON.parse(clean) as unknown[];
     if (!Array.isArray(parsed)) throw new Error("Not an array");
   } catch (firstErr) {
-    // Fallback: Claude sometimes embeds literal newlines inside JSON string values
-    // (e.g. between content paragraphs). Escape them and retry.
+    // Fallback: sanitize all control characters inside string values and retry
     try {
-      const fixed = escapeNewlinesInStrings(clean);
+      const fixed = sanitizeJsonStrings(clean);
       parsed = JSON.parse(fixed) as unknown[];
       if (!Array.isArray(parsed)) throw new Error("Not an array");
-      console.warn("[ai-child] JSON parsed only after newline-escape fix");
+      console.warn("[ai-child] JSON parsed only after control-char sanitization");
     } catch {
-      console.error("[ai-child] JSON parse error (both passes). Raw:", rawText.slice(0, 500), firstErr);
-      return NextResponse.json({ error: "Błąd parsowania odpowiedzi AI" }, { status: 500 });
+      console.error("[ai-child] JSON parse FAILED both passes.", firstErr, "\nraw[:500]:", rawText.slice(0, 500), "\nraw[-200:]:", rawText.slice(-200));
+      return NextResponse.json({
+        error: "Błąd parsowania odpowiedzi AI",
+        ...(isDev ? { rawStart: rawText.slice(0, 300), rawEnd: rawText.slice(-150), rawLen: rawText.length } : {}),
+      }, { status: 500 });
     }
   }
 
@@ -185,12 +183,6 @@ export async function POST(req: NextRequest) {
 
   if (modules.length === 0) {
     return NextResponse.json({ error: "Generowanie nie powiodło się — spróbuj ponownie" }, { status: 500 });
-  }
-
-  // Log token usage for observability (fire-and-forget)
-  const usage = (msg as unknown as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
-  if (usage) {
-    console.log(`[ai-child] tokens: in=${usage.input_tokens} out=${usage.output_tokens} age=${ageYears}`);
   }
 
   return NextResponse.json({ modules, failedIds });
