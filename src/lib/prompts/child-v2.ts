@@ -21,6 +21,8 @@ Tłumacz na zachowanie i potrzeby dziecka.
 
 QUOTE: 40-90 znaków, bez kropki na końcu, bez znaku zapytania, konkretna esencja tego dziecka.
 
+UNIKAJ znaków cudzysłowu (") w polach quote/content/tactics. Jeśli chcesz coś zaakcentować, parafrazuj bez cytowania.
+
 TACTICS: dokładnie 3, 20-140 znaków każda, format "Kiedy [sytuacja] — spróbuj [działanie]".
 
 TAGS: dokładnie 4, 1 słowo, PL małe litery z polskimi znakami. Empowering: "wytrwały" nie "uparty".
@@ -156,34 +158,15 @@ export function buildChildV2UserPrompt(params: {
     ? "\n⚠️ Brak godziny urodzenia — pomiń Ascendent i domy. Opieraj się wyłącznie na pozycjach planet w znakach.\n"
     : "";
 
-  const moduleSchemas = [
+  const moduleInstructions = [
     "temperament", "emotions", "learning", "talents", "parenting", "peers",
   ].map((id, i) => {
     const meters      = METERS_BY_MODULE[id];
     const instruction = MODULE_INSTRUCTIONS[id];
-    const wordRange   = instruction.match(/\d+-\d+/)?.[0] ?? "200-350";
-    return `
---- MODUŁ ${i + 1}: ${id} ---
-Instrukcja: ${instruction}
-
-{
-  "id": "${id}",
-  "title": "<tytuł po polsku, 3-60 zn>",
-  "quote": "<esencja dziecka w tym module, 40-90 zn, BEZ kropki, BEZ ?>",
-  "content": "<${wordRange} słów, **bold** 2-4x, bez żargonu astro, akapity przez \\n\\n>",
-  "tactics": [
-    "<taktyka 1 dla rodzica, 20-140 zn, format: Kiedy X — spróbuj Y>",
-    "<taktyka 2>",
-    "<taktyka 3>"
-  ],
-  "tags": ["<pl lowercase>", "<tag2>", "<tag3>", "<tag4>"],
-  "visualMeters": [
-    {"label": "${meters[0]}", "value": <0-100>, "archetype": "<8-15 słów konkretny obraz>", "category": "<action|emotion|mind|soul|social>"},
-    {"label": "${meters[1]}", "value": <0-100>, "archetype": "<8-15 słów>", "category": "<action|emotion|mind|soul|social>"},
-    {"label": "${meters[2]}", "value": <0-100>, "archetype": "<8-15 słów>", "category": "<action|emotion|mind|soul|social>"}
-  ]
-}`;
-  }).join("\n");
+    return `MODUŁ ${i + 1} — id="${id}"
+${instruction}
+Mierniki (visualMeters): "${meters[0]}", "${meters[1]}", "${meters[2]}"`;
+  }).join("\n\n");
 
   return `Imię dziecka: ${childName}
 Wiek: ${ageYears} lat (${ageGroup})
@@ -191,13 +174,15 @@ ${timeNote}
 ${formatPlacements(placements, aspects, nodes, hasTime)}
 
 ═══ ZADANIE ═══
-Wygeneruj tablicę JSON 6 modułów (kolejność: temperament, emotions, learning, talents, parenting, peers).
-Każdy opisuje inne oblicze ${childName} — przez kombinacje planet (⚡ kluczowe sygnatury powyżej), nigdy przez pojedynczy placement.
-Dziecko w 3. os. ("${childName} jest…"), taktyki do rodzica w 2. os. ("Dawaj mu…").
-Treść dopasowana do wieku: ${ageGroup}.
+Wywołaj narzędzie output_child_modules. Wypełnij 6 modułów dla ${childName} (${ageGroup}):
 
-SCHEMATY MODUŁÓW:
-${moduleSchemas}
+${moduleInstructions}
 
-Użyj narzędzia output_child_modules aby zwrócić wszystkie 6 modułów.`;
+Zasady dla wszystkich modułów:
+• Opieraj się na KOMBINACJACH planet (⚡ kluczowe sygnatury powyżej), nie pojedynczych pozycjach
+• Dziecko w 3. osobie ("${childName} jest…"), taktyki do rodzica w 2. osobie ("Dawaj mu…")
+• quote: 40-90 znaków, bez kropki na końcu
+• tactics: dokładnie 3, format "Kiedy X — spróbuj Y"
+• tags: dokładnie 4 słowa, PL małe litery
+• visualMeters: dokładnie 3, value 0-100`;
 }
