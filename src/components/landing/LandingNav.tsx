@@ -5,6 +5,7 @@ import Link from "next/link";
 
 const NAV_LINKS = [
   ["Kosmogram", "/cosmogram"],
+  ["Kalendarz", "/calendar"],
   ["Cosmo Match", "/match"],
   ["Cosmo Chat", "/cosmo-chat"],
   ["Cennik", "/pricing"],
