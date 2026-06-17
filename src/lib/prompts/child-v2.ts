@@ -27,9 +27,7 @@ TAGS: dokładnie 4, 1 słowo, PL małe litery z polskimi znakami. Empowering: "w
 
 VISUAL METERS: dokładnie 3, value 0-100, archetype 8-15 słów, category: action|emotion|mind|soul|social.
 
-MARKDOWN w content: **pogrubienie** 2-4x per moduł, krótkie akapity. W string JSON NIE wstawiaj dosłownych enterów — używaj \\n\\n.
-
-FORMAT: Zwróć WYŁĄCZNIE tablicę JSON zaczynającą się od [. Zero preambuły, zero \`\`\`json.`;
+MARKDOWN w content: **pogrubienie** 2-4x per moduł, krótkie akapity oddzielone pustą linią.`;
 
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -201,7 +199,5 @@ Treść dopasowana do wieku: ${ageGroup}.
 SCHEMATY MODUŁÓW:
 ${moduleSchemas}
 
-ZWRÓĆ TYLKO tablicę JSON — zero preambuły, zero \`\`\`json, zero komentarzy.
-Twoja odpowiedź zaczyna się dokładnie od znaku [.
-Format: [{"id":"temperament",...},{"id":"emotions",...},...{"id":"peers",...}]`;
+Użyj narzędzia output_child_modules aby zwrócić wszystkie 6 modułów.`;
 }

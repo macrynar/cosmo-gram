@@ -1,52 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 import { CHILD_V2_SYSTEM, buildChildV2UserPrompt, calcAgeYears } from "@/lib/prompts/child-v2";
 import { ChildModuleAIOutputSchema, CHILD_MODULE_SPECS, type ChildModule, type ChildModuleId } from "@/lib/schemas/childModule";
 import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
-import { supabaseAdmin } from "@/lib/supabase-server";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { aiComplete } from "@/lib/deepseek";
+import { supabaseAdmin } from "@/lib/supabase-server";
 
 export const maxDuration = 180;
 
-const PROMPT_VERSION = "child-v2.0";
+const PROMPT_VERSION = "child-v2.1";
 
-// Escape ALL control characters (U+0000–U+001F) inside JSON string values.
-// Claude sometimes embeds literal newlines, tabs, or other control chars between paragraphs.
-function sanitizeJsonStrings(json: string): string {
-  let result = "";
-  let inString = false;
-  let i = 0;
-  while (i < json.length) {
-    const ch = json[i];
-    if (ch === "\\" && inString) {
-      // Already-escaped sequence — pass through both chars unchanged
-      result += ch + (json[i + 1] ?? "");
-      i += 2;
-      continue;
-    }
-    if (ch === '"') {
-      inString = !inString;
-      result += ch;
-    } else if (inString) {
-      const code = ch.charCodeAt(0);
-      if (code < 0x20) {
-        // All control chars are invalid unescaped in JSON strings
-        switch (code) {
-          case 0x09: result += "\\t"; break;
-          case 0x0a: result += "\\n"; break;
-          case 0x0d: result += "\\r"; break;
-          default:   result += `\\u${code.toString(16).padStart(4, "0")}`; break;
-        }
-      } else {
-        result += ch;
-      }
-    } else {
-      result += ch;
-    }
-    i++;
-  }
-  return result;
+function getClient(): Anthropic {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
+  return new Anthropic({ apiKey });
 }
+
+// tool_use forces the SDK to handle JSON serialisation — no unescaped quotes
+// or literal newlines can appear regardless of what Claude generates.
+const CHILD_MODULES_TOOL: Anthropic.Tool = {
+  name: "output_child_modules",
+  description: "Zwróć 6 modułów interpretacji kosmogramu dziecka: temperament, emotions, learning, talents, parenting, peers",
+  input_schema: {
+    type: "object",
+    properties: {
+      modules: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            id:      { type: "string", enum: ["temperament", "emotions", "learning", "talents", "parenting", "peers"] },
+            title:   { type: "string" },
+            quote:   { type: "string" },
+            content: { type: "string" },
+            tactics: { type: "array", items: { type: "string" } },
+            tags:    { type: "array", items: { type: "string" } },
+            visualMeters: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  label:     { type: "string" },
+                  value:     { type: "integer", minimum: 0, maximum: 100 },
+                  archetype: { type: "string" },
+                  category:  { type: "string", enum: ["action", "emotion", "mind", "soul", "social"] },
+                },
+                required: ["label", "value", "archetype", "category"],
+              },
+            },
+          },
+          required: ["id", "title", "quote", "content", "tactics", "tags", "visualMeters"],
+        },
+      },
+    },
+    required: ["modules"],
+  },
+};
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
@@ -75,103 +84,75 @@ export async function POST(req: NextRequest) {
     nodes:      body.nodes      ?? { north_node_sign: "", south_node_sign: "" },
   });
 
-  let rawText: string;
+  let rawModules: unknown[];
   try {
-    rawText = await aiComplete({
-      model:     "claude-sonnet-4-6",
-      system:    CHILD_V2_SYSTEM,
-      messages:  [{ role: "user", content: userMessage }],
-      maxTokens: 8000,
-      task:      "ai-child",
+    const response = await getClient().messages.create({
+      model:       "claude-sonnet-4-6",
+      max_tokens:  8000,
+      system:      CHILD_V2_SYSTEM,
+      messages:    [{ role: "user", content: userMessage }],
+      tools:       [CHILD_MODULES_TOOL],
+      tool_choice: { type: "tool", name: "output_child_modules" },
     });
+
+    const toolBlock = response.content.find(
+      (b): b is Anthropic.ToolUseBlock => b.type === "tool_use",
+    );
+    if (!toolBlock) {
+      console.error("[ai-child] no tool_use block, stop_reason:", response.stop_reason);
+      return NextResponse.json({ error: "Błąd generowania interpretacji" }, { status: 500 });
+    }
+
+    const input  = toolBlock.input as Record<string, unknown>;
+    rawModules   = Array.isArray(input.modules) ? (input.modules as unknown[]) : [];
+    const inputPreview = JSON.stringify(input).slice(0, 400);
+    console.log("[ai-child] tool_use OK, modules:", rawModules.length,
+      "stop_reason:", response.stop_reason,
+      "input keys:", Object.keys(input),
+      "input[:400]:", inputPreview);
+    if (rawModules.length === 0) {
+      const isDev = process.env.NODE_ENV !== "production";
+      return NextResponse.json({
+        error: "Brak modułów — spróbuj ponownie",
+        ...(isDev ? { debug_input: inputPreview } : {}),
+      }, { status: 500 });
+    }
   } catch (err) {
-    console.error("[ai-child] aiComplete error:", err);
+    console.error("[ai-child] API error:", err);
     return NextResponse.json({ error: "Błąd generowania interpretacji" }, { status: 500 });
   }
 
-  const isDev = process.env.NODE_ENV !== "production";
-  console.log("[ai-child] rawText length:", rawText.length, "| first 200:", rawText.slice(0, 200).replace(/[\n\r]/g, "↵"));
 
-  if (!rawText) {
-    console.error("[ai-child] aiComplete returned empty string");
-    return NextResponse.json(
-      { error: "Błąd generowania interpretacji", ...(isDev ? { debug: "empty rawText" } : {}) },
-      { status: 500 },
-    );
-  }
-
-  // Strip code fences and extract JSON array
-  let clean = rawText.trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```\s*$/, "")
-    .trim();
-
-  if (!clean.startsWith("[")) {
-    const m = clean.match(/\[[\s\S]*\]/);
-    if (m) clean = m[0];
-  }
-
-  let parsed: unknown[];
-  try {
-    parsed = JSON.parse(clean) as unknown[];
-    if (!Array.isArray(parsed)) throw new Error("Not an array");
-  } catch (firstErr) {
-    // Fallback: sanitize all control characters inside string values and retry
-    try {
-      const fixed = sanitizeJsonStrings(clean);
-      parsed = JSON.parse(fixed) as unknown[];
-      if (!Array.isArray(parsed)) throw new Error("Not an array");
-      console.warn("[ai-child] JSON parsed only after control-char sanitization");
-    } catch {
-      console.error("[ai-child] JSON parse FAILED both passes.", firstErr, "\nraw[:500]:", rawText.slice(0, 500), "\nraw[-200:]:", rawText.slice(-200));
-      return NextResponse.json({
-        error: "Błąd parsowania odpowiedzi AI",
-        ...(isDev ? { rawStart: rawText.slice(0, 300), rawEnd: rawText.slice(-150), rawLen: rawText.length } : {}),
-      }, { status: 500 });
-    }
-  }
-
-  // Sanitize and validate
-  const ageYears = calcAgeYears(body.birthDate);
-  const modules: ChildModule[] = [];
+  const modules: ChildModule[]     = [];
   const failedIds: ChildModuleId[] = [];
 
-  for (const raw of parsed) {
+  for (const raw of rawModules) {
     try {
-      // Sanitize before validation
       const item = raw as Record<string, unknown>;
 
-      // Strip trailing period from quote
       if (typeof item.quote === "string") {
         item.quote = item.quote.replace(/\.\s*$/, "").trim();
       }
+      if (Array.isArray(item.tags))    item.tags    = (item.tags    as unknown[]).slice(0, 8);
+      if (Array.isArray(item.tactics)) item.tactics = (item.tactics as unknown[]).slice(0, 6);
 
-      // Trim arrays to safe lengths
-      if (Array.isArray(item.tags))         item.tags         = (item.tags as unknown[]).slice(0, 8);
-      if (Array.isArray(item.tactics))      item.tactics      = (item.tactics as unknown[]).slice(0, 6);
-
-      // Fix visualMeters: round floats, normalize category
       const VALID_CATEGORIES = new Set(["action", "emotion", "mind", "soul", "social"]);
       if (Array.isArray(item.visualMeters)) {
         item.visualMeters = (item.visualMeters as Record<string, unknown>[]).slice(0, 5).map(m => ({
           ...m,
-          value: typeof m.value === "number" ? Math.round(m.value) : m.value,
-          // Normalize archetype to max 80 chars
+          value:     typeof m.value === "number" ? Math.round(m.value) : m.value,
           archetype: typeof m.archetype === "string" ? m.archetype.slice(0, 80) : m.archetype,
-          // Default unknown category to "mind"
-          category: VALID_CATEGORIES.has(m.category as string) ? m.category : "mind",
+          category:  VALID_CATEGORIES.has(m.category as string) ? m.category : "mind",
         }));
       }
 
       const validated = ChildModuleAIOutputSchema.parse(item);
-      const id = validated.id;
-      const spec = CHILD_MODULE_SPECS[id];
+      const spec      = CHILD_MODULE_SPECS[validated.id];
       modules.push({
         ...validated,
         confidenceScore: 75 + Math.floor(Math.random() * 15),
         isPremium:       spec.isPremium,
-        cacheKey:        `child:${id}:${body.name}:${body.birthDate}`,
+        cacheKey:        `child:${validated.id}:${body.name}:${body.birthDate}`,
         promptVersion:   PROMPT_VERSION,
       });
     } catch (err) {
@@ -188,7 +169,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ modules, failedIds });
 }
 
-// Keep legacy GET for any existing cache lookups (no-op, returns empty)
 export async function GET() {
   return NextResponse.json({ modules: [] });
 }
