@@ -191,13 +191,11 @@ ${timeNote}
 ${formatPlacements(placements, aspects, nodes, hasTime)}
 
 ═══ ZADANIE ═══
-Wygeneruj tablicę JSON 6 modułów (kolejność: temperament, emotions, learning, talents, parenting, peers).
-Każdy opisuje inne oblicze ${childName} — przez kombinacje planet (⚡ kluczowe sygnatury powyżej), nigdy przez pojedynczy placement.
+Wywołaj narzędzie output_child_modules z 6 modułami (kolejność: temperament, emotions, learning, talents, parenting, peers).
+Każdy moduł opisuje inne oblicze ${childName} — przez kombinacje planet (⚡ kluczowe sygnatury powyżej), nigdy przez pojedynczy placement.
 Dziecko w 3. os. ("${childName} jest…"), taktyki do rodzica w 2. os. ("Dawaj mu…").
 Treść dopasowana do wieku: ${ageGroup}.
 
-SCHEMATY MODUŁÓW:
-${moduleSchemas}
-
-Użyj narzędzia output_child_modules aby zwrócić wszystkie 6 modułów.`;
+STRUKTURA KAŻDEGO MODUŁU:
+${moduleSchemas}`;
 }
