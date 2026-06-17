@@ -1,64 +1,149 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { User, Lock, CreditCard, Check, Loader2, Star, AlertCircle, RefreshCw, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  User, Lock, CreditCard, Check, Loader2, Sparkles,
+  AlertCircle, RefreshCw, Copy, LogOut, X, Circle,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/components/AuthContext";
 import { useSubscription } from "@/components/SubscriptionContext";
 import PaywallModal from "@/components/PaywallModal";
 import { supabase } from "@/lib/supabase";
 
-const STATUS_LABELS: Record<string, string> = {
-  free:     "Bezpłatny",
-  trialing: "Trial aktywny",
-  active:   "Aktywna",
-  past_due: "Zaległa płatność",
-  canceled: "Anulowana",
+// ── DS status map ─────────────────────────────────────────────────────────────
+
+type PillVariant = "ok" | "trial" | "warn" | "muted";
+
+const STATUS_CONFIG: Record<string, { label: string; variant: PillVariant; showCheck?: boolean }> = {
+  active:   { label: "Aktywna",          variant: "ok",    showCheck: true },
+  trialing: { label: "Trial · 7 dni",    variant: "trial" },
+  past_due: { label: "Zaległa płatność", variant: "warn"  },
+  canceled: { label: "Anulowana",        variant: "muted" },
+  free:     { label: "Bezpłatny",        variant: "muted" },
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  free:     "text-slate-400 border-slate-700 bg-slate-900/30",
-  trialing: "text-amber-300 border-amber-700/50 bg-amber-900/20",
-  active:   "text-green-300 border-green-700/50 bg-green-900/20",
-  past_due: "text-red-300 border-red-700/50 bg-red-900/20",
-  canceled: "text-slate-400 border-slate-700 bg-slate-900/30",
+const PILL_STYLES: Record<PillVariant, React.CSSProperties> = {
+  ok:    { background: "rgba(255,174,61,.12)", border: "1px solid rgba(224,181,102,.42)", color: "#FFD9A0" },
+  trial: { background: "transparent",          border: "1px solid rgba(224,181,102,.40)", color: "var(--accent-deep)" },
+  warn:  { background: "rgba(226,101,74,.12)", border: "1px solid rgba(226,101,74,.45)",  color: "#E89B86" },
+  muted: { background: "rgba(182,175,198,.06)",border: "1px solid var(--line)",           color: "var(--text-muted)" },
 };
 
-export default function SettingsPage() {
-  const { session, user } = useAuth();
+const PLUS_BENEFITS = [
+  "Pełna interpretacja Twojego kosmogramu",
+  "Dzienny odczyt astrologiczny każdego ranka",
+  "Nieograniczone Astro-Matche",
+  "Cosmogram Chat bez limitu",
+  "Karta kosmogramu dziecka",
+];
+
+// ── Password scoring ──────────────────────────────────────────────────────────
+
+function scorePassword(p: string): number {
+  let s = 0;
+  if (p.length >= 8)                             s++;
+  if (/[a-z]/.test(p) && /[A-Z]/.test(p))       s++;
+  if (/\d/.test(p))                              s++;
+  if (/[^A-Za-z0-9]/.test(p))                   s++;
+  if (p.length >= 12)                            s++;
+  return s;
+}
+
+// ── DS card + icon styles ─────────────────────────────────────────────────────
+
+const CARD: React.CSSProperties = {
+  background:   "var(--bg-elevated)",
+  border:       "1px solid var(--line)",
+  borderRadius: 18,
+  padding:      24,
+  marginBottom: 18,
+};
+
+const SECTION_ICON: React.CSSProperties = {
+  width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+  display: "flex", alignItems: "center", justifyContent: "center",
+  background: "rgba(224,181,102,.10)",
+  border: "1px solid rgba(224,181,102,.22)",
+};
+
+// ── RuleRow ───────────────────────────────────────────────────────────────────
+
+function RuleRow({ text, ok, empty }: { text: string; ok: boolean; empty: boolean }) {
+  const color = empty ? "var(--text-muted)" : ok ? "var(--voice)" : "#E89B86";
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color, transition: "color .2s" }}>
+      {empty
+        ? <Circle  size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+        : ok
+          ? <Check   size={14} style={{ color: "var(--accent)",     flexShrink: 0 }} />
+          : <X       size={14} style={{ color: "var(--tense)",      flexShrink: 0 }} />}
+      {text}
+    </div>
+  );
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export default function SettingsProfilePage() {
+  const router = useRouter();
+  const { session, user, signOut } = useAuth();
   const { isPro, status, currentPeriodEnd, isLoading: subLoading, refresh } = useSubscription();
 
   const [portalLoading, setPortalLoading] = useState(false);
-  const [showPaywall, setShowPaywall] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [showPaywall, setShowPaywall]     = useState(false);
+  const [refreshing, setRefreshing]       = useState(false);
 
-  // Password state
-  const [newPassword, setNewPassword] = useState("");
+  // Copy ID
+  const [copied, setCopied] = useState(false);
+
+  // Password
+  const [newPassword,     setNewPassword]     = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [passwordMsg, setPasswordMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [passwordMsg,     setPasswordMsg]     = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const authHeader = useCallback((): Record<string, string> =>
     session ? { Authorization: `Bearer ${session.access_token}` } : {}
   , [session]);
 
-  const handleRefresh = useCallback(async () => {
+  // ── Handlers ─────────────────────────────────────────────────────────────
+
+  async function handlePortal() {
+    if (!session) return;
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/create-portal-session", { method: "POST", headers: authHeader() });
+      const { url, error } = await res.json() as { url?: string; error?: string };
+      if (url) window.location.href = url;
+      else console.error(error);
+    } finally {
+      setPortalLoading(false);
+    }
+  }
+
+  async function handleRefresh() {
     setRefreshing(true);
     refresh();
-    await new Promise((r) => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 2000));
     setRefreshing(false);
-  }, [refresh]);
+  }
+
+  function handleCopy() {
+    if (!user?.id) return;
+    navigator.clipboard?.writeText(user.id).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  }
+
+  async function handleSignOut() {
+    await signOut();
+    router.push("/login");
+  }
 
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      setPasswordMsg({ type: "err", text: "Hasła nie są zgodne" });
-      return;
-    }
-    if (newPassword.length < 8) {
-      setPasswordMsg({ type: "err", text: "Hasło musi mieć minimum 8 znaków" });
-      return;
-    }
     setPasswordLoading(true);
     setPasswordMsg(null);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -72,217 +157,392 @@ export default function SettingsPage() {
     setPasswordLoading(false);
   }
 
-  async function handlePortal() {
-    if (!session) return;
-    setPortalLoading(true);
-    try {
-      const res = await fetch("/api/create-portal-session", {
-        method: "POST",
-        headers: authHeader(),
-      });
-      const { url, error } = await res.json() as { url?: string; error?: string };
-      if (url) window.location.href = url;
-      else console.error(error);
-    } finally {
-      setPortalLoading(false);
-    }
-  }
+  // ── Derived state ─────────────────────────────────────────────────────────
 
   const isEmailProvider = user?.app_metadata?.provider === "email" ||
     user?.identities?.some(i => i.provider === "email");
 
-  const statusKey = status ?? "free";
+  const statusKey  = status ?? "free";
+  const statusConf = STATUS_CONFIG[statusKey] ?? STATUS_CONFIG.free;
+  const pillStyle  = PILL_STYLES[statusConf.variant];
+
+  const pwScore   = scorePassword(newPassword);
+  const pwPct     = newPassword ? Math.max(12, Math.round(pwScore / 5 * 100)) : 0;
+  const lenOk     = newPassword.length >= 8;
+  const matchOk   = !!newPassword && newPassword === confirmPassword;
+  const canSubmit = lenOk && matchOk;
+
+  const strengthWord  = !newPassword ? "" : pwScore <= 2 ? "słabe" : pwScore <= 3 ? "średnie" : "mocne";
+  const strengthColor = !newPassword ? "transparent"
+    : pwScore <= 2 ? "var(--tense)"
+    : pwScore <= 3 ? "var(--accent-deep)"
+    : "var(--voice)";
+
+  const renewLabel = statusKey === "trialing" ? "Trial kończy się ·" : "Następne odnowienie ·";
+  const renewColor = statusKey === "past_due" ? "#E89B86" : "var(--text-muted)";
 
   return (
-    <div className="min-h-screen bg-[#03010d] text-white">
+    <div
+      className="min-h-screen text-white"
+      style={{ background: "radial-gradient(120% 90% at 50% 0%, #1A1530 0%, var(--bg-base) 70%) fixed var(--bg-base)" }}
+    >
       <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
-      <Star className="fixed top-[20%] left-[7%] w-2 h-2 text-amber-400/30 animate-pulse pointer-events-none" style={{ animationDuration: "3.8s" }} />
 
       <Navbar />
 
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
 
-      <main className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 pt-24 pb-20 space-y-6">
+      <main className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 pt-24 pb-24">
 
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white font-brand">Ustawienia</h1>
-          <p className="text-slate-500 text-sm mt-1">Konto, hasło i subskrypcja</p>
+        {/* Page header */}
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{ fontFamily: "var(--font-fraunces, 'Fraunces', serif)", fontWeight: 500, fontSize: 32, letterSpacing: ".01em", marginBottom: 4, color: "var(--text-primary)" }}>
+            Ustawienia
+          </h1>
+          <p style={{ color: "var(--text-muted)", fontSize: 14.5 }}>
+            Subskrypcja, konto i bezpieczeństwo
+          </p>
         </div>
 
-        {/* Subscription — top, most important */}
-        <section className="glass-card rounded-2xl p-6 border border-white/8">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-amber-900/25 flex items-center justify-center">
-                <CreditCard className="w-4 h-4 text-amber-400" />
-              </div>
-              <h2 className="text-white font-semibold">Subskrypcja</h2>
+        {/* ══ SEKCJA 1: SUBSKRYPCJA ══ */}
+        <section style={CARD}>
+          <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 18 }}>
+            <div style={SECTION_ICON}>
+              <CreditCard size={16} style={{ color: "var(--accent-deep)" }} />
             </div>
+            <h2 style={{ fontSize: 16.5, fontWeight: 600, letterSpacing: "-.01em", flex: 1 }}>
+              Subskrypcja
+            </h2>
             <button
               onClick={handleRefresh}
               disabled={subLoading || refreshing}
-              title="Odswierz status z Stripe"
-              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-40"
+              title="Synchronizuj subskrypcję"
+              style={{
+                width: 30, height: 30, borderRadius: 8,
+                border: "1px solid var(--line)", background: "none",
+                color: "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: subLoading || refreshing ? "not-allowed" : "pointer",
+                opacity: subLoading || refreshing ? 0.4 : 1, transition: ".2s",
+              }}
+              onMouseEnter={e => { if (!subLoading && !refreshing) (e.currentTarget as HTMLElement).style.color = "var(--accent-deep)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--text-muted)"; }}
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+              <RefreshCw size={15} className={refreshing ? "animate-spin" : ""} />
             </button>
           </div>
 
           {subLoading ? (
-            <div className="flex items-center gap-2 text-slate-500 text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Sprawdzam status…
+            <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)", fontSize: 14 }}>
+              <Loader2 size={16} className="animate-spin" /> Sprawdzam…
             </div>
           ) : (
-            <div className="space-y-4">
-              {/* Status badge */}
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className={`text-xs px-3 py-1 rounded-full border font-medium ${STATUS_COLORS[statusKey] ?? STATUS_COLORS.free}`}>
-                  {STATUS_LABELS[statusKey] ?? statusKey}
+            <>
+              {/* Status pill row */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                <span style={{
+                  ...pillStyle,
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  fontSize: 12, fontWeight: 600, letterSpacing: ".02em",
+                  padding: "5px 12px", borderRadius: 999,
+                }}>
+                  {statusConf.showCheck && <Check size={12} />}
+                  {statusConf.label}
                 </span>
-                {isPro && (
-                  <span className="flex items-center gap-1 text-xs text-amber-400/80">
-                    <Sparkles className="w-3 h-3" />
+                {(statusKey === "active" || statusKey === "trialing" || statusKey === "past_due") && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, color: "var(--accent-deep)" }}>
+                    <Sparkles size={13} />
                     Cosmogram Plus
                   </span>
                 )}
               </div>
 
+              {/* Renewal / warning */}
               {currentPeriodEnd && (
-                <p className="text-slate-500 text-xs">
-                  {statusKey === "trialing" ? "Trial kończy się:" : "Następne odnowienie:"}{" "}
-                  {new Date(currentPeriodEnd).toLocaleDateString("pl-PL")}
+                <p style={{ fontSize: 12.5, color: renewColor, marginBottom: 16 }}>
+                  {statusKey === "past_due"
+                    ? "Zaktualizuj metodę płatności, aby zachować dostęp"
+                    : `${renewLabel} ${new Date(currentPeriodEnd).toLocaleDateString("pl-PL")}`}
                 </p>
               )}
 
               {isPro ? (
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2 p-3 rounded-xl bg-green-900/10 border border-green-700/25">
-                    <Check className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
-                    <p className="text-green-300 text-sm">
-                      Masz pełny dostęp do Cosmogram Plus — kosmogram, horoskop dzienny, Cosmo Map, Cosmo Match i Chat bez limitu.
-                    </p>
+                <>
+                  {/* Benefits grid */}
+                  <div
+                    className="settings-benefits"
+                    style={{
+                      display: "grid", gridTemplateColumns: "1fr 1fr", gap: "9px 18px",
+                      padding: 16, borderRadius: 13,
+                      background: "rgba(224,181,102,.05)", border: "1px solid rgba(224,181,102,.16)",
+                      marginBottom: 18,
+                    }}
+                  >
+                    {PLUS_BENEFITS.map(b => (
+                      <div key={b} style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 13.5, color: "var(--text-secondary)" }}>
+                        <Check size={15} style={{ color: "var(--accent)", flexShrink: 0 }} />
+                        {b}
+                      </div>
+                    ))}
                   </div>
+
+                  {/* Portal button */}
                   <button
                     onClick={handlePortal}
                     disabled={portalLoading}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 text-slate-300 text-sm hover:text-white hover:border-white/20 transition-colors disabled:opacity-40"
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 8,
+                      padding: "10px 18px", borderRadius: 12, fontSize: 14,
+                      border: "1px solid var(--line)", background: "rgba(182,175,198,.04)",
+                      color: "var(--text-secondary)", cursor: portalLoading ? "not-allowed" : "pointer",
+                      opacity: portalLoading ? 0.4 : 1, transition: ".2s", marginBottom: 10,
+                    }}
+                    onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "rgba(224,181,102,.35)"; el.style.color = "var(--voice)"; }}
+                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "var(--line)"; el.style.color = "var(--text-secondary)"; }}
                   >
-                    {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                    Zarządzaj subskrypcją (Stripe)
+                    {portalLoading ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />}
+                    Zarządzaj subskrypcją
                   </button>
-                  <p className="text-slate-600 text-xs">
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
                     Zmień kartę, anuluj lub pobierz faktury — przez Stripe Customer Portal.
                   </p>
-                </div>
+                </>
               ) : (
-                <div className="space-y-3">
-                  <p className="text-slate-400 text-sm">
-                    Korzystasz z darmowego planu. Pierwszy Astro Match i 3 wiadomości w chacie gratis.
+                <>
+                  <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginBottom: 16 }}>
+                    Korzystasz z darmowego planu. Pierwszy Cosmo Match i 3 wiadomości w chacie — gratis.
                   </p>
                   <button
                     onClick={() => setShowPaywall(true)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-700 to-amber-600 text-white text-sm font-semibold shadow-lg shadow-amber-950/40 hover:scale-[1.01] transition-all"
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 8,
+                      padding: "10px 18px", borderRadius: 12, fontSize: 14, fontWeight: 600,
+                      background: "var(--grad-ember)", border: "none",
+                      color: "#241704", cursor: "pointer",
+                      boxShadow: "0 6px 22px rgba(255,174,61,.16)",
+                      marginBottom: 12, transition: ".2s",
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.filter = "brightness(1.05)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter = "none"; }}
                   >
-                    <Sparkles className="w-4 h-4" />
+                    <Sparkles size={16} />
                     Przejdź na Cosmogram Plus
                   </button>
-                  <p className="text-xs text-slate-500">
-                    Jeśli masz już opłaconą subskrypcję, kliknij{" "}
-                    <button onClick={handleRefresh} className="text-amber-500/70 underline hover:text-amber-400 transition-colors">
-                      Odśwież status
+                  <div>
+                    <button
+                      onClick={handleRefresh}
+                      disabled={refreshing}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 7,
+                        padding: "7px 13px", borderRadius: 12, fontSize: 12.5,
+                        border: "1px solid var(--line)", background: "none",
+                        color: "var(--text-muted)", cursor: refreshing ? "not-allowed" : "pointer",
+                        opacity: refreshing ? 0.4 : 1, transition: ".2s",
+                      }}
+                    >
+                      {refreshing && <Loader2 size={13} className="animate-spin" />}
+                      Mam już subskrypcję — synchronizuj
                     </button>
-                    {" "}— synchronizujemy bezpośrednio ze Stripe.
-                  </p>
-                </div>
+                  </div>
+                </>
               )}
-            </div>
+            </>
           )}
         </section>
 
-        {/* Account info */}
-        <section className="glass-card rounded-2xl p-6 border border-white/8">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-8 h-8 rounded-full bg-amber-900/25 flex items-center justify-center">
-              <User className="w-4 h-4 text-amber-400" />
+        {/* ══ SEKCJA 2: KONTO ══ */}
+        <section style={CARD}>
+          <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 18 }}>
+            <div style={SECTION_ICON}>
+              <User size={16} style={{ color: "var(--accent-deep)" }} />
             </div>
-            <h2 className="text-white font-semibold">Konto</h2>
+            <h2 style={{ fontSize: 16.5, fontWeight: 600, letterSpacing: "-.01em" }}>Konto</h2>
           </div>
-          <div className="space-y-3">
-            <div>
-              <p className="text-slate-500 text-xs mb-1">Adres e-mail</p>
-              <p className="text-slate-200 text-sm">{user?.email ?? "—"}</p>
-            </div>
-            <div>
-              <p className="text-slate-500 text-xs mb-1">Metoda logowania</p>
-              <p className="text-slate-200 text-sm capitalize">
-                {user?.app_metadata?.provider === "google" ? "Google OAuth" : "E-mail i hasło"}
-              </p>
-            </div>
-            <div>
-              <p className="text-slate-500 text-xs mb-1">ID konta</p>
-              <p className="text-slate-600 text-xs font-mono">{user?.id ?? "—"}</p>
+
+          <div style={{ padding: "12px 0", borderBottom: "1px solid var(--line-soft)" }}>
+            <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginBottom: 3 }}>Adres e-mail</div>
+            <div style={{ fontSize: 14.5, color: "var(--text-primary)" }}>{user?.email ?? "—"}</div>
+          </div>
+
+          <div style={{ padding: "12px 0", borderBottom: "1px solid var(--line-soft)" }}>
+            <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginBottom: 3 }}>Metoda logowania</div>
+            <div style={{ fontSize: 14.5, color: "var(--text-primary)" }}>
+              {user?.app_metadata?.provider === "google" ? "Google OAuth" : "E-mail i hasło"}
             </div>
           </div>
+
+          <div style={{ padding: "12px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginBottom: 3 }}>ID konta</div>
+              <div style={{
+                fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
+                fontSize: 12.5, color: "var(--text-secondary)", letterSpacing: ".02em",
+                wordBreak: "break-all",
+              }}>
+                {user?.id ?? "—"}
+              </div>
+            </div>
+            {user?.id && (
+              <button
+                onClick={handleCopy}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0,
+                  border: "1px solid var(--line)", background: "none",
+                  color: copied ? "var(--accent-deep)" : "var(--text-muted)",
+                  borderColor: copied ? "rgba(224,181,102,.3)" : "var(--line)",
+                  fontSize: 12, padding: "6px 11px", borderRadius: 9,
+                  cursor: "pointer", transition: ".2s", whiteSpace: "nowrap",
+                }}
+              >
+                {copied ? <Check size={13} /> : <Copy size={13} />}
+                {copied ? "Skopiowano" : "Kopiuj"}
+              </button>
+            )}
+          </div>
+
+          <div style={{ height: 1, background: "var(--line-soft)", margin: "14px 0 18px" }} />
+
+          <button
+            onClick={handleSignOut}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "10px 18px", borderRadius: 12, fontSize: 14,
+              border: "1px solid var(--line)", background: "none",
+              color: "var(--text-secondary)", cursor: "pointer", transition: ".2s",
+            }}
+            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "rgba(226,101,74,.5)"; el.style.color = "#E89B86"; }}
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "var(--line)"; el.style.color = "var(--text-secondary)"; }}
+          >
+            <LogOut size={16} />
+            Wyloguj się
+          </button>
         </section>
 
-        {/* Change password */}
+        {/* ══ SEKCJA 3: BEZPIECZEŃSTWO ══ */}
         {isEmailProvider && (
-          <section className="glass-card rounded-2xl p-6 border border-white/8">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-8 h-8 rounded-full bg-amber-900/25 flex items-center justify-center">
-                <Lock className="w-4 h-4 text-amber-400" />
+          <section style={CARD}>
+            <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 18 }}>
+              <div style={SECTION_ICON}>
+                <Lock size={16} style={{ color: "var(--accent-deep)" }} />
               </div>
-              <h2 className="text-white font-semibold">Zmiana hasła</h2>
+              <h2 style={{ fontSize: 16.5, fontWeight: 600, letterSpacing: "-.01em" }}>Bezpieczeństwo</h2>
             </div>
 
-            <form onSubmit={handleChangePassword} className="space-y-3">
-              <div>
-                <label className="text-slate-500 text-xs block mb-1">Nowe hasło</label>
+            <form onSubmit={handleChangePassword}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 12.5, color: "var(--text-muted)", marginBottom: 7 }}>
+                  Nowe hasło
+                </label>
                 <input
                   type="password"
                   value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
+                  onChange={e => { setNewPassword(e.target.value); setPasswordMsg(null); }}
                   placeholder="Minimum 8 znaków"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-600/40 transition-colors"
+                  autoComplete="new-password"
+                  style={{
+                    width: "100%", background: "rgba(182,175,198,.04)",
+                    border: "1px solid var(--line)", borderRadius: 12,
+                    padding: "11px 14px", color: "var(--text-primary)", fontSize: 14,
+                    outline: "none", transition: "border-color .2s",
+                  }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "rgba(224,181,102,.45)"; }}
+                  onBlur={e  => { e.currentTarget.style.borderColor = "var(--line)"; }}
                 />
+                {/* Strength bar */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 9, height: 14 }}>
+                  <div style={{ flex: 1, height: 5, borderRadius: 999, background: "rgba(182,175,198,.10)", overflow: "hidden" }}>
+                    <div style={{
+                      height: "100%", width: `${pwPct}%`, borderRadius: 999,
+                      background: "var(--accent)", transition: "width .3s",
+                    }} />
+                  </div>
+                  <span style={{ fontSize: 11.5, fontWeight: 600, minWidth: 54, textAlign: "right", letterSpacing: ".02em", color: strengthColor, transition: "color .2s" }}>
+                    {strengthWord}
+                  </span>
+                </div>
               </div>
-              <div>
-                <label className="text-slate-500 text-xs block mb-1">Powtórz hasło</label>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 12.5, color: "var(--text-muted)", marginBottom: 7 }}>
+                  Powtórz hasło
+                </label>
                 <input
                   type="password"
                   value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
+                  onChange={e => { setConfirmPassword(e.target.value); setPasswordMsg(null); }}
                   placeholder="Powtórz nowe hasło"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-600/40 transition-colors"
+                  autoComplete="new-password"
+                  style={{
+                    width: "100%", background: "rgba(182,175,198,.04)",
+                    border: "1px solid var(--line)", borderRadius: 12,
+                    padding: "11px 14px", color: "var(--text-primary)", fontSize: 14,
+                    outline: "none", transition: "border-color .2s",
+                  }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "rgba(224,181,102,.45)"; }}
+                  onBlur={e  => { e.currentTarget.style.borderColor = "var(--line)"; }}
                 />
               </div>
 
-              {passwordMsg && (
-                <div className={`flex items-center gap-2 text-sm px-3 py-2 rounded-xl ${
-                  passwordMsg.type === "ok"
-                    ? "bg-green-900/20 border border-green-700/30 text-green-300"
-                    : "bg-red-900/20 border border-red-700/30 text-red-300"
-                }`}>
-                  {passwordMsg.type === "ok"
-                    ? <Check className="w-4 h-4 shrink-0" />
-                    : <AlertCircle className="w-4 h-4 shrink-0" />}
-                  {passwordMsg.text}
-                </div>
-              )}
+              {/* Live rules */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+                <RuleRow text="Minimum 8 znaków"  ok={lenOk}   empty={!newPassword} />
+                <RuleRow text="Hasła są zgodne"   ok={matchOk} empty={!newPassword && !confirmPassword} />
+              </div>
 
               <button
                 type="submit"
-                disabled={passwordLoading || !newPassword || !confirmPassword}
-                className="px-5 py-2.5 rounded-xl bg-amber-900/20 border border-amber-700/35 text-amber-300 text-sm hover:bg-amber-800/30 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled={!canSubmit || passwordLoading}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "10px 18px", borderRadius: 12, fontSize: 14,
+                  border: "1px solid var(--line)", background: "rgba(182,175,198,.04)",
+                  color: canSubmit && !passwordLoading ? "var(--text-secondary)" : "var(--text-muted)",
+                  cursor: canSubmit && !passwordLoading ? "pointer" : "not-allowed",
+                  opacity: canSubmit && !passwordLoading ? 1 : 0.4,
+                  transition: ".2s",
+                }}
+                onMouseEnter={e => {
+                  if (!canSubmit || passwordLoading) return;
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.borderColor = "rgba(224,181,102,.35)";
+                  el.style.color = "var(--voice)";
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.borderColor = "var(--line)";
+                  el.style.color = canSubmit && !passwordLoading ? "var(--text-secondary)" : "var(--text-muted)";
+                }}
               >
-                {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Zmień hasło"}
+                {passwordLoading ? <Loader2 size={16} className="animate-spin" /> : null}
+                Zmień hasło
               </button>
+
+              {/* Result message — DS only, no green/red */}
+              {passwordMsg && (
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  fontSize: 13, padding: "10px 13px", borderRadius: 11, marginTop: 14,
+                  ...(passwordMsg.type === "ok"
+                    ? { background: "rgba(255,174,61,.10)", border: "1px solid rgba(224,181,102,.3)", color: "var(--voice)" }
+                    : { background: "rgba(226,101,74,.10)", border: "1px solid rgba(226,101,74,.3)",  color: "#E89B86" }
+                  ),
+                }}>
+                  {passwordMsg.type === "ok"
+                    ? <Check size={16} style={{ color: "var(--accent)", flexShrink: 0 }} />
+                    : <AlertCircle size={16} style={{ color: "var(--tense)", flexShrink: 0 }} />}
+                  {passwordMsg.text}
+                </div>
+              )}
             </form>
           </section>
         )}
 
       </main>
+
+      <style>{`
+        @media (max-width: 560px) {
+          .settings-benefits { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }

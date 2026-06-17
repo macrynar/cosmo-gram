@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/components/AuthContext";
 import PaywallModal from "@/components/PaywallModal";
+import ChatPackModal from "@/components/ChatPackModal";
 import { track } from "@/components/PostHogProvider";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -222,9 +223,11 @@ export default function ChatPage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [error, setError]                 = useState("");
   const [showPaywall, setShowPaywall]     = useState(false);
+  const [showPackModal, setShowPackModal] = useState<"monthly_limit" | "need_topup" | null>(null);
   const [showDataWarning, setShowDataWarning] = useState(false);
   const [warningDismissed, setWarningDismissed] = useState(false);
   const [remaining, setRemaining]         = useState<number | null>(null);
+  const [credits, setCredits]             = useState<number>(0);
   const [isPaid, setIsPaid]               = useState(false);
 
   // Redesign state — openers are frozen at mount (shuffle once, never re-shuffle)
@@ -318,9 +321,10 @@ export default function ChatPage() {
     if (!session) return;
     const res = await fetch("/api/chat/status", { headers: authHeader() });
     if (!res.ok) return;
-    const data = await res.json() as { isPaid: boolean; remaining: number };
+    const data = await res.json() as { isPaid: boolean; remaining: number; credits: number };
     setIsPaid(data.isPaid);
     setRemaining(data.remaining);
+    setCredits(data.credits ?? 0);
   }, [session, authHeader]);
 
   const maybeTriggerSummary = useCallback(async (convs: Conversation[]) => {
@@ -435,8 +439,14 @@ export default function ChatPage() {
         }
         if (err === "MONTHLY_LIMIT") {
           track("chat_limit_reached", { type: "monthly" });
-          setError("Osiągnięto limit wiadomości w tym miesiącu.");
           setMessages(prev => prev.slice(0, -1));
+          setShowPackModal("monthly_limit");
+          return;
+        }
+        if (err === "NEED_TOPUP") {
+          track("chat_limit_reached", { type: "topup" });
+          setMessages(prev => prev.slice(0, -1));
+          setShowPackModal("need_topup");
           return;
         }
         setError(err ?? "Błąd AI");
@@ -624,6 +634,7 @@ export default function ChatPage() {
       }} />
 
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} reason="Bezpłatny limit 3 wiadomości wyczerpany." />}
+      {showPackModal && <ChatPackModal reason={showPackModal} onClose={() => setShowPackModal(null)} />}
 
       <Navbar />
 
@@ -1110,8 +1121,8 @@ export default function ChatPage() {
                   {showCounter && remaining !== null && (
                     <p style={{ fontSize: "11px", color: "#877FA0", marginBottom: "8px", textAlign: "right" }}>
                       {isPaid
-                        ? `${remaining} wiad. pozostało w tym miesiącu`
-                        : `${remaining}/${FREE_MSG} bezpłatnych wiadomości`}
+                        ? `${remaining} wiad. pozostało w tym miesiącu${credits > 0 ? ` (+${credits} z paczki)` : ""}`
+                        : `${remaining}/${FREE_MSG} bezpłatnych wiadomości${credits > 0 ? ` (+${credits} z paczki)` : ""}`}
                     </p>
                   )}
                   <AnimatePresence>

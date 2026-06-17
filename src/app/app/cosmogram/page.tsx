@@ -744,6 +744,8 @@ export default function CosmogramPage() {
                   onChildUpdated={(childId, interpretation) => {
                     setChildren(prev => prev.map(c => c.id === childId ? { ...c, interpretation } : c));
                   }}
+                  onStartGenerating={() => setChildInterpretationLoadingId(displayedChild.id)}
+                  onFinishGenerating={() => setChildInterpretationLoadingId(null)}
                 />
               </div>
             )}

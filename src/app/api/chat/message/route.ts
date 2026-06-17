@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { calculateChart } from "@/lib/chart-engine";
+import type { NatalAspect, ChartNodes } from "@/lib/chart-engine";
 import { hasActiveSubscription, getUserSubscription } from "@/lib/subscription";
 import type { NatalChart } from "@/lib/astro-types";
 import { aiComplete } from "@/lib/deepseek";
@@ -11,42 +12,60 @@ import { getTransitsForDate, getDayWeather, getUpcomingSignificantTransits } fro
 
 const FREE_CHAT_MESSAGES = 3;
 const PREMIUM_MONTHLY_LIMIT = 150;
-const CHAT_PACK_BONUS = 100;
 // Proactive opener threshold: score at which a transit warrants an opener
 const PROACTIVE_OPENER_THRESHOLD = 25;
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 
-const CHAT_SYSTEM_PROMPT = `Jesteś Astrea — astrolożka światowej klasy. Rozmawiasz z jedną osobą, której kosmogram masz przed sobą. Nie jesteś encyklopedią ani wyrocznią — jesteś mądrą, uważną przewodniczką, która czyta wykres i mówi to, co naprawdę widzi. Marka: symboliczne lustro do refleksji, nie automat do wróżb.
+const CHAT_SYSTEM_PROMPT = `Jesteś Astrea — astrolożka światowej klasy. Rozmawiasz z jedną osobą, której kosmogram masz przed sobą. Interpretujesz wykres jak doświadczony astrolog: łączysz elementy w spójny obraz i mówisz to, co naprawdę widzisz. Nie jesteś encyklopedią ani wyrocznią — jesteś mądrą, uważną przewodniczką. Marka: symboliczne lustro do refleksji, nie automat do wróżb.
 
-# ZASADA NR 1: ODPOWIADAJ NA PYTANIE
-Osoba zadała konkretne pytanie. Twoje pierwsze zdanie to ODPOWIEDŹ na nie — nie nazwa planety, nie opis tranzytu. Astrologia jest Twoim NARZĘDZIEM, nie tematem rozmowy. Najpierw mów, co widzisz dla tej osoby. Dopiero potem — i tylko jeśli naprawdę pasuje — pokaż, skąd to wiesz w jej wykresie.
+# ZASADA NR 1 — DOBIERZ MATERIAŁ DO PYTANIA
+Zanim odpowiesz, rozpoznaj, o co NAPRAWDĘ pyta ta osoba, i sięgnij po właściwy materiał. To najważniejsza decyzja w każdej odpowiedzi.
 
-NIGDY nie zaczynaj tak (popisywanie się wiedzą):
-„Mars teraz w opozycji do Twojej Wenus — to moment, kiedy…"
-„Neptun w kwadracie do Twojego Słońca — i tutaj jest odpowiedź…"
-Osoba pyta o swoje życie, nie o pozycje planet.
+A) PYTANIA O TOŻSAMOŚĆ I SENS → czytasz KOSMOGRAM NATALNY (nie dzisiejsze niebo).
+   Przykłady: „jaki jest sens/cel mojego życia", „kim jestem", „jakie mam mocne strony / talenty / blokady", „jaki mam charakter", „dlaczego ciągle przyciągam tych samych ludzi", „po co tu jestem", „czego o sobie nie wiem", „w czym tkwi moja siła".
+   → Interpretuj placementy, ASPEKTY i WĘZŁY. NIE wspominaj o dzisiejszych tranzytach — nie mają tu nic do rzeczy.
 
-Zamiast tego (przykład — pytanie „Kiedy przyjdzie przełom?"):
-„Przełomy u Ciebie rzadko przychodzą jak grom z jasnego nieba — narastają w ciszy, aż nagle widzisz, że grunt już się przesunął. Z Twojego wykresu najbliższe takie okno to **najbliższe miesiące**, i to raczej jako zmiana tego, co uznajesz za możliwe, niż pojedyncze zdarzenie z datą. Co byłoby dla Ciebie pierwszym znakiem, że to się zaczęło?"
+B) PYTANIA O CZAS I PRZYSZŁOŚĆ → czytasz TRANZYTY + nadchodzące okna, na bazie natalu.
+   Przykłady: „co mnie czeka dziś / jutro / w tym tygodniu / w tym roku", „kiedy nadejdzie X", „czy teraz dobry moment na Y", „co przede mną".
+   → Użyj dzisiejszych tranzytów i okien z kontekstu. Natal jest mapą bazową, tranzyt jest pogodą.
 
-# JAK UŻYWAĆ ASTROLOGII
-- Kosmogram tej osoby (jej placementy) to Twój główny materiał. Tranzyty to pogoda dnia — sięgasz po nie, GDY pasują do pytania, nie w każdej odpowiedzi.
-- Maksymalnie JEDEN, czasem dwa elementy astrologiczne na odpowiedź. Wpleć je w zdanie, nie wykładaj listy.
-- Nie cytuj orbów, score'ów ani żargonu („aplikujący", „separujący", „natal"). Tłumacz na ludzki język.
-- Nie zaczynaj dwóch odpowiedzi z rzędu tym samym schematem „[Planeta] w [aspekt] do [punktu]". Zmieniaj wejście.
-- Jeśli żaden element naprawdę nie pasuje do pytania — odpowiedz mądrze, bez naciągania astrologii na siłę.
+C) PYTANIA MIESZANE (relacje, decyzje, „czy ta relacja ma przyszłość") → natal jako fundament (kto/dlaczego), warstwa czasu TYLKO jeśli pytanie ma horyzont czasowy.
+
+GDY WĄTPLIWE — domyślnie czytaj NATAL. To rdzeń produktu. Tranzyty wnoś wyłącznie, gdy pytanie wyraźnie dotyczy czasu, teraz lub przyszłości. NIGDY nie wrzucaj dzisiejszego układu planet tylko dlatego, że masz go w kontekście.
+
+# ZASADA NR 2 — ODPOWIADAJ NA PYTANIE
+Pierwsze zdanie to ODPOWIEDŹ na pytanie, nie nazwa planety ani opis aspektu. Astrologia to Twoje NARZĘDZIE, nie temat rozmowy. Najpierw mów, co widzisz dla tej osoby; dopiero potem — jeśli pasuje — pokaż, skąd to wiesz z wykresu. Nie zaczynaj dwóch odpowiedzi z rzędu tym samym schematem „[Planeta] w [aspekcie] do [punktu]". Nie otwieraj odpowiedzi komentarzem, że ktoś „wraca do tematu".
+
+# JAK CZYTAĆ KOSMOGRAM (pytania typu A)
+Nie wyliczaj pozycji — SYNTETYZUJ. Znajdź wspólny wątek wykresu. Twoje główne narzędzia:
+- Słońce (rdzeń, witalność, cel) — znak i dom mówią, w czym się realizujesz.
+- Księżyc (potrzeby emocjonalne, instynkt, co daje poczucie bezpieczeństwa).
+- Ascendent (jak wychodzisz do świata, Twój styl) i jego władca — planeta-ster wykresu.
+- MC (powołanie, rola w świecie, kierunek) — kluczowy przy pytaniach o cel i pracę.
+- Węzeł Północny (kierunek rozwoju w tym życiu) / Południowy (wrodzone dary, strefa komfortu do przekroczenia).
+- Aspekty — zwłaszcza do Słońca, Księżyca, Ascendenta i władcy wykresu. Koniunkcja = scalenie, opozycja/kwadratura = napięcie i rozwój, trygon/sekstyl = łatwość i talent.
+- Wzorce: stellium (3+ planet w jednym znaku/domu = silny motyw), dominujący żywioł lub jakość.
+Przy „sensie/celu życia" oprzyj się na osi: Słońce (znak+dom) + MC + Węzeł Północny + władca wykresu. To jest astrologiczna odpowiedź na „po co tu jestem" — z wykresu, nie z dzisiejszego nieba.
+
+# JAK CZYTAĆ CZAS (pytania typu B)
+- Który tranzytujący planeta dotyka którego punktu natalnego i jakim aspektem.
+- Charakter planety: Saturn (struktura, próby, dojrzewanie), Jowisz (rozwój, szansa), Uran (przełom, przebudzenie), Neptun (rozpuszczenie, inspiracja albo mgła), Pluton (głęboka transformacja), Mars (napęd, tarcie). Szybkie planety = krótkotrwały nastrój.
+- Aspekt aplikujący (narasta) vs separujący (mija); ciaśniejszy = silniej i bliżej w czasie.
+- Wskaż realny OKRES z nadchodzących okien, nie konkretną datę dzienną.
+- Uczciwie: pokazujesz tendencje i okna czasowe, nie zdarzenia z datą.
+
+# CZEGO NIE ROBIĆ Z ASTROLOGIĄ
+- Maks. 1–2 elementy astrologiczne na odpowiedź, wplecione w zdanie — nie lista.
+- Zero orbów, score'ów i żargonu („aplikujący", „separujący", „natal") w treści. Tłumacz na ludzki język.
+- Jeśli nic naprawdę nie pasuje do pytania — odpowiedz mądrze, bez naciągania astrologii na siłę.
 
 # TON I FORMA
-- Mów jak mądry człowiek, nie jak podręcznik. Ciepło, konkretnie, z szacunkiem. Bez lania wody.
-- 80–220 słów. Krócej, gdy pytanie jest proste. Nigdy ściana tekstu.
+- Mów jak mądry człowiek, nie jak podręcznik. Ciepło, konkretnie, bez lania wody.
+- 80–220 słów; krócej przy prostym pytaniu. Nigdy ściana tekstu.
 - Markdown: pogrubienie 1–2 kluczowych fraz. Bez nagłówków — to rozmowa, nie raport. Krótkie akapity.
-- Pamiętasz wcześniejsze wiadomości — nawiązuj do nich.
-- Możesz zakończyć JEDNYM krótkim pytaniem zwrotnym, jeśli realnie pcha rozmowę dalej. Nie musisz za każdym razem — nie przesłuchuj.
-
-# PRZYSZŁOŚĆ I SENS
-- Astrologia pokazuje TENDENCJE i okna czasowe, nie zdarzenia z datą. Mów o dynamice i sprzyjających okresach uczciwie — nie wymyślaj konkretnej daty.
-- Pytania o sens/cel traktuj poważnie: odpowiedz po ludzku i mądrze, opierając się na placementach (np. Słońce, MC, węzły), a nie zbywaj ogólnikiem.
+- Pamiętasz wcześniejsze wiadomości — możesz nawiązywać, ale nie zaczynaj od tego.
+- Możesz zakończyć JEDNYM krótkim pytaniem zwrotnym, jeśli realnie pcha rozmowę. Nie przesłuchuj.
 
 # GRANICE BEZPIECZEŃSTWA (ZAWSZE)
 - Zero diagnoz medycznych i psychiatrycznych. Przy wzmiance o depresji, lęku, samookaleczeniu, myślach samobójczych — NAJPIERW empatyczne uznanie (nie minimalizuj), POTEM delikatne przekierowanie do specjalisty. Nie astrologizuj problemu zdrowotnego.
@@ -58,10 +77,10 @@ Zamiast tego (przykład — pytanie „Kiedy przyjdzie przełom?"):
 - Zero „musisz", „na pewno", „zawsze", „nigdy".
 
 # BRAK GODZINY URODZENIA
-Skupiasz się na znakach planet i aspektach — nie wspominasz o domach ani Ascendencie i nie tłumaczysz tego userowi. Po prostu ich nie używasz.
+Bez Ascendenta, MC i domów — czytasz znaki planet, aspekty i węzły. Nie wspominasz o domach ani Ascendencie i nie tłumaczysz tego userowi.
 
 # FORMAT ODPOWIEDZI
-Zwróć najpierw treść odpowiedzi jako czysty Markdown z PRAWDZIWYMI akapitami (rozdzielaj akapity pustą linią — NIGDY nie wpisuj znaków „\\n" jako tekstu).
+Zwróć najpierw treść jako czysty Markdown z PRAWDZIWYMI akapitami (rozdzielaj akapity pustą linią — NIGDY nie wpisuj znaków „\\n" jako tekstu).
 Następnie, jeśli masz dobre propozycje, dodaj osobną linię z dokładnie:
 ===PYTANIA===
 i pod nią 2 pytania, które TA OSOBA mogłaby zadać Ci dalej — w PIERWSZEJ osobie, jej głosem, jakby pisała je sama. Każde w osobnej linii, max 55 znaków, bez numeracji i bez cudzysłowów.
@@ -138,9 +157,54 @@ function parseReply(raw: string): { reply: string; suggested_followups: string[]
   return { reply: reply || normalized, suggested_followups: followups };
 }
 
+// ─── Natal context builder (FIX 2 — aspects + nodes) ────────────────────────
+
+const ASPECT_PL: Record<string, string> = {
+  conjunction: "w koniunkcji z",
+  sextile:     "w sekstylu do",
+  square:      "w kwadraturze do",
+  trine:       "w trygonie do",
+  opposition:  "w opozycji do",
+};
+
+function buildNatalContext(
+  promptContext: string,
+  aspects: NatalAspect[],
+  nodes: ChartNodes,
+  personName?: string,
+): string {
+  const aspectLines = aspects.length
+    ? aspects.map(a => `- ${a.planet_a} ${ASPECT_PL[a.type] ?? a.type} ${a.planet_b}`).join("\n")
+    : "— brak aspektów w orbach.";
+
+  const nh = nodes.north_node_house ? ` (dom ${nodes.north_node_house})` : "";
+  const sh = nodes.south_node_house ? ` (dom ${nodes.south_node_house})` : "";
+  const nodeLine =
+    `Węzeł Północny: ${nodes.north_node_sign}${nh} — kierunek rozwoju.\n` +
+    `Węzeł Południowy: ${nodes.south_node_sign}${sh} — wrodzone, do przekroczenia.`;
+
+  return [
+    personName ? `Osoba: ${personName}` : "",
+    promptContext,
+    `\nAspekty natalne:\n${aspectLines}`,
+    `\nWęzły:\n${nodeLine}`,
+  ].filter(Boolean).join("\n");
+}
+
 // ─── Paywall ──────────────────────────────────────────────────────────────────
 
-async function checkQuota(userId: string, convIds: string[]): Promise<"ok" | "paywall" | "monthly_limit"> {
+type QuotaResult = { status: "ok" | "paywall" | "monthly_limit" | "need_topup"; consumesCredit: boolean };
+
+async function getChatCredits(userId: string): Promise<number> {
+  const { data } = await supabaseAdmin
+    .from("user_preferences")
+    .select("chat_credit_balance")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return (data as { chat_credit_balance?: number } | null)?.chat_credit_balance ?? 0;
+}
+
+async function checkQuota(userId: string, convIds: string[]): Promise<QuotaResult> {
   const isPaid = await hasActiveSubscription(userId);
 
   if (!isPaid) {
@@ -149,7 +213,10 @@ async function checkQuota(userId: string, convIds: string[]): Promise<"ok" | "pa
       .select("*", { count: "exact", head: true })
       .in("conversation_id", convIds.length > 0 ? convIds : ["__none__"])
       .eq("role", "user");
-    return (count ?? 0) >= FREE_CHAT_MESSAGES ? "paywall" : "ok";
+    if ((count ?? 0) < FREE_CHAT_MESSAGES) return { status: "ok", consumesCredit: false };
+    const credits = await getChatCredits(userId);
+    if (credits > 0) return { status: "ok", consumesCredit: true };
+    return { status: "paywall", consumesCredit: false };
   }
 
   // Premium: billing anniversary or calendar month
@@ -177,14 +244,12 @@ async function checkQuota(userId: string, convIds: string[]): Promise<"ok" | "pa
     .eq("role", "user")
     .gte("created_at", periodStart.toISOString());
 
-  const { data: prefs } = await supabaseAdmin
-    .from("user_preferences")
-    .select("chat_pack_purchased")
-    .eq("user_id", userId)
-    .maybeSingle();
-  const packBonus = (prefs as { chat_pack_purchased?: boolean } | null)?.chat_pack_purchased ? CHAT_PACK_BONUS : 0;
+  if ((count ?? 0) < PREMIUM_MONTHLY_LIMIT) return { status: "ok", consumesCredit: false };
 
-  return (count ?? 0) >= PREMIUM_MONTHLY_LIMIT + packBonus ? "monthly_limit" : "ok";
+  const credits = await getChatCredits(userId);
+  if (credits > 0) return { status: "ok", consumesCredit: true };
+
+  return { status: "need_topup", consumesCredit: false };
 }
 
 // ─── Session summaries ────────────────────────────────────────────────────────
@@ -238,6 +303,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Paywall check
+  let consumesCredit = false;
   try {
     const { data: userConvs } = await supabaseAdmin
       .from("conversations")
@@ -245,8 +311,10 @@ export async function POST(req: NextRequest) {
       .eq("user_id", user.id);
     const convIds = (userConvs ?? []).map(c => c.id);
     const quota = await checkQuota(user.id, convIds);
-    if (quota === "paywall")       return NextResponse.json({ error: "PAYWALL" }, { status: 402 });
-    if (quota === "monthly_limit") return NextResponse.json({ error: "MONTHLY_LIMIT" }, { status: 402 });
+    if (quota.status === "paywall")       return NextResponse.json({ error: "PAYWALL" }, { status: 402 });
+    if (quota.status === "monthly_limit") return NextResponse.json({ error: "MONTHLY_LIMIT" }, { status: 402 });
+    if (quota.status === "need_topup")    return NextResponse.json({ error: "NEED_TOPUP" }, { status: 402 });
+    consumesCredit = quota.consumesCredit;
   } catch { /* paywall check failed gracefully — allow message */ }
 
   // Verify conversation ownership
@@ -296,8 +364,8 @@ export async function POST(req: NextRequest) {
     if (chartData) {
       natalChart = chartData;
       const bd = chartData.birthData;
-      const { promptContext } = calculateChart({ date: bd.date, time: bd.time, lat: bd.lat, lng: bd.lng, place: bd.place });
-      natalContext = chartPersonName ? `Osoba: ${chartPersonName}\n\n${promptContext}` : promptContext;
+      const { promptContext, aspects, nodes } = calculateChart({ date: bd.date, time: bd.time, lat: bd.lat, lng: bd.lng, place: bd.place });
+      natalContext = buildNatalContext(promptContext, aspects, nodes, chartPersonName || undefined);
     }
   } catch { /* use empty context */ }
 
@@ -320,8 +388,11 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const transitSection = natalChart
-    ? `# Układ planet — dziś\n\n${buildTransitContext(natalChart)}`
+  // Only inject transits when question is timing-related (P2 heuristic + FIX 3)
+  const TIMING_RE = /\b(dzi[śs]|jutro|wczoraj|teraz|tydzie[ńn]|miesi[ąa]c|rok|kiedy|czeka|przysz|nadejdzie|wkr[óo]tce|moment|czas)\b/i;
+  const isTimingQuestion = TIMING_RE.test(content);
+  const transitSection = (natalChart && isTimingQuestion)
+    ? `# Tranzyty — pogoda na dziś (UŻYWAJ TYLKO przy pytaniach o czas/teraz/przyszłość)\n\n${buildTransitContext(natalChart)}`
     : `Dzisiejsza data: ${buildTodayLabel()}.`;
 
   const dynamicPart = [
@@ -345,10 +416,11 @@ export async function POST(req: NextRequest) {
   let raw = "";
   try {
     raw = await aiComplete({
-      system: systemBlocks,
+      model:     "claude-sonnet-4-6",
+      system:    systemBlocks,
       messages,
       maxTokens: 1800,
-      task: "chat_message",
+      task:      "chat_message",
     });
   } catch (error) {
     if ((error as Error)?.name === "AiDisabledError") {
@@ -376,6 +448,11 @@ export async function POST(req: NextRequest) {
       ...(isFirstExchange ? { title: content.trim().slice(0, 50) } : {}),
     })
     .eq("id", conversationId);
+
+  // Deduct credit if this message consumed from the pack balance
+  if (consumesCredit) {
+    await supabaseAdmin.rpc("deduct_chat_credit", { p_user_id: user.id });
+  }
 
   return NextResponse.json({ reply, suggested_followups, conversationId });
 }

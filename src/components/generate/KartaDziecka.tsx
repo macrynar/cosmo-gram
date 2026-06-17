@@ -29,6 +29,8 @@ interface Props {
   isPremiumUser:          boolean;
   interpretationLoading?: boolean;
   onChildUpdated?:        (childId: string, interpretation: string) => void;
+  onStartGenerating?:     () => void;
+  onFinishGenerating?:    () => void;
 }
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -86,7 +88,7 @@ function parseModules(interpretation: string): ChildModule[] | null {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function KartaDziecka({ child, isPremiumUser, interpretationLoading, onChildUpdated }: Props) {
+export default function KartaDziecka({ child, isPremiumUser, interpretationLoading, onChildUpdated, onStartGenerating, onFinishGenerating }: Props) {
   const { session } = useAuth();
   const [showPaywall,   setShowPaywall]   = useState(false);
   const [localModules,  setLocalModules]  = useState<ChildModule[] | null>(null);
@@ -114,6 +116,7 @@ export default function KartaDziecka({ child, isPremiumUser, interpretationLoadi
     if (!session) return;
     setGenerating(true);
     setGenError("");
+    onStartGenerating?.();
 
     const authHeader = { Authorization: `Bearer ${session.access_token}` };
     const bd = child.chart_data.birthData;
@@ -155,6 +158,7 @@ export default function KartaDziecka({ child, isPremiumUser, interpretationLoadi
       setGenError(err instanceof Error ? err.message : "Nieznany błąd");
     } finally {
       setGenerating(false);
+      onFinishGenerating?.();
     }
   }
 

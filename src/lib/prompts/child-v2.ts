@@ -5,71 +5,68 @@ export { calcAgeYears, getAgeGroup };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // child-v2: structured JSON — 6 modules
-// Source of truth: docs/prompts.md §child-v2
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const CHILD_V2_SYSTEM = `Jesteś ciepłym, uważnym astrologiem dziecięcym, piszącym dla rodziców (28-45 lat).
 
-═══ TON I PERSPEKTYWA (BEZWZGLĘDNE) ═══
-• Dziecko opisujesz w 3. osobie: "[Imię] łączy…", "[Imię] jest…", "ma tendencję do…"
-• Taktyki dla rodzica piszesz w 2. osobie: "Dawaj mu przestrzeń…", "Nazywaj przy nim emocje…"
-• Język ciepły, wspierający — NIGDY oceniający, NIGDY diagnoza medyczna/psychiatryczna
-• ZAKAZ: "ADHD", "autyzm", "zaburzenia", "terapia" — opisuj wzorzec behawioralny, nie etykietuj
+PERSPEKTYWA:
+• Dziecko opisujesz w 3. osobie: "[Imię] łączy…", "[Imię] ma tendencję do…"
+• Taktyki dla rodzica w 2. osobie: "Dawaj mu przestrzeń…", "Kiedy X — spróbuj Y…"
+• Język ciepły, wspierający — NIGDY oceniający, NIGDY diagnoza medyczna
+• ZAKAZ: "ADHD", "autyzm", "zaburzenia" — opisuj wzorzec zachowania, nie etykietuj
 
-═══ ZAKAZ ŻARGONU W content/quote ═══
-ZAKAZANE w treści modułów: Ascendent, ASC, MC, IC, DSC, orb, dyspozytor, retrogradacja,
-kwadratura, trygon, sekstyl, koniunkcja, opozycja, dom 1–12 (jako cyfra + "dom").
-Żargon astrologiczny może się pojawić TYLKO w chipach "na podstawie" — to backend doda z placements.
+ZAKAZ ŻARGONU w polach content/quote:
+Nie używaj: Ascendent, ASC, MC, IC, orb, retrogradacja, kwadratura, trygon, sekstyl, koniunkcja, opozycja, dom 1-12.
+Tłumacz na zachowanie i potrzeby dziecka.
 
-═══ QUOTE (hook modułu) ═══
-• Dokładnie 40–90 znaków
-• Jedno zdanie-esencja dziecka w tym module — konkretne, nie ogólnikowe
-• BEZ kropki na końcu, BEZ znaku zapytania
-• Przykład: "Mały odkrywca z gorącym sercem — myśli po swojemu, a czuje głębiej niż pokazuje"
+QUOTE: 40-90 znaków, bez kropki na końcu, bez znaku zapytania, konkretna esencja tego dziecka.
 
-═══ TACTICS ═══
-• Dokładnie 3 taktyki, każda 20–140 znaków
-• Imperatyw lub zdanie do rodzica: "Dawaj…", "Kiedy…", "Nie naciskaj…"
-• Konkretne działania — NIE ogólne wglądy
+TACTICS: dokładnie 3, 20-140 znaków każda, format "Kiedy [sytuacja] — spróbuj [działanie]".
 
-═══ TAGS ═══
-• Dokładnie 4 tagi, każdy 1 słowo, PL małe litery, bez polskich liter jeśli to problem (ą→a itd. NIE — używaj polskich liter)
-• Wzorzec regex: /^[a-ząćęłńóśźż]+$/
-• Empowering: "wytrwały" NIE "uparty"
+TAGS: dokładnie 4, 1 słowo, PL małe litery z polskimi znakami. Empowering: "wytrwały" nie "uparty".
 
-═══ VISUAL METERS ═══
-• Dokładnie 3 mierniki, dobrane tematycznie do modułu
-• label: wymiar domeny (np. "Ciekawość", "Wrażliwość", "Energia")
-• value: 0–100 (30=poniżej średniej, 50=średnia, 70=powyżej, 85=top 15%)
-• archetype: 8-15 słów konkretny anchor (np. "poziom ciekawości małego naukowca w laboratorium")
-• category: "action" | "emotion" | "mind" | "soul" | "social"
+VISUAL METERS: dokładnie 3, value 0-100, archetype 8-15 słów, category: action|emotion|mind|soul|social.
 
-═══ MARKDOWN w content ═══
-• **pogrubienie** kluczowych konceptów (2-4x)
-• Krótkie akapity (40-80 słów), bez H1/H2/H3, bez list bullet
+MARKDOWN w content: **pogrubienie** 2-4x per moduł, krótkie akapity oddzielone pustą linią.`;
 
-═══ FORMAT JSON (KRYTYCZNE) ═══
-• W string values JSON NIE wstawiaj dosłownych znaków nowej linii
-• Separator akapitów zapisuj jako sekwencję \\n\\n (backslash + n, dwa razy) — NIE enter
-• Cały output to jedna linia lub kompaktowy JSON bez surowych enterów wewnątrz stringów`;
 
-const MODULE_INSTRUCTIONS: Record<string, string> = {
-  temperament: `Opisz dominującą naturę dziecka jako INTEGRALNY obraz — nie listę cech. Jak przejawia się jego charakter w codziennych sytuacjach tego wieku? Zacznij od scenki którą rodzic zna. 200-350 słów.`,
-  emotions:    `Opisz jak dziecko CZUJE i czego potrzebuje emocjonalnie. Co uruchamia spokój, co rozregulowuje? Konkretne rytuały i sytuacje. 200-350 słów.`,
-  learning:    `Opisz jak dziecko myśli i poznaje świat — nie "styl uczenia" w teorii, ale konkretny wzorzec: co się dzieje gdy nauka idzie dobrze, co ją blokuje. 200-350 słów.`,
-  talents:     `Maksymalnie 2-3 talenty, ale opisane z detalem. Nie lista — pogłębione obrazy. Co rodzic może zaobserwować już teraz. 200-350 słów.`,
-  parenting:   `Wskazówki i obserwacje specyficznie dla TEGO dziecka i TEGO rodzica. Każda wskazówka zaczyna się od konkretnej sytuacji. Format "Kiedy [X] — zamiast [Y] spróbuj [Z]". 200-350 słów.`,
-  peers:       `Jak dziecko funkcjonuje w grupie rówieśniczej? Co przynosi radość w relacjach, co jest wyzwaniem, jak wygląda przyjaźń w tym wieku przy tej konfiguracji. 200-350 słów.`,
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const ASPECT_PL: Record<string, string> = {
+  conjunction: "koniunkcja (0°)",
+  sextile:     "sekstyl (60°)",
+  square:      "kwadrat (90°)",
+  trine:       "trygon (120°)",
+  opposition:  "opozycja (180°)",
 };
 
-const METERS_BY_MODULE: Record<string, [string, string, string]> = {
-  temperament: ["Ciekawość",   "Wrażliwość",  "Niezależność"],
-  emotions:    ["Głębia emocji", "Potrzeba bliskości", "Regulacja"],
-  learning:    ["Skupienie",   "Kreatywność", "Wytrwałość"],
-  talents:     ["Energia twórcza", "Precyzja", "Entuzjazm"],
-  parenting:   ["Wrażliwość na granice", "Potrzeba struktury", "Autonomia"],
-  peers:       ["Otwartość",  "Lojalność",   "Asertywność"],
+const PERSONAL_PLANETS = new Set([
+  "Słońce", "Księżyc", "Merkury", "Wenus", "Mars", "Ascendent",
+]);
+
+const SIGN_ELEMENT: Record<string, string> = {
+  "Baran": "Ogień", "Lew": "Ogień",   "Strzelec":  "Ogień",
+  "Byk":   "Ziemia", "Panna": "Ziemia", "Koziorożec": "Ziemia",
+  "Bliźnięta": "Powietrze", "Waga": "Powietrze", "Wodnik": "Powietrze",
+  "Rak":   "Woda",  "Skorpion": "Woda", "Ryby":      "Woda",
 };
+
+// Sort aspects: conjunctions/squares between personal planets first
+function sortAspects(aspects: NatalAspect[]): NatalAspect[] {
+  const TYPE_WEIGHT: Record<string, number> = {
+    conjunction: 0,
+    opposition:  1,
+    square:      2,
+    trine:       3,
+    sextile:     4,
+  };
+  return [...aspects].sort((a, b) => {
+    const aPersonal = PERSONAL_PLANETS.has(a.planet_a) && PERSONAL_PLANETS.has(a.planet_b) ? 0 : 1;
+    const bPersonal = PERSONAL_PLANETS.has(b.planet_a) && PERSONAL_PLANETS.has(b.planet_b) ? 0 : 1;
+    if (aPersonal !== bPersonal) return aPersonal - bPersonal;
+    return (TYPE_WEIGHT[a.type] ?? 5) - (TYPE_WEIGHT[b.type] ?? 5);
+  });
+}
 
 function formatPlacements(
   placements: ChartPlacement[],
@@ -79,20 +76,68 @@ function formatPlacements(
 ): string {
   const pLines = placements.map(p => {
     const h = hasTime && p.house ? `, Dom ${p.house}` : "";
-    const r = p.retrograde ? " (ruch wsteczny)" : "";
+    const r = p.retrograde ? " [ruch wsteczny]" : "";
     return `- ${p.planet}: ${p.sign}${h}${r}`;
   }).join("\n");
 
-  const aLines = aspects.length > 0
-    ? aspects.map(a => `- ${a.planet_a} — ${a.planet_b}: ${a.type}`).join("\n")
+  // Element distribution for personal planets
+  const elementCount: Record<string, number> = {};
+  for (const p of placements) {
+    if (PERSONAL_PLANETS.has(p.planet)) {
+      const el = SIGN_ELEMENT[p.sign];
+      if (el) elementCount[el] = (elementCount[el] ?? 0) + 1;
+    }
+  }
+  const elementSummary = Object.entries(elementCount)
+    .sort((a, b) => b[1] - a[1])
+    .map(([el, n]) => `${el}×${n}`)
+    .join(", ");
+
+  // Key signatures: conjunctions/squares between personal planets
+  const keyAspects = aspects.filter(
+    a => PERSONAL_PLANETS.has(a.planet_a) && PERSONAL_PLANETS.has(a.planet_b)
+      && (a.type === "conjunction" || a.type === "square" || a.type === "opposition"),
+  );
+
+  const keySigLines = keyAspects.length > 0
+    ? `\nKLUCZOWE SYGNATURY (planety osobiste — zacznij od nich):\n${keyAspects.map(a => `⚡ ${a.planet_a} — ${a.planet_b}: ${ASPECT_PL[a.type] ?? a.type}`).join("\n")}\n`
+    : "";
+
+  const sortedAspects = sortAspects(aspects);
+  const aLines = sortedAspects.length > 0
+    ? sortedAspects.map(a => `- ${a.planet_a} — ${a.planet_b}: ${ASPECT_PL[a.type] ?? a.type}`).join("\n")
     : "- brak głównych aspektów";
 
   const nLines = hasTime
     ? `Węzeł Północny: ${nodes.north_node_sign} (Dom ${nodes.north_node_house ?? "?"})\nWęzeł Południowy: ${nodes.south_node_sign} (Dom ${nodes.south_node_house ?? "?"})`
     : `Węzeł Północny: ${nodes.north_node_sign}\nWęzeł Południowy: ${nodes.south_node_sign}`;
 
-  return `POZYCJE PLANET:\n${pLines}\n\nASPEKTY:\n${aLines}\n\nWĘZŁY:\n${nLines}`;
+  return `POZYCJE PLANET:\n${pLines}\n\nŻYWIOŁY (planety osobiste): ${elementSummary || "brak danych"}
+${keySigLines}
+WSZYSTKIE ASPEKTY (od najważniejszych):\n${aLines}\n\nWĘZŁY:\n${nLines}`;
 }
+
+// ─── Module config ────────────────────────────────────────────────────────────
+
+const MODULE_INSTRUCTIONS: Record<string, string> = {
+  temperament: `Zidentyfikuj 2 sygnatury kombinacyjne (pary planet) które razem tworzą UNIKALNY temperament tego dziecka. Zacznij od konkretnej scenki którą rodzic rozpozna ("kiedy wchodzi nowe dziecko do grupy…", "kiedy skończy się zabawa…"). Opisz jak charakter przejawia się w codziennych sytuacjach TEGO wieku. 200-350 słów.`,
+  emotions:    `Znajdź kombinację planet która wyjaśnia WZORZEC emocjonalny — nie "jest wrażliwe" ale "kiedy X się dzieje, czuje Y i reaguje Z". Co uruchamia spokój, co rozregulowuje? Konkretne rytuały i sytuacje dla tego wieku. 200-350 słów.`,
+  learning:    `Opisz konkretny wzorzec poznawczy z kombinacji planet — co się dzieje kiedy nauka idzie dobrze (konkretna sytuacja), co ją blokuje i DLACZEGO (mechanizm, nie etykieta). Nie "styl uczenia" w teorii, ale co rodzic obserwuje przy odrabianiu zadań lub zabawie. 200-350 słów.`,
+  talents:     `Maksymalnie 2-3 talenty, ale każdy opisany z detalem — nie lista słów-kluczy, ale obraz: co rodzic może obserwować JUŻ TERAZ w zachowaniu dziecka, który sugeruje ten talent. Każdy talent wynika z konkretnej kombinacji w wykresie. 200-350 słów.`,
+  parenting:   `Wskazówki specyficznie dla TEGO dziecka. Każda zaczyna się od konkretnej sytuacji: "Kiedy [sytuacja typowa dla tej konfiguracji] — zamiast [instynktowna reakcja rodzica] spróbuj [alternatywa]". Wyjaśnij DLACZEGO ta alternatywa działa lepiej dla dziecka z tą konfiguracją. 200-350 słów.`,
+  peers:       `Opisz jak konkretna konfiguracja planet wpływa na funkcjonowanie w grupie. Nie ogólniki — konkretny wzorzec: jak dziecko wchodzi w nowe środowisko, co się dzieje przy konflikcie z rówieśnikami, jak wygląda przyjaźń przy tej konfiguracji w tym wieku. 200-350 słów.`,
+};
+
+const METERS_BY_MODULE: Record<string, [string, string, string]> = {
+  temperament: ["Ciekawość",             "Wrażliwość",           "Niezależność"],
+  emotions:    ["Głębia emocji",         "Potrzeba bliskości",   "Regulacja"],
+  learning:    ["Skupienie",             "Kreatywność",          "Wytrwałość"],
+  talents:     ["Energia twórcza",       "Precyzja",             "Entuzjazm"],
+  parenting:   ["Wrażliwość na granice", "Potrzeba struktury",   "Autonomia"],
+  peers:       ["Otwartość",             "Lojalność",            "Asertywność"],
+};
+
+// ─── User prompt builder ──────────────────────────────────────────────────────
 
 export function buildChildV2UserPrompt(params: {
   name: string;
@@ -102,9 +147,9 @@ export function buildChildV2UserPrompt(params: {
   nodes: ChartNodes;
 }): string {
   const { name, birthDate, placements, aspects, nodes } = params;
-  const ageYears = calcAgeYears(birthDate);
-  const ageGroup = getAgeGroup(ageYears);
-  const hasTime  = placements.some(p => p.house !== null && p.house !== undefined);
+  const ageYears  = calcAgeYears(birthDate);
+  const ageGroup  = getAgeGroup(ageYears);
+  const hasTime   = placements.some(p => p.house !== null && p.house !== undefined);
   const childName = name || "Dziecko";
 
   const timeNote = !hasTime
@@ -114,26 +159,26 @@ export function buildChildV2UserPrompt(params: {
   const moduleSchemas = [
     "temperament", "emotions", "learning", "talents", "parenting", "peers",
   ].map((id, i) => {
-    const meters = METERS_BY_MODULE[id];
+    const meters      = METERS_BY_MODULE[id];
     const instruction = MODULE_INSTRUCTIONS[id];
+    const wordRange   = instruction.match(/\d+-\d+/)?.[0] ?? "200-350";
     return `
 --- MODUŁ ${i + 1}: ${id} ---
 Instrukcja: ${instruction}
 
-Schemat JSON:
 {
   "id": "${id}",
-  "title": "<tytuł modułu po polsku, 3-60 zn>",
+  "title": "<tytuł po polsku, 3-60 zn>",
   "quote": "<esencja dziecka w tym module, 40-90 zn, BEZ kropki, BEZ ?>",
-  "content": "<${instruction.match(/\d+-\d+/)?.[0] ?? "200-350"} słów, **bold** 2-4x, bez żargonu astro>",
+  "content": "<${wordRange} słów, **bold** 2-4x, bez żargonu astro, akapity przez \\n\\n>",
   "tactics": [
-    "<taktyka 1 dla rodzica, 20-140 zn, imperatyw>",
+    "<taktyka 1 dla rodzica, 20-140 zn, format: Kiedy X — spróbuj Y>",
     "<taktyka 2>",
     "<taktyka 3>"
   ],
   "tags": ["<pl lowercase>", "<tag2>", "<tag3>", "<tag4>"],
   "visualMeters": [
-    {"label": "${meters[0]}", "value": <0-100>, "archetype": "<8-15 słów>", "category": "<action|emotion|mind|soul|social>"},
+    {"label": "${meters[0]}", "value": <0-100>, "archetype": "<8-15 słów konkretny obraz>", "category": "<action|emotion|mind|soul|social>"},
     {"label": "${meters[1]}", "value": <0-100>, "archetype": "<8-15 słów>", "category": "<action|emotion|mind|soul|social>"},
     {"label": "${meters[2]}", "value": <0-100>, "archetype": "<8-15 słów>", "category": "<action|emotion|mind|soul|social>"}
   ]
@@ -146,14 +191,13 @@ ${timeNote}
 ${formatPlacements(placements, aspects, nodes, hasTime)}
 
 ═══ ZADANIE ═══
-Wygeneruj tablicę JSON 6 obiektów modułów (w kolejności: temperament, emotions, learning, talents, parenting, peers).
-Każdy obiekt opisuje inne oblicze ${childName}.
+Wygeneruj tablicę JSON 6 modułów (kolejność: temperament, emotions, learning, talents, parenting, peers).
+Każdy opisuje inne oblicze ${childName} — przez kombinacje planet (⚡ kluczowe sygnatury powyżej), nigdy przez pojedynczy placement.
 Dziecko w 3. os. ("${childName} jest…"), taktyki do rodzica w 2. os. ("Dawaj mu…").
-Dopasuj treść i przykłady do wieku ${ageGroup}.
+Treść dopasowana do wieku: ${ageGroup}.
 
-FORMATY MODUŁÓW:
+SCHEMATY MODUŁÓW:
 ${moduleSchemas}
 
-ZWRÓĆ TYLKO tablicę JSON — zero preambuły, zero \`\`\`json, zero komentarzy.
-Format: [ {...}, {...}, {...}, {...}, {...}, {...} ]`;
+Użyj narzędzia output_child_modules aby zwrócić wszystkie 6 modułów.`;
 }

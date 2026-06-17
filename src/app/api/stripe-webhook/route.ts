@@ -43,8 +43,32 @@ export async function POST(req: NextRequest) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.user_id;
-        if (!userId || !session.subscription) break;
+        if (!userId) break;
 
+        // One-time chat pack purchase (mode: "payment")
+        if (session.mode === "payment") {
+          const credits = parseInt(session.metadata?.credits ?? "0", 10);
+          if (credits > 0 && session.id) {
+            // Idempotent: insert transaction first, skip if duplicate session
+            const { error: txErr } = await supabaseAdmin
+              .from("chat_credit_transactions")
+              .insert({ user_id: userId, delta: credits, reason: "purchase", stripe_session_id: session.id });
+
+            if (!txErr) {
+              await supabaseAdmin.rpc("add_chat_credits", { p_user_id: userId, p_delta: credits });
+
+              posthog.capture({
+                distinctId: userId,
+                event: "chat_pack_purchased",
+                properties: { credits, stripe_session_id: session.id },
+              });
+            }
+          }
+          break;
+        }
+
+        // Subscription checkout
+        if (!session.subscription) break;
         const sub = await stripe.subscriptions.retrieve(session.subscription as string);
         await upsertSubscription({
           userId,
