@@ -15,7 +15,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError("");
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: "https://www.cosmo-gram.com/reset-password",
     });
     if (err) {
       setError("Nie udało się wysłać e-maila. Sprawdź adres i spróbuj ponownie.");
