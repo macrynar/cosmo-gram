@@ -10,6 +10,131 @@ export const maxDuration = 180;
 
 const PROMPT_VERSION = "child-v2.1";
 
+function extractJsonArray(raw: string): string | null {
+  const stripped = raw
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
+    .trim();
+
+  const match = stripped.match(/\[[\s\S]*\]/);
+  return match ? match[0] : null;
+}
+
+function escapeControlCharsInJsonStrings(raw: string): string {
+  let result = "";
+  let inString = false;
+  let isEscaped = false;
+
+  for (const char of raw) {
+    if (isEscaped) {
+      result += char;
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      result += char;
+      isEscaped = true;
+      continue;
+    }
+
+    if (char === '"') {
+      result += char;
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) {
+      if (char === "\n") {
+        result += "\\n";
+        continue;
+      }
+      if (char === "\r") {
+        result += "\\r";
+        continue;
+      }
+      if (char === "\t") {
+        result += "\\t";
+        continue;
+      }
+    }
+
+    result += char;
+  }
+
+  return result;
+}
+
+function parseModulesInput(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== "string") return [];
+
+  const stripped = value
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
+    .trim();
+
+  const candidates = [stripped];
+  const arrayMatch = stripped.match(/\[[\s\S]*\]/);
+  if (arrayMatch) candidates.push(arrayMatch[0]);
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate) as unknown;
+      if (Array.isArray(parsed)) return parsed;
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        "modules" in parsed &&
+        Array.isArray((parsed as { modules?: unknown }).modules)
+      ) {
+        return (parsed as { modules: unknown[] }).modules;
+      }
+    } catch {
+      try {
+        const repaired = JSON.parse(escapeControlCharsInJsonStrings(candidate)) as unknown;
+        if (Array.isArray(repaired)) return repaired;
+        if (
+          repaired &&
+          typeof repaired === "object" &&
+          "modules" in repaired &&
+          Array.isArray((repaired as { modules?: unknown }).modules)
+        ) {
+          return (repaired as { modules: unknown[] }).modules;
+        }
+      } catch {
+        continue;
+      }
+    }
+  }
+
+  return [];
+}
+
+async function repairModulesInput(client: Anthropic, brokenModules: string): Promise<unknown[]> {
+  const candidate = extractJsonArray(brokenModules) ?? brokenModules;
+
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 4000,
+    system: [
+      "Napraw uszkodzony JSON i zwróć wyłącznie poprawny JSON.",
+      "Oczekiwany wynik to tablica modułów dziecięcej interpretacji kosmogramu.",
+      "Nie zmieniaj struktury danych. Nie dodawaj komentarzy, markdownu ani wyjaśnień.",
+      "Jeśli w tekście są nieucieczone cudzysłowy lub znaki nowej linii wewnątrz stringów, popraw je.",
+    ].join(" "),
+    messages: [{ role: "user", content: candidate }],
+  });
+
+  const text = response.content
+    .filter((block): block is Anthropic.TextBlock => block.type === "text")
+    .map(block => block.text)
+    .join("\n")
+    .trim();
+
+  return parseModulesInput(text);
+}
+
 function getClient(): Anthropic {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
@@ -84,9 +209,11 @@ export async function POST(req: NextRequest) {
     nodes:      body.nodes      ?? { north_node_sign: "", south_node_sign: "" },
   });
 
+  const client = getClient();
   let rawModules: unknown[];
+  let attemptedRepair = false;
   try {
-    const response = await getClient().messages.create({
+    const response = await client.messages.create({
       model:       "claude-sonnet-4-6",
       max_tokens:  8000,
       system:      CHILD_V2_SYSTEM,
@@ -104,13 +231,11 @@ export async function POST(req: NextRequest) {
     }
 
     const input  = toolBlock.input as Record<string, unknown>;
-    if (Array.isArray(input.modules)) {
-      rawModules = input.modules as unknown[];
-    } else if (typeof input.modules === "string") {
-      // Claude sometimes stringifies the array despite schema saying type:array
-      try { rawModules = JSON.parse(input.modules as string) as unknown[]; } catch { rawModules = []; }
-    } else {
-      rawModules = [];
+    rawModules = parseModulesInput(input.modules);
+    if (rawModules.length === 0 && typeof input.modules === "string") {
+      attemptedRepair = true;
+      console.warn("[ai-child] attempting repair for malformed modules string");
+      rawModules = await repairModulesInput(client, input.modules);
     }
     const inputPreview = JSON.stringify(input).slice(0, 400);
     console.log("[ai-child] tool_use OK, modules:", rawModules.length,
@@ -121,7 +246,11 @@ export async function POST(req: NextRequest) {
       const isDev = process.env.NODE_ENV !== "production";
       return NextResponse.json({
         error: "Brak modułów — spróbuj ponownie",
-        ...(isDev ? { debug_input: inputPreview } : {}),
+        ...(isDev ? {
+          debug_input: inputPreview,
+          debug_modules_type: typeof input.modules,
+          debug_attempted_repair: attemptedRepair,
+        } : {}),
       }, { status: 500 });
     }
   } catch (err) {

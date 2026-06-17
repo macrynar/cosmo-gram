@@ -21,6 +21,8 @@ Tłumacz na zachowanie i potrzeby dziecka.
 
 QUOTE: 40-90 znaków, bez kropki na końcu, bez znaku zapytania, konkretna esencja tego dziecka.
 
+UNIKAJ znaków cudzysłowu (") w polach quote/content/tactics. Jeśli chcesz coś zaakcentować, parafrazuj bez cytowania.
+
 TACTICS: dokładnie 3, 20-140 znaków każda, format "Kiedy [sytuacja] — spróbuj [działanie]".
 
 TAGS: dokładnie 4, 1 słowo, PL małe litery z polskimi znakami. Empowering: "wytrwały" nie "uparty".
