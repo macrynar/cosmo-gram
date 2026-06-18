@@ -6,6 +6,7 @@ import { getSynastryAspects, getSynastryScore, extractPlanetPositions, type Syna
 import { hasActiveSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { aiComplete } from "@/lib/deepseek";
+import { repairJson } from "@/lib/jsonRepair";
 import { STYLE_BLOCK } from "@/lib/moduleSpecs";
 
 export type CompatibilityCategory = {
@@ -73,6 +74,10 @@ Wskazówki tonalne:
 - summary: max 2 zdania (max 180 znaków)
 - interpretation każdej kategorii: 3–4 akapity, **160–240 słów**. Zaczynaj od 1 zdania leadu (głos Astrei, Fraunces italic), potem 2–3 akapity interpretacji z konkretnymi aspektami, kończ praktycznym spostrzeżeniem.
 - insight: DOKŁADNIE 1 zdanie (max 100 znaków). Konkretny krok, imperatyw lub pytanie.
+
+# KRYTYCZNE — poprawny JSON
+- Wewnątrz wartości tekstowych (summary, interpretation, insight) NIE używaj prostego cudzysłowu ". Psuje JSON. Gdy musisz zacytować — użyj „ ” lub apostrofu '.
+- Każdy znak nowej linii wewnątrz stringa zapisz jako \\n (escapowany), nie jako dosłowny enter.
 
 # Format odpowiedzi
 
@@ -327,12 +332,21 @@ function extractJson(raw: string): CompatibilityResult {
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```\s*$/i, "")
     .trim();
-  try {
-    return JSON.parse(stripped) as CompatibilityResult;
-  } catch { /* fall through */ }
+
+  const candidates = [stripped];
   const match = stripped.match(/\{[\s\S]*\}/);
-  if (match) return JSON.parse(match[0]) as CompatibilityResult;
-  throw new Error("No JSON found in response");
+  if (match) candidates.push(match[0]);
+
+  // 1. Szybka ścieżka — czysty JSON.
+  for (const c of candidates) {
+    try { return JSON.parse(c) as CompatibilityResult; } catch { /* spróbuj dalej */ }
+  }
+  // 2. Fallback — napraw typowe błędy LLM (niezescapowane cudzysłowy,
+  //    trailing comma, ucięty output) i sparsuj ponownie.
+  for (const c of candidates) {
+    try { return JSON.parse(repairJson(c)) as CompatibilityResult; } catch { /* spróbuj dalej */ }
+  }
+  throw new Error("No parseable JSON found in response");
 }
 
 function mockResult(name1: string, name2: string, scores: ReturnType<typeof getSynastryScore>): CompatibilityResult {
