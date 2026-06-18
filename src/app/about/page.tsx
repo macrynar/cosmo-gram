@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "O projekcie — Cosmogram",
   description: "Cosmogram to projekt łączący astrologię i AI. Dowiedz się, kto stoi za projektem i czym różnimy się od konkurencji.",
-  alternates: { canonical: "https://cosmogram.pl/about" },
+  alternates: { canonical: "https://www.cosmo-gram.com/about" },
 };
 
 export default function AboutPage() {

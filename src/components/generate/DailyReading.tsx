@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CalendarDays, Loader2, Sun, Zap, ShieldAlert, Quote } from "lucide-react";
+import { CalendarDays, Sun, Zap, ShieldAlert, Quote } from "lucide-react";
+import GeneratingLoader from "@/components/GeneratingLoader";
 import type { DailyReadingData } from "@/app/api/daily-reading/route";
 
 interface Props {
@@ -56,10 +57,14 @@ export default function DailyReading({ text, loading, dateLabel }: Props) {
       {/* Body */}
       <div className="px-5 pb-6 pt-5">
         {loading ? (
-          <div className="flex flex-col items-center gap-3 text-slate-500 py-12">
-            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#D4AF37" }} />
-            <span className="text-xs">AI oblicza tranzyty i układa horoskop…</span>
-          </div>
+          <GeneratingLoader
+            phrases={[
+              "Obliczam dzisiejsze tranzyty…",
+              "Sprawdzam, jak niebo dotyka Twojego kosmogramu…",
+              "Wyłapuję najważniejszy motyw dnia…",
+              "Układam horoskop na dziś…",
+            ]}
+          />
         ) : !reading ? (
           <p className="text-sm text-slate-500">
             Dzienny horoskop pojawi się tutaj po wygenerowaniu kosmogramu.

@@ -11,7 +11,7 @@ type PackSize = "small" | "medium" | "large";
 
 type Props = {
   onClose: () => void;
-  reason?: "monthly_limit" | "need_topup";
+  reason?: "monthly_limit" | "need_topup" | "proactive";
 };
 
 const PACKS: { size: PackSize; messages: number; price: string; badge?: string }[] = [
@@ -59,13 +59,15 @@ export default function ChatPackModal({ onClose, reason = "monthly_limit" }: Pro
     }
   }
 
-  const headingText = reason === "need_topup"
-    ? "Wyczerpałeś kredyty"
-    : "Limit wiadomości wyczerpany";
+  const headingText =
+    reason === "need_topup"  ? "Wyczerpałeś kredyty" :
+    reason === "proactive"   ? "Dokup wiadomości" :
+                               "Limit wiadomości wyczerpany";
 
-  const subText = reason === "need_topup"
-    ? "Dokup paczkę, żeby pisać dalej — kredyty nie wygasają."
-    : "Twój miesięczny limit się skończył. Dokup paczkę lub poczekaj do nowego okresu.";
+  const subText =
+    reason === "need_topup"  ? "Dokup paczkę, żeby pisać dalej — kredyty nie wygasają." :
+    reason === "proactive"   ? "Dokup paczkę, kiedy chcesz — kredyty nie wygasają i sumują się z limitem." :
+                               "Twój miesięczny limit się skończył. Dokup paczkę lub poczekaj do nowego okresu.";
 
   return (
     <AnimatePresence>

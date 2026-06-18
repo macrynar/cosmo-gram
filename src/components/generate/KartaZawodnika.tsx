@@ -9,6 +9,7 @@ import ModuleNav from "./ModuleNav";
 import LockedModulePlaceholder from "./LockedModulePlaceholder";
 import FailedModulePlaceholder from "./FailedModulePlaceholder";
 import PaywallModal from "@/components/PaywallModal";
+import GeneratingLoader from "@/components/GeneratingLoader";
 import type { AstroModule, ModuleId } from "@/lib/schemas/astroModule";
 import type { NatalChart } from "@/lib/astro-types";
 import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
@@ -290,15 +291,19 @@ export default function KartaZawodnika({ reading, isPremiumUser }: Props) {
       {/* ── Loading ── */}
       {loading && (
         <div
-          className="rounded-2xl p-16 text-center"
+          className="rounded-2xl p-12 text-center"
           style={{ background: "rgba(11,9,18,0.65)", border: "0.5px solid rgba(224,181,102,0.14)" }}
         >
-          <div
-            className="w-12 h-12 rounded-full animate-spin border-2 mx-auto mb-4"
-            style={{ borderColor: "rgba(224,181,102,0.12)", borderTopColor: "#E0B566" }}
+          <GeneratingLoader
+            phrases={[
+              "Odczytuję pozycje planet…",
+              "Mierzę kąty między ciałami niebieskimi…",
+              "Analizuję aspekty i domy…",
+              "Splatam wątki Twojej historii…",
+              "Dobieram właściwe słowa…",
+            ]}
           />
-          <p className="text-slate-400 text-sm mb-1">Generuję Twoją Kartę Astrologiczną…</p>
-          <p className="text-slate-600 text-xs">
+          <p className="text-slate-600 text-xs mt-1">
             {isPremiumUser ? "8 modułów · może zająć 20–40 s" : "3 moduły · może zająć 10–20 s"}
           </p>
         </div>

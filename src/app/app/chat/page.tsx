@@ -206,6 +206,49 @@ function Composer({
 const IDLE_MS = 24 * 60 * 60 * 1000;
 const FREE_MSG = 3;
 
+// ─── Licznik wiadomości — pasek postępu + dokup ────────────────────────────────
+
+function CreditMeter({
+  isPaid, remaining, limit, credits, onTopUp,
+}: {
+  isPaid: boolean; remaining: number; limit: number; credits: number; onTopUp: () => void;
+}) {
+  const consumed  = Math.max(0, Math.min(limit, limit - remaining));
+  const pct       = limit > 0 ? Math.round((consumed / limit) * 100) : 0;
+  const exhausted = remaining <= 0;
+  const fill      = exhausted ? "#E2654A" : "#FFAE3D";
+  const label     = isPaid
+    ? `${remaining} z ${limit} wiadomości w tym miesiącu`
+    : `${remaining} z ${limit} bezpłatnych wiadomości`;
+
+  return (
+    <div style={{ marginBottom: "12px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "6px" }}>
+        <span style={{ fontSize: "11.5px", color: "#B6AFC6" }}>
+          {label}
+          {credits > 0 && <span style={{ color: "#E0B566" }}> · +{credits} z paczki</span>}
+        </span>
+        <button
+          onClick={onTopUp}
+          style={{
+            flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "5px",
+            padding: "4px 11px", borderRadius: "999px", cursor: "pointer",
+            background: "rgba(224,181,102,.08)", border: "1px solid rgba(224,181,102,.35)",
+            color: "#E0B566", fontSize: "11.5px", fontFamily: "inherit", transition: ".2s ease",
+          }}
+          onMouseEnter={e => { const b = e.currentTarget; b.style.background = "rgba(224,181,102,.16)"; b.style.borderColor = "#E0B566"; }}
+          onMouseLeave={e => { const b = e.currentTarget; b.style.background = "rgba(224,181,102,.08)"; b.style.borderColor = "rgba(224,181,102,.35)"; }}
+        >
+          <Plus size={12} /> Dokup
+        </button>
+      </div>
+      <div style={{ height: "4px", borderRadius: "999px", background: "#2B2540", overflow: "hidden" }}>
+        <div style={{ width: `${pct}%`, height: "100%", background: fill, borderRadius: "999px", transition: "width .4s ease" }} />
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ChatPage() {
@@ -223,12 +266,14 @@ export default function ChatPage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [error, setError]                 = useState("");
   const [showPaywall, setShowPaywall]     = useState(false);
-  const [showPackModal, setShowPackModal] = useState<"monthly_limit" | "need_topup" | null>(null);
+  const [showPackModal, setShowPackModal] = useState<"monthly_limit" | "need_topup" | "proactive" | null>(null);
   const [showDataWarning, setShowDataWarning] = useState(false);
   const [warningDismissed, setWarningDismissed] = useState(false);
   const [remaining, setRemaining]         = useState<number | null>(null);
+  const [limit, setLimit]                 = useState<number>(FREE_MSG);
   const [credits, setCredits]             = useState<number>(0);
   const [isPaid, setIsPaid]               = useState(false);
+  const [packSuccess, setPackSuccess]     = useState(false);
 
   // Redesign state — openers are frozen at mount (shuffle once, never re-shuffle)
   const [stars]   = useState<StarDatum[]>(() => makeStars());
@@ -321,9 +366,10 @@ export default function ChatPage() {
     if (!session) return;
     const res = await fetch("/api/chat/status", { headers: authHeader() });
     if (!res.ok) return;
-    const data = await res.json() as { isPaid: boolean; remaining: number; credits: number };
+    const data = await res.json() as { isPaid: boolean; limit: number; remaining: number; credits: number };
     setIsPaid(data.isPaid);
     setRemaining(data.remaining);
+    setLimit(data.limit ?? FREE_MSG);
     setCredits(data.credits ?? 0);
   }, [session, authHeader]);
 
@@ -354,6 +400,21 @@ export default function ChatPage() {
     loadStatus();
     checkDataWarning();
   }, [loadCharts, loadConversations, loadStatus, maybeTriggerSummary, checkDataWarning]);
+
+  // Powrót ze Stripe po zakupie paczki — odśwież status, pokaż potwierdzenie, wyczyść URL
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("pack_success") !== "1") return;
+    track("chat_pack_success");
+    setPackSuccess(true);
+    // status zaktualizuje się po przetworzeniu webhooka — odpytaj kilka razy
+    const tries = [800, 2200, 4500];
+    const timers = tries.map(ms => setTimeout(() => loadStatus(), ms));
+    const hide = setTimeout(() => setPackSuccess(false), 6000);
+    window.history.replaceState({}, "", window.location.pathname);
+    return () => { timers.forEach(clearTimeout); clearTimeout(hide); };
+  }, [loadStatus]);
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
@@ -1118,12 +1179,30 @@ export default function ChatPage() {
                 display: "flex", justifyContent: "center", flexShrink: 0,
               }}>
                 <div style={{ width: "100%", maxWidth: "680px" }}>
+                  <AnimatePresence>
+                    {packSuccess && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+                        style={{
+                          display: "flex", alignItems: "center", gap: "8px",
+                          padding: "9px 14px", marginBottom: "10px", borderRadius: "10px",
+                          background: "rgba(224,181,102,.08)", border: ".5px solid rgba(224,181,102,.35)",
+                          color: "#E9DCC0", fontSize: "13px",
+                        }}
+                      >
+                        <span style={{ color: "#FFAE3D" }}>✓</span>
+                        Paczka dodana — kredyty są już na Twoim koncie.
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                   {showCounter && remaining !== null && (
-                    <p style={{ fontSize: "11px", color: "#877FA0", marginBottom: "8px", textAlign: "right" }}>
-                      {isPaid
-                        ? `${remaining} wiad. pozostało w tym miesiącu${credits > 0 ? ` (+${credits} z paczki)` : ""}`
-                        : `${remaining}/${FREE_MSG} bezpłatnych wiadomości${credits > 0 ? ` (+${credits} z paczki)` : ""}`}
-                    </p>
+                    <CreditMeter
+                      isPaid={isPaid}
+                      remaining={remaining}
+                      limit={limit}
+                      credits={credits}
+                      onTopUp={() => { track("chat_pack_topup_clicked"); setShowPackModal("proactive"); }}
+                    />
                   )}
                   <AnimatePresence>
                     {showDataWarning && !warningDismissed && (

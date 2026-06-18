@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Loader2, Sun, Star, Heart, Briefcase, TrendingUp, Moon, Flame, Compass } from "lucide-react";
+import { Sparkles, Sun, Star, Heart, Briefcase, TrendingUp, Moon, Flame, Compass } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import GeneratingLoader from "@/components/GeneratingLoader";
 
 interface Props {
   text: string;
@@ -99,10 +100,15 @@ export default function Interpretation({ text, loading }: Props) {
 
       <div className="px-5 py-5">
         {loading ? (
-          <div className="flex items-center gap-3 text-slate-400 py-12 justify-center">
-            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#D4AF37" }} />
-            <span className="text-sm">AI analizuje Twój kosmogram…</span>
-          </div>
+          <GeneratingLoader
+            phrases={[
+              "Odczytuję pozycje planet…",
+              "Mierzę kąty między ciałami niebieskimi…",
+              "Analizuję aspekty i domy…",
+              "Splatam wątki Twojej historii…",
+              "Dobieram właściwe słowa…",
+            ]}
+          />
         ) : text ? (
           <div className="space-y-4">
             {intro?.body && (

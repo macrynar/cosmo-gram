@@ -20,10 +20,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: `${p1} × ${p2} — Astro Match ${score}/100 | Cosmogram`,
-    description: `Kompatybilność astrologiczna ${p1} i ${p2}: ${score}/100. Sprawdź swoją na cosmogram.pl`,
+    description: `Kompatybilność astrologiczna ${p1} i ${p2}: ${score}/100. Sprawdź swoją na cosmo-gram.com`,
     openGraph: {
       title: `${p1} × ${p2} — Astro Match | Cosmogram`,
-      description: `Kompatybilność: ${score}/100. Sprawdź swoją na cosmogram.pl`,
+      description: `Kompatybilność: ${score}/100. Sprawdź swoją na cosmo-gram.com`,
       siteName: "Cosmogram",
     },
   };
@@ -34,7 +34,7 @@ export default async function ShareMatchPage({ params }: Props) {
 
   const { data } = await supabaseAdmin
     .from("matches")
-    .select("person1_name, person2_name, overall_score, compatibility_data")
+    .select("person1_name, person2_name, overall_score, compatibility_data, user_id")
     .eq("id", id)
     .single();
 
@@ -45,6 +45,7 @@ export default async function ShareMatchPage({ params }: Props) {
       person1Name={data.person1_name}
       person2Name={data.person2_name}
       result={data.compatibility_data as CompatibilityResult}
+      matchUserId={data.user_id as string}
     />
   );
 }

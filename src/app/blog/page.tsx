@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Blog — Cosmogram",
   description: "Artykuły o astrologii, kosmogramach i tym, co mówią gwiazdy. Wiedza, która pomaga rozumieć siebie głębiej.",
-  alternates: { canonical: "https://cosmogram.pl/blog" },
+  alternates: { canonical: "https://www.cosmo-gram.com/blog" },
 };
 
 export default function BlogPage() {

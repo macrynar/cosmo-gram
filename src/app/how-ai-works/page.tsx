@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Jak działa AI w Cosmogramie",
   description: "Transparentność: jakich modeli AI używamy, jakie są granice odpowiedzialności i jak interpretujemy dane astronomiczne.",
-  alternates: { canonical: "https://cosmogram.pl/how-ai-works" },
+  alternates: { canonical: "https://www.cosmo-gram.com/how-ai-works" },
 };
 
 const SECTIONS = [

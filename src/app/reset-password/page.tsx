@@ -15,6 +15,7 @@ const LOCK_ICON = (
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [ready, setReady]       = useState(false);
+  const [linkError, setLinkError] = useState(false);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm]   = useState("");
   const [loading, setLoading]   = useState(false);
@@ -22,35 +23,44 @@ export default function ResetPasswordPage() {
   const [done, setDone]         = useState(false);
 
   useEffect(() => {
-    // Register listener FIRST so we don't miss events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
 
-    async function resolveSession() {
-      // 1. Check existing session (covers page refresh after token exchange)
-      const { data } = await supabase.auth.getSession();
-      if (data.session) { setReady(true); return; }
+    // Timeout: if session not resolved in 8s, link is expired/used
+    const timeout = setTimeout(() => setLinkError(true), 8000);
 
-      // 2. Parse hash fragment — Supabase implicit flow puts tokens here
+    async function resolveSession() {
+      // Check for Supabase error in URL (expired/used token)
+      const urlError = new URLSearchParams(window.location.search).get("error");
+      if (urlError) { clearTimeout(timeout); setLinkError(true); return; }
+
+      // 1. Existing session
+      const { data } = await supabase.auth.getSession();
+      if (data.session) { clearTimeout(timeout); setReady(true); return; }
+
+      // 2. Hash fragment (implicit flow) — access_token in #hash
       const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
       const accessToken  = hash.get("access_token");
       const refreshToken = hash.get("refresh_token") ?? "";
       if (accessToken) {
         const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-        if (!error) { setReady(true); return; }
+        if (!error) { clearTimeout(timeout); setReady(true); return; }
+        clearTimeout(timeout); setLinkError(true); return;
       }
 
       // 3. PKCE flow — code in query string
       const code = new URLSearchParams(window.location.search).get("code");
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error) { setReady(true); return; }
+        if (!error) { clearTimeout(timeout); setReady(true); return; }
+        clearTimeout(timeout); setLinkError(true); return;
       }
+      // No tokens found at all — will wait for timeout
     }
 
     resolveSession();
-    return () => subscription.unsubscribe();
+    return () => { subscription.unsubscribe(); clearTimeout(timeout); };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -144,7 +154,40 @@ export default function ResetPasswordPage() {
                 Minimum 8 znaków.
               </p>
 
-              {!ready ? (
+              {linkError ? (
+                <div style={{ textAlign: "center", padding: "16px 0" }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: "50%",
+                    background: "rgba(226,101,74,.10)", border: "1px solid rgba(226,101,74,.3)",
+                    display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px",
+                  }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#E2654A" strokeWidth={2} style={{ width: 20, height: 20 }}>
+                      <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+                    </svg>
+                  </div>
+                  <h3 style={{ fontFamily: "var(--font-fraunces),'Fraunces',serif", fontWeight: 500, fontSize: 18, color: "#F4F1EA", marginBottom: 8 }}>
+                    Link wygasł lub został już użyty
+                  </h3>
+                  <p style={{ color: "#877FA0", fontSize: 13.5, lineHeight: 1.6, marginBottom: 20 }}>
+                    Linki resetujące są jednorazowe i ważne przez 1 godzinę.<br />Poproś o nowy.
+                  </p>
+                  <Link
+                    href="/forgot-password"
+                    style={{
+                      display: "inline-block",
+                      padding: "11px 24px",
+                      borderRadius: 12,
+                      background: "linear-gradient(135deg,#FFC56B 0%,#E0992E 100%)",
+                      color: "#241704",
+                      fontWeight: 600,
+                      fontSize: 14,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Wyślij nowy link
+                  </Link>
+                </div>
+              ) : !ready ? (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, color: "#877FA0", padding: "32px 0" }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
                     style={{ width: 16, height: 16, animation: "spin 1s linear infinite", flexShrink: 0 }}>

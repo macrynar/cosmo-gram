@@ -6,6 +6,7 @@
  */
 
 import type { DayWeather } from "@/lib/astro/transits";
+import GeneratingLoader from "@/components/GeneratingLoader";
 
 // ─── Design tokens → CSS string ──────────────────────────────────────────────
 
@@ -487,7 +488,17 @@ export function PgNarrZone({ narr, sources, reflection, loading, isPremium }: Na
         </a>
       )}
       {isPremium && loading && (
-        <div className="pg-loading-row"><span className="pg-spin-ring" />Astrea analizuje Twój czas…</div>
+        <div className="pg-loading-row" style={{ display: "block", padding: "10px 0" }}>
+          <GeneratingLoader
+            variant="compact"
+            phrases={[
+              "Astrea analizuje Twój czas…",
+              "Odczytuję tranzyty planet…",
+              "Sprawdzam, co aktywuje Twój kosmogram…",
+              "Splatam interpretację okresu…",
+            ]}
+          />
+        </div>
       )}
       {isPremium && !loading && narr && (
         <>

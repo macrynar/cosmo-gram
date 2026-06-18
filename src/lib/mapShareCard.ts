@@ -54,7 +54,7 @@ function drawFooter(ctx: CanvasRenderingContext2D) {
   ctx.fillStyle = "rgba(255,255,255,0.35)";
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.fillText("cosmogram.pl", W / 2, H - 100);
+  ctx.fillText("cosmo-gram.com", W / 2, H - 100);
 }
 
 function drawDivider(ctx: CanvasRenderingContext2D, y: number) {
