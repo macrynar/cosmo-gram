@@ -4,15 +4,22 @@ import Link from "next/link";
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import CompatibilityResultView from "@/components/astro-match/CompatibilityResult";
+import ShareCTA from "@/components/ShareCTA";
+import { useAuth } from "@/components/AuthContext";
 import type { CompatibilityResult } from "@/app/api/astro-match/route";
 
 type Props = {
   person1Name: string;
   person2Name: string;
   result: CompatibilityResult;
+  matchUserId: string;
 };
 
-export default function ShareMatchClient({ person1Name, person2Name, result }: Props) {
+export default function ShareMatchClient({ person1Name, person2Name, result, matchUserId }: Props) {
+  const { user, loading: authLoading } = useAuth();
+  const isOwner = !authLoading && !!user && user.id === matchUserId;
+  const showCTA = !authLoading && !isOwner;
+
   return (
     <div className="min-h-screen bg-[#03010d] text-white">
       <div className="fixed inset-0 star-bg pointer-events-none" aria-hidden="true" />
@@ -67,27 +74,16 @@ export default function ShareMatchClient({ person1Name, person2Name, result }: P
         />
       </main>
 
-      {/* Sticky CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 px-4 py-4"
-        style={{ background: "rgba(3,1,13,0.92)", backdropFilter: "blur(16px)", borderTop: "0.5px solid rgba(255,255,255,0.06)" }}>
-        <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-slate-400 text-sm text-center sm:text-left">
-            Sprawdź swoją kompatybilność astrologiczną
-          </p>
-          <Link
-            href="/astro-match"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all"
-            style={{
-              background: "linear-gradient(135deg, #e11d48, #fb7185)",
-              color: "white",
-              boxShadow: "0 4px 24px rgba(244,63,94,0.25)",
-            }}
-          >
-            <Heart className="w-4 h-4" />
-            Sprawdź swój Cosmo Match — bezpłatnie
-          </Link>
-        </div>
-      </div>
+      {/* Floatujący CTA — tylko dla odwiedzających (nie właściciela) */}
+      {showCTA && (
+        <ShareCTA
+          accent="rose"
+          text="Sprawdź swoją kompatybilność astrologiczną"
+          href="/astro-match"
+          label="Sprawdź swój Cosmo Match — bezpłatnie"
+          icon={<Heart className="w-4 h-4" />}
+        />
+      )}
     </div>
   );
 }

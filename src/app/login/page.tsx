@@ -124,9 +124,6 @@ function LoginForm() {
             <Image src="/logo-b-refined.svg" alt="Cosmogram" width={200} height={50}
               className="h-11 w-auto [filter:brightness(0)_invert(1)]" priority />
           </Link>
-          <p className="mt-3 text-xs uppercase tracking-[0.25em]" style={{ color: "rgba(212,175,55,0.55)" }}>
-            Twój ołtarz astrologiczny
-          </p>
         </div>
 
         {/* Card */}

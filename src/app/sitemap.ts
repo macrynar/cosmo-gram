@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 import { ROUTES } from "@/lib/routes";
 
-const BASE_URL = "https://cosmogram.pl";
+const BASE_URL = "https://www.cosmo-gram.com";
 
 const INDEXED_PUBLIC_ROUTES = [
   ROUTES.public.home,

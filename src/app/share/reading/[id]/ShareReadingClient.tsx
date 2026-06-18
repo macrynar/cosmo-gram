@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Star, Eye, EyeOff, CalendarDays, MapPin } from "lucide-react";
+import { Star } from "lucide-react";
 import { CosmoIcon } from "@/components/CosmoIcon";
+import ShareCTA from "@/components/ShareCTA";
 import NatalChartAltarView from "@/components/generate/NatalChartAltarView";
 import PlanetTable from "@/components/generate/PlanetTable";
 import Interpretation from "@/components/generate/Interpretation";
@@ -88,8 +88,6 @@ function EndCTA() {
 
 type Props = {
   name: string;
-  birthDate: string;
-  birthPlace: string;
   chart: NatalChart;
   interpretation: string;
   kartaModules: AstroModule[];
@@ -99,8 +97,6 @@ type Props = {
 
 export default function ShareReadingClient({
   name,
-  birthDate,
-  birthPlace,
   chart,
   interpretation,
   kartaModules,
@@ -109,7 +105,7 @@ export default function ShareReadingClient({
 }: Props) {
   const { user, loading: authLoading } = useAuth();
   const isOwner = !authLoading && !!user && user.id === readingUserId;
-  const [showBirthData, setShowBirthData] = useState(false);
+  const showCTA = !authLoading && !isOwner;
 
   const el         = getDominantElement(chart);
   const tags       = getPersonalityTags(chart);
@@ -161,30 +157,7 @@ export default function ShareReadingClient({
               {bigThreeLine}
             </p>
           )}
-          {/* Birth data — hidden by default; owner can reveal */}
-          {isOwner && (
-            <button
-              onClick={() => setShowBirthData(v => !v)}
-              className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors mt-1"
-            >
-              {showBirthData ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-              {showBirthData ? "Ukryj dane urodzenia" : "Pokaż datę urodzenia"}
-            </button>
-          )}
-          {isOwner && showBirthData && (
-            <div className="flex flex-wrap items-center justify-center gap-2 text-xs mt-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-slate-400" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
-                <CalendarDays className="w-3 h-3 shrink-0" style={{ color: "rgba(212,175,55,0.55)" }} />
-                {birthDate}
-              </span>
-              {birthPlace && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-slate-400 max-w-[240px] truncate" style={{ background: "rgba(212,175,55,0.07)", border: "0.5px solid rgba(212,175,55,0.18)" }}>
-                  <MapPin className="w-3 h-3 shrink-0" style={{ color: "rgba(212,175,55,0.55)" }} />
-                  {birthPlace}
-                </span>
-              )}
-            </div>
-          )}
+          {/* Dane urodzenia (data, godzina, miejsce) celowo ukryte na stronie udostępniania. */}
         </div>
 
         {/* Altar view */}
@@ -251,28 +224,15 @@ export default function ShareReadingClient({
 
       </main>
 
-      {/* Sticky CTA — hidden from owner */}
-      {!isOwner && (
-        <div className="fixed bottom-0 left-0 right-0 z-20 backdrop-blur-md border-t border-white/8 px-4 py-4"
-          style={{ background: "rgba(5,4,14,0.90)" }}>
-          <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-slate-400 text-sm text-center sm:text-left">
-              Chcesz poznać swój kosmogram?
-            </p>
-            <Link
-              href="/generate"
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all shadow-lg whitespace-nowrap"
-              style={{
-                background: "linear-gradient(135deg, rgba(212,175,55,0.92), rgba(197,160,89,0.92))",
-                color: "#050508",
-                boxShadow: "0 4px 20px rgba(212,175,55,0.20)",
-              }}
-            >
-              <CosmoIcon className="w-4 h-4" />
-              Stwórz swój kosmogram — bezpłatnie
-            </Link>
-          </div>
-        </div>
+      {/* Floatujący CTA — tylko dla odwiedzających (nie właściciela) */}
+      {showCTA && (
+        <ShareCTA
+          accent="gold"
+          text="Chcesz poznać swój kosmogram?"
+          href="/generate"
+          label="Stwórz swój kosmogram — bezpłatnie"
+          icon={<CosmoIcon className="w-4 h-4" />}
+        />
       )}
     </div>
   );

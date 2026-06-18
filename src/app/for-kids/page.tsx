@@ -7,12 +7,12 @@ import { ROUTES } from "@/lib/routes";
 export const metadata: Metadata = {
   title: "Kosmogram dziecka — Cosmogram",
   description: "Stwórz kosmogram natalny dla swojego dziecka. Zrozum jego temperament, potrzeby emocjonalne i naturalne talenty przez pryzmat astrologii.",
-  alternates: { canonical: "https://cosmogram.pl/for-kids" },
+  alternates: { canonical: "https://www.cosmo-gram.com/for-kids" },
   openGraph: {
     title: "Kosmogram dziecka — Cosmogram",
     description: "Zrozum swoje dziecko głębiej — kosmogram natalny dopasowany do potrzeb rodziców.",
-    url: "https://cosmogram.pl/for-kids",
-    images: [{ url: "https://cosmogram.pl/og-default.png", width: 1200, height: 630 }],
+    url: "https://www.cosmo-gram.com/for-kids",
+    images: [{ url: "https://www.cosmo-gram.com/og-default.png", width: 1200, height: 630 }],
   },
 };
 

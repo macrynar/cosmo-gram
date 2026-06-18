@@ -169,7 +169,7 @@ export async function generateNatalCard(data: NatalCardData): Promise<Blob> {
   ctx.fillStyle = "rgba(255,255,255,0.45)";
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.fillText("cosmogram.pl", W / 2, 1820);
+  ctx.fillText("cosmo-gram.com", W / 2, 1820);
 
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")), "image/png");
@@ -286,7 +286,7 @@ export async function generateMatchCard(data: MatchCardData): Promise<Blob> {
   ctx.fillStyle = "rgba(255,255,255,0.45)";
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.fillText("cosmogram.pl", W / 2, 1820);
+  ctx.fillText("cosmo-gram.com", W / 2, 1820);
 
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")), "image/png");
