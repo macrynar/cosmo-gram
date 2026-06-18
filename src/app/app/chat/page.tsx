@@ -581,7 +581,9 @@ export default function ChatPage() {
   // ─── Derived ───────────────────────────────────────────────────────────────
 
   const activeConv  = conversations.find(c => c.id === activeId);
-  const showCounter = remaining !== null && (isPaid ? remaining < 30 : true);
+  // Licznik widoczny zawsze, gdy znamy status (też dla premium) — daje wgląd i dostęp do dokupienia
+  const showCounter = remaining !== null;
+  const topUp = () => { track("chat_pack_topup_clicked"); setShowPackModal("proactive"); };
 
   // ─── Rail content ─────────────────────────────────────────────────────────
 
@@ -935,6 +937,36 @@ export default function ChatPage() {
                     ))}
                   </div>
 
+                  {/* Licznik + dokup — także na ekranie startowym */}
+                  <AnimatePresence>
+                    {packSuccess && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+                        style={{
+                          marginTop: "20px", width: "100%", maxWidth: "420px",
+                          display: "flex", alignItems: "center", gap: "8px",
+                          padding: "9px 14px", borderRadius: "10px",
+                          background: "rgba(224,181,102,.08)", border: ".5px solid rgba(224,181,102,.35)",
+                          color: "#E9DCC0", fontSize: "13px",
+                        }}
+                      >
+                        <span style={{ color: "#FFAE3D" }}>✓</span>
+                        Paczka dodana — kredyty są już na Twoim koncie.
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  {showCounter && remaining !== null && (
+                    <div style={{ width: "100%", maxWidth: "420px", marginTop: "22px" }}>
+                      <CreditMeter
+                        isPaid={isPaid}
+                        remaining={remaining}
+                        limit={limit}
+                        credits={credits}
+                        onTopUp={topUp}
+                      />
+                    </div>
+                  )}
+
                   {/* Data warning */}
                   <AnimatePresence>
                     {showDataWarning && !warningDismissed && (
@@ -1201,7 +1233,7 @@ export default function ChatPage() {
                       remaining={remaining}
                       limit={limit}
                       credits={credits}
-                      onTopUp={() => { track("chat_pack_topup_clicked"); setShowPackModal("proactive"); }}
+                      onTopUp={topUp}
                     />
                   )}
                   <AnimatePresence>

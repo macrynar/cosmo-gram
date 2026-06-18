@@ -555,7 +555,7 @@ export default function MatchPublicPage() {
             {[
               { icon: <IconWheel />, title: "Kosmogram", desc: "Najpierw poznaj swój — Match porównuje dwa kosmogramy.", href: "/cosmogram" },
               { icon: <IconCal />, title: "Kalendarz", desc: "Twoje Dni Mocy i prognoza na dziś, tydzień, miesiąc, rok.", href: "/calendar" },
-              { icon: <IconChat />, title: "Cosmo Chat", desc: "Astrea — dopytaj o Waszą relację własnymi słowami.", href: "/chat" },
+              { icon: <IconChat />, title: "Cosmo Chat", desc: "Astrea — dopytaj o Waszą relację własnymi słowami.", href: "/app/chat" },
             ].map((card) => (
               <Link
                 key={card.title}
