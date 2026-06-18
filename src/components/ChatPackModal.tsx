@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Check, Loader2, MessageCircle } from "lucide-react";
+import { X, Check, Loader2, MessageCircle, ChevronRight } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { track } from "@/components/PostHogProvider";
 import { supabase } from "@/lib/supabase";
@@ -24,13 +24,16 @@ export default function ChatPackModal({ onClose, reason = "monthly_limit" }: Pro
   const { session } = useAuth();
   const [loading, setLoading] = useState<PackSize | null>(null);
   const [withdrawalConsent, setWithdrawalConsent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     track("chat_pack_modal_shown", { reason });
   }, [reason]);
 
   async function handleBuyPack(packSize: PackSize) {
-    if (!session) return;
+    setError(null);
+    if (!withdrawalConsent) { setError("Zaznacz zgodę na natychmiastowy dostęp do treści cyfrowych, aby kontynuować."); return; }
+    if (!session) { setError("Musisz być zalogowany, aby dokupić paczkę."); return; }
     track("chat_pack_initiated", { pack_size: packSize });
     setLoading(packSize);
     try {
@@ -46,14 +49,27 @@ export default function ChatPackModal({ onClose, reason = "monthly_limit" }: Pro
         body: JSON.stringify({ packSize }),
       });
 
-      if (!res.ok) {
-        console.error("buy-pack error", res.status);
+      const data = await res.json().catch(() => ({})) as { url?: string; error?: string };
+
+      if (!res.ok || data.error) {
+        console.error("[buy-pack] error", res.status, data.error);
+        track("chat_pack_error", { pack_size: packSize, status: res.status });
+        setError(
+          data.error
+            ? `Nie udało się otworzyć płatności: ${data.error}`
+            : `Nie udało się otworzyć płatności (kod ${res.status}). Spróbuj ponownie.`
+        );
         return;
       }
 
-      const { url, error } = await res.json() as { url?: string; error?: string };
-      if (error) { console.error(error); return; }
-      if (url) window.location.href = url;
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError("Stripe nie zwrócił adresu płatności. Spróbuj ponownie.");
+      }
+    } catch (e) {
+      console.error("[buy-pack] network error", e);
+      setError("Błąd połączenia. Sprawdź internet i spróbuj ponownie.");
     } finally {
       setLoading(null);
     }
@@ -141,7 +157,7 @@ export default function ChatPackModal({ onClose, reason = "monthly_limit" }: Pro
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.12 + i * 0.07, duration: 0.4 }}
                   onClick={() => handleBuyPack(pack.size)}
-                  disabled={!!loading || !withdrawalConsent}
+                  disabled={!!loading}
                   whileHover={loading ? undefined : { y: -1, boxShadow: isPopular ? "0 0 24px rgba(212,175,55,0.30)" : undefined }}
                   whileTap={loading ? undefined : { scale: 0.98 }}
                   className="w-full py-3.5 px-4 rounded-2xl text-sm font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
@@ -171,13 +187,27 @@ export default function ChatPackModal({ onClose, reason = "monthly_limit" }: Pro
                       )}
                     </span>
                   </span>
-                  <span className={`font-semibold text-sm ${isPopular ? "text-[#050508]" : "text-[#D4AF37]"}`}>
-                    {pack.price}
+                  <span className="flex items-center gap-1.5">
+                    <span className={`font-semibold text-sm ${isPopular ? "text-[#050508]" : "text-[#D4AF37]"}`}>
+                      {pack.price}
+                    </span>
+                    <ChevronRight className={`w-4 h-4 ${isPopular ? "text-[#050508]" : "text-[#D4AF37]"}`} style={{ opacity: 0.7 }} />
                   </span>
                 </motion.button>
               );
             })}
           </div>
+
+          {/* Komunikat błędu / walidacji */}
+          {error && (
+            <motion.p
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-red-400 text-xs text-center mb-4 leading-relaxed"
+            >
+              {error}
+            </motion.p>
+          )}
 
           {/* Withdrawal consent */}
           <label className="flex items-start gap-3 mb-4 cursor-pointer group">
