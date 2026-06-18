@@ -24,7 +24,6 @@
     { "source": "/profile",            "destination": "/app/settings/profile", "permanent": true },
     { "source": "/dashboard",          "destination": "/app/today",            "permanent": true },
     { "source": "/natal",              "destination": "/app/cosmogram",        "permanent": true },
-    { "source": "/horoskop-dzienny",   "destination": "/daily-horoscope",      "permanent": true },
-    { "source": "/reset-password",     "destination": "/forgot-password",      "permanent": true }
+    { "source": "/horoskop-dzienny",   "destination": "/daily-horoscope",      "permanent": true }
   ]
 }
