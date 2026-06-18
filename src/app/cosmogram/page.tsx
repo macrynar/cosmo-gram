@@ -586,7 +586,7 @@ export default function CosmogramPage() {
                 icon: <IconChat />,
                 title: "Cosmo Chat",
                 desc: "Astrea — astrolog AI, który zna Twój układ planet i odpowiada własnym głosem.",
-                href: "/chat",
+                href: "/app/chat",
               },
               {
                 icon: <IconSun />,

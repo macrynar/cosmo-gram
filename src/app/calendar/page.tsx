@@ -436,7 +436,7 @@ export default function CalendarPage() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, maxWidth: 860, margin: "0 auto" }}>
             {[
               { icon: <IconWheel />, title: "Kosmogram", desc: "Najpierw poznaj swój — to z niego liczą się Dni Mocy.", href: "/cosmogram" },
-              { icon: <IconChat />, title: "Cosmo Chat", desc: "Dopytaj Astreę, jak najlepiej wykorzystać dany dzień.", href: "/chat" },
+              { icon: <IconChat />, title: "Cosmo Chat", desc: "Dopytaj Astreę, jak najlepiej wykorzystać dany dzień.", href: "/app/chat" },
               { icon: <IconSunSm />, title: "Horoskop dzienny", desc: 'Krótka „pogoda" na dziś — w 60 sekund przy kawie.', href: "/daily" },
             ].map((card) => (
               <Link
