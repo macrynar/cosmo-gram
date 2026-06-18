@@ -22,12 +22,34 @@ export default function ResetPasswordPage() {
   const [done, setDone]         = useState(false);
 
   useEffect(() => {
+    // Register listener FIRST so we don't miss events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
+
+    async function resolveSession() {
+      // 1. Check existing session (covers page refresh after token exchange)
+      const { data } = await supabase.auth.getSession();
+      if (data.session) { setReady(true); return; }
+
+      // 2. Parse hash fragment — Supabase implicit flow puts tokens here
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const accessToken  = hash.get("access_token");
+      const refreshToken = hash.get("refresh_token") ?? "";
+      if (accessToken) {
+        const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        if (!error) { setReady(true); return; }
+      }
+
+      // 3. PKCE flow — code in query string
+      const code = new URLSearchParams(window.location.search).get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!error) { setReady(true); return; }
+      }
+    }
+
+    resolveSession();
     return () => subscription.unsubscribe();
   }, []);
 
