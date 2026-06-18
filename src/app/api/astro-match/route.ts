@@ -3,7 +3,7 @@ import { z } from "zod";
 import { calculateChart } from "@/lib/chart-engine";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getSynastryAspects, getSynastryScore, extractPlanetPositions, type SynastryAspect, type PlanetPos } from "@/lib/astro/synastry";
-import { hasActiveSubscription } from "@/lib/subscription";
+import { resolveActiveSubscription } from "@/lib/subscription";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { aiComplete } from "@/lib/deepseek";
 import { repairJson } from "@/lib/jsonRepair";
@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
       const token = authHeader.replace("Bearer ", "");
       const { data: { user } } = await supabaseAdmin.auth.getUser(token);
       if (user) {
-        isPaidUser = await hasActiveSubscription(user.id);
+        isPaidUser = await resolveActiveSubscription(user.id, user.email);
         if (isPaidUser) {
           const monthStart = new Date();
           monthStart.setDate(1);
