@@ -61,7 +61,20 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      # Fail only on high/critical vulnerabilities
+      # Fail only on high/critical vulnerabilities.
+      #
+      # Known accepted MODERATE issues (do NOT block CI, do NOT "fix" with --force):
+      #   - postcss <8.5.10 (XSS) via next. The only available fix is
+      #     `npm audit fix --force`, which downgrades next to 9.x — a breaking
+      #     change we will not make. Resolved upstream once next ships a patched
+      #     postcss; re-check on each Next.js upgrade.
+      #
+      # HIGH issues are all resolved:
+      #   - protobufjs etc. fixed via plain `npm audit fix`.
+      #   - d3-color ReDoS (transitive via react-simple-maps@3 → d3-zoom) is
+      #     pinned to the patched ^3.1.0 through the "overrides" field in
+      #     package.json (its public API is unchanged, so d3-interpolate /
+      #     d3-transition stay compatible — verified by build + tests).
       - run: npm audit --audit-level=high
 
   # ─── 5. Build ───────────────────────────────────────────────────────────────
