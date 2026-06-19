@@ -17,24 +17,8 @@ type PromptRow = {
   };
 };
 
-export default function PromptCompare() {
-  const { session } = useAuth();
-  const [prompts, setPrompts] = useState<PromptRow[]>([]);
-  const [idA, setIdA] = useState("");
-  const [idB, setIdB] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!session) return;
-    fetch("/api/admin-prompt", { headers: { Authorization: `Bearer ${session.access_token}` } })
-      .then((r) => r.json())
-      .then((data) => { setPrompts(data); setLoading(false); });
-  }, [session]);
-
-  const a = prompts.find((p) => p.id === idA);
-  const b = prompts.find((p) => p.id === idB);
-
-  const StatBlock = ({ row }: { row: PromptRow }) => (
+function StatBlock({ row }: { row: PromptRow }) {
+  return (
     <div className="space-y-2 text-sm">
       <div className="text-xs text-slate-500 font-mono">{row.prompt_name} · {row.version} · {row.status}</div>
       <div className="grid grid-cols-2 gap-2 mt-3">
@@ -58,6 +42,24 @@ export default function PromptCompare() {
       </div>
     </div>
   );
+}
+
+export default function PromptCompare() {
+  const { session } = useAuth();
+  const [prompts, setPrompts] = useState<PromptRow[]>([]);
+  const [idA, setIdA] = useState("");
+  const [idB, setIdB] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!session) return;
+    fetch("/api/admin-prompt", { headers: { Authorization: `Bearer ${session.access_token}` } })
+      .then((r) => r.json())
+      .then((data) => { setPrompts(data); setLoading(false); });
+  }, [session]);
+
+  const a = prompts.find((p) => p.id === idA);
+  const b = prompts.find((p) => p.id === idB);
 
   if (loading) return <div className="flex gap-2 text-slate-400"><Loader2 className="w-4 h-4 animate-spin" /> Ładowanie...</div>;
 
