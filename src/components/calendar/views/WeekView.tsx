@@ -8,20 +8,18 @@ import DayPanel from "@/components/calendar/DayPanel";
 import {
   PgWeatherZone,
   PgNarrZone,
+  PgInterpretButton,
   PgWhenBest,
   PgWindowsList,
   DayIcon,
   PROGNOZA_STYLES,
-  summarizeWindows,
+  summarizePeriodWeather,
+  characterLine,
+  plOkno,
   MONTH_SHORT,
   type ProgInterpretation,
   type WeatherKind,
 } from "./prognoza-shared";
-
-const MONTH_FULL: Record<number, string> = {
-  1: "Styczeń", 2: "Luty", 3: "Marzec", 4: "Kwiecień", 5: "Maj", 6: "Czerwiec",
-  7: "Lipiec", 8: "Sierpień", 9: "Wrzesień", 10: "Październik", 11: "Listopad", 12: "Grudzień",
-};
 
 function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -79,7 +77,7 @@ export default function WeekView({
     new Map(weekWindows.map(w => [`${w.transitPlanet}-${w.aspectType}-${w.natalPoint}`, w])).values()
   ).slice(0, 5);
 
-  const { intensity, character, kind: weekKind, orbSrc } = summarizeWindows(uniqueWindows);
+  const headerWeather = summarizePeriodWeather(uniqueWindows);
 
   // Per-day weather from windowDateMap (same source as icons — consistent)
   const dayWeathers = weekDates.map(dateStr => {
@@ -141,18 +139,11 @@ export default function WeekView({
       <PgWeatherZone
         eyebrow={eyebrow}
         theme={interp?.theme ?? headerLabel}
-        desc={
-          interp?.summary ??
-          (interpLoading ? "Generuję interpretację tygodnia…" :
-           interpError   ? "Nie udało się wygenerować. Spróbuj ponownie." :
-           !isPremium    ? "Interpretacja AI dostępna w planie Plus." :
-                           "")
-        }
-        sub={uniqueWindows.length > 0 ? `${uniqueWindows.length} aktywnych okien` : "spokojny tydzień"}
-        intensity={intensity}
-        character={character}
-        kind={weekKind}
-        orbSrc={orbSrc}
+        desc={interp?.summary ?? characterLine(headerWeather, uniqueWindows.length)}
+        sub={uniqueWindows.length === 0
+          ? "Spokojny tydzień — brak wyraźnych okien"
+          : `${uniqueWindows.length} ${plOkno(uniqueWindows.length)} w tym tygodniu`}
+        intensity={headerWeather.intensity}
       />
 
       <section className="pg-timeline">
@@ -190,6 +181,15 @@ export default function WeekView({
           })}
         </div>
         <div className="pg-hint">Kliknij dzień, by zobaczyć szczegóły · Słońce = sprzyja · Piorun = napięcie · Księżyc = spokojnie</div>
+        {!interp && (
+          <PgInterpretButton
+            label="Generuj interpretację tygodnia"
+            loading={interpLoading}
+            error={interpError}
+            isPremium={isPremium}
+            onClick={fetchInterp}
+          />
+        )}
       </section>
 
       {/* Day panel — shown inline when day selected */}
@@ -207,36 +207,11 @@ export default function WeekView({
         />
       )}
 
-      {/* Week interpretation — generated on demand */}
-      {isPremium && !interp && !interpLoading && (
-        <section className="pg-narr">
-          <button
-            onClick={fetchInterp}
-            style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "11px 20px", borderRadius: 12, fontSize: 14, fontWeight: 600,
-              border: "1px solid rgba(224,181,102,.40)", background: "rgba(224,181,102,.06)",
-              color: "var(--pg-deep)", cursor: "pointer", transition: ".2s",
-              fontFamily: "inherit",
-            }}
-          >
-            Generuj interpretację tygodnia
-          </button>
-          {interpError && (
-            <p style={{ fontSize: 13, color: "var(--pg-tense)", marginTop: 10 }}>
-              Nie udało się wygenerować — spróbuj ponownie.
-            </p>
-          )}
-        </section>
-      )}
-
-      {isPremium && (interp || interpLoading) && (
+      {isPremium && interp?.narr && (
         <PgNarrZone
-          narr={interp?.narr ?? null}
-          sources={interp?.sources ?? []}
-          reflection={interp?.reflection ?? null}
-          loading={interpLoading}
-          isPremium={isPremium}
+          narr={interp.narr}
+          sources={interp.sources ?? []}
+          reflection={interp.reflection ?? null}
         />
       )}
 

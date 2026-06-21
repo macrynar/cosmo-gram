@@ -427,7 +427,6 @@ export default function CalendarPage() {
                     isPremium={isPremium}
                     readingId={selectedId}
                     year={year}
-                    chart={selectedReading?.chart_data ?? null}
                     session={session}
                     onDayClick={(date) => {
                       const d = new Date(date + "T12:00:00Z");

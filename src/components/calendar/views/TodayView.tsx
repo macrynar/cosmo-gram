@@ -8,11 +8,13 @@ import {
   PgWeatherZone,
   PgTimelineDay,
   PgNarrZone,
+  PgInterpretButton,
   PgWhenBest,
   PgWindowsList,
   type ProgInterpretation,
   PROGNOZA_STYLES,
-  summarizeWindows,
+  summarizePeriodWeather,
+  characterLine,
   MONTH_SHORT,
   WEEK_DAY_FULL,
 } from "./prognoza-shared";
@@ -37,7 +39,7 @@ export default function TodayView({
 
   // Weather gauge — same source as WeekView/MonthView (windowDateMap → fast planets only)
   // Slow outer planets (Uran/Neptune/Saturn) move <0.1°/day and skew daily intensity if included
-  const { intensity, character, kind, orbSrc } = summarizeWindows(dayWindows);
+  const headerWeather = summarizePeriodWeather(dayWindows);
 
   // Transits still used for the day timeline display and Moon element line
   const transits = getTransitsForDate(chart, now);
@@ -113,12 +115,9 @@ export default function TodayView({
       <PgWeatherZone
         eyebrow={eyebrow}
         theme={interp?.theme ?? title}
-        desc={interp?.summary ?? ""}
+        desc={interp?.summary ?? characterLine(headerWeather, dayWindows.length)}
         sub={`☾ Księżyc · ${weather.element}`}
-        intensity={intensity}
-        character={character}
-        kind={kind}
-        orbSrc={orbSrc}
+        intensity={headerWeather.intensity}
       />
 
       <section className="pg-timeline">
@@ -127,37 +126,22 @@ export default function TodayView({
         </div>
         <PgTimelineDay moments={dayMoments} nowPct={nowPct} />
         <div className="pg-hint">Złoto = wsparcie · terakota = napięcie · najedź po szczegół</div>
+        {!interp && (
+          <PgInterpretButton
+            label="Generuj interpretację dnia"
+            loading={interpLoading}
+            error={interpError}
+            isPremium={isPremium}
+            onClick={fetchInterp}
+          />
+        )}
       </section>
 
-      {isPremium && !interp && !interpLoading && (
-        <section className="pg-narr">
-          <button
-            onClick={fetchInterp}
-            style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "11px 20px", borderRadius: 12, fontSize: 14, fontWeight: 600,
-              border: "1px solid rgba(224,181,102,.40)", background: "rgba(224,181,102,.06)",
-              color: "var(--pg-deep)", cursor: "pointer", transition: ".2s",
-              fontFamily: "inherit",
-            }}
-          >
-            Generuj interpretację dnia
-          </button>
-          {interpError && (
-            <p style={{ fontSize: 13, color: "var(--pg-tense)", marginTop: 10 }}>
-              Nie udało się wygenerować — spróbuj ponownie.
-            </p>
-          )}
-        </section>
-      )}
-
-      {isPremium && (interp || interpLoading) && (
+      {isPremium && interp?.narr && (
         <PgNarrZone
-          narr={interp?.narr ?? null}
-          sources={interp?.sources ?? []}
-          reflection={interp?.reflection ?? null}
-          loading={interpLoading}
-          isPremium={isPremium}
+          narr={interp.narr}
+          sources={interp.sources ?? []}
+          reflection={interp.reflection ?? null}
         />
       )}
 
