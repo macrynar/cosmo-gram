@@ -1,4 +1,4 @@
-import { Html, Body, Container, Section, Text, Link, Footer, Heading } from "@react-email/components";
+import { Html, Body, Container, Section, Text, Link, Heading } from "@react-email/components";
 
 export interface WeeklyHoroscopeEmailProps {
   userName: string;
@@ -67,7 +67,7 @@ export function WeeklyHoroscopeEmail({
             </Link>
           </Section>
 
-          <Footer style={{ textAlign: "center", color: "#999", fontSize: "12px", paddingTop: "20px" }}>
+          <Section style={{ textAlign: "center", color: "#999", fontSize: "12px", paddingTop: "20px" }}>
             <Text style={{ marginBottom: "10px" }}>
               © {new Date().getFullYear()} Cosmogram. Wszyscy prawa zastrzeżone.
             </Text>
@@ -81,7 +81,7 @@ export function WeeklyHoroscopeEmail({
             >
               Wyrejestruj się z wiadomości tygodniowych
             </Link>
-          </Footer>
+          </Section>
         </Container>
       </Body>
     </Html>
@@ -155,7 +155,7 @@ export function MonthlyForecastEmail({
             </Link>
           </Section>
 
-          <Footer style={{ textAlign: "center", color: "#999", fontSize: "12px", paddingTop: "20px" }}>
+          <Section style={{ textAlign: "center", color: "#999", fontSize: "12px", paddingTop: "20px" }}>
             <Text style={{ marginBottom: "10px" }}>
               © {new Date().getFullYear()} Cosmogram. Wszyscy prawa zastrzeżone.
             </Text>
@@ -169,7 +169,7 @@ export function MonthlyForecastEmail({
             >
               Wyrejestruj się z wiadomości miesięcznych
             </Link>
-          </Footer>
+          </Section>
         </Container>
       </Body>
     </Html>

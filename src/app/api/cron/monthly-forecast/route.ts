@@ -7,7 +7,10 @@ import { Resend } from "resend";
 export const maxDuration = 60;
 export const runtime = "nodejs";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy — avoid instantiating (and throwing on a missing key) at import/build time.
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 /**
  * Vercel Cron: GET /api/cron/monthly-forecast
@@ -144,7 +147,7 @@ async function sendMonthlyEmail(
   );
 
   try {
-    const result = await resend.emails.send({
+    const result = await getResend().emails.send({
       from: process.env.RESEND_FROM ?? process.env.RESEND_FROM_EMAIL ?? "Cosmogram <hello@cosmo-gram.com>",
       to: user.email,
       subject: `Twoja prognoza na ${monthName} ${year}`,
