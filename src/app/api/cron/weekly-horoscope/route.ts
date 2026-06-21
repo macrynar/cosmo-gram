@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
- * Vercel Cron: POST /api/cron/weekly-horoscope
+ * Vercel Cron: GET /api/cron/weekly-horoscope
  * Scheduled: Every Sunday at 6:00 PM UTC
  * Purpose: Send weekly horoscope to Premium subscribers
  *
@@ -21,6 +21,15 @@ interface SubscriptionWithUser {
   user_id: string;
   email: string;
   name: string;
+}
+
+function getISOWeekKey(weekStartISO: string): string {
+  const d = new Date(`${weekStartISO}T12:00:00Z`);
+  const thu = new Date(d);
+  thu.setUTCDate(d.getUTCDate() + 3);
+  const yearStart = new Date(Date.UTC(thu.getUTCFullYear(), 0, 1));
+  const weekNum = Math.ceil(((thu.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${thu.getUTCFullYear()}-W${String(weekNum).padStart(2, "0")}`;
 }
 
 function getWeekBoundaries(): { start: string; end: string } {
@@ -99,6 +108,7 @@ async function getOrGenerateWeekInterpretation(
   readingId: string
 ): Promise<{ content: string; generated: boolean } | null> {
   const { start: weekStart } = getWeekBoundaries();
+  const isoWeek = getISOWeekKey(weekStart);
 
   // Try to get cached interpretation
   const { data: cached } = await supabaseAdmin
@@ -106,7 +116,7 @@ async function getOrGenerateWeekInterpretation(
     .select("content")
     .eq("user_id", userId)
     .eq("reading_id", readingId)
-    .eq("iso_week", weekStart)
+    .eq("iso_week", isoWeek)
     .maybeSingle();
 
   if (cached) {
@@ -176,7 +186,7 @@ async function updateSentTimestamp(userId: string): Promise<void> {
     .eq("user_id", userId);
 }
 
-export async function POST(req: NextRequest) {
+async function runWeeklyCron(req: NextRequest) {
   // Auth check
   const secret = req.headers.get("authorization");
   if (secret !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -266,4 +276,12 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(req: NextRequest) {
+  return runWeeklyCron(req);
+}
+
+export async function POST(req: NextRequest) {
+  return runWeeklyCron(req);
 }

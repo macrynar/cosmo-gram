@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
- * Vercel Cron: POST /api/cron/monthly-forecast
+ * Vercel Cron: GET /api/cron/monthly-forecast
  * Scheduled: 28th of each month at 6:00 PM UTC
  * Purpose: Send monthly forecast to Premium subscribers
  *
@@ -171,7 +171,7 @@ async function updateSentTimestamp(userId: string): Promise<void> {
     .eq("user_id", userId);
 }
 
-export async function POST(req: NextRequest) {
+async function runMonthlyCron(req: NextRequest) {
   // Auth check
   const secret = req.headers.get("authorization");
   if (secret !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -264,4 +264,12 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(req: NextRequest) {
+  return runMonthlyCron(req);
+}
+
+export async function POST(req: NextRequest) {
+  return runMonthlyCron(req);
 }
