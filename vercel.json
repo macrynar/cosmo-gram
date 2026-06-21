@@ -11,6 +11,14 @@
     {
       "path": "/api/cron/cleanup-chat-sessions",
       "schedule": "0 3 1 * *"
+    },
+    {
+      "path": "/api/cron/weekly-horoscope",
+      "schedule": "0 18 * * 0"
+    },
+    {
+      "path": "/api/cron/monthly-forecast",
+      "schedule": "0 18 28 * *"
     }
   ],
   "redirects": [
