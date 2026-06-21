@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kosmogram natalny — mapa nieba z chwili urodzenia · mockup</title>
+<meta name="description" content="Kosmogram natalny (horoskop urodzeniowy) to mapa położenia planet w chwili Twoich narodzin. Interpretacja AI po polsku, obliczenia Swiss Ephemeris. Wygeneruj za darmo.">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&display=swap" rel="stylesheet">
+<!--
+  JSON-LD do wdrożenia (CC): WebPage + BreadcrumbList + HowTo + FAQPage + SoftwareApplication/Product.
+  Poniżej w <body> wstawiłem przykładowe FAQPage + HowTo jako wzór — bez aggregateRating (nie zmyślamy ocen).
+-->
+<style>
+:root{
+  --bg-base:#0B0912;--bg-elevated:#14101F;--text-primary:#F4F1EA;--text-secondary:#B6AFC6;
+  --text-muted:#877FA0;--accent:#FFAE3D;--accent-deep:#E0B566;--voice:#E9DCC0;
+  --line:#2B2540;--line-soft:rgba(182,175,198,.14);--tense:#E2654A;--ease:cubic-bezier(.22,1,.36,1);
+  --grad-ember:linear-gradient(135deg,#FFC56B 0%,#E0992E 100%);
+}
+*{margin:0;box-sizing:border-box}
+body{background:var(--bg-base);color:var(--text-primary);font-family:'General Sans',system-ui,sans-serif;line-height:1.6}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+.nav{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,9,18,.72);backdrop-filter:blur(12px);z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600}
+.tabs{display:flex;gap:2px}.tab{padding:8px 13px;border-radius:999px;color:var(--text-muted);font-size:13.5px}
+.tab.on{color:var(--voice);background:rgba(224,181,102,.10);border:1px solid var(--line)}
+.navr{display:flex;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;font-family:inherit;cursor:pointer;transition:.25s var(--ease);font-weight:600}
+.btn.sm{font-size:13px;padding:8px 15px}
+.btn.ghost{color:var(--text-muted);background:none;border:none}
+.btn.line{border:1px solid rgba(224,181,102,.4);color:var(--voice);background:rgba(224,181,102,.06)}
+.btn.primary{background:var(--grad-ember);color:#241704;border:none;box-shadow:0 8px 26px rgba(255,174,61,.18)}
+.btn.primary:hover{filter:brightness(1.05)}.btn svg{width:16px;height:16px}
+.eyebrow{font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--accent-deep)}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:500;letter-spacing:.01em;line-height:1.15}
+.lead{color:var(--text-secondary);font-size:17px;line-height:1.65}
+.g{color:var(--accent-deep);font-family:'Segoe UI Symbol','Apple Symbols',system-ui,sans-serif;font-feature-settings:normal}
+
+/* hero */
+.hero{position:relative;text-align:center;padding:90px 22px 70px;overflow:hidden}
+.hero .bg{position:absolute;inset:0;background-image:url("https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260617_094724_e702b157-0512-4a98-bcb1-9514e87ac946.png");background-size:cover;background-position:center;opacity:.5}
+.hero .bg::after{content:'';position:absolute;inset:0;background:radial-gradient(70% 70% at 50% 35%,rgba(11,9,18,.35) 0%,rgba(11,9,18,.86) 70%,var(--bg-base) 100%)}
+.hero .in{position:relative;z-index:1;max-width:760px;margin:0 auto}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:999px;border:1px solid rgba(224,181,102,.28);background:rgba(224,181,102,.08);color:var(--accent-deep);font-size:12px;font-weight:600;margin-bottom:20px}
+.pill svg{width:13px;height:13px}
+.hero h1{font-size:clamp(34px,5.4vw,54px);margin-bottom:18px}
+.hero h1 .hl{background:var(--grad-ember);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero .lead{max-width:600px;margin:0 auto 30px}
+.reass{margin-top:14px;font-size:12.5px;color:var(--text-muted)}
+
+section{padding:54px 0}
+.sec-h{text-align:center;max-width:620px;margin:0 auto 34px}
+.sec-h h2{font-size:clamp(26px,3.4vw,34px);margin:8px 0 10px}
+.sec-h p{color:var(--text-secondary);font-size:15.5px}
+
+/* definicja (GEO snippet) */
+.define{background:var(--bg-elevated);border:1px solid var(--line);border-left:3px solid var(--accent-deep);border-radius:16px;padding:26px 28px;max-width:780px;margin:0 auto}
+.define .eyebrow{display:block;margin-bottom:10px}
+.define p{font-size:17px;line-height:1.7;color:var(--text-primary)}
+.define b{color:var(--accent-deep);font-weight:600}
+
+/* howto */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.step{background:var(--bg-elevated);border:1px solid var(--line);border-radius:16px;padding:22px}
+.step .n{font-family:'Fraunces',serif;font-size:13px;color:var(--accent-deep);border:1px solid var(--line);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:13px}
+.step h3{font-size:17px;margin-bottom:7px}.step p{color:var(--text-secondary);font-size:14px;line-height:1.6}
+
+/* co pokazuje */
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+.tcard{background:var(--bg-elevated);border:1px solid var(--line);border-radius:16px;padding:20px;text-align:center}
+.tcard .gw{font-size:30px;line-height:1;margin-bottom:10px;display:block}
+.tcard h3{font-size:18px;margin-bottom:5px}.tcard p{color:var(--text-muted);font-size:13px;line-height:1.5}
+.planets{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.pl{background:rgba(182,175,198,.03);border:1px solid var(--line);border-radius:13px;padding:14px;text-align:center}
+.pl .gw{font-size:22px;color:var(--accent-deep)}.pl .nm{font-size:13.5px;font-weight:600;margin-top:6px}.pl .d{font-size:11.5px;color:var(--text-muted);margin-top:2px;line-height:1.4}
+.foot-note{text-align:center;color:var(--text-muted);font-size:13px;margin-top:18px}
+
+/* tabela porównawcza */
+.cmp{width:100%;border-collapse:collapse;max-width:820px;margin:0 auto;font-size:14.5px}
+.cmp th,.cmp td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--line)}
+.cmp thead th{font-family:'Fraunces',serif;font-weight:500;font-size:16px}
+.cmp thead th:nth-child(2){color:var(--accent-deep)}
+.cmp td:first-child,.cmp th:first-child{color:var(--text-muted);font-weight:500}
+.cmp td:nth-child(2){color:var(--text-primary)}
+.cmp td:nth-child(3){color:var(--text-muted)}
+.cmp tbody tr:hover{background:rgba(224,181,102,.03)}
+.sampleblock{max-width:760px;margin:0 auto;background:var(--bg-elevated);border:1px solid var(--line);border-left:3px solid var(--accent-deep);border-radius:16px;padding:26px 28px}
+.sampleblock .sq{font-family:'Fraunces',serif;font-style:italic;font-size:19px;line-height:1.5;color:var(--voice);margin-bottom:12px}
+.sampleblock p{color:var(--text-secondary);font-size:15px;line-height:1.7}
+.chatnote{text-align:center;font-size:11.5px;color:var(--text-muted);margin-top:12px}
+
+/* karta panel (ascendent / dziecko) */
+.panel{background:var(--bg-elevated);border:1px solid var(--line);border-radius:18px;padding:28px;display:grid;grid-template-columns:1fr;gap:8px;max-width:820px;margin:0 auto}
+.panel h3{font-size:21px;margin-bottom:4px}.panel p{color:var(--text-secondary);font-size:15px}
+.panel.child{border-color:rgba(224,181,102,.25);background:radial-gradient(120% 100% at 0% 0%,rgba(224,181,102,.06),var(--bg-elevated))}
+.inline-link{color:var(--accent-deep);border-bottom:1px solid rgba(224,181,102,.4)}
+/* sekcja kosmogramu dziecka — rozbudowana */
+.childfeat{display:grid;grid-template-columns:1.35fr .9fr;gap:26px;align-items:center;max-width:900px;margin:0 auto;background:radial-gradient(130% 140% at 0% 0%,rgba(224,181,102,.09),var(--bg-elevated));border:1px solid rgba(224,181,102,.26);border-radius:22px;padding:34px}
+.childfeat .eyebrow{display:block;margin-bottom:8px}
+.childfeat h2{font-size:clamp(24px,3vw,30px);margin-bottom:12px}
+.childfeat p{color:var(--text-secondary);font-size:15px;margin-bottom:18px}
+.cf-list{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;margin-bottom:24px}
+.cf-list li{position:relative;padding-left:18px;font-size:13.5px;color:var(--text-secondary)}
+.cf-list li::before{content:'';position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.cf-vis{display:flex;align-items:center;justify-content:center}.cf-vis svg{width:170px;height:170px}
+@media(max-width:760px){.childfeat{grid-template-columns:1fr}.cf-vis{order:-1}.cf-vis svg{width:130px;height:130px}.cf-list{grid-template-columns:1fr}}
+
+/* powiązane */
+.rel{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:820px;margin:0 auto}
+.rcard{display:flex;gap:13px;align-items:flex-start;background:var(--bg-elevated);border:1px solid var(--line);border-radius:14px;padding:18px;transition:border-color .2s var(--ease)}
+.rcard:hover{border-color:rgba(224,181,102,.35)}
+.rcard .ic{width:36px;height:36px;border-radius:10px;background:rgba(224,181,102,.10);border:1px solid rgba(224,181,102,.22);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.rcard .ic svg{width:17px;height:17px;color:var(--accent-deep)}
+.rcard h3{font-size:16px;margin-bottom:3px}.rcard p{font-size:13px;color:var(--text-muted);line-height:1.5}
+
+/* faq */
+.faq-list{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+details.faq{background:var(--bg-elevated);border:1px solid var(--line);border-radius:13px;padding:4px 18px;transition:border-color .2s var(--ease)}
+details.faq[open]{border-color:rgba(224,181,102,.3)}
+details.faq summary{list-style:none;cursor:pointer;padding:15px 0;font-weight:600;font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary::after{content:'+';color:var(--accent-deep);font-size:20px;transition:.2s var(--ease)}
+details.faq[open] summary::after{content:'–'}
+details.faq p{color:var(--text-secondary);font-size:14.5px;line-height:1.65;padding:0 0 16px}
+
+/* cta */
+.cta{text-align:center;max-width:680px;margin:0 auto;background:radial-gradient(120% 120% at 50% 0%,rgba(224,181,102,.08),var(--bg-elevated));border:1px solid rgba(224,181,102,.22);border-radius:22px;padding:44px 28px}
+.cta h2{font-size:clamp(28px,3.6vw,38px);margin-bottom:12px}
+.cta p{color:var(--text-secondary);margin-bottom:24px}
+.btn.lg{font-size:15px;padding:14px 30px}
+
+/* footer */
+footer{border-top:1px solid var(--line);margin-top:40px;padding:46px 0 30px;color:var(--text-muted);font-size:13px}
+.fcols{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:24px;margin-bottom:30px}
+.fcols h4{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px}
+.fcols a{display:block;color:var(--text-secondary);font-size:13.5px;margin-bottom:7px}
+.fdisc{border-top:1px solid var(--line);padding-top:18px;font-size:12px;line-height:1.6}
+@media(max-width:760px){.steps,.trio,.planets,.rel,.fcols{grid-template-columns:1fr}.tabs{display:none}.planets{grid-template-columns:repeat(2,1fr)}}
+</style></head>
+<body>
+
+<nav class="nav">
+  <div class="brand"><svg width="22" height="22" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>cosmogram</div>
+  <div class="tabs"><a class="tab on">Kosmogram</a><a class="tab">Kalendarz</a><a class="tab">Cosmo Match</a><a class="tab">Cosmo Chat</a><a class="tab">Blog</a><a class="tab">Cennik</a></div>
+  <div class="navr"><a class="btn ghost sm">Zaloguj</a><a class="btn line sm">Załóż konto</a></div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="bg"></div>
+  <div class="in">
+    <h1>Twoja mapa nieba<br><span class="hl">z chwili urodzenia</span></h1>
+    <p class="lead">Kosmogram (horoskop urodzeniowy) to precyzyjna mapa położenia wszystkich planet w momencie Twoich narodzin. U nas czyta go AI — po polsku, z głębią, jakiej nie da darmowy kalkulator.</p>
+    <a class="btn primary lg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.9 5.2L19 10l-5.1 1.8L12 17l-1.9-5.2L5 10l5.1-1.8z"/></svg>Wygeneruj swój kosmogram — za darmo</a>
+    <p class="reass">Wystarczą data i miejsce urodzenia — godzinę dodaj, jeśli znasz · gotowe w kilkanaście sekund</p>
+  </div>
+</header>
+
+<!-- DEFINICJA (GEO snippet) -->
+<section>
+  <div class="wrap">
+    <div class="define">
+      <span class="eyebrow">Czym jest kosmogram?</span>
+      <p><b>Kosmogram</b>, nazywany też horoskopem urodzeniowym lub natalnym, to wykres pokazujący, gdzie znajdowały się Słońce, Księżyc i planety w chwili Twoich narodzin. W przeciwieństwie do horoskopu „pod znak" opiera się na dokładnej <b>dacie, godzinie i miejscu urodzenia</b> — dlatego jest jedyny w swoim rodzaju, jak odcisk palca.</p>
+    </div>
+  </div>
+</section>
+
+<!-- JAK TO DZIAŁA (HowTo) -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Jak to działa</span><h2>Jak obliczyć swój kosmogram</h2><p>Trzy kroki, kilkanaście sekund.</p></div>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Podajesz datę urodzenia</h3><p>Data i miejsce. Znasz godzinę? Dodaj ją — odsłoni Ascendent i domy. Jeśli nie, policzymy wersję bez nich.</p></div>
+      <div class="step"><div class="n">2</div><h3>Liczymy Twój wykres</h3><p>Wyznaczamy położenie wszystkich planet z dokładnością co do minuty — tak, jak robi to zawodowy astrolog.</p></div>
+      <div class="step"><div class="n">3</div><h3>Czytasz interpretację</h3><p>Napisaną przez AI po polsku, dla Twojego układu planet — nie ogólniki ze znaku Słońca.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CO POKAZUJE -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Co pokazuje Twój kosmogram</span><h2>Od Wielkiej Trójki po wszystkie planety</h2><p>Zaczynamy od trzech filarów, potem reszta układu — i domy, i aspekty między planetami.</p></div>
+    <div class="trio">
+      <div class="tcard"><span class="gw g">&#9737;&#xFE0E;</span><h3>Słońce</h3><p>Twoja tożsamość, wola i cel życiowy.</p></div>
+      <div class="tcard"><span class="gw g">&#9789;&#xFE0E;</span><h3>Księżyc</h3><p>Emocje, instynkty i poczucie bezpieczeństwa.</p></div>
+      <div class="tcard"><span class="gw g">&#8593;</span><h3>Ascendent</h3><p>Maska, którą pokazujesz światu, i pierwsze wrażenie.</p></div>
+    </div>
+    <div class="planets">
+      <div class="pl"><span class="gw g">&#9791;&#xFE0E;</span><div class="nm">Merkury</div><div class="d">Myślenie i komunikacja</div></div>
+      <div class="pl"><span class="gw g">&#9792;&#xFE0E;</span><div class="nm">Wenus</div><div class="d">Miłość i wartości</div></div>
+      <div class="pl"><span class="gw g">&#9794;&#xFE0E;</span><div class="nm">Mars</div><div class="d">Energia i działanie</div></div>
+      <div class="pl"><span class="gw g">&#9795;&#xFE0E;</span><div class="nm">Jowisz</div><div class="d">Rozwój i sens</div></div>
+      <div class="pl"><span class="gw g">&#9796;&#xFE0E;</span><div class="nm">Saturn</div><div class="d">Dyscyplina i dojrzałość</div></div>
+    </div>
+    <p class="foot-note">…a do tego 12 domów (obszary życia) i aspekty — kąty, które planety tworzą między sobą.</p>
+  </div>
+</section>
+
+<!-- TABELA PORÓWNAWCZA -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Dlaczego to nie to samo</span><h2>Kosmogram a horoskop „pod znak"</h2></div>
+    <table class="cmp">
+      <thead><tr><th></th><th>Kosmogram natalny</th><th>Horoskop z gazety</th></tr></thead>
+      <tbody>
+        <tr><td>Na czym oparty</td><td>Liczony z daty, miejsca i — jeśli znasz — godziny urodzenia</td><td>Bierze pod uwagę tylko Twój znak Słońca</td></tr>
+        <tr><td>Personalizacja</td><td>Jest unikalny — tylko Twój</td><td>Wspólny dla co dwunastej osoby na świecie</td></tr>
+        <tr><td>Dokładność</td><td>Pokazuje dokładne położenie wszystkich planet</td><td>Mocno upraszcza obraz</td></tr>
+        <tr><td>Głębia</td><td>Mówi o osobowości, relacjach, karierze i emocjach</td><td>Jedno ogólne zdanie na dzień</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- FRAGMENT INTERPRETACJI (dowód) -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Tak to brzmi</span><h2>Fragment interpretacji</h2></div>
+    <div class="sampleblock">
+      <p class="sq">„Słońce w Koziorożcu daje Ci cierpliwość, której inni Ci zazdroszczą — i poprzeczkę, którą czasem zawieszasz sobie za wysoko."</p>
+      <p>To nie opis „Koziorożca w ogóle". W Twoim układzie ta dyscyplina spotyka się z Księżycem w Skorpionie — dlatego potrafisz wyglądać na spokojnego, gdy w środku przeżywasz mocno. Interpretacja łączy te elementy w jeden obraz: kim jesteś, a nie pod jaki znak trafiłeś.</p>
+      <p class="chatnote">Ilustracja. Twoja interpretacja powstaje z Twojego własnego układu planet.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ASCENDENT / BEZ GODZINY -->
+<section>
+  <div class="wrap">
+    <div class="panel">
+      <h3>Ascendent i godzina urodzenia</h3>
+      <p>Ascendent — znak wschodzący nad horyzontem w chwili narodzin — zmienia się mniej więcej co dwie godziny. Dlatego do pełnego kosmogramu potrzebna jest dokładna <b style="color:var(--accent-deep);font-weight:600">godzina urodzenia</b> (znajdziesz ją w akcie urodzenia). Nie znasz godziny? Policzymy przybliżony kosmogram — bez Ascendentu i domów, z orientacyjną pozycją Księżyca — wciąż wartościowy.</p>
+    </div>
+  </div>
+</section>
+
+<!-- KOSMOGRAM DZIECKA -->
+<section>
+  <div class="wrap">
+    <div class="childfeat">
+      <div class="cf-body">
+        <span class="eyebrow">Dla rodziców</span>
+        <h2>Kosmogram dziecka</h2>
+        <p>Interpretacja skupiona na tym, czego potrzebuje dziecko — nie na tym, kim będzie. Pomaga rozumieć temperament, świat emocji i sposób uczenia się malucha, z konkretnymi wskazówkami dla rodzica.</p>
+        <ul class="cf-list">
+          <li>Temperament i naturalne skłonności</li>
+          <li>Potrzeby emocjonalne i przywiązanie</li>
+          <li>Jak dziecko uczy się najlepiej</li>
+          <li>Wskazówki dla rodzica — praktyczne</li>
+        </ul>
+        <a class="btn line lg" href="/for-kids">Zobacz kosmogram dziecka →</a>
+      </div>
+      <div class="cf-vis" aria-hidden="true">
+        <svg viewBox="0 0 200 200" fill="none">
+          <circle cx="100" cy="100" r="80" stroke="rgba(224,181,102,.22)" stroke-width="1"/>
+          <circle cx="100" cy="100" r="60" stroke="rgba(224,181,102,.16)" stroke-width="1"/>
+          <path d="M120 64a44 44 0 1 0 0 72 35 35 0 0 1 0-72z" fill="rgba(224,181,102,.16)" stroke="#E0B566" stroke-width="1.6"/>
+          <path d="M70 58l2.8 7.2L80 68l-7.2 2.8L70 78l-2.8-7.2L60 68l7.2-2.8z" fill="#FFAE3D"/>
+          <path d="M138 124l2 5.2 5.2 2-5.2 2-2 5.2-2-5.2-5.2-2 5.2-2z" fill="#E0B566"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- POWIĄZANE -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Więcej w Cosmogram</span><h2>Gdy poznasz już swój kosmogram</h2></div>
+    <div class="rel">
+      <a class="rcard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20.3l-1.3-1.2C6 14.8 3.5 12.5 3.5 9.4 3.5 7 5.4 5.2 7.7 5.2c1.3 0 2.6.6 3.4 1.6.8-1 2.1-1.6 3.4-1.6 2.3 0 4.2 1.8 4.2 4.2 0 3.1-2.5 5.4-7.2 9.7L12 20.3z"/></svg></span><div><h3>Cosmo Match</h3><p>Synastria — nałóż swój kosmogram na kosmogram drugiej osoby i sprawdź kompatybilność.</p></div></a>
+      <a class="rcard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span><div><h3>Kalendarz astronomiczny</h3><p>Twoje Dni Mocy i prognoza na dziś, tydzień, miesiąc i rok.</p></div></a>
+      <a class="rcard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg></span><div><h3>Cosmo Chat</h3><p>Astrea — astrolog AI, który zna Twój układ planet i odpowiada własnym głosem.</p></div></a>
+      <a class="rcard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5.6 5.6 7 7M17 17l1.4 1.4"/></svg></span><div><h3>Horoskop dzienny</h3><p>Codzienna refleksja liczona dla Ciebie, nie dla znaku z gazety.</p></div></a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">FAQ</span><h2>Najczęstsze pytania o kosmogram</h2></div>
+    <div class="faq-list">
+      <details class="faq"><summary>Czym jest kosmogram?</summary><p>Kosmogram (horoskop urodzeniowy, natalny) to mapa położenia Słońca, Księżyca i planet w chwili Twoich narodzin, obliczana z daty, godziny i miejsca urodzenia. Pokazuje Twój indywidualny układ — nie znak, pod który trafia 1/12 ludzi.</p></details>
+      <details class="faq"><summary>Czy kosmogram jest za darmo?</summary><p>Tak. Pierwszy kosmogram i podstawową interpretację wygenerujesz bezpłatnie, bez karty. Pełna, pogłębiona interpretacja i pozostałe funkcje są w planie Cosmogram Plus.</p></details>
+      <details class="faq"><summary>Czy potrzebuję godziny urodzenia?</summary><p>Do pełnego wyniku — tak. Godzina wyznacza Ascendent i domy, które zmieniają się co ok. dwie godziny. Bez godziny policzymy przybliżony kosmogram (bez Ascendentu i domów, z orientacyjną pozycją Księżyca).</p></details>
+      <details class="faq"><summary>Czym kosmogram różni się od horoskopu z gazety?</summary><p>Horoskop „pod znak" patrzy tylko na Słońce i jest wspólny dla milionów osób. Kosmogram uwzględnia położenie wszystkich planet w Twoim momencie narodzin — dlatego jest osobisty i znacznie dokładniejszy.</p></details>
+      <details class="faq"><summary>Skąd biorą się obliczenia?</summary><p>Z efemeryd Swiss Ephemeris — tego samego źródła danych astronomicznych, którego używają zawodowi astrolodzy. Interpretację pisze AI po polsku, na podstawie wyliczonego układu.</p></details>
+      <details class="faq"><summary>Co to jest ascendent?</summary><p>Ascendent to znak zodiaku wschodzący nad wschodnim horyzontem w chwili Twoich narodzin. Opisuje pierwsze wrażenie i to, jak odbierają Cię inni. Do jego wyznaczenia potrzebna jest godzina urodzenia.</p></details>
+      <details class="faq"><summary>Czy to wróżenie?</summary><p>Nie. Traktujemy astrologię jak symboliczne lustro do autorefleksji, a nie wyrocznię. Treści mają charakter refleksyjny i rozrywkowy — nie zastępują porady medycznej, psychologicznej, prawnej ani finansowej.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section>
+  <div class="wrap">
+    <div class="cta">
+      <h2>Gotowy zobaczyć swój kosmogram?</h2>
+      <p>Wystarczą data i miejsce urodzenia — godzinę dodaj, jeśli znasz. Interpretacja gotowa w kilkanaście sekund.</p>
+      <a class="btn primary lg">Zacznij za darmo →</a>
+      <p class="reass" style="margin-top:16px">Bez karty · pierwszy kosmogram i podstawowa interpretacja za darmo · Twoich danych nie sprzedajemy</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fcols">
+      <div><div class="brand" style="margin-bottom:10px"><svg width="20" height="20" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>cosmogram</div><p style="color:var(--text-muted);max-width:230px">Twój kosmiczny przewodnik — astrologia i AI w jednym miejscu.</p></div>
+      <div><h4>Produkt</h4><a>Kosmogram</a><a>Horoskop dzienny</a><a>Cosmo Match</a><a>Kosmogram dziecka</a><a>Cennik</a></div>
+      <div><h4>Zasoby</h4><a>Blog</a><a>Jak działa AI</a></div>
+      <div><h4>Legal</h4><a>Regulamin</a><a>Polityka prywatności</a><a>Polityka cookies</a></div>
+    </div>
+    <div class="fdisc">Treści mają charakter refleksyjno-rozrywkowy i nie stanowią porady medycznej, psychologicznej, prawnej ani finansowej.<br>© 2026 Cosmogram · Swiss Ephemeris · Anthropic Claude</div>
+  </div>
+</footer>
+
+<!-- ===== JSON-LD wzór do wdrożenia (CC) ===== -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Czym jest kosmogram?","acceptedAnswer":{"@type":"Answer","text":"Kosmogram to mapa położenia Słońca, Księżyca i planet w chwili narodzin, obliczana z daty, godziny i miejsca urodzenia."}},
+{"@type":"Question","name":"Czy potrzebuję godziny urodzenia?","acceptedAnswer":{"@type":"Answer","text":"Do pełnego wyniku tak — godzina wyznacza Ascendent i domy. Bez godziny liczymy kosmogram przybliżony."}},
+{"@type":"Question","name":"Czym kosmogram różni się od horoskopu z gazety?","acceptedAnswer":{"@type":"Answer","text":"Horoskop pod znak patrzy tylko na Słońce. Kosmogram uwzględnia wszystkie planety w Twoim momencie narodzin."}}
+]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"HowTo","name":"Jak obliczyć swój kosmogram","step":[
+{"@type":"HowToStep","name":"Podajesz datę urodzenia","text":"Data i miejsce urodzenia; godzina opcjonalnie, dla Ascendentu i domów."},
+{"@type":"HowToStep","name":"Liczymy Twój wykres","text":"Wyznaczamy położenie wszystkich planet z dokładnością co do minuty."},
+{"@type":"HowToStep","name":"Czytasz interpretację","text":"Po polsku, dla Twojego układu planet — nie ogólniki ze znaku Słońca."}
+]}
+</script>
+</body></html>
