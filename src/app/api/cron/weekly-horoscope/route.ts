@@ -72,6 +72,19 @@ async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
     return [];
   }
 
+  const { data: prefs, error: prefsError } = await supabaseAdmin
+    .from("user_preferences")
+    .select("user_id")
+    .eq("email_horoscope", true)
+    .in("user_id", eligibleUserIds);
+
+  if (prefsError || !prefs?.length) {
+    console.error("Error fetching user_preferences:", prefsError);
+    return [];
+  }
+
+  const optedIn = new Set(prefs.map((p) => p.user_id));
+
   // Get email + name for eligible users
   const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers({
     perPage: 1000,
@@ -83,7 +96,7 @@ async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
   }
 
   return users
-    .filter((u) => eligibleUserIds.includes(u.id) && u.email)
+    .filter((u) => eligibleUserIds.includes(u.id) && optedIn.has(u.id) && u.email)
     .map((u) => ({
       user_id: u.id,
       email: u.email || "",
