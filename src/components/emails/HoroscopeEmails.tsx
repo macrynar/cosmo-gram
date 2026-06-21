@@ -15,7 +15,7 @@ export function WeeklyHoroscopeEmail({
   horoscopeContent,
   userId,
 }: WeeklyHoroscopeEmailProps) {
-  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://cosmogram.pl"}/api/email/unsubscribe?id=${userId}`;
+  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmo-gram.com"}/api/email/unsubscribe?id=${userId}`;
 
   return (
     <Html>
@@ -50,7 +50,7 @@ export function WeeklyHoroscopeEmail({
             </Section>
 
             <Link
-              href={`${process.env.NEXT_PUBLIC_APP_URL || "https://cosmogram.pl"}/app/calendar?h=week`}
+              href={`${process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmo-gram.com"}/app/calendar?h=week`}
               style={{
                 display: "inline-block",
                 backgroundColor: "#d4a574",
@@ -103,7 +103,7 @@ export function MonthlyForecastEmail({
   forecastContent,
   userId,
 }: MonthlyForecastEmailProps) {
-  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://cosmogram.pl"}/api/email/unsubscribe?id=${userId}`;
+  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmo-gram.com"}/api/email/unsubscribe?id=${userId}`;
 
   return (
     <Html>
@@ -138,7 +138,7 @@ export function MonthlyForecastEmail({
             </Section>
 
             <Link
-              href={`${process.env.NEXT_PUBLIC_APP_URL || "https://cosmogram.pl"}/app/calendar`}
+              href={`${process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmo-gram.com"}/app/calendar`}
               style={{
                 display: "inline-block",
                 backgroundColor: "#d4a574",

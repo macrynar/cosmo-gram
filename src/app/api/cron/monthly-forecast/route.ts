@@ -145,11 +145,11 @@ async function sendMonthlyEmail(
 
   try {
     const result = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "noreply@cosmogram.pl",
+      from: process.env.RESEND_FROM ?? process.env.RESEND_FROM_EMAIL ?? "Cosmogram <hello@cosmo-gram.com>",
       to: user.email,
       subject: `Twoja prognoza na ${monthName} ${year}`,
       html,
-      replyTo: "hello@cosmogram.pl",
+      replyTo: "hello@cosmo-gram.com",
     });
 
     if (result.error) {
