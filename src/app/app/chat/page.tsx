@@ -479,6 +479,7 @@ export default function ChatPage() {
     setSending(true);
     setError("");
     setMessages(prev => [...prev, { role: "user", content }]);
+
     try {
       const res = await fetch("/api/chat/message", {
         method: "POST",
@@ -489,42 +490,115 @@ export default function ChatPage() {
           chartContextId:   selectedChart?.id,
         }),
       });
+
       if (!res.ok) {
-        const { error: err } = await res.json() as { error: string };
-        if (err === "PAYWALL") {
-          track("chat_paywall_hit");
-          track("chat_limit_reached", { type: "free" });
-          setShowPaywall(true);
-          setMessages(prev => prev.slice(0, -1));
-          return;
+        try {
+          const { error: err } = await res.json() as { error: string };
+          if (err === "PAYWALL") {
+            track("chat_paywall_hit");
+            track("chat_limit_reached", { type: "free" });
+            setShowPaywall(true);
+            setMessages(prev => prev.slice(0, -1));
+            return;
+          }
+          if (err === "MONTHLY_LIMIT") {
+            track("chat_limit_reached", { type: "monthly" });
+            setMessages(prev => prev.slice(0, -1));
+            setShowPackModal("monthly_limit");
+            return;
+          }
+          if (err === "NEED_TOPUP") {
+            track("chat_limit_reached", { type: "topup" });
+            setMessages(prev => prev.slice(0, -1));
+            setShowPackModal("need_topup");
+            return;
+          }
+          setError(err ?? "Błąd AI");
+        } catch {
+          setError("Błąd AI");
         }
-        if (err === "MONTHLY_LIMIT") {
-          track("chat_limit_reached", { type: "monthly" });
-          setMessages(prev => prev.slice(0, -1));
-          setShowPackModal("monthly_limit");
-          return;
-        }
-        if (err === "NEED_TOPUP") {
-          track("chat_limit_reached", { type: "topup" });
-          setMessages(prev => prev.slice(0, -1));
-          setShowPackModal("need_topup");
-          return;
-        }
-        setError(err ?? "Błąd AI");
+        setMessages(prev => prev.slice(0, -1));
         return;
       }
-      const { reply, suggested_followups } = await res.json() as { reply: string; suggested_followups?: string[] };
+
+      // Handle streaming response
+      const reader = res.body?.getReader();
+      if (!reader) {
+        setError("Błąd: brak streamem");
+        setMessages(prev => prev.slice(0, -1));
+        return;
+      }
+
+      const decoder = new TextDecoder();
+      let fullText = "";
+      let assistantMsgId: string | null = null;
+
+      // Add placeholder assistant message
       setMessages(prev => {
-        if (prev.filter(m => m.role === "user").length === 1) track("first_chat");
-        return [...prev, { role: "assistant", content: reply, followups: suggested_followups ?? [] }];
+        const newMsg = { role: "assistant" as const, content: "", followups: [] as string[] };
+        assistantMsgId = Math.random().toString();
+        return [...prev, newMsg];
       });
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          fullText += chunk;
+
+          // Update message with streaming content
+          setMessages(prev => {
+            const updated = [...prev];
+            const lastMsg = updated[updated.length - 1];
+            if (lastMsg?.role === "assistant") {
+              lastMsg.content = fullText;
+            }
+            return updated;
+          });
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+      // Parse followups from the final text
+      const FOLLOWUP_DELIM = "===PYTANIA===";
+      const idx = fullText.indexOf(FOLLOWUP_DELIM);
+      let reply = fullText;
+      let suggested_followups: string[] = [];
+
+      if (idx !== -1) {
+        reply = fullText.slice(0, idx).trim();
+        suggested_followups = fullText
+          .slice(idx + FOLLOWUP_DELIM.length)
+          .split("\n")
+          .map(l => l.replace(/^[-*\d.)\s]+/, "").replace(/^["„']|[""']$/g, "").trim())
+          .filter(Boolean)
+          .slice(0, 2);
+      }
+
+      // Update final message with parsed content
+      setMessages(prev => {
+        const updated = [...prev];
+        const lastMsg = updated[updated.length - 1];
+        if (lastMsg?.role === "assistant") {
+          lastMsg.content = reply;
+          lastMsg.followups = suggested_followups;
+        }
+        return updated;
+      });
+
       setConversations(prev => prev.map(c =>
         c.id === convId
           ? { ...c, title: c.title === "Nowa rozmowa" ? content.slice(0, 50) : c.title, updated_at: new Date().toISOString() }
           : c
       ));
+
+      if (messages.filter(m => m.role === "user").length === 0) track("first_chat");
       loadStatus();
-    } catch {
+    } catch (err) {
+      console.error("Chat error:", err);
       setMessages(prev => [...prev, { role: "assistant", content: "Wystąpił błąd. Spróbuj ponownie." }]);
     } finally {
       setSending(false);
