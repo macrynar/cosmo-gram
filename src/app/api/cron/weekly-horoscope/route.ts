@@ -3,7 +3,6 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 import { render } from "@react-email/render";
 import { WeeklyHoroscopeEmail } from "@/components/emails/HoroscopeEmails";
 import { Resend } from "resend";
-import { createHmac } from "crypto";
 
 export const maxDuration = 60;
 export const runtime = "nodejs";
@@ -22,12 +21,6 @@ interface SubscriptionWithUser {
   user_id: string;
   email: string;
   name: string;
-}
-
-function generateUnsubscribeToken(userId: string, type: "weekly" | "monthly"): string {
-  const secret = process.env.UNSUBSCRIBE_SECRET || "default-secret";
-  const data = `${userId}:${type}`;
-  return createHmac("sha256", secret).update(data).digest("hex");
 }
 
 function getWeekBoundaries(): { start: string; end: string } {
@@ -131,14 +124,6 @@ async function sendWeeklyEmail(
   horoscopeContent: string
 ): Promise<boolean> {
   const { start: weekStart, end: weekEnd } = getWeekBoundaries();
-  const unsubscribeToken = generateUnsubscribeToken(user.user_id, "weekly");
-
-  // Store the token in the database for verification during unsubscribe
-  await supabaseAdmin.from("email_unsubscribe_tokens").insert({
-    user_id: user.user_id,
-    token: unsubscribeToken,
-    type: "weekly",
-  });
 
   const html = await render(
     WeeklyHoroscopeEmail({
@@ -146,7 +131,6 @@ async function sendWeeklyEmail(
       weekStart,
       weekEnd,
       horoscopeContent,
-      unsubscribeToken,
       userId: user.user_id,
     })
   );

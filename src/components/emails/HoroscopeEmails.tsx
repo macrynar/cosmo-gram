@@ -5,7 +5,6 @@ export interface WeeklyHoroscopeEmailProps {
   weekStart: string;
   weekEnd: string;
   horoscopeContent: string;
-  unsubscribeToken: string;
   userId: string;
 }
 
@@ -14,10 +13,9 @@ export function WeeklyHoroscopeEmail({
   weekStart,
   weekEnd,
   horoscopeContent,
-  unsubscribeToken,
   userId,
 }: WeeklyHoroscopeEmailProps) {
-  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://cosmogram.pl"}/emails/unsubscribe?type=weekly&token=${unsubscribeToken}`;
+  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://cosmogram.pl"}/api/email/unsubscribe?id=${userId}`;
 
   return (
     <Html>
@@ -95,7 +93,6 @@ export interface MonthlyForecastEmailProps {
   month: string;
   year: number;
   forecastContent: string;
-  unsubscribeToken: string;
   userId: string;
 }
 
@@ -104,10 +101,9 @@ export function MonthlyForecastEmail({
   month,
   year,
   forecastContent,
-  unsubscribeToken,
   userId,
 }: MonthlyForecastEmailProps) {
-  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://cosmogram.pl"}/emails/unsubscribe?type=monthly&token=${unsubscribeToken}`;
+  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://cosmogram.pl"}/api/email/unsubscribe?id=${userId}`;
 
   return (
     <Html>

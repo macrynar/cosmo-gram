@@ -24,19 +24,3 @@ CREATE TABLE IF NOT EXISTS horoscope_send_logs (
 
 CREATE INDEX IF NOT EXISTS idx_horoscope_send_logs_user_type
   ON horoscope_send_logs(user_id, type, created_at DESC);
-
--- Store unsubscribe tokens for email verification
-CREATE TABLE IF NOT EXISTS email_unsubscribe_tokens (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  token TEXT NOT NULL UNIQUE,
-  type TEXT NOT NULL CHECK (type IN ('weekly', 'monthly')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  used_at TIMESTAMP WITH TIME ZONE NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_email_unsubscribe_tokens_token
-  ON email_unsubscribe_tokens(token);
-
-CREATE INDEX IF NOT EXISTS idx_email_unsubscribe_tokens_user_type
-  ON email_unsubscribe_tokens(user_id, type);
