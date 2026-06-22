@@ -1,5 +1,5 @@
 import {
-  Html, Head, Preview, Body, Container, Section, Heading, Text, Hr, Button,
+  Html, Head, Preview, Body, Container, Section, Heading, Text, Hr, Button, Img,
 } from "@react-email/components";
 import * as React from "react";
 
@@ -39,7 +39,13 @@ function HoroscopeLayout({
       <Body style={S.body}>
         <Container style={S.container}>
           <Section style={{ textAlign: "center" }}>
-            <Text style={S.brand}>✦ COSMOGRAM ✦</Text>
+            <Img
+              src={`${APP_URL}/email/logo-cosmogram.png`}
+              alt="Cosmogram"
+              width={170}
+              height={31}
+              style={{ margin: "0 auto" }}
+            />
             <Text style={S.date}>{dateLabel}</Text>
           </Section>
 
