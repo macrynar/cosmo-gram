@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 import { render } from "@react-email/render";
 import { WeeklyHoroscopeEmail } from "@/components/emails/HoroscopeEmails";
 import { getOrGenerateWeekContent } from "@/lib/calendar/cronGen";
-import type { NatalChart } from "@/lib/astro-types";
+import { getPrimaryReading } from "@/lib/readings";
 import { Resend } from "resend";
 
 export const maxDuration = 300; // generate for every premium user in one run
@@ -97,19 +97,6 @@ async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
     }));
 }
 
-async function getUserLatestChart(userId: string): Promise<{ readingId: string; chart: NatalChart } | null> {
-  const { data } = await supabaseAdmin
-    .from("readings")
-    .select("id, chart_data")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (!data?.id || !data?.chart_data) return null;
-  return { readingId: data.id, chart: data.chart_data as NatalChart };
-}
-
 async function sendWeeklyEmail(
   user: SubscriptionWithUser,
   horoscopeContent: string
@@ -190,14 +177,14 @@ async function runWeeklyCron(req: NextRequest) {
     // Process users sequentially (safe under maxDuration; AI gen is the slow part)
     for (const user of users) {
       try {
-        const reading = await getUserLatestChart(user.user_id);
+        const reading = await getPrimaryReading(user.user_id);
         if (!reading) {
           skipped++;
           await logHoroscopeSend(user.user_id, "skipped", "Brak kosmogramu");
           continue;
         }
 
-        // Generate the week reading for this user if not yet cached, then send
+        // Generate the week reading for this user's PRIMARY chart if not cached, then send
         const content = await getOrGenerateWeekContent(user.user_id, reading.readingId, reading.chart, weekStart);
         if (!content) {
           skipped++;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X, Star } from "lucide-react";
 import Image from "next/image";
 import { SIGN_TO_KEY } from "@/components/astro/zodiacGlyphs";
 
@@ -19,6 +19,8 @@ type Props = {
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onRename?: (id: string, name: string) => void;
+  onSetPrimary?: (id: string) => void;
+  primaryId?: string | null;
   onNew: () => void;
   newLabel?: string;
 };
@@ -30,7 +32,7 @@ function portraitPath(sunSign?: string): string {
 }
 
 export default function HistorySelector({
-  items, selectedId, onSelect, onDelete, onRename, onNew, newLabel = "Nowy",
+  items, selectedId, onSelect, onDelete, onRename, onSetPrimary, primaryId, onNew, newLabel = "Nowy",
 }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -62,6 +64,7 @@ export default function HistorySelector({
       {items.map((item) => {
         const isSelected = item.id === selectedId;
         const isEditing  = item.id === editingId;
+        const isPrimary  = item.id === primaryId;
 
         return (
           <div
@@ -123,10 +126,13 @@ export default function HistorySelector({
               ) : (
                 <>
                   <span
-                    className="text-sm font-medium truncate max-w-[120px]"
+                    className="text-sm font-medium flex items-center gap-1"
                     style={{ color: isSelected ? "#E9DCC0" : "#A09BBF" }}
                   >
-                    {item.name}
+                    {isPrimary && (
+                      <Star className="w-3 h-3 shrink-0" style={{ color: "#E0B566", fill: "#E0B566" }} aria-label="Główny" />
+                    )}
+                    <span className="truncate max-w-[110px]">{item.name}</span>
                   </span>
                   {item.subtitle && (
                     <span className="text-xs truncate max-w-[120px]" style={{ color: "rgba(135,127,160,0.65)" }}>
@@ -144,6 +150,16 @@ export default function HistorySelector({
                   isSelected ? "opacity-70" : "opacity-0 group-hover:opacity-60"
                 }`}
               >
+                {onSetPrimary && !isPrimary && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onSetPrimary(item.id); }}
+                    className="hover:text-amber-400 transition-colors p-1"
+                    style={{ color: "#4B5563" }}
+                    title="Ustaw jako główny"
+                  >
+                    <Star className="w-3 h-3" />
+                  </button>
+                )}
                 {onRename && (
                   <button
                     onClick={(e) => startEdit(item, e)}

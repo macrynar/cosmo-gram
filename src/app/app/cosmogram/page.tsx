@@ -70,6 +70,7 @@ export default function CosmogramPage() {
   const [showShare, setShowShare] = useState(false);
   const [readings, setReadings] = useState<SavedReading[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [primaryId, setPrimaryId] = useState<string | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [chart, setChart] = useState<NatalChart | null>(null);
   const [interpretation, setInterpretation] = useState("");
@@ -157,8 +158,9 @@ export default function CosmogramPage() {
     setLoadingHistory(true);
     try {
       const res = await fetch("/api/get-readings", { headers: authHeader });
-      const { readings: data } = await res.json() as { readings: SavedReading[] };
+      const { readings: data, primary_id } = await res.json() as { readings: SavedReading[]; primary_id: string | null };
       setReadings(data);
+      setPrimaryId(primary_id ?? null);
       if (data.length > 0 && !selectedId) {
         setSelectedId(data[0].id);
         displayReading(data[0]);
@@ -502,6 +504,15 @@ export default function CosmogramPage() {
                   onSelect={handleSelect}
                   onDelete={handleDelete}
                   onRename={handleRename}
+                  primaryId={primaryId}
+                  onSetPrimary={async (id) => {
+                    setPrimaryId(id);
+                    await fetch("/api/set-primary-reading", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json", ...authHeader },
+                      body: JSON.stringify({ reading_id: id }),
+                    });
+                  }}
                   onNew={handleNew}
                   newLabel="Nowy kosmogram"
                 />

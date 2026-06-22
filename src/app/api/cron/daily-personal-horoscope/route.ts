@@ -58,20 +58,32 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ generated: 0 });
   }
 
-  // Get their most recent natal charts
+  // Each user's PRIMARY ("główny") chart: explicit primary_reading_id, else oldest.
   const userIds = premiumUsers.map(u => u.user_id);
-  const { data: readings } = await supabaseAdmin
-    .from("readings")
-    .select("user_id, chart_data")
-    .in("user_id", userIds)
-    .order("created_at", { ascending: false });
+  const [{ data: readings }, { data: primaryPrefs }] = await Promise.all([
+    supabaseAdmin
+      .from("readings")
+      .select("id, user_id, chart_data")
+      .in("user_id", userIds)
+      .order("created_at", { ascending: true }), // oldest first → fallback primary
+    supabaseAdmin
+      .from("user_preferences")
+      .select("user_id, primary_reading_id")
+      .in("user_id", userIds),
+  ]);
 
-  const latestByUser = new Map<string, NatalChart>();
+  const primaryRid   = new Map((primaryPrefs ?? []).map(p => [p.user_id, p.primary_reading_id as string | null]));
+  const oldestByUser = new Map<string, NatalChart>();
+  const byReadingId  = new Map<string, NatalChart>();
   for (const r of readings ?? []) {
-    if (!latestByUser.has(r.user_id) && r.chart_data) {
-      latestByUser.set(r.user_id, r.chart_data as NatalChart);
-    }
+    if (!r.chart_data) continue;
+    byReadingId.set(r.id, r.chart_data as NatalChart);
+    if (!oldestByUser.has(r.user_id)) oldestByUser.set(r.user_id, r.chart_data as NatalChart);
   }
+  const chartFor = (userId: string): NatalChart | undefined => {
+    const rid = primaryRid.get(userId);
+    return (rid ? byReadingId.get(rid) : undefined) ?? oldestByUser.get(userId);
+  };
 
   // Skip users who already have today's horoscope
   const { data: existing } = await supabaseAdmin
@@ -88,7 +100,7 @@ export async function GET(req: NextRequest) {
 
   for (const userId of userIds) {
     if (alreadyDone.has(userId)) continue;
-    const chart = latestByUser.get(userId);
+    const chart = chartFor(userId);
     if (!chart) continue;
 
     try {
@@ -172,7 +184,7 @@ export async function GET(req: NextRequest) {
       Array.from(optedIn).map(async userId => {
         const email = emailById.get(userId);
         if (!email) return;
-        const chart = latestByUser.get(userId);
+        const chart = chartFor(userId);
         const sunSign = (chart?.planets ?? []).find(p => p.name === "Słońce")?.sign ?? "Baran";
         await sendDailyHoroscopeEmail(email, sunSign, today_pl, userId, headlineByUser.get(userId));
       })
