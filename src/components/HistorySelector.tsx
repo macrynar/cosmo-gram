@@ -36,7 +36,10 @@ export default function HistorySelector({
 }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const confirmName = items.find(i => i.id === confirmDeleteId)?.name ?? "";
 
   useEffect(() => {
     if (editingId && inputRef.current) {
@@ -60,6 +63,7 @@ export default function HistorySelector({
   function cancelEdit() { setEditingId(null); }
 
   return (
+    <>
     <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
       {items.map((item) => {
         const isSelected = item.id === selectedId;
@@ -171,7 +175,7 @@ export default function HistorySelector({
                   </button>
                 )}
                 <button
-                  onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
+                  onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(item.id); }}
                   className="hover:text-red-400 transition-colors p-1"
                   style={{ color: "#4B5563" }}
                   title="Usuń"
@@ -207,5 +211,60 @@ export default function HistorySelector({
         {newLabel}
       </button>
     </div>
+
+    {/* Delete confirmation overlay */}
+    {confirmDeleteId && (
+      <div
+        className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+        onClick={() => setConfirmDeleteId(null)}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="absolute inset-0 backdrop-blur-sm" style={{ background: "rgba(5,4,14,0.75)" }} />
+        <div
+          onClick={e => e.stopPropagation()}
+          className="relative w-full max-w-xs rounded-2xl p-5 text-center"
+          style={{
+            background: "rgba(5,4,14,0.95)",
+            border: "0.5px solid rgba(239,68,68,0.30)",
+            backdropFilter: "blur(24px)",
+            boxShadow: "0 0 60px rgba(0,0,0,0.6)",
+          }}
+        >
+          <div
+            className="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3"
+            style={{ background: "rgba(239,68,68,0.12)", border: "0.5px solid rgba(239,68,68,0.30)" }}
+          >
+            <Trash2 className="w-5 h-5" style={{ color: "#f87171" }} />
+          </div>
+          <p className="text-sm font-medium text-white mb-1">Usunąć kosmogram?</p>
+          <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+            {confirmName ? <>„{confirmName}” zniknie na stałe. </> : "Ten kosmogram zniknie na stałe. "}
+            Tej operacji nie można cofnąć.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmDeleteId(null)}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors"
+              style={{ background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.12)", color: "#cbd5e1" }}
+            >
+              Anuluj
+            </button>
+            <button
+              type="button"
+              onClick={() => { onDelete(confirmDeleteId); setConfirmDeleteId(null); }}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+              style={{ background: "rgba(239,68,68,0.90)", color: "#fff" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,1)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.90)"; }}
+            >
+              Usuń
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

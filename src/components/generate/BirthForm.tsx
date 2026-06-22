@@ -59,20 +59,11 @@ export default function BirthForm({ onSubmit, loading, onDateChange, requireName
       const res  = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
       const data = await res.json() as { results: GeoResult[] };
       const results = data.results ?? [];
+      // Never auto-fill the input or auto-select — that overwrote the user's text mid-typing.
+      // Always surface results as suggestions below; the user picks one explicitly.
       setSuggestions(results);
-      if (results.length === 1) {
-        // Single unambiguous result — auto-select and fill input
-        setSelected(results[0]);
-        setPlaceQuery(results[0].displayName);
-        setDropdownOpen(false);
-      } else if (results.length > 1) {
-        // Multiple results — show dropdown, user must pick explicitly
-        setSelected(null);
-        setDropdownOpen(true);
-      } else {
-        setSelected(null);
-        setDropdownOpen(false);
-      }
+      setSelected(null);
+      setDropdownOpen(results.length > 0);
     } finally {
       setGeocoding(false);
     }

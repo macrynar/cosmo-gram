@@ -7,7 +7,6 @@ import { AuthProvider } from "@/components/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import { SubscriptionProvider } from "@/components/SubscriptionContext";
 import { PostHogProvider } from "@/components/PostHogProvider";
-import ChatFAB from "@/components/ChatFAB";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -66,9 +65,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      "/favicon.ico",
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
       { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
       { url: "/favicon-16.png", type: "image/png", sizes: "16x16" },
+      "/favicon.ico",
     ],
     apple: "/apple-touch-icon.png",
   },
@@ -90,7 +90,6 @@ export default function RootLayout({
           <AuthProvider>
             <SubscriptionProvider>
               {children}
-              <ChatFAB />
               <BottomNav />
             </SubscriptionProvider>
           </AuthProvider>
