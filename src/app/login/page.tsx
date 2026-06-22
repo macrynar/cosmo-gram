@@ -79,23 +79,40 @@ function LoginForm() {
 
   async function handleOAuth() {
     setLoading("google"); setError("");
-    const { error: err } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: typeof window !== "undefined"
-          ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
-          : undefined,
-      },
-    });
-    if (err) { setError(err.message); setLoading(null); }
+    try {
+      const { error: err } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: typeof window !== "undefined"
+            ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
+            : undefined,
+        },
+      });
+      if (err) { setError("Nie udało się połączyć z Google — spróbuj ponownie."); setLoading(null); }
+    } catch {
+      setError("Problem z połączeniem — spróbuj ponownie.");
+      setLoading(null);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(""); setLoading("email");
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-    if (err) { setError("Nieprawidłowy e-mail lub hasło."); setLoading(null); }
-    else router.replace(redirectTo);
+    try {
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+      if (err) {
+        // Distinguish a network/transport failure (Safari: "Load failed") from bad credentials,
+        // so a flaky first attempt doesn't read as a wrong password.
+        const isNetwork = /load failed|failed to fetch|network|timeout/i.test(err.message);
+        setError(isNetwork ? "Problem z połączeniem — spróbuj ponownie." : "Nieprawidłowy e-mail lub hasło.");
+        setLoading(null);
+      } else {
+        router.replace(redirectTo);
+      }
+    } catch {
+      setError("Problem z połączeniem — spróbuj ponownie.");
+      setLoading(null);
+    }
   }
 
   const isBusy = loading !== null;

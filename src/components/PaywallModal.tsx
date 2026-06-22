@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Check, Loader2 } from "lucide-react";
 import { CosmoIcon } from "@/components/CosmoIcon";
@@ -25,12 +25,22 @@ export default function PaywallModal({ onClose, reason }: Props) {
   const { session } = useAuth();
   const [loading, setLoading] = useState<"monthly" | "yearly" | null>(null);
   const [withdrawalConsent, setWithdrawalConsent] = useState(false);
+  const [consentError, setConsentError] = useState(false);
+  const consentRef = useRef<HTMLLabelElement>(null);
 
   useEffect(() => {
     track("paywall_shown", { reason: reason ?? "generic" });
   }, [reason]);
 
   async function handleCheckout(priceType: "monthly" | "yearly") {
+    // Consent is legally required before checkout. Instead of a silently-disabled button,
+    // surface the requirement so the user knows what to do. Checked before the session guard
+    // so the requirement is always discoverable.
+    if (!withdrawalConsent) {
+      setConsentError(true);
+      consentRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     if (!session) return;
     track("checkout_initiated", { price_type: priceType });
     setLoading(priceType);
@@ -61,29 +71,32 @@ export default function PaywallModal({ onClose, reason }: Props) {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 backdrop-blur-sm"
+          className="fixed inset-0 backdrop-blur-sm"
           style={{ background: "rgba(5,4,14,0.75)" }}
           onClick={onClose}
         />
 
-        <motion.div
-          initial={{ opacity: 0, y: 28, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 16, scale: 0.97 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="relative rounded-3xl p-6 sm:p-8 max-w-md w-full"
-          style={{
-            background: "rgba(5,4,14,0.92)",
-            border: "0.5px solid rgba(212,175,55,0.28)",
-            backdropFilter: "blur(28px)",
-            boxShadow: "0 0 80px rgba(5,4,14,0.9), 0 0 0 0.5px rgba(212,175,55,0.10) inset, 0 0 40px rgba(212,175,55,0.05)",
-          }}
-        >
+        {/* min-h-full wrapper centers the card when it fits, lets the overlay scroll when it doesn't.
+            pointer-events-none here + pointer-events-auto on the card keeps click-outside-to-close working. */}
+        <div className="relative flex min-h-full items-center justify-center p-4 pointer-events-none">
+          <motion.div
+            initial={{ opacity: 0, y: 28, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.97 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="relative rounded-3xl p-6 sm:p-8 max-w-md w-full my-4 pointer-events-auto"
+            style={{
+              background: "rgba(5,4,14,0.92)",
+              border: "0.5px solid rgba(212,175,55,0.28)",
+              backdropFilter: "blur(28px)",
+              boxShadow: "0 0 80px rgba(5,4,14,0.9), 0 0 0 0.5px rgba(212,175,55,0.10) inset, 0 0 40px rgba(212,175,55,0.05)",
+            }}
+          >
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-slate-600 hover:text-slate-300 transition-colors duration-300"
@@ -155,34 +168,45 @@ export default function PaywallModal({ onClose, reason }: Props) {
           </ul>
 
           {/* Withdrawal consent — art. 38 ustawy o prawach konsumenta */}
-          <label className="flex items-start gap-3 mb-4 cursor-pointer group">
+          <label
+            ref={consentRef}
+            className="flex items-start gap-3 mb-2 cursor-pointer group rounded-xl p-2 -m-2 transition-colors"
+            style={consentError ? { background: "rgba(239,68,68,0.06)" } : undefined}
+          >
             <div className="relative mt-0.5 shrink-0">
               <input
                 type="checkbox"
                 checked={withdrawalConsent}
-                onChange={e => setWithdrawalConsent(e.target.checked)}
+                onChange={e => { setWithdrawalConsent(e.target.checked); if (e.target.checked) setConsentError(false); }}
                 className="sr-only"
               />
-              <div
+              <motion.div
+                animate={consentError ? { x: [0, -4, 4, -3, 3, 0] } : { x: 0 }}
+                transition={{ duration: 0.4 }}
                 className="w-4 h-4 rounded transition-all duration-200 flex items-center justify-center"
                 style={{
                   background: withdrawalConsent ? "rgba(212,175,55,0.85)" : "transparent",
-                  border: withdrawalConsent ? "0.5px solid #D4AF37" : "0.5px solid rgba(255,255,255,0.20)",
+                  border: withdrawalConsent
+                    ? "0.5px solid #D4AF37"
+                    : consentError ? "1px solid rgba(248,113,113,0.8)" : "0.5px solid rgba(255,255,255,0.20)",
                 }}
               >
                 {withdrawalConsent && <Check className="w-2.5 h-2.5 text-[#050508]" />}
-              </div>
+              </motion.div>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed group-hover:text-slate-400 transition-colors">
+            <p className={`text-xs leading-relaxed transition-colors ${consentError ? "text-red-300" : "text-slate-500 group-hover:text-slate-400"}`}>
               Chcę natychmiastowego dostępu do treści cyfrowych i przyjmuję do wiadomości, że tracę przez to prawo odstąpienia od umowy w ciągu 14 dni.
             </p>
           </label>
+          <p className="text-[11px] mb-4 ml-2 transition-colors" style={{ color: consentError ? "#fca5a5" : "rgba(100,116,139,0.7)" }}>
+            {consentError ? "↑ Zaznacz tę zgodę, aby przejść do płatności." : "Zaznacz powyższą zgodę, aby kontynuować."}
+          </p>
 
           {/* Pricing buttons */}
           <div className="space-y-2.5">
             <motion.button
               onClick={() => handleCheckout("monthly")}
-              disabled={!!loading || !withdrawalConsent}
+              disabled={!!loading}
               whileHover={loading ? undefined : {
                 boxShadow: "0 0 24px rgba(212,175,55,0.35), 0 0 48px rgba(212,175,55,0.12)",
                 y: -1,
@@ -203,8 +227,8 @@ export default function PaywallModal({ onClose, reason }: Props) {
 
             <button
               onClick={() => handleCheckout("yearly")}
-              disabled={!!loading || !withdrawalConsent}
-              className="w-full py-3.5 rounded-2xl text-sm transition-all duration-400 disabled:opacity-50 disabled:cursor-not-allowed relative flex items-center justify-center"
+              disabled={!!loading}
+              className="w-full py-3 rounded-2xl text-sm transition-all duration-400 disabled:opacity-50 disabled:cursor-not-allowed relative flex items-center justify-center"
               style={{
                 background: "rgba(212,175,55,0.06)",
                 border: "0.5px solid rgba(212,175,55,0.28)",
@@ -216,15 +240,10 @@ export default function PaywallModal({ onClose, reason }: Props) {
               {loading === "yearly" ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <>
-                  Roczny — 199 zł / rok
-                  <span
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs px-2 py-0.5 rounded-full"
-                    style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}
-                  >
-                    ≈ 16,60 zł/mc
-                  </span>
-                </>
+                <span className="flex flex-col items-center leading-tight">
+                  <span className="font-medium">Roczny — 199 zł / rok</span>
+                  <span className="text-[11px] mt-0.5" style={{ color: "#D4AF37" }}>≈ 16,60 zł/mc · oszczędzasz 17%</span>
+                </span>
               )}
             </button>
           </div>
@@ -232,7 +251,8 @@ export default function PaywallModal({ onClose, reason }: Props) {
           <p className="text-center text-slate-700 text-xs mt-4">
             Bezpieczna płatność przez Stripe · VAT wliczony
           </p>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </AnimatePresence>
   );

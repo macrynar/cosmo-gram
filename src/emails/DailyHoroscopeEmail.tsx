@@ -70,7 +70,7 @@ export default function DailyHoroscopeEmail({ sunSign, date, appUrl, unsubId, he
               <Text style={{ color: "rgba(148,163,184,0.80)", fontSize: 15, lineHeight: 1.7, margin: "0 0 28px" }}>
                 {headline
                   ? `Twój personalny horoskop na ${date} jest gotowy — otwórz aplikację, żeby go przeczytać.`
-                  : `Kosmogram przygotował Twój spersonalizowany horoskop na ${date}. Sprawdź co gwiazdy mówią o Twoim dniu — tranzytowe aspekty do Twojej karty natalnej, energia dnia i konkretne wskazówki.`}
+                  : `Kosmogram przygotował Twój spersonalizowany horoskop na ${date}. Sprawdź co gwiazdy mówią o Twoim dniu — tranzytowe aspekty do Twojej karty urodzeniowej, energia dnia i konkretne wskazówki.`}
               </Text>
 
               <Button

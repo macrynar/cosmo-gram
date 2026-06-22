@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { useState } from "react";
 import type { NatalChart } from "@/lib/astro-types";
@@ -60,21 +60,32 @@ interface PortraitCardProps {
   body: Body;
   sign: string;
   degree: number;
-  tipSide: "above" | "below";
-  onScroll: () => void;
+  tipSide?: "above" | "below";
+  onScroll?: () => void;
+  // Mobile: tap toggles a shared inline panel instead of hovering a floating tooltip.
+  mode?: "hover" | "tap";
+  active?: boolean;
+  onTap?: () => void;
 }
 
-function PortraitCard({ body, sign, degree, tipSide, onScroll }: PortraitCardProps) {
+function PortraitCard({ body, sign, degree, tipSide = "below", onScroll, mode = "hover", active = false, onTap }: PortraitCardProps) {
   const [tip, setTip] = useState(false);
   const element = SIGN_ELEMENT[sign] ?? "";
   const info = SIGN_INFO[sign];
+  const isTap = mode === "tap";
   return (
     <div className="p3-wrap"
-      onMouseEnter={() => setTip(true)} onMouseLeave={() => setTip(false)}>
-      <button type="button" onClick={onScroll}
-        onFocus={() => setTip(true)} onBlur={() => setTip(false)}
-        className="p3-card group block w-full text-center"
-        aria-label={`${BODY_EYEBROW[body]} w znaku ${sign}, ${degree} stopni — przejdź do interpretacji`}>
+      onMouseEnter={isTap ? undefined : () => setTip(true)}
+      onMouseLeave={isTap ? undefined : () => setTip(false)}>
+      <button type="button"
+        onClick={isTap ? onTap : onScroll}
+        onFocus={isTap ? undefined : () => setTip(true)}
+        onBlur={isTap ? undefined : () => setTip(false)}
+        className={`p3-card group block w-full text-center${active ? " p3-card-active" : ""}`}
+        aria-expanded={isTap ? active : undefined}
+        aria-label={isTap
+          ? `${BODY_EYEBROW[body]} w znaku ${sign}, ${degree} stopni — pokaż opis`
+          : `${BODY_EYEBROW[body]} w znaku ${sign}, ${degree} stopni — przejdź do interpretacji`}>
         <div className="p3-portrait relative w-full aspect-square overflow-hidden rounded-xl">
           <Image src={portraitSrc(sign)} alt={`Portret znaku ${sign}`} fill
             sizes="(max-width: 640px) 30vw, 200px" style={{ objectFit: "cover" }} />
@@ -89,17 +100,39 @@ function PortraitCard({ body, sign, degree, tipSide, onScroll }: PortraitCardPro
         </div>
       </button>
 
-      {info && (
+      {/* Desktop floating tooltip (hover/focus). Mobile uses the inline panel below the row. */}
+      {!isTap && info && (
         <div className={`p3-tip ${tipSide}`} role="tooltip"
           style={{ opacity: tip ? 1 : 0, visibility: tip ? "visible" : "hidden",
             transform: tip ? "translateY(0)" : `translateY(${tipSide === "below" ? "-4px" : "4px"})` }}>
           <p className="p3-tip-eyebrow">{BODY_NAME[body]} w {SIGN_LOCATIVE[sign] ?? sign}</p>
-          <p className="p3-tip-quote">„{BODY_DESC[body]}"</p>
+          <p className="p3-tip-quote">„{BODY_DESC[body]}”</p>
           <p className="p3-tip-desc">{info.desc}</p>
           <div className="p3-tip-kw">{info.kw.map(k => <span key={k}>{k}</span>)}</div>
         </div>
       )}
     </div>
+  );
+}
+
+// Mobile-only: full-width detail panel shown under the three cards when one is tapped.
+// Avoids the clipped floating tooltip and the accidental scroll-to-interpretation.
+function MobileSignDetail({ body, sign }: { body: Body; sign: string }) {
+  const info = SIGN_INFO[sign];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.24, ease: EASE }}
+      className="p3-mobile-panel"
+      role="region"
+    >
+      <p className="p3-tip-eyebrow">{BODY_NAME[body]} w {SIGN_LOCATIVE[sign] ?? sign}</p>
+      <p className="p3-tip-quote">„{BODY_DESC[body]}”</p>
+      {info && <p className="p3-tip-desc">{info.desc}</p>}
+      {info && <div className="p3-tip-kw">{info.kw.map(k => <span key={k}>{k}</span>)}</div>}
+    </motion.div>
   );
 }
 
@@ -136,6 +169,7 @@ interface Props { chart: NatalChart }
 
 export default function NatalChartAltarView({ chart }: Props) {
   const rm = useReducedMotion();
+  const [mobileTip, setMobileTip] = useState<Body | null>(null);
   const sun = chart.planets.find(p => p.name === "Słońce");
   const moon = chart.planets.find(p => p.name === "Księżyc");
   if (!sun || !moon) return <NatalChartSVG chart={chart} />;
@@ -150,6 +184,9 @@ export default function NatalChartAltarView({ chart }: Props) {
 
   const scrollToInterpretation = () =>
     document.getElementById("interpretacja")?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  const toggleMobileTip = (b: Body) => setMobileTip(prev => (prev === b ? null : b));
+  const mobileTipSign: Record<Body, string> = { asc: ascSign, sun: sun.sign, moon: moon.sign };
 
   const enter = (delay: number, axis: "x" | "y" = "y", from = 16) =>
     rm
@@ -197,14 +234,21 @@ export default function NatalChartAltarView({ chart }: Props) {
           </motion.div>
         </div>
 
-        {/* ════ MOBILE — trzy karty NAD kołem ════ */}
+        {/* ════ MOBILE — trzy karty NAD kołem (tap → panel opisu pod rzędem) ════ */}
         <div className="sm:hidden space-y-6">
-          <motion.div {...enter(0.18)} className="grid grid-cols-3 gap-1.5">
-            {!timeUnknown
-              ? <PortraitCard body="asc" sign={ascSign} degree={ascDegree} tipSide="below" onScroll={scrollToInterpretation} />
-              : <AscUnknownCard />}
-            <PortraitCard body="sun" sign={sun.sign} degree={sun.degree} tipSide="below" onScroll={scrollToInterpretation} />
-            <PortraitCard body="moon" sign={moon.sign} degree={moon.degree} tipSide="below" onScroll={scrollToInterpretation} />
+          <motion.div {...enter(0.18)}>
+            <div className="grid grid-cols-3 gap-1.5">
+              {!timeUnknown
+                ? <PortraitCard body="asc" sign={ascSign} degree={ascDegree} mode="tap" active={mobileTip === "asc"} onTap={() => toggleMobileTip("asc")} />
+                : <AscUnknownCard />}
+              <PortraitCard body="sun" sign={sun.sign} degree={sun.degree} mode="tap" active={mobileTip === "sun"} onTap={() => toggleMobileTip("sun")} />
+              <PortraitCard body="moon" sign={moon.sign} degree={moon.degree} mode="tap" active={mobileTip === "moon"} onTap={() => toggleMobileTip("moon")} />
+            </div>
+            <AnimatePresence initial={false} mode="wait">
+              {mobileTip && !(mobileTip === "asc" && timeUnknown) && (
+                <MobileSignDetail key={mobileTip} body={mobileTip} sign={mobileTipSign[mobileTip]} />
+              )}
+            </AnimatePresence>
           </motion.div>
           <motion.div {...enter(0.28)} className="relative">
             <WheelWithBackdrop chart={chart} />
@@ -221,7 +265,8 @@ export default function NatalChartAltarView({ chart }: Props) {
 
         {/* ── Microcopy ── */}
         <p className="mt-4 text-center text-[11px]" style={{ color: "var(--text-muted)" }}>
-          Najedź na kartę lub planetę po dodatkowe informacje · kliknij planetę po aspekty
+          <span className="hidden sm:inline">Najedź na kartę lub planetę po dodatkowe informacje · kliknij planetę po aspekty</span>
+          <span className="sm:hidden">Dotknij karty po opis znaku · dotknij planety po aspekty</span>
         </p>
       </div>
 
@@ -231,6 +276,7 @@ export default function NatalChartAltarView({ chart }: Props) {
           border-radius: 16px; padding: 16px; transition: border-color .25s var(--ease-out), box-shadow .3s var(--ease-out); }
         .p3-card:hover { border-color: var(--accent-deep); box-shadow: 0 0 48px rgba(255,174,61,0.14); }
         .p3-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .p3-card-active { border-color: var(--accent-deep) !important; box-shadow: 0 0 32px rgba(255,174,61,0.16); background: rgba(224,181,102,0.07); }
         .p3-portrait { border: 1px solid var(--line-soft); }
         .p3-portrait img { transition: transform .3s var(--ease-out); }
         .p3-card:hover .p3-portrait img { transform: scale(1.02); }
@@ -252,6 +298,10 @@ export default function NatalChartAltarView({ chart }: Props) {
         .p3-tip-kw { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
         .p3-tip-kw span { font-size: 9.5px; padding: 2px 8px; border-radius: 999px;
           color: var(--accent-deep); border: 1px solid var(--line); background: rgba(224,181,102,0.06); }
+
+        .p3-mobile-panel { margin-top: 12px; text-align: center; padding: 14px 16px; border-radius: 14px;
+          background: var(--bg-elevated); border: 1px solid var(--line); box-shadow: 0 8px 32px rgba(0,0,0,0.40); }
+        .p3-mobile-panel .p3-tip-desc { margin-bottom: 10px; }
 
         @media (max-width: 639px) {
           .p3-card { padding: 8px; }

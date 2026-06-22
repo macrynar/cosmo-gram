@@ -27,7 +27,7 @@ export default function ForKidsPage() {
             Kosmogram dziecka
           </h1>
           <p className="text-slate-400 text-lg max-w-xl mx-auto">
-            Każde dziecko przychodzi na świat z unikalnym temperamentem. Kosmogram natalny pomaga zrozumieć potrzeby emocjonalne, styl uczenia się i naturalne talenty Twojego dziecka.
+            Każde dziecko przychodzi na świat z unikalnym temperamentem. Kosmogram urodzeniowy pomaga zrozumieć potrzeby emocjonalne, styl uczenia się i naturalne talenty Twojego dziecka.
           </p>
           <Link
             href={ROUTES.public.signup.path}

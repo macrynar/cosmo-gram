@@ -13,7 +13,7 @@ const FEATURES = [
     description:
       "Pełna interpretacja wykresu urodzeniowego — osobowość, kariera, relacje, talenty i wyzwania. Konkretnie, po polsku, w nowoczesnym języku. Osobny moduł dla dzieci pomaga rodzicom rozumieć emocje i temperament malucha zamiast na oślep szukać odpowiedzi.",
     highlights: [
-      "Kosmogram natalny w 7 obszarach życia",
+      "Kosmogram urodzeniowy w 7 obszarach życia",
       "Kosmogram dziecka — temperament i potrzeby",
       "Interpretacja AI oparta na Swiss Ephemeris",
     ],

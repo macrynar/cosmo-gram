@@ -222,7 +222,7 @@ export default function NatalChartSVG({ chart }: Props) {
       <svg
         viewBox="0 0 600 600"
         className="w-full max-w-[560px] mx-auto"
-        aria-label="Koło kosmogramu natalnego"
+        aria-label="Koło kosmogramu urodzeniowego"
         style={{
           overflow: "visible",
           transform: revealed ? "none" : "rotate(-10deg) scale(.97)",

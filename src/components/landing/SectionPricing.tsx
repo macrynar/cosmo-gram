@@ -35,7 +35,7 @@ export default function SectionPricing() {
           <ul style={{ listStyle:"none",marginBottom:32,padding:0 }}>
             {[
               "Pełny kosmogram bazowy z&nbsp;interpretacją",
-              "Koło natalne z&nbsp;pozycjami planet",
+              "Koło urodzeniowe z&nbsp;pozycjami planet",
               "Jeden Cosmo Match na start",
               "Ogólny kalendarz astrologiczny",
             ].map((item,i) => (

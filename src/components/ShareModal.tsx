@@ -18,7 +18,7 @@ export default function ShareModal(props: Props) {
     : `/share/match/${id}`;
   const url = `${typeof window !== "undefined" ? window.location.origin : ""}${path}`;
 
-  const title = props.type === "natal" ? "Mój kosmogram natalny" : "Mój Astro Match";
+  const title = props.type === "natal" ? "Mój kosmogram urodzeniowy" : "Mój Astro Match";
 
   async function handleCopy() {
     try {

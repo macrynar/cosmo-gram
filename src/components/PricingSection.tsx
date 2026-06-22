@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import PaywallModal from "@/components/PaywallModal";
 
 const freePlan = [
-  "Pełny kosmogram natalny z wykresem",
+  "Pełny kosmogram urodzeniowy z wykresem",
   "Interpretacja AI kluczowych pozycji",
   "Astro Match dla jednej pary",
   "Dzienny horoskop (1 dziennie)",

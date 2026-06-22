@@ -233,7 +233,7 @@ export default function HoroscopePage() {
                   <p className="text-sm text-slate-200 leading-snug">
                     <span className="font-medium">{t.transitPlanet}</span>
                     {" "}{aspectPl[t.aspectType] ?? t.aspectType}{" "}
-                    <span className="text-slate-400">do natalnego {t.natalPoint}</span>
+                    <span className="text-slate-400">do urodzeniowego {t.natalPoint}</span>
                   </p>
                   <p className="text-xs text-slate-500 mt-0.5">{datePl} · orb {t.orbDegrees.toFixed(1)}°{t.applying ? " · aplikacyjny" : ""}</p>
                 </div>
@@ -288,7 +288,7 @@ export default function HoroscopePage() {
           </div>
           <p className="text-slate-500 text-sm leading-relaxed mb-4">
             Horoskop oparty o aktywne tranzyty planet do Twojego konkretnego kosmogramu — nie o znak Słońca.
-            Codziennie nowy, generowany z pozycji planet względem Twoich planet natalnych.
+            Codziennie nowy, generowany z pozycji planet względem Twoich planet urodzeniowych.
           </p>
           <Link
             href="/pricing"

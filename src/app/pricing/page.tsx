@@ -240,7 +240,7 @@ export default function PricingPage() {
 
             <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
               {([
-                ["Pełny kosmogram natalny z kołem i Wielką Trójką", false],
+                ["Pełny kosmogram urodzeniowy z kołem i Wielką Trójką", false],
                 ["Interpretacja AI kluczowych pozycji", "1 rozdział"],
                 ["Cosmo Match", "wynik + 1 moduł"],
                 ["Cosmo Chat", "3 wiadomości na start"],
@@ -378,7 +378,7 @@ export default function PricingPage() {
                 <tbody>
                   {(
                     [
-                      ["Kosmogram natalny z kołem i Wielką Trójką", "check", "check"],
+                      ["Kosmogram urodzeniowy z kołem i Wielką Trójką", "check", "check"],
                       ["Rozdziały interpretacji o Tobie", "1 z 8", "wszystkie 8"],
                       ["Cosmo Match (synastria)", "wynik + 1 moduł", "pełna analiza · 10 / mies."],
                       ["Kosmogram dziecka", "none", "check"],

@@ -41,7 +41,7 @@ export default function WelcomeEmail({ appUrl }: Props) {
                 Kosmogram jest gotowy.<br />Teraz czas na Twój.
               </Heading>
               <Text style={{ color: "rgba(148,163,184,0.85)", fontSize: 15, lineHeight: 1.7, margin: "0 0 32px" }}>
-                Twoje konto zostało aktywowane. Stwórz swój kosmogram natalny i odkryj, co gwiazdy mówiły w chwili Twoich narodzin — interpretacja AI z prawdziwym głosem, nie szablon.
+                Twoje konto zostało aktywowane. Stwórz swój kosmogram urodzeniowy i odkryj, co gwiazdy mówiły w chwili Twoich narodzin — interpretacja AI z prawdziwym głosem, nie szablon.
               </Text>
               <Button
                 href={`${appUrl}/app/cosmogram`}
@@ -71,7 +71,7 @@ export default function WelcomeEmail({ appUrl }: Props) {
               </Text>
 
               {[
-                { icon: "✦", title: "Kosmogram natalny", desc: "8 modułów interpretacji — tożsamość, supermoce, cienie, misja." },
+                { icon: "✦", title: "Kosmogram urodzeniowy", desc: "8 modułów interpretacji — tożsamość, supermoce, cienie, misja." },
                 { icon: "📅", title: "Kalendarz kosmiczny", desc: "Dni Mocy, okna aktywności. Wiesz kiedy działać, kiedy odpoczywać." },
                 { icon: "💬", title: "Cosmo Chat", desc: "Astrolog AI który zna Twoją kartę. Pytaj o wszystko." },
                 { icon: "❤️", title: "Cosmo Match", desc: "Synastria z partnerem, przyjacielem, rodziną. Kto Cię uzupełnia?" },
