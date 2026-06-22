@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { render } from "@react-email/render";
 import { WeeklyHoroscopeEmail } from "@/components/emails/HoroscopeEmails";
+import { getOrGenerateWeekContent } from "@/lib/calendar/cronGen";
+import type { NatalChart } from "@/lib/astro-types";
 import { Resend } from "resend";
 
-export const maxDuration = 60;
+export const maxDuration = 300; // generate for every premium user in one run
 export const runtime = "nodejs";
 
 // Lazy — avoid instantiating (and throwing on a missing key) at import/build time.
@@ -26,15 +28,6 @@ interface SubscriptionWithUser {
   name: string;
 }
 
-function getISOWeekKey(weekStartISO: string): string {
-  const d = new Date(`${weekStartISO}T12:00:00Z`);
-  const thu = new Date(d);
-  thu.setUTCDate(d.getUTCDate() + 3);
-  const yearStart = new Date(Date.UTC(thu.getUTCFullYear(), 0, 1));
-  const weekNum = Math.ceil(((thu.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-  return `${thu.getUTCFullYear()}-W${String(weekNum).padStart(2, "0")}`;
-}
-
 function getWeekBoundaries(): { start: string; end: string } {
   const now = new Date();
   // Get Monday of current week (ISO)
@@ -50,18 +43,18 @@ function getWeekBoundaries(): { start: string; end: string } {
 }
 
 async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
-  // Get all active Premium subscriptions
+  // All premium subscriptions (active + trialing — both have premium access)
   const { data: subscriptions, error } = await supabaseAdmin
     .from("subscriptions")
     .select("user_id, weekly_horoscope_sent_at")
-    .eq("status", "active");
+    .in("status", ["active", "trialing"]);
 
   if (error || !subscriptions) {
     console.error("Error fetching subscriptions:", error);
     return [];
   }
 
-  // Filter: not sent in last 6 days (safety margin)
+  // Filter: not sent in last 6 days (safety margin against double-send)
   const now = new Date();
   const sixDaysAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
   const eligibleUserIds = subscriptions
@@ -75,18 +68,14 @@ async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
     return [];
   }
 
-  const { data: prefs, error: prefsError } = await supabaseAdmin
+  // Opt-OUT model: email_horoscope defaults to true, so send to everyone EXCEPT
+  // those who explicitly unsubscribed (= false). Users with no row are included.
+  const { data: unsub } = await supabaseAdmin
     .from("user_preferences")
     .select("user_id")
-    .eq("email_horoscope", true)
+    .eq("email_horoscope", false)
     .in("user_id", eligibleUserIds);
-
-  if (prefsError || !prefs?.length) {
-    console.error("Error fetching user_preferences:", prefsError);
-    return [];
-  }
-
-  const optedIn = new Set(prefs.map((p) => p.user_id));
+  const unsubscribed = new Set((unsub ?? []).map((p) => p.user_id));
 
   // Get email + name for eligible users
   const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers({
@@ -98,8 +87,9 @@ async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
     return [];
   }
 
+  const eligible = new Set(eligibleUserIds);
   return users
-    .filter((u) => eligibleUserIds.includes(u.id) && optedIn.has(u.id) && u.email)
+    .filter((u) => eligible.has(u.id) && !unsubscribed.has(u.id) && u.email)
     .map((u) => ({
       user_id: u.id,
       email: u.email || "",
@@ -107,42 +97,17 @@ async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
     }));
 }
 
-async function getUserLatestReading(userId: string): Promise<string | null> {
-  const { data, error } = await supabaseAdmin
+async function getUserLatestChart(userId: string): Promise<{ readingId: string; chart: NatalChart } | null> {
+  const { data } = await supabaseAdmin
     .from("readings")
-    .select("id")
+    .select("id, chart_data")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  return data?.id || null;
-}
-
-async function getOrGenerateWeekInterpretation(
-  userId: string,
-  readingId: string
-): Promise<{ content: string; generated: boolean } | null> {
-  const { start: weekStart } = getWeekBoundaries();
-  const isoWeek = getISOWeekKey(weekStart);
-
-  // Try to get cached interpretation
-  const { data: cached } = await supabaseAdmin
-    .from("week_interpretations")
-    .select("content")
-    .eq("user_id", userId)
-    .eq("reading_id", readingId)
-    .eq("iso_week", isoWeek)
-    .maybeSingle();
-
-  if (cached) {
-    return { content: cached.content, generated: false };
-  }
-
-  // If not cached, we cannot generate during cron (would exceed timeout)
-  // Return null to skip this user
-  console.log(`Week interpretation not cached for user ${userId}, skipping`);
-  return null;
+  if (!data?.id || !data?.chart_data) return null;
+  return { readingId: data.id, chart: data.chart_data as NatalChart };
 }
 
 async function sendWeeklyEmail(
@@ -220,28 +185,27 @@ async function runWeeklyCron(req: NextRequest) {
     const users = await getActivePremiumUsers();
     console.log(`[cron/weekly-horoscope] Found ${users.length} eligible users`);
 
-    // Process users sequentially (safe under timeout)
+    const { start: weekStart } = getWeekBoundaries();
+
+    // Process users sequentially (safe under maxDuration; AI gen is the slow part)
     for (const user of users) {
       try {
-        // Get latest reading
-        const readingId = await getUserLatestReading(user.user_id);
-        if (!readingId) {
-          console.log(`[cron/weekly-horoscope] User ${user.user_id} has no reading`);
+        const reading = await getUserLatestChart(user.user_id);
+        if (!reading) {
           skipped++;
-          await logHoroscopeSend(user.user_id, "skipped", "No natal chart");
+          await logHoroscopeSend(user.user_id, "skipped", "Brak kosmogramu");
           continue;
         }
 
-        // Get cached week interpretation (don't generate new ones during cron)
-        const interpretation = await getOrGenerateWeekInterpretation(user.user_id, readingId);
-        if (!interpretation) {
+        // Generate the week reading for this user if not yet cached, then send
+        const content = await getOrGenerateWeekContent(user.user_id, reading.readingId, reading.chart, weekStart);
+        if (!content) {
           skipped++;
-          await logHoroscopeSend(user.user_id, "skipped", "Week interpretation not cached");
+          await logHoroscopeSend(user.user_id, "skipped", "Generowanie nie powiodło się");
           continue;
         }
 
-        // Send email
-        const emailSent = await sendWeeklyEmail(user, interpretation.content);
+        const emailSent = await sendWeeklyEmail(user, content);
         if (emailSent) {
           sent++;
           await updateSentTimestamp(user.user_id);

@@ -1,4 +1,83 @@
-import { Html, Body, Container, Section, Text, Link, Heading } from "@react-email/components";
+import {
+  Html, Head, Preview, Body, Container, Section, Heading, Text, Hr, Button,
+} from "@react-email/components";
+import * as React from "react";
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmo-gram.com";
+
+// ─── Shared premium dark/gold layout (matches DailyHoroscopeEmail) ─────────────
+
+const S = {
+  body:    { background: "#050508", fontFamily: "Georgia, 'Times New Roman', serif", margin: 0, padding: 0 } as const,
+  container: { maxWidth: 560, margin: "0 auto", padding: "40px 24px" } as const,
+  brand:   { color: "rgba(212,175,55,0.6)", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", margin: 0 } as const,
+  date:    { color: "rgba(100,116,139,0.7)", fontSize: 11, letterSpacing: "0.15em", margin: "8px 0 0" } as const,
+  hrGold:  { borderColor: "rgba(212,175,55,0.22)", margin: "24px 0 28px" } as const,
+  heading: { color: "#F3E5AB", fontSize: 26, fontWeight: 400, lineHeight: 1.35, margin: "0 0 6px", textAlign: "center" } as const,
+  intro:   { color: "rgba(148,163,184,0.80)", fontSize: 14, lineHeight: 1.7, margin: "0 0 24px", textAlign: "center" } as const,
+  card:    { background: "rgba(212,175,55,0.05)", border: "0.5px solid rgba(212,175,55,0.18)", borderRadius: 14, padding: "22px 24px" } as const,
+  para:    { color: "rgba(226,232,240,0.88)", fontSize: 15, lineHeight: 1.75, margin: "0 0 14px" } as const,
+  button:  { background: "linear-gradient(135deg, #D4AF37, #C5A059)", color: "#050508", padding: "14px 32px", borderRadius: 24, fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textDecoration: "none", display: "inline-block" } as const,
+  hrFaint: { borderColor: "rgba(212,175,55,0.10)", margin: "32px 0 20px" } as const,
+  footer:  { color: "rgba(100,116,139,0.7)", fontSize: 11, lineHeight: 1.6, margin: "0 0 8px", textAlign: "center" } as const,
+  footerSm:{ color: "rgba(100,116,139,0.45)", fontSize: 10, margin: 0, textAlign: "center" } as const,
+  linkGold:{ color: "rgba(212,175,55,0.55)", textDecoration: "none" } as const,
+  linkUnsub:{ color: "rgba(100,116,139,0.65)", textDecoration: "underline" } as const,
+};
+
+function HoroscopeLayout({
+  dateLabel, heading, intro, content, ctaHref, ctaLabel, userId, unsubLabel,
+}: {
+  dateLabel: string; heading: string; intro: string; content: string;
+  ctaHref: string; ctaLabel: string; userId: string; unsubLabel: string;
+}) {
+  const paragraphs = content.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean);
+  return (
+    <Html lang="pl">
+      <Head />
+      <Preview>{heading} · Cosmogram</Preview>
+      <Body style={S.body}>
+        <Container style={S.container}>
+          <Section style={{ textAlign: "center" }}>
+            <Text style={S.brand}>✦ COSMOGRAM ✦</Text>
+            <Text style={S.date}>{dateLabel}</Text>
+          </Section>
+
+          <Hr style={S.hrGold} />
+
+          <Heading style={S.heading}>{heading}</Heading>
+          <Text style={S.intro}>{intro}</Text>
+
+          <Section style={S.card}>
+            {paragraphs.map((p, i) => (
+              <Text key={i} style={{ ...S.para, margin: i === paragraphs.length - 1 ? 0 : S.para.margin }}>
+                {p}
+              </Text>
+            ))}
+          </Section>
+
+          <Section style={{ textAlign: "center", margin: "28px 0 0" }}>
+            <Button href={ctaHref} style={S.button}>{ctaLabel}</Button>
+          </Section>
+
+          <Hr style={S.hrFaint} />
+
+          <Section>
+            <Text style={S.footer}>
+              Wysłano z <a href="https://www.cosmo-gram.com" style={S.linkGold}>cosmo-gram.com</a>
+            </Text>
+            <Text style={S.footerSm}>
+              {unsubLabel}{" "}
+              <a href={`${APP_URL}/api/email/unsubscribe?id=${userId}`} style={S.linkUnsub}>Wypisz się</a>
+            </Text>
+          </Section>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+
+// ─── Weekly ────────────────────────────────────────────────────────────────────
 
 export interface WeeklyHoroscopeEmailProps {
   userName: string;
@@ -8,85 +87,22 @@ export interface WeeklyHoroscopeEmailProps {
   userId: string;
 }
 
-export function WeeklyHoroscopeEmail({
-  userName,
-  weekStart,
-  weekEnd,
-  horoscopeContent,
-  userId,
-}: WeeklyHoroscopeEmailProps) {
-  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmo-gram.com"}/api/email/unsubscribe?id=${userId}`;
-
+export function WeeklyHoroscopeEmail({ userName, weekStart, weekEnd, horoscopeContent, userId }: WeeklyHoroscopeEmailProps) {
   return (
-    <Html>
-      <Body style={{ fontFamily: "sans-serif", backgroundColor: "#f9f5f0" }}>
-        <Container style={{ maxWidth: "600px", margin: "0 auto", paddingTop: "20px" }}>
-          <Section style={{ backgroundColor: "#fff", borderRadius: "8px", padding: "30px", marginBottom: "20px" }}>
-            <Heading style={{ color: "#2d2d2d", fontSize: "24px", marginTop: 0 }}>
-              Twoja tygodniówka ✨
-            </Heading>
-
-            <Text style={{ color: "#666", fontSize: "14px", margin: "10px 0" }}>
-              Cześć {userName}!
-            </Text>
-
-            <Text style={{ color: "#666", fontSize: "14px", margin: "10px 0" }}>
-              Oto energetyczne trendy na tydzień <strong>{weekStart}</strong> – <strong>{weekEnd}</strong>:
-            </Text>
-
-            <Section
-              style={{
-                backgroundColor: "#faf7f3",
-                borderLeft: "4px solid #d4a574",
-                padding: "15px",
-                marginTop: "20px",
-                marginBottom: "20px",
-                borderRadius: "4px",
-              }}
-            >
-              <Text style={{ color: "#2d2d2d", fontSize: "16px", lineHeight: "1.6", margin: 0 }}>
-                {horoscopeContent}
-              </Text>
-            </Section>
-
-            <Link
-              href={`${process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmo-gram.com"}/app/calendar?h=week`}
-              style={{
-                display: "inline-block",
-                backgroundColor: "#d4a574",
-                color: "#fff",
-                padding: "12px 24px",
-                borderRadius: "4px",
-                textDecoration: "none",
-                fontSize: "14px",
-                fontWeight: "bold",
-                marginTop: "20px",
-              }}
-            >
-              Przejdź do kalendarza
-            </Link>
-          </Section>
-
-          <Section style={{ textAlign: "center", color: "#999", fontSize: "12px", paddingTop: "20px" }}>
-            <Text style={{ marginBottom: "10px" }}>
-              © {new Date().getFullYear()} Cosmogram. Wszyscy prawa zastrzeżone.
-            </Text>
-            <Link
-              href={unsubscribeUrl}
-              style={{
-                color: "#d4a574",
-                textDecoration: "underline",
-                fontSize: "12px",
-              }}
-            >
-              Wyrejestruj się z wiadomości tygodniowych
-            </Link>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
+    <HoroscopeLayout
+      dateLabel={`${weekStart} – ${weekEnd}`}
+      heading="Twoja tygodniówka"
+      intro={`Cześć ${userName} — oto co gwiazdy szykują na Twój tydzień.`}
+      content={horoscopeContent}
+      ctaHref={`${APP_URL}/app/calendar?h=week`}
+      ctaLabel="Zobacz cały tydzień →"
+      userId={userId}
+      unsubLabel="Nie chcesz tygodniowych horoskopów?"
+    />
   );
 }
+
+// ─── Monthly ───────────────────────────────────────────────────────────────────
 
 export interface MonthlyForecastEmailProps {
   userName: string;
@@ -96,82 +112,17 @@ export interface MonthlyForecastEmailProps {
   userId: string;
 }
 
-export function MonthlyForecastEmail({
-  userName,
-  month,
-  year,
-  forecastContent,
-  userId,
-}: MonthlyForecastEmailProps) {
-  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmo-gram.com"}/api/email/unsubscribe?id=${userId}`;
-
+export function MonthlyForecastEmail({ userName, month, year, forecastContent, userId }: MonthlyForecastEmailProps) {
   return (
-    <Html>
-      <Body style={{ fontFamily: "sans-serif", backgroundColor: "#f9f5f0" }}>
-        <Container style={{ maxWidth: "600px", margin: "0 auto", paddingTop: "20px" }}>
-          <Section style={{ backgroundColor: "#fff", borderRadius: "8px", padding: "30px", marginBottom: "20px" }}>
-            <Heading style={{ color: "#2d2d2d", fontSize: "24px", marginTop: 0 }}>
-              Twoja prognoza na miesiąc 🌙
-            </Heading>
-
-            <Text style={{ color: "#666", fontSize: "14px", margin: "10px 0" }}>
-              Cześć {userName}!
-            </Text>
-
-            <Text style={{ color: "#666", fontSize: "14px", margin: "10px 0" }}>
-              Oto szczegółowa prognoza na <strong>{month} {year}</strong>:
-            </Text>
-
-            <Section
-              style={{
-                backgroundColor: "#faf7f3",
-                borderLeft: "4px solid #d4a574",
-                padding: "15px",
-                marginTop: "20px",
-                marginBottom: "20px",
-                borderRadius: "4px",
-              }}
-            >
-              <Text style={{ color: "#2d2d2d", fontSize: "16px", lineHeight: "1.6", margin: 0 }}>
-                {forecastContent}
-              </Text>
-            </Section>
-
-            <Link
-              href={`${process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmo-gram.com"}/app/calendar`}
-              style={{
-                display: "inline-block",
-                backgroundColor: "#d4a574",
-                color: "#fff",
-                padding: "12px 24px",
-                borderRadius: "4px",
-                textDecoration: "none",
-                fontSize: "14px",
-                fontWeight: "bold",
-                marginTop: "20px",
-              }}
-            >
-              Przejdź do pełnego kalendarza
-            </Link>
-          </Section>
-
-          <Section style={{ textAlign: "center", color: "#999", fontSize: "12px", paddingTop: "20px" }}>
-            <Text style={{ marginBottom: "10px" }}>
-              © {new Date().getFullYear()} Cosmogram. Wszyscy prawa zastrzeżone.
-            </Text>
-            <Link
-              href={unsubscribeUrl}
-              style={{
-                color: "#d4a574",
-                textDecoration: "underline",
-                fontSize: "12px",
-              }}
-            >
-              Wyrejestruj się z wiadomości miesięcznych
-            </Link>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
+    <HoroscopeLayout
+      dateLabel={`${month} ${year}`}
+      heading={`Twoja prognoza na ${month.toLowerCase()}`}
+      intro={`Cześć ${userName} — oto Twój miesiąc w tranzytach.`}
+      content={forecastContent}
+      ctaHref={`${APP_URL}/app/calendar?h=month`}
+      ctaLabel="Zobacz pełną prognozę →"
+      userId={userId}
+      unsubLabel="Nie chcesz miesięcznych prognoz?"
+    />
   );
 }

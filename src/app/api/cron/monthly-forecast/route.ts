@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { render } from "@react-email/render";
 import { MonthlyForecastEmail } from "@/components/emails/HoroscopeEmails";
+import { getOrGenerateMonthContent } from "@/lib/calendar/cronGen";
+import type { NatalChart } from "@/lib/astro-types";
 import { Resend } from "resend";
 
-export const maxDuration = 60;
+export const maxDuration = 300; // generate for every premium user in one run
 export const runtime = "nodejs";
 
 // Lazy — avoid instantiating (and throwing on a missing key) at import/build time.
@@ -37,11 +39,11 @@ function getCurrentMonthBoundaries(): { monthName: string; year: number } {
 }
 
 async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
-  // Get all active Premium subscriptions
+  // All premium subscriptions (active + trialing — both have premium access)
   const { data: subscriptions, error } = await supabaseAdmin
     .from("subscriptions")
     .select("user_id, monthly_forecast_sent_at")
-    .eq("status", "active");
+    .in("status", ["active", "trialing"]);
 
   if (error || !subscriptions) {
     console.error("Error fetching subscriptions:", error);
@@ -62,18 +64,13 @@ async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
     return [];
   }
 
-  const { data: prefs, error: prefsError } = await supabaseAdmin
+  // Opt-OUT model: send to everyone EXCEPT those who explicitly unsubscribed.
+  const { data: unsub } = await supabaseAdmin
     .from("user_preferences")
     .select("user_id")
-    .eq("email_horoscope", true)
+    .eq("email_horoscope", false)
     .in("user_id", eligibleUserIds);
-
-  if (prefsError || !prefs?.length) {
-    console.error("Error fetching user_preferences:", prefsError);
-    return [];
-  }
-
-  const optedIn = new Set(prefs.map((p) => p.user_id));
+  const unsubscribed = new Set((unsub ?? []).map((p) => p.user_id));
 
   // Get email + name for eligible users
   const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers({
@@ -85,8 +82,9 @@ async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
     return [];
   }
 
+  const eligible = new Set(eligibleUserIds);
   return users
-    .filter((u) => eligibleUserIds.includes(u.id) && optedIn.has(u.id) && u.email)
+    .filter((u) => eligible.has(u.id) && !unsubscribed.has(u.id) && u.email)
     .map((u) => ({
       user_id: u.id,
       email: u.email || "",
@@ -94,40 +92,17 @@ async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
     }));
 }
 
-async function getUserLatestReading(userId: string): Promise<string | null> {
-  const { data, error } = await supabaseAdmin
+async function getUserLatestChart(userId: string): Promise<{ readingId: string; chart: NatalChart } | null> {
+  const { data } = await supabaseAdmin
     .from("readings")
-    .select("id")
+    .select("id, chart_data")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  return data?.id || null;
-}
-
-async function getOrGenerateMonthlyForecast(
-  userId: string,
-  readingId: string,
-  month: number,
-  year: number
-): Promise<{ content: string } | null> {
-  // Try to get cached forecast
-  const { data: cached } = await supabaseAdmin
-    .from("monthly_summaries")
-    .select("summary_text")
-    .eq("user_id", userId)
-    .eq("year", year)
-    .eq("month", month)
-    .maybeSingle();
-
-  if (cached?.summary_text) {
-    return { content: cached.summary_text };
-  }
-
-  // If not cached, we cannot generate during cron (would exceed timeout)
-  console.log(`Monthly forecast not cached for user ${userId}, skipping`);
-  return null;
+  if (!data?.id || !data?.chart_data) return null;
+  return { readingId: data.id, chart: data.chart_data as NatalChart };
 }
 
 async function sendMonthlyEmail(
@@ -208,28 +183,25 @@ async function runMonthlyCron(req: NextRequest) {
     const users = await getActivePremiumUsers();
     console.log(`[cron/monthly-forecast] Found ${users.length} eligible users`);
 
-    // Process users sequentially (safe under timeout)
+    // Process users sequentially (safe under maxDuration; AI gen is the slow part)
     for (const user of users) {
       try {
-        // Get latest reading
-        const readingId = await getUserLatestReading(user.user_id);
-        if (!readingId) {
-          console.log(`[cron/monthly-forecast] User ${user.user_id} has no reading`);
+        const reading = await getUserLatestChart(user.user_id);
+        if (!reading) {
           skipped++;
-          await logHoroscopeSend(user.user_id, "skipped", "No natal chart");
+          await logHoroscopeSend(user.user_id, "skipped", "Brak kosmogramu");
           continue;
         }
 
-        // Get cached monthly forecast (don't generate new ones during cron)
-        const forecast = await getOrGenerateMonthlyForecast(user.user_id, readingId, month, year);
-        if (!forecast) {
+        // Generate this user's monthly forecast if not yet cached, then send
+        const content = await getOrGenerateMonthContent(user.user_id, reading.readingId, reading.chart, year, month);
+        if (!content) {
           skipped++;
-          await logHoroscopeSend(user.user_id, "skipped", "Monthly forecast not cached");
+          await logHoroscopeSend(user.user_id, "skipped", "Generowanie nie powiodło się");
           continue;
         }
 
-        // Send email
-        const emailSent = await sendMonthlyEmail(user, forecast.content, monthName, year);
+        const emailSent = await sendMonthlyEmail(user, content, monthName, year);
         if (emailSent) {
           sent++;
           await updateSentTimestamp(user.user_id);
