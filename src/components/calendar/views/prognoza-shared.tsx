@@ -177,7 +177,7 @@ a.pg-interp-lock:hover span { color:var(--pg-voice); }
   pointer-events:none;animation:pg-spin 90s linear infinite;
   box-shadow:0 0 0 1px var(--pg-line),0 0 50px rgba(255,174,61,.08);
 }
-.pg-wheel { width:300px;height:300px; }
+.pg-wheel { width:300px;max-width:100%;height:auto; }
 .pg-arctip {
   position:absolute;z-index:5;pointer-events:none;width:212px;padding:11px 13px;
   border-radius:12px;background:var(--pg-elevated);border:1px solid var(--pg-line);

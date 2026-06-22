@@ -89,6 +89,8 @@ export default function Navbar() {
           : "transparent",
         backdropFilter: scrolled || menuOpen ? "blur(24px) saturate(180%)" : "none",
         WebkitBackdropFilter: scrolled || menuOpen ? "blur(24px) saturate(180%)" : "none",
+        // PWA standalone: drop the bar below the iOS status bar (clock/signal/battery)
+        paddingTop: "env(safe-area-inset-top, 0px)",
       }}
     >
       {/* Thin gold top line when scrolled */}
