@@ -40,6 +40,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.cosmo-gram.com"),
   title: "Cosmogram — Horoskop, który naprawdę jest o Tobie",
   description:
     "Cosmogram łączy dane astronomiczne NASA z wiedzą astrologiczną. Astrea — AI tworzona z astrologami — zamienia je w portret, w którym rozpoznasz siebie. Za darmo, bez karty.",
@@ -55,15 +56,21 @@ export const metadata: Metadata = {
     type: "website",
     url: "https://www.cosmo-gram.com",
     siteName: "Cosmogram",
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Cosmogram" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Cosmogram — Horoskop, który naprawdę jest o Tobie",
     description: "Personalizowana astrologia oparta na danych NASA. Za darmo.",
+    images: ["/og-default.png"],
   },
   icons: {
-    icon: "/icons/icon-192.png",
-    apple: "/icons/icon-192.png",
+    icon: [
+      "/favicon.ico",
+      { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16.png", type: "image/png", sizes: "16x16" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
 };
 
