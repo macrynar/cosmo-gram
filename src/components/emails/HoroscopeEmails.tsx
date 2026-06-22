@@ -97,8 +97,8 @@ export function WeeklyHoroscopeEmail({ userName, weekStart, weekEnd, horoscopeCo
   return (
     <HoroscopeLayout
       dateLabel={`${weekStart} – ${weekEnd}`}
-      heading="Twoja tygodniówka"
-      intro={`Cześć ${userName} — oto co gwiazdy szykują na Twój tydzień.`}
+      heading="Twoja prognoza na nadchodzący tydzień"
+      intro={`Cześć ${userName} — oto co gwiazdy szykują na nadchodzący tydzień.`}
       content={horoscopeContent}
       ctaHref={`${APP_URL}/app/calendar?h=week`}
       ctaLabel="Zobacz cały tydzień →"
@@ -122,8 +122,8 @@ export function MonthlyForecastEmail({ userName, month, year, forecastContent, u
   return (
     <HoroscopeLayout
       dateLabel={`${month} ${year}`}
-      heading={`Twoja prognoza na ${month.toLowerCase()}`}
-      intro={`Cześć ${userName} — oto Twój miesiąc w tranzytach.`}
+      heading="Twoja prognoza na nadchodzący miesiąc"
+      intro={`Cześć ${userName} — oto co gwiazdy szykują na ${month.toLowerCase()}.`}
       content={forecastContent}
       ctaHref={`${APP_URL}/app/calendar?h=month`}
       ctaLabel="Zobacz pełną prognozę →"

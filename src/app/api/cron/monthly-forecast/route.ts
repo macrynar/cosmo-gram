@@ -28,14 +28,14 @@ interface SubscriptionWithUser {
   name: string;
 }
 
-function getCurrentMonthBoundaries(): { monthName: string; year: number } {
+// Cron runs on the 28th → forecast the UPCOMING month (not the one that's ending).
+function getUpcomingMonth(): { monthName: string; year: number; month: number } {
   const now = new Date();
-  const month = now.getUTCMonth() + 1;
-  const year = now.getUTCFullYear();
-  const monthName = new Intl.DateTimeFormat("pl-PL", { month: "long" }).format(
-    new Date(year, month - 1)
-  );
-  return { monthName: monthName.charAt(0).toUpperCase() + monthName.slice(1), year };
+  let year = now.getUTCFullYear();
+  let month = now.getUTCMonth() + 2; // +1 → 1-indexed, +1 → next month
+  if (month > 12) { month = 1; year += 1; }
+  const monthName = new Intl.DateTimeFormat("pl-PL", { month: "long" }).format(new Date(year, month - 1));
+  return { monthName: monthName.charAt(0).toUpperCase() + monthName.slice(1), year, month };
 }
 
 async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
@@ -112,7 +112,8 @@ async function sendMonthlyEmail(
     const result = await getResend().emails.send({
       from: process.env.RESEND_FROM ?? process.env.RESEND_FROM_EMAIL ?? "Cosmogram <hello@cosmo-gram.com>",
       to: user.email,
-      subject: `Twoja prognoza na ${monthName} ${year}`,
+      // Month in the subject keeps each send unique → Gmail won't thread + collapse.
+      subject: `Twoja prognoza na nadchodzący miesiąc · ${monthName} ${year}`,
       html,
       replyTo: "hello@cosmo-gram.com",
     });
@@ -164,8 +165,7 @@ async function runMonthlyCron(req: NextRequest) {
   const errors: string[] = [];
 
   try {
-    const { monthName, year } = getCurrentMonthBoundaries();
-    const month = new Date().getUTCMonth() + 1;
+    const { monthName, year, month } = getUpcomingMonth();
 
     const users = await getActivePremiumUsers();
     console.log(`[cron/monthly-forecast] Found ${users.length} eligible users`);

@@ -30,16 +30,22 @@ interface SubscriptionWithUser {
 
 function getWeekBoundaries(): { start: string; end: string } {
   const now = new Date();
-  // Get Monday of current week (ISO)
+  // Monday of the UPCOMING week — cron runs Sunday 18:00, so forecast the week
+  // AHEAD (not the one that's ending). +7 shifts from this week's Monday to next.
   const dayOfWeek = now.getUTCDay();
-  const diff = now.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+  const diff = now.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) + 7;
   const monday = new Date(new Date(now.setUTCDate(diff)));
   const sunday = new Date(monday);
   sunday.setUTCDate(sunday.getUTCDate() + 6);
 
-  const start = monday.toISOString().slice(0, 10);
-  const end = sunday.toISOString().slice(0, 10);
-  return { start, end };
+  return { start: monday.toISOString().slice(0, 10), end: sunday.toISOString().slice(0, 10) };
+}
+
+function plDay(iso: string): string {
+  return new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(iso + "T12:00:00Z"));
+}
+function plDayYear(iso: string): string {
+  return new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(iso + "T12:00:00Z"));
 }
 
 async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
@@ -99,15 +105,17 @@ async function getActivePremiumUsers(): Promise<SubscriptionWithUser[]> {
 
 async function sendWeeklyEmail(
   user: SubscriptionWithUser,
-  horoscopeContent: string
+  horoscopeContent: string,
+  weekStartISO: string,
+  weekEndISO: string,
 ): Promise<boolean> {
-  const { start: weekStart, end: weekEnd } = getWeekBoundaries();
+  const range = `${plDay(weekStartISO)} – ${plDayYear(weekEndISO)}`;
 
   const html = await render(
     WeeklyHoroscopeEmail({
       userName: user.name,
-      weekStart,
-      weekEnd,
+      weekStart: plDay(weekStartISO),
+      weekEnd: plDayYear(weekEndISO),
       horoscopeContent,
       userId: user.user_id,
     })
@@ -117,7 +125,9 @@ async function sendWeeklyEmail(
     const result = await getResend().emails.send({
       from: process.env.RESEND_FROM ?? process.env.RESEND_FROM_EMAIL ?? "Cosmogram <hello@cosmo-gram.com>",
       to: user.email,
-      subject: `Twoja tygodniówka astrologiczna ${weekStart} – ${weekEnd}`,
+      // Date in the subject keeps each week's email unique → Gmail won't thread
+      // and collapse them ("show trimmed content").
+      subject: `Twoja prognoza na nadchodzący tydzień · ${range}`,
       html,
       replyTo: "hello@cosmo-gram.com",
     });
@@ -172,7 +182,7 @@ async function runWeeklyCron(req: NextRequest) {
     const users = await getActivePremiumUsers();
     console.log(`[cron/weekly-horoscope] Found ${users.length} eligible users`);
 
-    const { start: weekStart } = getWeekBoundaries();
+    const { start: weekStart, end: weekEnd } = getWeekBoundaries();
 
     // Process users sequentially (safe under maxDuration; AI gen is the slow part)
     for (const user of users) {
@@ -192,7 +202,7 @@ async function runWeeklyCron(req: NextRequest) {
           continue;
         }
 
-        const emailSent = await sendWeeklyEmail(user, content);
+        const emailSent = await sendWeeklyEmail(user, content, weekStart, weekEnd);
         if (emailSent) {
           sent++;
           await updateSentTimestamp(user.user_id);
