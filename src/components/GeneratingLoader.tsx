@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 
 // ─── Reusable "AI tworzy interpretację" loader ──────────────────────────────
 // Pełny wariant: animowana orbita planet + rotujące opisy czynności.
@@ -26,8 +25,11 @@ const LOADER_CSS = `
 .gl-core   { animation: gl-pulse 3.2s ease-in-out infinite; }
 .gl-star   { animation: gl-tw 2.4s ease-in-out infinite; }
 .gl-spinring { animation: gl-spin 0.9s linear infinite; }
+/* transform-only — text stays at opacity 1 even if the animation is throttled/frozen */
+@keyframes gl-phrase-in { from { transform: translateY(5px); } to { transform: translateY(0); } }
+.gl-phrase { animation: gl-phrase-in 0.35s cubic-bezier(.22,1,.36,1); }
 @media (prefers-reduced-motion: reduce) {
-  .gl-ring-1,.gl-ring-2,.gl-ring-3,.gl-core,.gl-star,.gl-spinring { animation: none !important; }
+  .gl-ring-1,.gl-ring-2,.gl-ring-3,.gl-core,.gl-star,.gl-spinring,.gl-phrase { animation: none !important; }
 }
 `;
 
@@ -50,34 +52,31 @@ function RotatingPhrase({
   return (
     <div
       style={{
-        position: "relative",
-        height: size === "md" ? "22px" : "18px",
-        minWidth: "200px",
-        overflow: "hidden",
+        // min-height reserves space for up to two wrapped lines so nothing is clipped;
+        // mode="wait" means only one phrase is mounted at a time, so normal flow is safe.
+        minHeight: size === "md" ? "42px" : "34px",
+        maxWidth: size === "md" ? "340px" : "260px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
       aria-live="polite"
     >
-      <AnimatePresence mode="wait">
-        <motion.span
-          key={i}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            fontSize: size === "md" ? "14px" : "13px",
-            letterSpacing: ".01em",
-            color: accent,
-            textAlign: "center",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {phrases[i]}
-        </motion.span>
-      </AnimatePresence>
+      {/* key remounts the span on each change → re-triggers the CSS fade-in.
+          Resting opacity is 1, so the text is always visible (no stuck-at-0 risk). */}
+      <span
+        key={i}
+        className="gl-phrase"
+        style={{
+          fontSize: size === "md" ? "14px" : "13px",
+          lineHeight: 1.35,
+          letterSpacing: ".01em",
+          color: accent,
+          textAlign: "center",
+        }}
+      >
+        {phrases[i]}
+      </span>
     </div>
   );
 }

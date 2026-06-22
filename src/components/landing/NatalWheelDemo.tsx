@@ -308,14 +308,10 @@ export default function NatalWheelDemo() {
         <p data-reveal style={{ fontSize:19,lineHeight:1.6,color:"var(--text-secondary)",marginBottom:36 }}>
           O tym, jak kochasz, czego unikasz i&nbsp;co przychodzi Ci łatwiej niż innym. Napisane tak, że czyta się jak list od kogoś, kto zna Cię od dawna.
         </p>
-        <p data-reveal style={{ fontFamily:"var(--font-fraunces),serif",fontStyle:"italic",fontSize:"clamp(24px,2.6vw,30px)",lineHeight:1.35,color:"var(--voice)",marginBottom:28 }}>
-          „Dom to dla Ciebie nie miejsce, do którego się wraca — to spokój, który uczysz się nosić w&nbsp;sobie."
-        </p>
-        <div data-reveal style={{ fontSize:14,color:"var(--text-muted)",marginBottom:18 }}>z modułu „Korzenie duszy"</div>
         <p data-reveal style={{ fontSize:18,color:"var(--text-primary)",marginBottom:34 }}>
           Obiecujemy jedno: w&nbsp;pierwszych trzech akapitach przeczytasz o&nbsp;sobie rzeczy, które czujesz od lat — a&nbsp;których nikt dotąd nie nazwał.
         </p>
-        <Link href="/app/cosmogram" data-reveal
+        <Link href="/share/reading/eeffa42a-c51c-473c-add2-c4fbe94aaa33" data-reveal
           style={{ fontSize:16.5,padding:"15px 30px",display:"inline-block",
             color:"var(--text-primary)",textDecoration:"none",
             border:"1px solid var(--line)",borderRadius:999 }}>
