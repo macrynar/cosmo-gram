@@ -66,6 +66,19 @@
   }
 }
 
+/* iOS Safari ignores `width` on date/time inputs and renders them at their
+   intrinsic width, overflowing the container. Reset appearance on mobile so
+   they honour width:100% (the native picker still opens on tap). */
+@media (max-width: 640px) {
+  input[type="date"],
+  input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
 /* ─── Star field background utility ─── */
 .star-bg {
   background-image:
