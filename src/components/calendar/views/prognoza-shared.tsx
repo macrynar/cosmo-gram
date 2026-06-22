@@ -274,6 +274,12 @@ a.pg-interp-lock:hover span { color:var(--pg-voice); }
   .pg-dd { font-size:15px; }
   /* Smaller, corner-anchored orb so it stays clear of the title/desc text */
   .pg-orb { width:140px;height:140px;margin-top:0;top:-12px;right:-26px; }
+  /* Month grid: stack number (top) + icon (bottom) so they don't overlap in tiny cells */
+  .pg-month { gap:4px; }
+  .pg-mc { aspect-ratio:0.9;padding:5px; }
+  .pg-dnum { top:4px;left:6px;font-size:12px; }
+  .pg-mic { top:auto;bottom:4px;transform:translateX(-50%); }
+  .pg-mic svg { width:16px;height:16px; }
 }
 `;
 
