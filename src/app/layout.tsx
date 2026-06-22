@@ -41,7 +41,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.cosmo-gram.com"),
-  title: "Cosmogram — Horoskop, który naprawdę jest o Tobie",
+  title: "Cosmogram — Twój głęboki portret, odczytany z nieba",
   description:
     "Cosmogram łączy dane astronomiczne NASA z wiedzą astrologiczną. Astrea — AI tworzona z astrologami — zamienia je w portret, w którym rozpoznasz siebie. Za darmo, bez karty.",
   manifest: "/manifest.json",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     title: "Cosmogram",
   },
   openGraph: {
-    title: "Cosmogram — Horoskop, który naprawdę jest o Tobie",
+    title: "Cosmogram — Twój głęboki portret, odczytany z nieba",
     description: "Kosmogram natalny, Cosmo Match, Kalendarz i Cosmo Chat — spersonalizowana astrologia oparta na Twoim niebie.",
     type: "website",
     url: "https://www.cosmo-gram.com",
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cosmogram — Horoskop, który naprawdę jest o Tobie",
+    title: "Cosmogram — Twój głęboki portret, odczytany z nieba",
     description: "Personalizowana astrologia oparta na danych NASA. Za darmo.",
     images: ["/og-default.png"],
   },

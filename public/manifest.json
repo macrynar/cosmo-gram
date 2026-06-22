@@ -1,11 +1,11 @@
 {
   "name": "Cosmo-gram",
   "short_name": "Cosmo-gram",
-  "description": "Twoja astrologia z prawdziwym głosem. Kosmogram, synastria, chat.",
+  "description": "Twój głęboki portret, odczytany z nieba. Kosmogram, synastria, kalendarz i chat z Astreą.",
   "start_url": "/generate",
   "display": "standalone",
   "background_color": "#03010d",
-  "theme_color": "#7c3aed",
+  "theme_color": "#050508",
   "orientation": "portrait-primary",
   "lang": "pl",
   "icons": [
