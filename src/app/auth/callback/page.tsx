@@ -16,6 +16,7 @@ export default function AuthCallback() {
   const [saving, setSaving]             = useState(false);
   const [session, setSession]           = useState<{ access_token: string } | null>(null);
   const [redirectTarget, setRedirectTarget]     = useState("/app/cosmogram");
+  const [hasPendingChart, setHasPendingChart]   = useState(false);
 
   useEffect(() => {
     async function handleCallback() {
@@ -51,6 +52,25 @@ export default function AuthCallback() {
       const stored = localStorage.getItem("cosmo_terms_accepted");
       const hasPending = localStorage.getItem("cosmogram_pending_chart");
 
+      // Persist pending birth data to Supabase so it survives cross-device/cross-browser flows
+      // (e.g. user signs up on desktop, clicks confirmation link from mobile mail app)
+      let pendingChartSaved = false;
+      if (hasPending) {
+        try {
+          const pendingData = JSON.parse(hasPending) as Record<string, unknown>;
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
+          if (currentUser) {
+            await supabase
+              .from("user_preferences")
+              .upsert({ user_id: currentUser.id, pending_birth_data: pendingData }, { onConflict: "user_id" });
+            pendingChartSaved = true;
+          }
+        } catch {
+          // non-critical — same-device localStorage path still works
+        }
+      }
+      setHasPendingChart(!!hasPending || pendingChartSaved);
+
       if (stored) {
         // Already accepted — save consent to DB and proceed
         try {
@@ -61,7 +81,7 @@ export default function AuthCallback() {
             body: JSON.stringify({ terms: true, marketing: parsed.marketing ?? false }),
           });
         } catch {}
-        router.replace(hasPending ? "/app/cosmogram?autostart=true" : redirect);
+        router.replace((hasPending || pendingChartSaved) ? "/app/cosmogram?autostart=true" : redirect);
       } else {
         // New user via Google OAuth on login page — show terms gate
         setState("needs_terms");
@@ -86,7 +106,8 @@ export default function AuthCallback() {
       });
     } catch {}
     const hasPending = localStorage.getItem("cosmogram_pending_chart");
-    router.replace(hasPending ? "/app/cosmogram?autostart=true" : redirectTarget);
+    // hasPendingChart covers cross-device case where localStorage was empty but Supabase has the data
+    router.replace((hasPending || hasPendingChart) ? "/app/cosmogram?autostart=true" : redirectTarget);
   }
 
   if (state === "loading") {

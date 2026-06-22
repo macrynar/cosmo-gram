@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cennik — Cosmogram · mockup</title>
+<meta name="description" content="Zacznij za darmo, przejdź na Plus, gdy chcesz więcej. Cosmogram Plus 19,90 zł/mc lub 199 zł/rok — pełna interpretacja, Cosmo Match, Kosmogram dziecka i Cosmo Chat z Astreą. Anuluj kiedy chcesz.">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-base:#0B0912;--bg-elevated:#14101F;--text-primary:#F4F1EA;--text-secondary:#B6AFC6;
+  --text-muted:#877FA0;--accent:#FFAE3D;--accent-deep:#E0B566;--voice:#E9DCC0;
+  --line:#2B2540;--line-soft:rgba(182,175,198,.14);--tense:#E2654A;--ease:cubic-bezier(.22,1,.36,1);
+  --grad-ember:linear-gradient(135deg,#FFC56B 0%,#E0992E 100%);
+}
+*{margin:0;box-sizing:border-box}
+body{background:radial-gradient(120% 80% at 50% 0%,#1A1530 0%,#0B0912 60%) fixed var(--bg-base);color:var(--text-primary);font-family:'General Sans',system-ui,sans-serif;line-height:1.6}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+.nav{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,9,18,.72);backdrop-filter:blur(12px);z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600}
+.tabs{display:flex;gap:2px}.tab{padding:8px 13px;border-radius:999px;color:var(--text-muted);font-size:13.5px}
+.tab.on{color:var(--voice);background:rgba(224,181,102,.10);border:1px solid var(--line)}
+.navr{display:flex;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;font-family:inherit;cursor:pointer;transition:.25s var(--ease);font-weight:600}
+.btn.sm{font-size:13px;padding:8px 15px}
+.btn.ghost{color:var(--text-muted);background:none;border:none}
+.btn.line{border:1px solid rgba(224,181,102,.4);color:var(--voice);background:rgba(224,181,102,.06)}
+.btn.primary{background:var(--grad-ember);color:#241704;border:none;box-shadow:0 8px 26px rgba(255,174,61,.18)}
+.btn.primary:hover{filter:brightness(1.05)}.btn svg{width:16px;height:16px}
+.eyebrow{font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--accent-deep)}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:500;letter-spacing:.01em;line-height:1.15}
+
+.head{text-align:center;padding:70px 22px 30px;max-width:760px;margin:0 auto}
+.head .pill{display:inline-block;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-deep);border:1px solid rgba(224,181,102,.28);background:rgba(224,181,102,.06);border-radius:999px;padding:5px 14px;margin-bottom:18px}
+.head h1{font-size:clamp(30px,4.4vw,44px);margin-bottom:14px}
+.head h1 .hl{background:var(--grad-ember);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.head p{color:var(--text-secondary);font-size:16px}
+
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:880px;margin:0 auto;padding:14px 22px 0}
+.plan{background:var(--bg-elevated);border:1px solid var(--line);border-radius:22px;padding:30px;position:relative;overflow:hidden}
+.plan.plus{border-color:rgba(224,181,102,.42);background:radial-gradient(130% 120% at 100% 0%,rgba(224,181,102,.10),var(--bg-elevated))}
+.plan .row1{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.plan .lab{font-size:12.5px;color:var(--text-muted)}.plan.plus .lab{color:var(--accent-deep)}
+.plan h3{font-size:24px;display:flex;align-items:center;gap:8px}.plan h3 svg{width:18px;height:18px;color:var(--accent)}
+.plan .badge{font-size:11px;font-weight:600;padding:5px 11px;border-radius:999px}
+.plan .badge.free{color:var(--text-secondary);background:rgba(182,175,198,.06);border:1px solid var(--line)}
+.plan .badge.ea{color:#241704;background:var(--grad-ember)}
+.price{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.price .amt{font-family:'Fraunces',serif;font-size:38px;color:var(--text-primary)}
+.price .per{color:var(--text-muted);font-size:15px}
+.subprice{font-size:13px;color:var(--text-muted);margin-bottom:4px}.subprice b{color:var(--accent-deep);font-weight:600}.subprice .save{color:var(--accent-deep)}
+.trust{font-size:12px;color:var(--text-muted);margin-bottom:22px}
+.flist{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+.flist li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--text-secondary)}
+.flist li svg{width:16px;height:16px;color:var(--accent);flex:0 0 auto;margin-top:2px}
+.flist li b{color:var(--text-primary);font-weight:600}
+.plan .cta{width:100%;padding:13px;font-size:14.5px;border-radius:13px}
+
+/* tabela porównawcza */
+.ptable{width:100%;border-collapse:collapse;max-width:820px;margin:0 auto;font-size:14px}
+.ptable th,.ptable td{padding:13px 14px;border-bottom:1px solid var(--line);text-align:left}
+.ptable thead th{font-family:'Fraunces',serif;font-weight:500;font-size:15px}
+.ptable thead th:nth-child(2),.ptable td:nth-child(2){text-align:center;color:var(--text-muted)}
+.ptable thead th:nth-child(3),.ptable td:nth-child(3){text-align:center}
+.ptable thead th:nth-child(3){color:var(--accent-deep)}
+.ptable td:first-child{color:var(--text-secondary)}
+.ptable .yes{color:var(--accent)}.ptable .no{color:var(--text-muted);opacity:.5}
+.ptable .val{color:var(--text-primary);font-size:13px}
+.ptable tbody tr:hover{background:rgba(224,181,102,.03)}
+
+.faq-list{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+details.faq{background:var(--bg-elevated);border:1px solid var(--line);border-radius:13px;padding:4px 18px}
+details.faq[open]{border-color:rgba(224,181,102,.3)}
+details.faq summary{list-style:none;cursor:pointer;padding:15px 0;font-weight:600;font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary::after{content:'+';color:var(--accent-deep);font-size:20px}details.faq[open] summary::after{content:'–'}
+details.faq p{color:var(--text-secondary);font-size:14.5px;line-height:1.65;padding:0 0 16px}
+
+.sec-h{text-align:center;max-width:640px;margin:0 auto 30px}.sec-h h2{font-size:clamp(24px,3.2vw,30px);margin:8px 0 8px}.sec-h p{color:var(--text-secondary);font-size:15px}
+section{padding:50px 0}
+
+footer{border-top:1px solid var(--line);margin-top:30px;padding:44px 0 30px;color:var(--text-muted);font-size:13px}
+.fcols{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:24px;margin-bottom:30px}
+.fcols h4{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px}
+.fcols a{display:block;color:var(--text-secondary);font-size:13.5px;margin-bottom:7px}
+.fdisc{border-top:1px solid var(--line);padding-top:18px;font-size:12px;line-height:1.6}
+@media(max-width:760px){.plans,.fcols{grid-template-columns:1fr}.tabs{display:none}}
+</style></head>
+<body>
+
+<nav class="nav">
+  <div class="brand"><svg width="22" height="22" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>cosmogram</div>
+  <div class="tabs"><a class="tab">Kosmogram</a><a class="tab">Kalendarz</a><a class="tab">Cosmo Match</a><a class="tab">Cosmo Chat</a><a class="tab">Blog</a><a class="tab on">Cennik</a></div>
+  <div class="navr"><a class="btn ghost sm">Zaloguj</a><a class="btn line sm">Załóż konto</a></div>
+</nav>
+
+<div class="head">
+  <span class="pill">Plany i ceny</span>
+  <h1>Zacznij za darmo.<br><span class="hl">Przejdź na Plus, gdy chcesz więcej.</span></h1>
+  <p>Free na start, Plus dla tych, którzy chcą zejść głębiej w swój kosmogram. Bez ukrytych kosztów — anulujesz, kiedy zechcesz.</p>
+</div>
+
+<!-- PLANY -->
+<div class="plans">
+
+  <!-- FREE -->
+  <div class="plan">
+    <div class="row1">
+      <div><div class="lab">Plan</div><h3>Free</h3></div>
+      <span class="badge free">Bez opłat</span>
+    </div>
+    <div class="price"><span class="amt">0 zł</span><span class="per">na zawsze</span></div>
+    <div class="trust">Konto bez karty — wystarczy e-mail.</div>
+    <ul class="flist">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Pełny kosmogram natalny z kołem i Wielką Trójką</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Interpretacja AI kluczowych pozycji <b>(1 rozdział)</b></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><b>Cosmo Match</b> — wynik dopasowania + 1 moduł analizy</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><b>Cosmo Chat</b> — 3 wiadomości na start</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Horoskop dzienny — raz dziennie</li>
+    </ul>
+    <a class="btn line cta">Startuję za darmo</a>
+  </div>
+
+  <!-- PLUS -->
+  <div class="plan plus">
+    <div class="row1">
+      <div><div class="lab">Plan</div><h3>Plus <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16 3 7l5.5 4L12 5l3.5 6L21 7l-2 9z"/></svg></h3></div>
+      <span class="badge ea">✦ Early Access</span>
+    </div>
+    <div class="price"><span class="amt">19,90 zł</span><span class="per">/ miesiąc</span></div>
+    <div class="subprice">lub <b>199 zł / rok</b> <span style="color:var(--text-muted)">≈ 16,60 zł/mc</span> · <span class="save">oszczędzasz 17%</span></div>
+    <div class="trust">Anuluj kiedy chcesz · bezpieczna płatność Stripe</div>
+    <ul class="flist">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><b>Pełna interpretacja kosmogramu</b> — wszystkie 8 rozdziałów o Tobie</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><b>Cosmo Match — pełna analiza 8 wymiarów</b> (do 10 analiz miesięcznie): gdzie iskrzy, a gdzie tkwi potencjał</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><b>Kosmogram dziecka</b> — temperament i potrzeby emocjonalne</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><b>Cosmo Chat — 150 wiadomości miesięcznie</b> z Astreą, z pełnym kontekstem Twojego kosmogramu (+ doładowania, gdy chcesz więcej)</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Priorytetowe, dłuższe i głębsze odpowiedzi AI</li>
+    </ul>
+    <a class="btn primary cta">Kup Cosmogram Plus</a>
+  </div>
+</div>
+
+<!-- TABELA PORÓWNAWCZA -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Porównanie</span><h2>Co dokładnie dostajesz</h2></div>
+    <table class="ptable">
+      <thead><tr><th>Funkcja</th><th>Free</th><th>Plus</th></tr></thead>
+      <tbody>
+        <tr><td>Kosmogram natalny z kołem i Wielką Trójką</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+        <tr><td>Rozdziały interpretacji o Tobie</td><td><span class="val">1 z 8</span></td><td><span class="val">wszystkie 8</span></td></tr>
+        <tr><td>Cosmo Match (synastria)</td><td><span class="val">wynik + 1 moduł</span></td><td><span class="val">pełna analiza · 10 / mies.</span></td></tr>
+        <tr><td>Kosmogram dziecka</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td></tr>
+        <tr><td>Cosmo Chat z Astreą</td><td><span class="val">3 wiadomości</span></td><td><span class="val">150 / miesiąc</span></td></tr>
+        <tr><td>Horoskop dzienny</td><td><span class="val">1× dziennie</span></td><td><span class="val">1× dziennie</span></td></tr>
+        <tr><td>Priorytetowe, dłuższe odpowiedzi AI</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">FAQ</span><h2>Pytania o płatności</h2></div>
+    <div class="faq-list">
+      <details class="faq"><summary>Czy mogę korzystać za darmo?</summary><p>Tak. Plan Free jest bezpłatny na zawsze — pełny kosmogram z kołem, pierwszy rozdział interpretacji, jeden Cosmo Match i kilka pytań do Astrei. Konto zakładasz bez karty.</p></details>
+      <details class="faq"><summary>Co dokładnie odblokowuje Plus?</summary><p>Pełną interpretację (wszystkie 8 rozdziałów), Cosmo Match z pełną analizą relacji (do 10 analiz miesięcznie), Kosmogram dziecka, Cosmo Chat z Astreą (150 wiadomości miesięcznie) z pełnym kontekstem Twojego kosmogramu oraz priorytetowe, dłuższe odpowiedzi AI.</p></details>
+      <details class="faq"><summary>Ile mogę rozmawiać z Astreą?</summary><p>W planie Free masz 3 wiadomości na start. W Plus — 150 wiadomości miesięcznie, a licznik odnawia się co okres rozliczeniowy. Gdy potrzebujesz więcej, możesz w każdej chwili doładować dodatkową paczkę wiadomości.</p></details>
+      <details class="faq"><summary>Ile kosztuje Plus?</summary><p>19,90 zł miesięcznie lub 199 zł rocznie (≈ 16,60 zł/mc — oszczędzasz 17%). Ceny brutto, bez ukrytych kosztów.</p></details>
+      <details class="faq"><summary>Czy mogę anulować w każdej chwili?</summary><p>Tak. Subskrypcję anulujesz jednym kliknięciem w ustawieniach — zachowujesz dostęp do końca opłaconego okresu, bez automatycznych pułapek.</p></details>
+      <details class="faq"><summary>Jak wygląda płatność?</summary><p>Bezpiecznie przez Stripe — kartą lub popularnymi metodami płatności. Nie przechowujemy danych Twojej karty.</p></details>
+      <details class="faq"><summary>Czy dostanę fakturę?</summary><p>Tak, fakturę lub rachunek wystawiamy na życzenie po podaniu danych do rozliczenia.</p></details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fcols">
+      <div><div class="brand" style="margin-bottom:10px"><svg width="20" height="20" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>cosmogram</div><p style="color:var(--text-muted);max-width:230px">Twój kosmiczny przewodnik — astrologia i AI w jednym miejscu.</p></div>
+      <div><h4>Produkt</h4><a>Kosmogram</a><a>Horoskop dzienny</a><a>Cosmo Match</a><a>Kosmogram dziecka</a><a>Cennik</a></div>
+      <div><h4>Zasoby</h4><a>Blog</a><a>Jak działa AI</a></div>
+      <div><h4>Legal</h4><a>Regulamin</a><a>Polityka prywatności</a><a>Polityka cookies</a></div>
+    </div>
+    <div class="fdisc">Treści mają charakter refleksyjno-rozrywkowy i nie stanowią porady medycznej, psychologicznej, prawnej ani finansowej.<br>© 2026 Cosmogram · Swiss Ephemeris · Anthropic Claude</div>
+  </div>
+</footer>
+
+<!-- ===== JSON-LD wzór do wdrożenia (CC) ===== -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Product","name":"Cosmogram Plus","description":"Pełna interpretacja kosmogramu, Cosmo Match, Kosmogram dziecka i Cosmo Chat z Astreą.","brand":{"@type":"Brand","name":"Cosmogram"},"offers":[
+{"@type":"Offer","name":"Plus miesięczny","price":"19.90","priceCurrency":"PLN","availability":"https://schema.org/InStock"},
+{"@type":"Offer","name":"Plus roczny","price":"199.00","priceCurrency":"PLN","availability":"https://schema.org/InStock"}
+]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Czy mogę korzystać za darmo?","acceptedAnswer":{"@type":"Answer","text":"Tak — plan Free jest bezpłatny na zawsze: pełny kosmogram, pierwszy rozdział interpretacji, jeden Cosmo Match i kilka pytań do Astrei."}},
+{"@type":"Question","name":"Ile kosztuje Plus?","acceptedAnswer":{"@type":"Answer","text":"19,90 zł miesięcznie lub 199 zł rocznie (oszczędzasz 17%). Ceny brutto, bez ukrytych kosztów."}},
+{"@type":"Question","name":"Czy mogę anulować w każdej chwili?","acceptedAnswer":{"@type":"Answer","text":"Tak — anulujesz jednym kliknięciem i zachowujesz dostęp do końca opłaconego okresu."}}
+]}
+</script>
+</body></html>

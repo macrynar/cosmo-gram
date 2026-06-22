@@ -5,8 +5,8 @@
  * All CSS is injected via dangerouslySetInnerHTML (Turbopack-safe, pg-* prefix).
  */
 
-import type { DayWeather } from "@/lib/astro/transits";
 import GeneratingLoader from "@/components/GeneratingLoader";
+import { orbOpacity, intensityLabel, intensityOrb } from "@/lib/astro/periodWeather";
 
 // ─── Design tokens → CSS string ──────────────────────────────────────────────
 
@@ -39,12 +39,16 @@ export const PROGNOZA_STYLES = `
 .pg-desc { font-size:13.5px;color:var(--pg-muted);margin:0 0 6px; }
 .pg-sub { font-size:13px;color:var(--pg-muted); }
 .pg-orb {
-  position:absolute;right:6px;top:50%;margin-top:-116px;width:232px;height:232px;
+  position:absolute;right:-4px;top:50%;margin-top:-112px;width:224px;height:224px;
   border-radius:50%;object-fit:cover;opacity:.6;pointer-events:none;z-index:0;
-  -webkit-mask-image:radial-gradient(circle,#000 44%,transparent 70%);
-  mask-image:radial-gradient(circle,#000 44%,transparent 70%);
-  animation:pg-spin 70s linear infinite;
+  mix-blend-mode:screen;
+  -webkit-mask-image:radial-gradient(circle,#000 40%,transparent 72%);
+  mask-image:radial-gradient(circle,#000 40%,transparent 72%);
+  animation:pg-spin 70s linear infinite, pg-pulse 6.5s ease-in-out infinite;
 }
+/* Gentle breathing — animates the scale property (independent of the spin's
+   transform), so motion stays visible even on the symmetric minimal orb. */
+@keyframes pg-pulse { 0%,100% { scale:1; } 50% { scale:1.06; } }
 .pg-weather > *:not(.pg-orb) { position:relative;z-index:1; }
 @keyframes pg-spin { to { transform:rotate(360deg); } }
 @media (prefers-reduced-motion:reduce) {
@@ -57,14 +61,12 @@ export const PROGNOZA_STYLES = `
 }
 .pg-loading-row { display:flex;align-items:center;gap:0;color:var(--pg-muted);font-size:13px; }
 
-.pg-gauge { position:absolute;right:22px;top:22px;text-align:right;z-index:1; }
-.pg-gauge-label { font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--pg-muted);margin-bottom:6px; }
-.pg-bars { display:flex;gap:4px;justify-content:flex-end; }
-.pg-bars i { width:16px;height:6px;border-radius:3px;background:var(--pg-line);transition:.3s var(--pg-ease); }
+.pg-gauge { display:inline-flex;align-items:center;gap:11px;margin-top:16px;position:relative;z-index:1; }
+.pg-gauge-label { font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--pg-muted); }
+.pg-bars { display:flex;gap:4px; }
+.pg-bars i { width:15px;height:6px;border-radius:3px;background:var(--pg-line);transition:.3s var(--pg-ease); }
 .pg-bars i.on { background:var(--pg-accent); }
-.pg-char { margin-top:7px;font-size:11px; }
-.pg-char.harm { color:var(--pg-deep); }
-.pg-char.tense { color:var(--pg-tense); }
+.pg-char { font-size:11px;font-weight:500;color:var(--pg-deep); }
 
 /* ── TIMELINE ZONE ── */
 .pg-timeline {
@@ -81,6 +83,21 @@ export const PROGNOZA_STYLES = `
   background:transparent;color:var(--pg-muted);cursor:pointer;
 }
 .pg-hint { font-size:12px;color:var(--pg-muted);margin-top:12px;text-align:center; }
+
+/* Interpretation CTA — sits inside the forecast module */
+.pg-interp-cta { margin-top:18px;padding-top:16px;border-top:1px solid var(--pg-line); }
+.pg-interp-btn {
+  display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;
+  font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;
+  border:1px solid rgba(224,181,102,.40);background:rgba(224,181,102,.06);
+  color:var(--pg-deep);transition:.2s var(--pg-ease);
+}
+.pg-interp-btn:hover { background:rgba(224,181,102,.12);border-color:var(--pg-deep); }
+.pg-interp-err { font-size:13px;color:var(--pg-tense);margin-top:10px; }
+a.pg-interp-lock { display:block;text-decoration:none; }
+a.pg-interp-lock span { display:block;color:var(--pg-sec);font-size:14px;margin-bottom:2px; }
+a.pg-interp-lock small { color:var(--pg-muted);font-size:12px; }
+a.pg-interp-lock:hover span { color:var(--pg-voice); }
 
 /* Day timeline */
 .pg-daytl { position:relative;height:104px;margin-top:4px; }
@@ -255,6 +272,8 @@ export const PROGNOZA_STYLES = `
   .pg-week { grid-template-columns:repeat(7,1fr);gap:4px; }
   .pg-wd { padding:8px 3px; }
   .pg-dd { font-size:15px; }
+  /* Smaller, corner-anchored orb so it stays clear of the title/desc text */
+  .pg-orb { width:140px;height:140px;margin-top:0;top:-12px;right:-26px; }
 }
 `;
 
@@ -275,86 +294,16 @@ export const WEEK_DAY_FULL  = ["Niedziela", "Poniedziałek", "Wtorek", "Środa",
 
 export type WeatherKind = "good" | "tense" | "calm";
 
-export function dayWeatherKind(character: string, _dominantPlanet: string): WeatherKind {
-  const c = character.toLowerCase();
-  if (
-    c.includes("nap")       ||
-    c.includes("wymagaj")   ||
-    c.includes("trud")      ||
-    c.includes("konflik")   ||
-    c.includes("niesp")     ||
-    c.includes("nieoczek")  ||
-    c.includes("transform") ||
-    c.includes("intensyw")  ||
-    c.includes("chaotycz")  ||
-    c.includes("nadmiar")
-  ) return "tense";
-  if (
-    c.includes("harmoni")   ||
-    c.includes("ekspans")   ||
-    c.includes("dynamicz")  ||
-    c.includes("wyraz")     ||
-    c.includes("koncentr")  ||
-    c.includes("analitycz") ||
-    c.includes("sprzyjaj")
-  ) return "good";
-  return "calm";
-}
-
-function humanCharacter(raw: string): string {
-  const c = raw.toLowerCase();
-  if (c.includes("nap") || c.includes("konflik") || c.includes("trud"))      return "napięty";
-  if (c.includes("wymagaj"))                                                   return "wymagający";
-  if (c.includes("niesp") || c.includes("nieoczek"))                          return "zaskakujący";
-  if (c.includes("przełom") || c.includes("transform"))                       return "przełomowy";
-  if (c.includes("harmoni") || c.includes("sprzyjaj") || c.includes("łagod")) return "łagodny";
-  if (c.includes("ekspans") || c.includes("dynamicz"))                        return "dynamiczny";
-  if (c.includes("intuicj") || c.includes("mglist") || c.includes("wizyjn")) return "mglisty";
-  if (c.includes("koncentr") || c.includes("analitycz"))                      return "skupiony";
-  if (c.includes("emocjon") || c.includes("wrażliw"))                         return "emocjonalny";
-  return "spokojny";
-}
-
-export function intensityChar(weather: DayWeather): { intensity: number; character: string; charKind: "harm" | "tense" } {
-  const rawChar = weather.character ?? "spokojny";
-  const kind    = dayWeatherKind(rawChar, "");
-  return { intensity: weather.intensity, character: humanCharacter(rawChar), charKind: kind === "tense" ? "tense" : "harm" };
-}
-
-// Derives period-level weather from fast-planet windows so the header card
-// stays consistent with per-day icons (both use windowDateMap, not slow planets).
-export function summarizeWindows(windows: Array<{ favorable: boolean }>): {
-  intensity: number; character: string; charKind: "harm" | "tense"; kind: WeatherKind; orbSrc: string;
-} {
-  if (windows.length === 0) {
-    return { intensity: 1, character: "spokojny", charKind: "harm", kind: "calm", orbSrc: "/assets/prognoza/mood-calm.png" };
-  }
-  const unfavorable = windows.filter(w => !w.favorable).length;
-  const favorable   = windows.length - unfavorable;
-  const intensity   = Math.min(5, Math.max(1, windows.length));
-  let character: string; let kind: WeatherKind;
-  if (unfavorable > favorable)  { character = "napięty";     kind = "tense"; }
-  else if (favorable > 0)       { character = "sprzyjający"; kind = "good";  }
-  else                          { character = "spokojny";    kind = "calm";  }
-  const orbSrc = kind === "tense" ? "/assets/prognoza/mood-intense.png"
-               : kind === "good"  ? "/assets/prognoza/mood-electric.png"
-               :                    "/assets/prognoza/mood-calm.png";
-  return { intensity, character, charKind: kind === "tense" ? "tense" : "harm", kind, orbSrc };
-}
-
-export function moodImg(kind: WeatherKind | string): string {
-  if (kind === "tense") return "/assets/prognoza/mood-intense.png";
-  if (kind === "calm")  return "/assets/prognoza/mood-calm.png";
-  return "/assets/prognoza/mood-electric.png";
-}
-
-export function moodImgByCharacter(character: string, dominantPlanet: string): string {
-  const c = character.toLowerCase();
-  if (dominantPlanet === "Neptun" || c.includes("intuicj") || c.includes("mglist")) return "/assets/prognoza/mood-misty.png";
-  if (dominantPlanet === "Uran"   || c.includes("nieoczek") || c.includes("przełom")) return "/assets/prognoza/mood-electric.png";
-  if (c.includes("nap") || c.includes("wymagaj")) return "/assets/prognoza/mood-intense.png";
-  return "/assets/prognoza/mood-calm.png";
-}
+// Unified period-weather model lives in a pure (React-free) module so it can be
+// unit-tested; re-exported here for the view components that already import it.
+export {
+  summarizePeriodWeather,
+  characterLine,
+  plOkno,
+  plSezon,
+  type PeriodWeather,
+  type PeriodTone,
+} from "@/lib/astro/periodWeather";
 
 // ─── SVG Day Icons ────────────────────────────────────────────────────────────
 
@@ -412,32 +361,29 @@ type WeatherZoneProps = {
   desc:      string;
   sub:       string;
   intensity: number;
-  character: string;
-  kind:      WeatherKind;
-  orbSrc:    string;
 };
 
-export function PgWeatherZone({ eyebrow, theme, desc, sub, intensity, character, kind, orbSrc }: WeatherZoneProps) {
-  const charKind = (kind === "tense") ? "tense" : "harm";
+export function PgWeatherZone({ eyebrow, theme, desc, sub, intensity }: WeatherZoneProps) {
   return (
     <section className="pg-weather">
       <img
         className="pg-orb"
-        src={orbSrc}
+        src={intensityOrb(intensity)}
         alt=""
+        style={{ opacity: orbOpacity(intensity) }}
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
       />
+      <div className="pg-eyebrow">{eyebrow}</div>
+      <h2 className="pg-theme">{theme}</h2>
+      {desc && <p className="pg-desc">{desc}</p>}
+      <div className="pg-sub">{sub}</div>
       <div className="pg-gauge">
-        <div className="pg-gauge-label">intensywność</div>
+        <span className="pg-gauge-label">intensywność</span>
         <div className="pg-bars">
           {[1,2,3,4,5].map(n => <i key={n} className={n <= intensity ? "on" : ""} />)}
         </div>
-        <div className={`pg-char ${charKind}`}>{character}</div>
+        <span className="pg-char">{intensityLabel(intensity)}</span>
       </div>
-      <div className="pg-eyebrow">{eyebrow}</div>
-      <h2 className="pg-theme">{theme}</h2>
-      <p className="pg-desc">{desc}</p>
-      <div className="pg-sub">{sub}</div>
     </section>
   );
 }
@@ -470,25 +416,30 @@ export function PgTimelineDay({ moments, nowPct }: { moments: DayMoment[]; nowPc
 
 // ─── Zone: Narration ─────────────────────────────────────────────────────────
 
-type NarrProps = {
-  narr:       string | null;
-  sources:    string[];
-  reflection: string | null;
-  loading:    boolean;
-  isPremium:  boolean;
+// Interpretation call-to-action — lives INSIDE the forecast module (timeline),
+// so there's never a lonely card with just a button. Handles all four states:
+// premium idle (button), loading (loader), error, and free (locked upsell).
+type InterpretButtonProps = {
+  label:     string;
+  loading:   boolean;
+  error:     boolean;
+  isPremium: boolean;
+  onClick:   () => void;
 };
 
-export function PgNarrZone({ narr, sources, reflection, loading, isPremium }: NarrProps) {
+export function PgInterpretButton({ label, loading, error, isPremium, onClick }: InterpretButtonProps) {
+  if (!isPremium) {
+    return (
+      <a href="/pricing" className="pg-interp-cta pg-interp-lock">
+        <span>Odblokuj pełną interpretację okresu</span>
+        <small>Aktywuj Premium →</small>
+      </a>
+    );
+  }
   return (
-    <section className="pg-narr">
-      {!isPremium && (
-        <a href="/pricing" className="pg-upsell" style={{ display: "block" }}>
-          <p>Odblokuj szczegółową interpretację</p>
-          <small>Aktywuj Premium →</small>
-        </a>
-      )}
-      {isPremium && loading && (
-        <div className="pg-loading-row" style={{ display: "block", padding: "10px 0" }}>
+    <div className="pg-interp-cta">
+      {loading ? (
+        <div className="pg-loading-row">
           <GeneratingLoader
             variant="compact"
             phrases={[
@@ -499,28 +450,40 @@ export function PgNarrZone({ narr, sources, reflection, loading, isPremium }: Na
             ]}
           />
         </div>
+      ) : (
+        <button className="pg-interp-btn" onClick={onClick}>{label}</button>
       )}
-      {isPremium && !loading && narr && (
-        <>
-          <div dangerouslySetInnerHTML={{ __html: narr }} />
-          {sources.length > 0 && (
-            <div className="pg-src">
-              <span className="pg-src-label">na podstawie</span>
-              {sources.map((s, i) => (
-                <span key={i} className="pg-src-chip">{s}</span>
-              ))}
-            </div>
-          )}
-          {reflection && (
-            <div className="pg-refl">
-              <div className="pg-refl-head">Na ten okres</div>
-              <p>{reflection}</p>
-            </div>
-          )}
-        </>
+      {error && !loading && (
+        <p className="pg-interp-err">Nie udało się wygenerować — spróbuj ponownie.</p>
       )}
-      {isPremium && !loading && !narr && (
-        <p className="pg-skeleton">Generuję interpretację…</p>
+    </div>
+  );
+}
+
+// Generated interpretation result — its own card, only when there's content.
+type NarrProps = {
+  narr:       string;
+  sources:    string[];
+  reflection: string | null;
+};
+
+export function PgNarrZone({ narr, sources, reflection }: NarrProps) {
+  return (
+    <section className="pg-narr">
+      <div dangerouslySetInnerHTML={{ __html: narr }} />
+      {sources.length > 0 && (
+        <div className="pg-src">
+          <span className="pg-src-label">na podstawie</span>
+          {sources.map((s, i) => (
+            <span key={i} className="pg-src-chip">{s}</span>
+          ))}
+        </div>
+      )}
+      {reflection && (
+        <div className="pg-refl">
+          <div className="pg-refl-head">Na ten okres</div>
+          <p>{reflection}</p>
+        </div>
       )}
     </section>
   );

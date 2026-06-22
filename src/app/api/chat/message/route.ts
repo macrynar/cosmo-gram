@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { calculateChart } from "@/lib/chart-engine";
 import type { NatalAspect, ChartNodes } from "@/lib/chart-engine";
 import { hasActiveSubscription, getUserSubscription } from "@/lib/subscription";
 import type { NatalChart } from "@/lib/astro-types";
-import { aiComplete } from "@/lib/deepseek";
 import type { SystemBlock } from "@/lib/deepseek";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { STYLE_BLOCK } from "@/lib/moduleSpecs";
@@ -413,46 +413,85 @@ export async function POST(req: NextRequest) {
     { role: "user" as const, content: content.trim() },
   ];
 
-  let raw = "";
-  try {
-    raw = await aiComplete({
-      model:     "claude-sonnet-4-6",
-      system:    systemBlocks,
-      messages,
-      maxTokens: 1800,
-      task:      "chat_message",
-    });
-  } catch (error) {
-    if ((error as Error)?.name === "AiDisabledError") {
-      return NextResponse.json({ error: "AI tymczasowo niedostępne. Spróbuj za chwilę." }, { status: 503 });
-    }
-    console.error("AI chat error:", error);
-    return NextResponse.json({ error: "Błąd AI" }, { status: 502 });
-  }
+  // Build system string from systemBlocks
+  const systemStr = systemBlocks.map(b => b.text).join("\n\n");
 
-  const { reply, suggested_followups } = parseReply(raw);
+  // Create streaming response
+  const encoder = new TextEncoder();
+  let fullResponse = "";
 
-  // Save both messages — NEVER log content, only metadata
-  const now = new Date().toISOString();
-  await supabaseAdmin.from("messages").insert([
-    { conversation_id: conversationId, role: "user",      content: content.trim() },
-    { conversation_id: conversationId, role: "assistant", content: reply },
-  ]);
+  const readableStream = new ReadableStream({
+    async start(controller) {
+      const client = new Anthropic({
+        apiKey: process.env.ANTHROPIC_API_KEY,
+      });
 
-  const isFirstExchange = historyMessages.length === 0;
-  await supabaseAdmin
-    .from("conversations")
-    .update({
-      updated_at: now,
-      last_message_at: now,
-      ...(isFirstExchange ? { title: content.trim().slice(0, 50) } : {}),
-    })
-    .eq("id", conversationId);
+      try {
+        const stream = await client.messages.stream({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1800,
+          system: systemStr,
+          messages: messages.map(m => ({
+            role: m.role,
+            content: m.content,
+          })),
+        });
 
-  // Deduct credit if this message consumed from the pack balance
-  if (consumesCredit) {
-    await supabaseAdmin.rpc("deduct_chat_credit", { p_user_id: user.id });
-  }
+        for await (const chunk of stream) {
+          if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
+            const text = chunk.delta.text;
+            fullResponse += text;
+            controller.enqueue(encoder.encode(text));
+          }
+        }
 
-  return NextResponse.json({ reply, suggested_followups, conversationId });
+        controller.close();
+
+        // After stream is complete, save to database asynchronously
+        // Don't await this — let it run in background
+        (async () => {
+          try {
+            const { reply, suggested_followups } = parseReply(fullResponse);
+
+            const now = new Date().toISOString();
+            await supabaseAdmin.from("messages").insert([
+              { conversation_id: conversationId, role: "user",      content: content.trim() },
+              { conversation_id: conversationId, role: "assistant", content: reply },
+            ]);
+
+            const isFirstExchange = historyMessages.length === 0;
+            await supabaseAdmin
+              .from("conversations")
+              .update({
+                updated_at: now,
+                last_message_at: now,
+                ...(isFirstExchange ? { title: content.trim().slice(0, 50) } : {}),
+              })
+              .eq("id", conversationId);
+
+            if (consumesCredit) {
+              await supabaseAdmin.rpc("deduct_chat_credit", { p_user_id: user.id });
+            }
+          } catch (err) {
+            console.error("Error saving chat message:", err);
+          }
+        })();
+      } catch (error) {
+        console.error("Stream error:", error);
+        const errMsg = error instanceof Error ? error.message : "Błąd AI";
+        controller.enqueue(
+          encoder.encode(`\n\n---ERROR---\n${errMsg}`)
+        );
+        controller.close();
+      }
+    },
+  });
+
+  return new NextResponse(readableStream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+    },
+  });
 }

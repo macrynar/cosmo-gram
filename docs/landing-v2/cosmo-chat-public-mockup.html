@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cosmo Chat — astrolog AI, który zna Twój kosmogram · mockup</title>
+<meta name="description" content="Cosmo Chat to astrolog AI po polsku. Rozmawiasz z Astreą, która czyta z Twojego kosmogramu i pamięta rozmowę — odpowiedzi o Tobie, nie ze znaku.">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-base:#0B0912;--bg-elevated:#14101F;--text-primary:#F4F1EA;--text-secondary:#B6AFC6;
+  --text-muted:#877FA0;--accent:#FFAE3D;--accent-deep:#E0B566;--voice:#E9DCC0;
+  --line:#2B2540;--line-soft:rgba(182,175,198,.14);--tense:#E2654A;--ease:cubic-bezier(.22,1,.36,1);
+  --grad-ember:linear-gradient(135deg,#FFC56B 0%,#E0992E 100%);
+}
+*{margin:0;box-sizing:border-box}
+body{background:var(--bg-base);color:var(--text-primary);font-family:'General Sans',system-ui,sans-serif;line-height:1.6}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+.nav{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,9,18,.72);backdrop-filter:blur(12px);z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600}
+.tabs{display:flex;gap:2px}.tab{padding:8px 13px;border-radius:999px;color:var(--text-muted);font-size:13.5px}
+.tab.on{color:var(--voice);background:rgba(224,181,102,.10);border:1px solid var(--line)}
+.navr{display:flex;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;font-family:inherit;cursor:pointer;transition:.25s var(--ease);font-weight:600}
+.btn.sm{font-size:13px;padding:8px 15px}
+.btn.ghost{color:var(--text-muted);background:none;border:none}
+.btn.line{border:1px solid rgba(224,181,102,.4);color:var(--voice);background:rgba(224,181,102,.06)}
+.btn.primary{background:var(--grad-ember);color:#241704;border:none;box-shadow:0 8px 26px rgba(255,174,61,.18)}
+.btn.primary:hover{filter:brightness(1.05)}.btn svg{width:16px;height:16px}.btn.lg{font-size:15px;padding:14px 30px}
+.eyebrow{font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--accent-deep)}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:500;letter-spacing:.01em;line-height:1.15}
+.lead{color:var(--text-secondary);font-size:17px;line-height:1.65}
+
+.hero{position:relative;text-align:center;padding:90px 22px 70px;overflow:hidden}
+.hero .bg{position:absolute;inset:0;background-image:url("https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260617_134051_885282b7-2052-47f9-967c-eecc61bc0236.png");background-size:cover;background-position:center;opacity:.52}
+.hero .bg::after{content:'';position:absolute;inset:0;background:radial-gradient(68% 70% at 50% 38%,rgba(11,9,18,.32) 0%,rgba(11,9,18,.86) 70%,var(--bg-base) 100%)}
+.hero .in{position:relative;z-index:1;max-width:760px;margin:0 auto}
+.hero h1{font-size:clamp(34px,5.4vw,54px);margin-bottom:18px}
+.hero h1 .hl{background:var(--grad-ember);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero .lead{max-width:620px;margin:0 auto 30px}
+.reass{margin-top:14px;font-size:12.5px;color:var(--text-muted)}
+
+section{padding:54px 0}
+.sec-h{text-align:center;max-width:640px;margin:0 auto 34px}
+.sec-h h2{font-size:clamp(26px,3.4vw,34px);margin:8px 0 10px}
+.sec-h p{color:var(--text-secondary);font-size:15.5px}
+
+.define{background:var(--bg-elevated);border:1px solid var(--line);border-left:3px solid var(--accent-deep);border-radius:16px;padding:26px 28px;max-width:800px;margin:0 auto}
+.define .eyebrow{display:block;margin-bottom:10px}
+.define p{font-size:17px;line-height:1.7;color:var(--text-primary)}.define b{color:var(--accent-deep);font-weight:600}
+
+/* przykładowe pytania */
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:820px;margin:0 auto}
+.qc{position:relative;background:var(--bg-elevated);border:1px solid var(--line);border-radius:16px;padding:20px 22px;transition:border-color .2s var(--ease),transform .2s var(--ease)}
+.qc:hover{border-color:rgba(224,181,102,.35);transform:translateY(-2px)}
+.qc .tag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:4px 10px;border-radius:999px;color:var(--accent-deep);background:rgba(224,181,102,.08);border:1px solid rgba(224,181,102,.22);margin-bottom:12px}
+.qc .qt{font-family:'Fraunces',serif;font-style:italic;font-size:17px;line-height:1.45;color:var(--voice);padding-right:24px}
+.qc .send{position:absolute;right:18px;bottom:18px;color:var(--accent-deep);opacity:.45}.qc .send svg{width:16px;height:16px}
+
+.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.fc{background:var(--bg-elevated);border:1px solid var(--line);border-radius:16px;padding:24px}
+.fc .ic{width:40px;height:40px;border-radius:11px;background:rgba(224,181,102,.10);border:1px solid rgba(224,181,102,.22);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.fc .ic svg{width:18px;height:18px;color:var(--accent-deep)}
+.fc h3{font-size:16.5px;margin-bottom:8px}.fc p{color:var(--text-muted);font-size:13.5px;line-height:1.6}
+
+.cmp{width:100%;border-collapse:collapse;max-width:820px;margin:0 auto;font-size:14.5px}
+.cmp th,.cmp td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--line)}
+.cmp thead th{font-family:'Fraunces',serif;font-weight:500;font-size:16px}
+.cmp thead th:nth-child(2){color:var(--accent-deep)}
+.cmp td:first-child,.cmp th:first-child{color:var(--text-muted);font-weight:500}
+.cmp td:nth-child(2){color:var(--text-primary)}.cmp td:nth-child(3){color:var(--text-muted)}
+.cmp tbody tr:hover{background:rgba(224,181,102,.03)}
+
+.chatdemo{max-width:680px;margin:0 auto;background:var(--bg-elevated);border:1px solid var(--line);border-radius:20px;padding:26px}
+.bubble{max-width:86%;padding:14px 17px;border-radius:16px;font-size:14.5px;line-height:1.65;margin-bottom:14px}
+.bubble .who{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px;color:var(--accent-deep)}
+.bubble.u{margin-left:auto;background:rgba(224,181,102,.10);border:1px solid rgba(224,181,102,.22);color:var(--voice);border-bottom-right-radius:5px;font-family:'Fraunces',serif;font-style:italic}
+.bubble.a{background:rgba(182,175,198,.04);border:1px solid var(--line);color:var(--text-secondary);border-bottom-left-radius:5px}
+.chatnote{text-align:center;font-size:11.5px;color:var(--text-muted);margin-top:8px}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.step{background:var(--bg-elevated);border:1px solid var(--line);border-radius:16px;padding:22px}
+.step .n{font-family:'Fraunces',serif;font-size:13px;color:var(--accent-deep);border:1px solid var(--line);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:13px}
+.step h3{font-size:17px;margin-bottom:7px}.step p{color:var(--text-secondary);font-size:14px;line-height:1.6}
+
+.rel{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:860px;margin:0 auto}
+.rcard{display:flex;gap:13px;align-items:flex-start;background:var(--bg-elevated);border:1px solid var(--line);border-radius:14px;padding:18px;transition:border-color .2s var(--ease)}
+.rcard:hover{border-color:rgba(224,181,102,.35)}
+.rcard .ic{width:34px;height:34px;border-radius:10px;background:rgba(224,181,102,.10);border:1px solid rgba(224,181,102,.22);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.rcard .ic svg{width:16px;height:16px;color:var(--accent-deep)}
+.rcard h3{font-size:15px;margin-bottom:3px}.rcard p{font-size:12.5px;color:var(--text-muted);line-height:1.5}
+
+.faq-list{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+details.faq{background:var(--bg-elevated);border:1px solid var(--line);border-radius:13px;padding:4px 18px}
+details.faq[open]{border-color:rgba(224,181,102,.3)}
+details.faq summary{list-style:none;cursor:pointer;padding:15px 0;font-weight:600;font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary::after{content:'+';color:var(--accent-deep);font-size:20px}details.faq[open] summary::after{content:'–'}
+details.faq p{color:var(--text-secondary);font-size:14.5px;line-height:1.65;padding:0 0 16px}
+
+.cta{text-align:center;max-width:680px;margin:0 auto;background:radial-gradient(120% 120% at 50% 0%,rgba(224,181,102,.08),var(--bg-elevated));border:1px solid rgba(224,181,102,.22);border-radius:22px;padding:44px 28px}
+.cta h2{font-size:clamp(28px,3.6vw,38px);margin-bottom:12px}.cta p{color:var(--text-secondary);margin-bottom:24px}
+
+footer{border-top:1px solid var(--line);margin-top:40px;padding:46px 0 30px;color:var(--text-muted);font-size:13px}
+.fcols{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:24px;margin-bottom:30px}
+.fcols h4{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px}
+.fcols a{display:block;color:var(--text-secondary);font-size:13.5px;margin-bottom:7px}
+.fdisc{border-top:1px solid var(--line);padding-top:18px;font-size:12px;line-height:1.6}
+@media(max-width:760px){.feat,.steps,.rel,.fcols,.qgrid{grid-template-columns:1fr}.tabs{display:none}}
+</style></head>
+<body>
+
+<nav class="nav">
+  <div class="brand"><svg width="22" height="22" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>cosmogram</div>
+  <div class="tabs"><a class="tab">Kosmogram</a><a class="tab">Kalendarz</a><a class="tab">Cosmo Match</a><a class="tab on">Cosmo Chat</a><a class="tab">Blog</a><a class="tab">Cennik</a></div>
+  <div class="navr"><a class="btn ghost sm">Zaloguj</a><a class="btn line sm">Załóż konto</a></div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="bg"></div>
+  <div class="in">
+    <h1>Twój prywatny<br><span class="hl">astrolog AI</span></h1>
+    <p class="lead">Rozmawiaj z <b style="color:var(--voice);font-weight:500">Astreą</b> — astrologiem AI, który zna Twój kosmogram. Pytasz o cokolwiek, a odpowiedź wychodzi z Twojego układu planet, nie ze znaku. I pamięta, o czym rozmawialiście.</p>
+    <a class="btn primary lg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>Zacznij rozmowę →</a>
+    <p class="reass">Najpierw wygeneruj kosmogram — za darmo — a Astrea pozna Twój układ.</p>
+  </div>
+</header>
+
+<!-- DEFINICJA -->
+<section>
+  <div class="wrap"><div class="define">
+    <span class="eyebrow">Czym jest Cosmo Chat?</span>
+    <p><b>Cosmo Chat</b> to rozmowa z Astreą, astrologiem AI po polsku. W odróżnieniu od zwykłego chatbota nie zgaduje ze znaku — czyta z Twojego <b>policzonego kosmogramu</b> i pamięta wcześniejsze wątki, jak ktoś, kto naprawdę Cię zna.</p>
+  </div></div>
+</section>
+
+<!-- O CO PYTAĆ -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Przykładowe pytania</span><h2>O co ludzie pytają Astreę</h2><p>Nie o znak spod gazety — o własne życie: relacje, pracę, emocje, decyzje.</p></div>
+    <div class="qgrid">
+      <div class="qc"><span class="tag">Relacje</span><p class="qt">„Dlaczego tak trudno mi zakończyć tę relację?"</p><span class="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></span></div>
+      <div class="qc"><span class="tag">Kariera</span><p class="qt">„Czy to dobry moment na zmianę pracy?"</p><span class="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></span></div>
+      <div class="qc"><span class="tag">Rozwój</span><p class="qt">„Skąd biorą się moje problemy ze stawianiem granic?"</p><span class="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></span></div>
+      <div class="qc"><span class="tag">Komunikacja</span><p class="qt">„Jak przyjmować krytykę, nie zamykając się w sobie?"</p><span class="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CECHY -->
+<section>
+  <div class="wrap">
+    <div class="feat">
+      <div class="fc"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H19v3H6.5A2.5 2.5 0 0 1 4 20.5z"/></svg></div><h3>Głęboka wiedza astrologiczna</h3><p>Oparta na klasycznej, psychologicznej i ewolucyjnej astrologii — nie ogólniki, lecz odpowiedź, która rozumie kontekst.</p></div>
+      <div class="fc"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></div><h3>Zna Twój kosmogram</h3><p>Każda odpowiedź wychodzi z Twojego układu planet i tego, co dzieje się na niebie teraz — nie z porady spod znaku.</p></div>
+      <div class="fc"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/><path d="M8.5 11.5h7M8.5 14h4"/></svg></div><h3>Pamięta rozmowę</h3><p>Pytaj jak przyjaciela. Możesz pogłębiać, doprecyzowywać i wracać do tematów — Astrea pamięta, o czym mówiliście.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- TABELA -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Dlaczego to o Tobie</span><h2>Inne chatboty mówią ogólnie.<br>Astrea mówi o Tobie.</h2></div>
+    <table class="cmp">
+      <thead><tr><th></th><th>Cosmo Chat (Astrea)</th><th>Generyczny chatbot</th></tr></thead>
+      <tbody>
+        <tr><td>Skąd czerpie wiedzę</td><td>Czyta z Twojego policzonego kosmogramu</td><td>Zna najwyżej Twój znak Słońca</td></tr>
+        <tr><td>Personalizacja</td><td>Odpowiada konkretnie o Tobie</td><td>Podaje ogólniki pasujące do każdego</td></tr>
+        <tr><td>Pamięć</td><td>Pamięta, o czym już rozmawialiście</td><td>Każdą rozmowę zaczyna od zera</td></tr>
+        <tr><td>Język</td><td>Mówi naturalnym polskim, jak bliska osoba</td><td>Sypie sztywnymi, ogólnymi formułkami</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- PRZYKŁAD ROZMOWY (dowód) -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Tak to brzmi</span><h2>Przykład rozmowy</h2><p>Astrea nie sypie horoskopami — odpowiada na Twoje pytanie i oddaje Ci je w lepszej formie.</p></div>
+    <div class="chatdemo">
+      <div class="bubble u"><span class="who">Ty</span>Czy to dobry moment na zmianę pracy?</div>
+      <div class="bubble a"><span class="who">Astrea</span>To pytanie wraca do Ciebie nie bez powodu. W Twoim kosmogramie potrzeba, żeby praca naprawdę coś znaczyła, jest wyjątkowo silna — a teraz na niebie dzieje się coś, co tę potrzebę rozgrzewa. Zanim zmienisz pracę, sprawdź jedno: czy chodzi o samą zmianę, czy o to, że obecna rola przestała dawać Ci poczucie sensu? Co ostatnio uwierało Cię w niej najbardziej?</div>
+      <p class="chatnote">Ilustracja. W realnej rozmowie Astrea opiera się na Twoim kosmogramie i tym, o czym wcześniej mówiliście.</p>
+    </div>
+  </div>
+</section>
+
+<!-- JAK TO DZIAŁA -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Jak to działa</span><h2>Trzy kroki do rozmowy</h2></div>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Wygeneruj kosmogram</h3><p>Za darmo, z daty i miejsca urodzenia. To on daje Astrei kontekst o Tobie.</p></div>
+      <div class="step"><div class="n">2</div><h3>Zacznij rozmowę</h3><p>Zapytaj o cokolwiek — relację, decyzję, trudny moment. Własnymi słowami.</p></div>
+      <div class="step"><div class="n">3</div><h3>Pogłębiaj i wracaj</h3><p>Astrea pamięta wątki, więc rozmowa rośnie z czasem — jak z kimś, kto Cię zna.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- POWIĄZANE -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Cały ekosystem</span><h2>Z czym łączy się Cosmo Chat</h2></div>
+    <div class="rel">
+      <a class="rcard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></span><div><h3>Kosmogram</h3><p>Najpierw poznaj swój — to z niego Astrea czyta odpowiedzi.</p></div></a>
+      <a class="rcard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="4.5"/><circle cx="16" cy="16" r="4.5"/><path d="M11 11l2 2"/></svg></span><div><h3>Cosmo Match</h3><p>Dopytaj Astreę o Waszą relację po porównaniu kosmogramów.</p></div></a>
+      <a class="rcard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span><div><h3>Kalendarz</h3><p>Zapytaj, co dziś na niebie i jak to wykorzystać.</p></div></a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">FAQ</span><h2>Najczęstsze pytania o astrologa AI</h2></div>
+    <div class="faq-list">
+      <details class="faq"><summary>Czym jest Cosmo Chat?</summary><p>To astrolog AI po polsku — rozmowa z Astreą, która czyta odpowiedzi z Twojego policzonego kosmogramu (nie ze znaku) i pamięta wcześniejsze wątki.</p></details>
+      <details class="faq"><summary>Czym różni się od ChatGPT albo zwykłego chatbota astrologicznego?</summary><p>Zwykłe chatboty znają najwyżej Twój znak i zaczynają każdą rozmowę od zera. Astrea ma za kontekst Twój pełny kosmogram i pamięta, o czym rozmawialiście — dlatego odpowiada o Tobie, nie ogólnikami.</p></details>
+      <details class="faq"><summary>Skąd Astrea zna mój kosmogram?</summary><p>Po wygenerowaniu kosmogramu (za darmo) Twój układ planet staje się kontekstem rozmowy. Dlatego najpierw kosmogram, potem czat.</p></details>
+      <details class="faq"><summary>Czy pamięta wcześniejsze rozmowy?</summary><p>Tak. Możesz wracać do wątków i pogłębiać tematy — rozmowa rośnie z czasem, jak z kimś, kto Cię zna.</p></details>
+      <details class="faq"><summary>Czy AI zastępuje astrologa?</summary><p>Nie. Astrea to narzędzie do autorefleksji i nauki o sobie, nie zamiennik człowieka. Przy tematach zdrowia czy poważnych decyzji życiowych kieruje do odpowiedniego specjalisty.</p></details>
+      <details class="faq"><summary>Czy to wróżenie?</summary><p>Nie. Traktujemy astrologię jak symboliczne lustro do lepszego rozumienia siebie, a nie wyrocznię. Treści mają charakter refleksyjny i rozrywkowy.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section>
+  <div class="wrap"><div class="cta">
+    <h2>Zadaj pierwsze pytanie</h2>
+    <p>Utwórz konto, wygeneruj kosmogram i zacznij rozmawiać z Astreą — Twoim osobistym astrologiem AI.</p>
+    <a class="btn primary lg">Utwórz konto za darmo →</a>
+    <p class="reass" style="margin-top:16px">Bez karty · pierwszy kosmogram i podstawowa interpretacja za darmo · Twoich danych nie sprzedajemy</p>
+  </div></div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fcols">
+      <div><div class="brand" style="margin-bottom:10px"><svg width="20" height="20" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>cosmogram</div><p style="color:var(--text-muted);max-width:230px">Twój kosmiczny przewodnik — astrologia i AI w jednym miejscu.</p></div>
+      <div><h4>Produkt</h4><a>Kosmogram</a><a>Horoskop dzienny</a><a>Cosmo Match</a><a>Kosmogram dziecka</a><a>Cennik</a></div>
+      <div><h4>Zasoby</h4><a>Blog</a><a>Jak działa AI</a></div>
+      <div><h4>Legal</h4><a>Regulamin</a><a>Polityka prywatności</a><a>Polityka cookies</a></div>
+    </div>
+    <div class="fdisc">Treści mają charakter refleksyjno-rozrywkowy i nie stanowią porady medycznej, psychologicznej, prawnej ani finansowej.<br>© 2026 Cosmogram · Swiss Ephemeris · Anthropic Claude</div>
+  </div>
+</footer>
+
+<!-- ===== JSON-LD wzór do wdrożenia (CC) ===== -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Czym jest Cosmo Chat?","acceptedAnswer":{"@type":"Answer","text":"Astrolog AI po polsku — rozmowa z Astreą, która czyta odpowiedzi z Twojego policzonego kosmogramu i pamięta wcześniejsze wątki."}},
+{"@type":"Question","name":"Czym różni się od zwykłego chatbota astrologicznego?","acceptedAnswer":{"@type":"Answer","text":"Zwykłe chatboty znają najwyżej Twój znak i zaczynają od zera. Astrea ma za kontekst pełny kosmogram i pamięta rozmowy."}},
+{"@type":"Question","name":"Skąd Astrea zna mój kosmogram?","acceptedAnswer":{"@type":"Answer","text":"Po wygenerowaniu kosmogramu (za darmo) Twój układ planet staje się kontekstem rozmowy."}},
+{"@type":"Question","name":"Czy AI zastępuje astrologa?","acceptedAnswer":{"@type":"Answer","text":"Nie — to narzędzie do autorefleksji, nie zamiennik człowieka. Przy zdrowiu i poważnych decyzjach kieruje do specjalisty."}}
+]}
+</script>
+</body></html>

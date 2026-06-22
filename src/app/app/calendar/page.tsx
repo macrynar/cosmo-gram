@@ -118,6 +118,7 @@ export default function CalendarPage() {
   const [loadingHistory,  setLoadingHistory]  = useState(false);
   const [loadError,       setLoadError]       = useState("");
   const [isPremium,       setIsPremium]       = useState(false);
+  const [primaryId,       setPrimaryId]       = useState<string | null>(null);
 
   const authHeader: Record<string, string> = session
     ? { Authorization: `Bearer ${session.access_token}` }
@@ -204,8 +205,9 @@ export default function CalendarPage() {
         fetch("/api/get-readings", { headers: authHeader }),
         supabase.from("subscriptions").select("status").eq("user_id", session.user.id).maybeSingle(),
       ]);
-      const { readings: data } = await readingsRes.json() as { readings: SavedReading[] };
+      const { readings: data, primary_id } = await readingsRes.json() as { readings: SavedReading[]; primary_id: string | null };
       setReadings(data || []);
+      setPrimaryId(primary_id ?? null);
       if (data?.length) setSelectedId(data[0].id);
       const s = subData.data?.status;
       setIsPremium(s === "active" || s === "trialing");
@@ -354,6 +356,15 @@ export default function CalendarPage() {
                   });
                   setReadings(prev => prev.map(r => r.id === id ? { ...r, name } : r));
                 }}
+                primaryId={primaryId}
+                onSetPrimary={async (id) => {
+                  setPrimaryId(id);
+                  await fetch("/api/set-primary-reading", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json", ...authHeader },
+                    body: JSON.stringify({ reading_id: id }),
+                  });
+                }}
                 onNew={() => router.push(ROUTES.app.cosmogram.path)}
                 newLabel="Nowy kosmogram"
               />
@@ -427,7 +438,6 @@ export default function CalendarPage() {
                     isPremium={isPremium}
                     readingId={selectedId}
                     year={year}
-                    chart={selectedReading?.chart_data ?? null}
                     session={session}
                     onDayClick={(date) => {
                       const d = new Date(date + "T12:00:00Z");

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "@/lib/supabase";
 import { Star, Share2, Baby, Plus, CalendarDays, Clock, MapPin, Globe, X } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -57,7 +58,7 @@ function sunSignName(chart: NatalChart | null | undefined): string | undefined {
 }
 
 export default function CosmogramPage() {
-  const { session, loading: authLoading } = useAuth();
+  const { session, user, loading: authLoading } = useAuth();
   const { isPro, isLoading: subLoading } = useSubscription();
 
   const [activeTab, setActiveTab] = useState<Tab>("natal");
@@ -69,6 +70,7 @@ export default function CosmogramPage() {
   const [showShare, setShowShare] = useState(false);
   const [readings, setReadings] = useState<SavedReading[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [primaryId, setPrimaryId] = useState<string | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [chart, setChart] = useState<NatalChart | null>(null);
   const [interpretation, setInterpretation] = useState("");
@@ -80,22 +82,62 @@ export default function CosmogramPage() {
   const autoStartRef = useRef(false);
 
   useEffect(() => {
-    if (authLoading || !session || loadingHistory || autoStartRef.current) return;
+    if (authLoading || !session || !user || autoStartRef.current) return;
     if (!window.location.search.includes("autostart=true")) return;
 
-    const raw = localStorage.getItem("cosmogram_pending_chart");
-    if (!raw) return;
+    // Pre-set flag immediately to stop loadReadings from showing the empty form
+    // while we do the async Supabase check below.
+    autoStartRef.current = true;
+    const userId = user.id;
 
-    try {
-      const pending = JSON.parse(raw) as BirthFormData;
-      localStorage.removeItem("cosmogram_pending_chart");
-      autoStartRef.current = true;
-      handleFormSubmit(pending);
-    } catch {
-      // ignore corrupt data
+    async function tryAutoStart() {
+      // 1. Check localStorage (same-device flow)
+      let raw = localStorage.getItem("cosmogram_pending_chart");
+      if (raw) {
+        localStorage.removeItem("cosmogram_pending_chart");
+        // Clear Supabase too — prevents a page refresh from re-generating the chart
+        void supabase.from("user_preferences").update({ pending_birth_data: null }).eq("user_id", userId);
+      } else {
+        // 2. Supabase fallback — handles cross-device/cross-browser email confirmation
+        //    (e.g. signed up on desktop, clicked link from iOS Mail in its own webview)
+        try {
+          const { data: prefs } = await supabase
+            .from("user_preferences")
+            .select("pending_birth_data")
+            .eq("user_id", userId)
+            .maybeSingle();
+          if (prefs?.pending_birth_data) {
+            raw = JSON.stringify(prefs.pending_birth_data);
+            // Clear from Supabase
+            await supabase
+              .from("user_preferences")
+              .update({ pending_birth_data: null })
+              .eq("user_id", userId);
+          }
+        } catch {
+          // ignore — will fall through to reset below
+        }
+      }
+
+      if (!raw) {
+        // No pending data anywhere — show the form normally
+        autoStartRef.current = false;
+        setShowForm(true);
+        return;
+      }
+
+      try {
+        const pending = JSON.parse(raw) as BirthFormData;
+        handleFormSubmit(pending);
+      } catch {
+        autoStartRef.current = false;
+        setShowForm(true);
+      }
     }
+
+    tryAutoStart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, session, loadingHistory]);
+  }, [authLoading, session, user]);
 
   // ── Children state ───────────────────────────────────────────────────────
   const [children, setChildren] = useState<SavedChild[]>([]);
@@ -116,8 +158,9 @@ export default function CosmogramPage() {
     setLoadingHistory(true);
     try {
       const res = await fetch("/api/get-readings", { headers: authHeader });
-      const { readings: data } = await res.json() as { readings: SavedReading[] };
+      const { readings: data, primary_id } = await res.json() as { readings: SavedReading[]; primary_id: string | null };
       setReadings(data);
+      setPrimaryId(primary_id ?? null);
       if (data.length > 0 && !selectedId) {
         setSelectedId(data[0].id);
         displayReading(data[0]);
@@ -461,6 +504,15 @@ export default function CosmogramPage() {
                   onSelect={handleSelect}
                   onDelete={handleDelete}
                   onRename={handleRename}
+                  primaryId={primaryId}
+                  onSetPrimary={async (id) => {
+                    setPrimaryId(id);
+                    await fetch("/api/set-primary-reading", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json", ...authHeader },
+                      body: JSON.stringify({ reading_id: id }),
+                    });
+                  }}
                   onNew={handleNew}
                   newLabel="Nowy kosmogram"
                 />

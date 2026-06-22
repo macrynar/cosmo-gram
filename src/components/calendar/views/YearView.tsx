@@ -1,18 +1,17 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits";
 import type { Season } from "@/lib/astro/layers";
-import type { NatalChart } from "@/lib/astro-types";
 import {
   PgWeatherZone,
   PgNarrZone,
+  PgInterpretButton,
   PgWhenBest,
   PgWindowsList,
   PROGNOZA_STYLES,
-  moodImgByCharacter,
-  dayWeatherKind,
-  intensityChar,
+  summarizePeriodWeather,
+  characterLine,
+  plSezon,
   arcPath,
   type ProgInterpretation,
 } from "./prognoza-shared";
@@ -22,7 +21,6 @@ type Props = {
   isPremium: boolean;
   readingId: string | null;
   year:      number;
-  chart:     NatalChart | null;
   onDayClick?: (date: string) => void;
   session?:  { access_token: string } | null;
 };
@@ -33,28 +31,13 @@ function toRad(deg: number) { return deg * Math.PI / 180; }
 
 type ArcTip = { name: string; dates: string; desc: string; visible: boolean; x: number; y: number };
 
-export default function YearView({ seasons, isPremium, readingId, year, chart, onDayClick, session }: Props) {
+export default function YearView({ seasons, isPremium, readingId, year, onDayClick, session }: Props) {
   const now     = new Date();
   const curMonth = now.getMonth(); // 0-indexed
 
-  // Year-level weather from today
-  const yearWeather = chart
-    ? (() => {
-        const transits = getTransitsForDate(chart, now);
-        const w = getDayWeather(transits);
-        return { weather: w, dominant: transits[0]?.transitPlanet ?? "" };
-      })()
-    : null;
-
-  const { intensity, character } = yearWeather
-    ? intensityChar(yearWeather.weather)
-    : { intensity: 3, character: "przełomowy" };
-  const yearKind = yearWeather
-    ? dayWeatherKind(yearWeather.weather.character, yearWeather.dominant)
-    : "calm" as const;
-  const orbSrc = yearWeather
-    ? moodImgByCharacter(yearWeather.weather.character, yearWeather.dominant)
-    : "/assets/prognoza/mood-calm.png";
+  // Year-level weather from the active SEASONS (slow themes) — not today's sky.
+  // Slow planets carry higher scores, so seasons use a larger reference max.
+  const headerWeather = summarizePeriodWeather(seasons, { refMax: 150, denseAt: 3 });
 
   // AI interpretation
   const [interp, setInterp] = useState<ProgInterpretation | null>(null);
@@ -146,18 +129,13 @@ export default function YearView({ seasons, isPremium, readingId, year, chart, o
       <PgWeatherZone
         eyebrow={`Pogoda · Rok ${year}`}
         theme={interp?.theme ?? `Rok ${year}`}
-        desc={
-          interp?.summary ??
-          (interpLoading ? "Generuję interpretację roku…" :
-           interpError   ? "Interpretacja chwilowo niedostępna." :
-           !isPremium    ? "Interpretacja AI dostępna w planie Plus." :
-                           "Ładowanie…")
-        }
-        sub={`${seasons.length} sezonów · aktualny miesiąc: ${MONTH_SHORT_ARR[curMonth]}`}
-        intensity={intensity}
-        character={character}
-        kind={yearKind}
-        orbSrc={orbSrc}
+        desc={interp?.summary ?? characterLine(headerWeather, seasons.length)}
+        sub={seasons.length === 0
+          ? "Brak wyraźnych sezonów w tym okresie"
+          : seasons.length === 1
+            ? "1 sezon — długi temat tego roku"
+            : `${seasons.length} ${plSezon(seasons.length)} — długie tematy tego roku`}
+        intensity={headerWeather.intensity}
       />
 
       <section className="pg-timeline">
@@ -309,37 +287,22 @@ export default function YearView({ seasons, isPremium, readingId, year, chart, o
         </div>
 
         <div className="pg-hint">Łuki = sezony wpływu · najedź, by zobaczyć co znaczą · aktualny miesiąc podświetlony</div>
+        {!interp && (
+          <PgInterpretButton
+            label="Generuj interpretację roku"
+            loading={interpLoading}
+            error={interpError}
+            isPremium={isPremium}
+            onClick={fetchInterp}
+          />
+        )}
       </section>
 
-      {isPremium && !interp && !interpLoading && (
-        <section className="pg-narr">
-          <button
-            onClick={fetchInterp}
-            style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "11px 20px", borderRadius: 12, fontSize: 14, fontWeight: 600,
-              border: "1px solid rgba(224,181,102,.40)", background: "rgba(224,181,102,.06)",
-              color: "var(--pg-deep)", cursor: "pointer", transition: ".2s",
-              fontFamily: "inherit",
-            }}
-          >
-            Generuj interpretację roku
-          </button>
-          {interpError && (
-            <p style={{ fontSize: 13, color: "var(--pg-tense)", marginTop: 10 }}>
-              Nie udało się wygenerować — spróbuj ponownie.
-            </p>
-          )}
-        </section>
-      )}
-
-      {isPremium && (interp || interpLoading) && (
+      {isPremium && interp?.narr && (
         <PgNarrZone
-          narr={interp?.narr ?? null}
-          sources={interp?.sources ?? []}
-          reflection={interp?.reflection ?? null}
-          loading={interpLoading}
-          isPremium={isPremium}
+          narr={interp.narr}
+          sources={interp.sources ?? []}
+          reflection={interp.reflection ?? null}
         />
       )}
 

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ustawienia — redesign DS · mockup</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-base:#0B0912;--bg-elevated:#14101F;--text-primary:#F4F1EA;--text-secondary:#B6AFC6;
+  --text-muted:#877FA0;--accent:#FFAE3D;--accent-deep:#E0B566;--voice:#E9DCC0;
+  --line:#2B2540;--line-soft:rgba(182,175,198,.14);--tense:#E2654A;--ease:cubic-bezier(.22,1,.36,1);
+  --grad-ember:linear-gradient(110deg,#FFC56B 0%,#E0992E 100%);
+}
+*{margin:0;box-sizing:border-box}
+body{background:radial-gradient(120% 90% at 50% 0%,#1A1530 0%,#0B0912 70%) fixed var(--bg-base);
+  color:var(--text-primary);font-family:'General Sans',system-ui,sans-serif;padding-bottom:80px}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:70;opacity:.045;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.nav{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,9,18,.7);backdrop-filter:blur(10px);z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600}
+.tabs{display:flex;gap:4px}.tab{padding:8px 15px;border-radius:999px;color:var(--text-muted);font-size:14px;text-decoration:none}
+.tab.on{color:var(--voice);background:rgba(224,181,102,.10);border:1px solid var(--line)}
+.ava{width:33px;height:33px;border-radius:50%;border:1px solid var(--accent-deep);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--accent-deep)}
+
+.wrap{max-width:640px;margin:0 auto;padding:40px 22px 0}
+h1{font-family:'Fraunces',serif;font-weight:500;font-size:34px;letter-spacing:.01em;margin-bottom:4px}
+.sub{color:var(--text-muted);font-size:14.5px;margin-bottom:26px}
+
+.card{background:var(--bg-elevated);border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:18px;position:relative;overflow:hidden}
+.chead{display:flex;align-items:center;gap:11px;margin-bottom:18px}
+.chead .ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(224,181,102,.10);border:1px solid rgba(224,181,102,.22)}
+.chead .ic svg{width:16px;height:16px;color:var(--accent-deep)}
+.chead h2{font-size:16.5px;font-weight:600;letter-spacing:-.01em;flex:1}
+.chead .refresh{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s var(--ease)}
+.chead .refresh:hover{color:var(--accent-deep);border-color:rgba(224,181,102,.3)}.chead .refresh svg{width:15px;height:15px}
+
+.statusrow{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.02em;padding:5px 12px;border-radius:999px;border:1px solid var(--line)}
+.pill svg{width:12px;height:12px}
+.pill.ok{background:rgba(255,174,61,.12);border-color:rgba(224,181,102,.42);color:#FFD9A0}
+.pill.trial{background:transparent;border-color:rgba(224,181,102,.40);color:var(--accent-deep)}
+.pill.muted{background:rgba(182,175,198,.06);border-color:var(--line);color:var(--text-muted)}
+.pill.warn{background:rgba(226,101,74,.12);border-color:rgba(226,101,74,.45);color:#E89B86}
+.planname{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--accent-deep)}.planname svg{width:13px;height:13px}
+.renew{font-size:12.5px;color:var(--text-muted);margin-bottom:16px}
+.renew.warn{color:#E89B86}
+
+.benefits{display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;padding:16px;border-radius:13px;background:rgba(224,181,102,.05);border:1px solid rgba(224,181,102,.16);margin-bottom:18px}
+.benefits .b{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--text-secondary)}
+.benefits .b svg{width:15px;height:15px;color:var(--accent);flex:0 0 auto}
+.valueprop{font-size:14px;line-height:1.6;color:var(--text-secondary);margin-bottom:16px}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:12px;font-size:14px;font-family:inherit;cursor:pointer;border:1px solid var(--line);background:rgba(182,175,198,.04);color:var(--text-secondary);transition:.2s var(--ease)}
+.btn:hover{border-color:rgba(224,181,102,.35);color:var(--voice)}.btn svg{width:16px;height:16px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--grad-ember);border:none;color:#241704;font-weight:600;box-shadow:0 6px 22px rgba(255,174,61,.16)}
+.btn.primary:hover{filter:brightness(1.05);color:#241704}
+.btn.ghost{font-size:12.5px;padding:7px 13px;color:var(--text-muted)}
+.btn.danger:hover{border-color:rgba(226,101,74,.5);color:#E89B86}
+.micro{font-size:12px;color:var(--text-muted);margin-top:10px;line-height:1.5}
+
+.field{margin-bottom:8px}
+.field+.field{margin-top:14px}
+.lab{display:block;font-size:12.5px;color:var(--text-muted);margin-bottom:7px}
+.row{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line-soft)}
+.row:first-child{border-top:none}
+.row .k{font-size:12.5px;color:var(--text-muted);margin-bottom:3px}
+.row .v{font-size:14.5px;color:var(--text-primary)}
+.row .v.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:var(--text-secondary);letter-spacing:.02em}
+.copy{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:none;color:var(--text-muted);font-size:12px;font-family:inherit;padding:6px 11px;border-radius:9px;cursor:pointer;transition:.2s var(--ease);white-space:nowrap}
+.copy:hover{color:var(--accent-deep);border-color:rgba(224,181,102,.3)}.copy svg{width:13px;height:13px}
+.divider{height:1px;background:var(--line-soft);margin:18px 0}
+
+.inp{width:100%;background:rgba(182,175,198,.04);border:1px solid var(--line);border-radius:12px;padding:11px 14px;color:var(--text-primary);font-size:14px;font-family:inherit;outline:none;transition:border-color .2s var(--ease)}
+.inp::placeholder{color:var(--text-muted);opacity:.55}
+.inp:focus{border-color:rgba(224,181,102,.45)}
+.strength{display:flex;align-items:center;gap:10px;margin-top:9px;height:14px}
+.sbar{flex:1;height:5px;border-radius:999px;background:rgba(182,175,198,.10);overflow:hidden}
+.sbar i{display:block;height:100%;width:0;border-radius:999px;background:var(--accent);transition:width .3s var(--ease)}
+.sword{font-size:11.5px;font-weight:600;min-width:54px;text-align:right;letter-spacing:.02em}
+.rules{display:flex;flex-direction:column;gap:6px;margin:14px 0 16px}
+.rule{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-muted);transition:color .2s var(--ease)}
+.rule svg{width:14px;height:14px}.rule.ok{color:var(--voice)}.rule.ok svg{color:var(--accent)}
+.rule.bad{color:#E89B86}.rule.bad svg{color:var(--tense)}
+.msg{display:flex;align-items:center;gap:8px;font-size:13px;padding:10px 13px;border-radius:11px;margin-top:14px}
+.msg.ok{background:rgba(255,174,61,.10);border:1px solid rgba(224,181,102,.3);color:var(--voice)}
+.msg.ok svg{color:var(--accent)}
+@media(max-width:560px){.benefits{grid-template-columns:1fr}}
+</style></head>
+<body>
+<nav class="nav">
+  <div class="brand"><svg width="22" height="22" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>cosmogram</div>
+  <div class="tabs"><a class="tab">Kosmogram</a><a class="tab">Kalendarz</a><a class="tab">Cosmo Match</a><a class="tab on">Ustawienia</a></div>
+  <div class="ava">MR</div>
+</nav>
+<div class="wrap">
+  <h1>Ustawienia</h1>
+  <p class="sub">Subskrypcja, konto i bezpieczeństwo</p>
+
+  <!-- ── Subskrypcja ── -->
+  <section class="card">
+    <div class="chead">
+      <div class="ic" id="subIc"></div>
+      <h2>Subskrypcja</h2>
+      <button class="refresh" title="Synchronizuj" id="subRefresh"></button>
+    </div>
+    <div id="subBody"></div>
+  </section>
+
+  <!-- ── Konto ── -->
+  <section class="card">
+    <div class="chead"><div class="ic" id="accIc"></div><h2>Konto</h2></div>
+    <div class="row"><div><div class="k">Adres e-mail</div><div class="v">wisdomsparks@proton.me</div></div></div>
+    <div class="row"><div><div class="k">Metoda logowania</div><div class="v">E-mail i hasło</div></div></div>
+    <div class="row"><div style="min-width:0"><div class="k">ID konta</div><div class="v mono" id="acctId">f1a24b2a-06e6-44ab-a047-0150c77cd9fb</div></div>
+      <button class="copy" id="copyId"><span id="copyIc"></span><span id="copyTxt">Kopiuj</span></button></div>
+    <div class="divider"></div>
+    <button class="btn danger" id="logout"><span id="logoutIc"></span>Wyloguj się</button>
+  </section>
+
+  <!-- ── Bezpieczeństwo ── -->
+  <section class="card">
+    <div class="chead"><div class="ic" id="secIc"></div><h2>Bezpieczeństwo</h2></div>
+    <div class="field">
+      <label class="lab">Nowe hasło</label>
+      <input class="inp" type="password" id="pw" placeholder="Minimum 8 znaków" autocomplete="new-password">
+      <div class="strength"><div class="sbar"><i id="sbar"></i></div><span class="sword" id="sword"></span></div>
+    </div>
+    <div class="field">
+      <label class="lab">Powtórz hasło</label>
+      <input class="inp" type="password" id="pw2" placeholder="Powtórz nowe hasło" autocomplete="new-password">
+    </div>
+    <div class="rules">
+      <div class="rule" id="r-len"><span id="r-len-ic"></span>Minimum 8 znaków</div>
+      <div class="rule" id="r-match"><span id="r-match-ic"></span>Hasła są zgodne</div>
+    </div>
+    <button class="btn" id="pwBtn" disabled><span id="pwBtnIc"></span>Zmień hasło</button>
+    <div id="pwMsg"></div>
+  </section>
+</div>
+
+<script>
+const I={
+ card:'<rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/>',
+ user:'<circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c0-3.4 2.9-5.5 6.5-5.5s6.5 2.1 6.5 5.5"/>',
+ lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+ refresh:'<path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v4h-4"/>',
+ copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
+ check:'<path d="M20 6 9 17l-5-5"/>',
+ x:'<path d="M18 6 6 18M6 6l12 12"/>',
+ dot:'<circle cx="12" cy="12" r="3.4"/>',
+ logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+ spark:'<path d="M12 3l1.8 4.9L18.5 9l-4.7 1.6L12 15.5 10.2 10.6 5.5 9l4.7-1.1z"/>'
+};
+const svg=(p,sw)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw||1.7}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+document.getElementById('subIc').innerHTML=svg(I.card);
+document.getElementById('accIc').innerHTML=svg(I.user);
+document.getElementById('secIc').innerHTML=svg(I.lock);
+document.getElementById('subRefresh').innerHTML=svg(I.refresh);
+document.getElementById('copyIc').innerHTML=svg(I.copy);
+document.getElementById('logoutIc').innerHTML=svg(I.logout,1.7);
+document.getElementById('pwBtnIc').innerHTML='';
+
+const BENEFITS=['Pełny kosmogram natalny','Horoskop dzienny','Cosmo Map','Cosmo Match','Chat z Astreą bez limitu','Kosmogram dziecka'];
+const SUBS={
+ active:{pill:'Aktywna',picon:I.check,cls:'ok',plan:'Cosmogram Plus',renew:'Następne odnowienie · 13 lipca 2026',plus:true},
+ trialing:{pill:'Trial · 7 dni',cls:'trial',plan:'Cosmogram Plus',renew:'Trial kończy się · 20 czerwca 2026',plus:true},
+ past_due:{pill:'Zaległa płatność',cls:'warn',plan:'Cosmogram Plus',renew:'Zaktualizuj metodę płatności, aby zachować dostęp',plus:true,warn:true},
+ free:{pill:'Bezpłatny',cls:'muted',plan:'',renew:'',plus:false}
+};
+function renderSub(state){
+ const s=SUBS[state];const pIcon=s.picon?`${svg(s.picon)}`:'';
+ const head=`<div class="statusrow"><span class="pill ${s.cls}">${pIcon}${s.pill}</span>`+
+   (s.plan?`<span class="planname">${svg(I.spark,1.4)}${s.plan}</span>`:'')+`</div>`+
+   (s.renew?`<p class="renew${s.warn?' warn':''}">${s.renew}</p>`:'');
+ let body;
+ if(s.plus){
+   body=`<div class="benefits">${BENEFITS.map(b=>`<div class="b">${svg(I.check)}${b}</div>`).join('')}</div>`+
+     `<button class="btn">${svg(I.card)}Zarządzaj subskrypcją</button>`+
+     `<p class="micro">Zmień kartę, anuluj lub pobierz faktury — przez Stripe Customer Portal.</p>`;
+ } else {
+   body=`<p class="valueprop">Korzystasz z darmowego planu. Pierwszy Cosmo Match i 3 wiadomości w chacie — gratis.</p>`+
+     `<button class="btn primary">${svg(I.spark,1.4)}Przejdź na Cosmogram Plus</button>`+
+     `<p class="micro"><button class="btn ghost" style="margin-top:6px">Mam już subskrypcję — synchronizuj</button></p>`;
+ }
+ document.getElementById('subBody').innerHTML=head+body;
+}
+renderSub('active');
+
+// copy ID
+document.getElementById('copyId').onclick=()=>{
+ const t=document.getElementById('acctId').textContent;
+ navigator.clipboard&&navigator.clipboard.writeText(t).catch(()=>{});
+ document.getElementById('copyIc').innerHTML=svg(I.check);
+ document.getElementById('copyTxt').textContent='Skopiowano';
+ setTimeout(()=>{document.getElementById('copyIc').innerHTML=svg(I.copy);document.getElementById('copyTxt').textContent='Kopiuj';},1600);
+};
+document.getElementById('logout').onclick=()=>{};
+
+// password validation
+const pw=document.getElementById('pw'),pw2=document.getElementById('pw2');
+function score(p){let s=0;if(p.length>=8)s++;if(/[a-z]/.test(p)&&/[A-Z]/.test(p))s++;if(/\d/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;if(p.length>=12)s++;return s;}
+function ruleIcon(el,ok,empty){const ic=document.getElementById(el+'-ic');const row=document.getElementById(el);
+ row.classList.remove('ok','bad');if(empty){ic.innerHTML=svg(I.dot,1.6);return;}
+ row.classList.add(ok?'ok':'bad');ic.innerHTML=svg(ok?I.check:I.x);}
+function validate(){
+ const p=pw.value,p2=pw2.value;const sc=score(p);
+ const pct=p?Math.max(12,Math.round(sc/5*100)):0;
+ document.getElementById('sbar').style.width=pct+'%';
+ const word=!p?'':sc<=2?'słabe':sc<=3?'średnie':'mocne';
+ const sw=document.getElementById('sword');sw.textContent=word;
+ sw.style.color=!p?'transparent':sc<=2?'var(--tense)':sc<=3?'var(--accent-deep)':'var(--voice)';
+ const lenOk=p.length>=8, matchOk=!!p&&p===p2;
+ ruleIcon('r-len',lenOk,!p);
+ ruleIcon('r-match',matchOk,!p&&!p2);
+ const btn=document.getElementById('pwBtn');btn.disabled=!(lenOk&&matchOk);
+}
+pw.addEventListener('input',validate);pw2.addEventListener('input',validate);
+ruleIcon('r-len',false,true);ruleIcon('r-match',false,true);
+document.getElementById('pwBtn').onclick=()=>{
+ document.getElementById('pwMsg').innerHTML=`<div class="msg ok">${svg(I.check)}Hasło zostało zmienione</div>`;
+ pw.value='';pw2.value='';validate();
+ setTimeout(()=>document.getElementById('pwMsg').innerHTML='',2600);
+};
+</script>
+</body></html>

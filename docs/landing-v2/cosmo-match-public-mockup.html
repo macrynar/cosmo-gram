@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cosmo Match — synastria i kompatybilność kosmogramów · mockup</title>
+<meta name="description" content="Synastria online: porównaj dwa kosmogramy i zobacz, jak naprawdę działacie razem — synergie, napięcia, komunikacja i styl miłości. Interpretacja AI po polsku.">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-base:#0B0912;--bg-elevated:#14101F;--text-primary:#F4F1EA;--text-secondary:#B6AFC6;
+  --text-muted:#877FA0;--accent:#FFAE3D;--accent-deep:#E0B566;--voice:#E9DCC0;
+  --line:#2B2540;--line-soft:rgba(182,175,198,.14);--tense:#E2654A;--ease:cubic-bezier(.22,1,.36,1);
+  --grad-ember:linear-gradient(135deg,#FFC56B 0%,#E0992E 100%);
+}
+*{margin:0;box-sizing:border-box}
+body{background:var(--bg-base);color:var(--text-primary);font-family:'General Sans',system-ui,sans-serif;line-height:1.6}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+.nav{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,9,18,.72);backdrop-filter:blur(12px);z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600}
+.tabs{display:flex;gap:2px}.tab{padding:8px 13px;border-radius:999px;color:var(--text-muted);font-size:13.5px}
+.tab.on{color:var(--voice);background:rgba(224,181,102,.10);border:1px solid var(--line)}
+.navr{display:flex;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;font-family:inherit;cursor:pointer;transition:.25s var(--ease);font-weight:600}
+.btn.sm{font-size:13px;padding:8px 15px}
+.btn.ghost{color:var(--text-muted);background:none;border:none}
+.btn.line{border:1px solid rgba(224,181,102,.4);color:var(--voice);background:rgba(224,181,102,.06)}
+.btn.primary{background:var(--grad-ember);color:#241704;border:none;box-shadow:0 8px 26px rgba(255,174,61,.18)}
+.btn.primary:hover{filter:brightness(1.05)}.btn svg{width:16px;height:16px}.btn.lg{font-size:15px;padding:14px 30px}
+.eyebrow{font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--accent-deep)}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:500;letter-spacing:.01em;line-height:1.15}
+.lead{color:var(--text-secondary);font-size:17px;line-height:1.65}
+
+.hero{position:relative;text-align:center;padding:90px 22px 70px;overflow:hidden}
+.hero .bg{position:absolute;inset:0;background-image:url("https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260617_131542_b3855484-9960-4a3d-9676-1fbba64dac7c.png");background-size:cover;background-position:center;opacity:.5}
+.hero .bg::after{content:'';position:absolute;inset:0;background:radial-gradient(70% 70% at 50% 35%,rgba(11,9,18,.35) 0%,rgba(11,9,18,.86) 70%,var(--bg-base) 100%)}
+.hero .in{position:relative;z-index:1;max-width:760px;margin:0 auto}
+.hero h1{font-size:clamp(34px,5.4vw,54px);margin-bottom:18px}
+.hero h1 .hl{background:var(--grad-ember);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero .lead{max-width:610px;margin:0 auto 30px}
+.reass{margin-top:14px;font-size:12.5px;color:var(--text-muted)}
+
+section{padding:54px 0}
+.sec-h{text-align:center;max-width:640px;margin:0 auto 34px}
+.sec-h h2{font-size:clamp(26px,3.4vw,34px);margin:8px 0 10px}
+.sec-h p{color:var(--text-secondary);font-size:15.5px}
+
+.define{background:var(--bg-elevated);border:1px solid var(--line);border-left:3px solid var(--accent-deep);border-radius:16px;padding:26px 28px;max-width:800px;margin:0 auto}
+.define .eyebrow{display:block;margin-bottom:10px}
+.define p{font-size:17px;line-height:1.7;color:var(--text-primary)}.define b{color:var(--accent-deep);font-weight:600}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.step{background:var(--bg-elevated);border:1px solid var(--line);border-radius:16px;padding:22px}
+.step .n{font-family:'Fraunces',serif;font-size:13px;color:var(--accent-deep);border:1px solid var(--line);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:13px}
+.step h3{font-size:17px;margin-bottom:7px}.step p{color:var(--text-secondary);font-size:14px;line-height:1.6}
+
+.who{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.wcard{background:var(--bg-elevated);border:1px solid var(--line);border-radius:16px;padding:24px;text-align:center}
+.wcard .ic{width:42px;height:42px;border-radius:12px;background:rgba(224,181,102,.10);border:1px solid rgba(224,181,102,.22);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.wcard .ic svg{width:19px;height:19px;color:var(--accent-deep)}
+.wcard h3{font-size:16px;margin-bottom:7px}.wcard p{color:var(--text-muted);font-size:13.5px;line-height:1.55}
+
+.get{background:var(--bg-elevated);border:1px solid var(--line);border-radius:20px;padding:30px 32px;max-width:860px;margin:0 auto}
+.get-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 26px}
+.gi{display:flex;gap:13px;align-items:flex-start}
+.gi .ic{width:34px;height:34px;border-radius:9px;background:rgba(224,181,102,.08);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.gi .ic svg{width:16px;height:16px;color:var(--accent-deep)}
+.gi.tense .ic svg{color:var(--tense)}
+.gi h3{font-size:15px;margin-bottom:3px}.gi p{font-size:13px;color:var(--text-muted);line-height:1.5}
+
+/* dowód — wizualizacja synastrii + wymiary */
+.proof{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:center;max-width:900px;margin:0 auto;background:radial-gradient(130% 130% at 100% 0%,rgba(94,72,162,.12),var(--bg-elevated));border:1px solid var(--line);border-radius:22px;padding:30px;overflow:hidden}
+.proof .vis{border-radius:16px;overflow:hidden;border:1px solid var(--line-soft);aspect-ratio:16/11;background:#0c0a16}
+.proof .vis img{width:100%;height:100%;object-fit:cover}
+.dims{display:flex;flex-direction:column;gap:13px}
+.dims .score{font-family:'Fraunces',serif;font-size:34px;color:var(--voice)}.dims .score small{font-size:14px;color:var(--text-muted);font-family:'General Sans'}
+.dim .dr{display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);margin-bottom:5px}.dim .dr b{color:var(--accent-deep);font-variant-numeric:tabular-nums}
+.dim .bar{height:6px;border-radius:999px;background:rgba(182,175,198,.08);overflow:hidden}.dim .bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(to right,rgba(224,181,102,.6),var(--accent))}
+.dim.t .bar i{background:linear-gradient(to right,rgba(226,101,74,.5),var(--tense))}
+
+.cmp{width:100%;border-collapse:collapse;max-width:820px;margin:0 auto;font-size:14.5px}
+.cmp th,.cmp td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--line)}
+.cmp thead th{font-family:'Fraunces',serif;font-weight:500;font-size:16px}
+.cmp thead th:nth-child(2){color:var(--accent-deep)}
+.cmp td:first-child,.cmp th:first-child{color:var(--text-muted);font-weight:500}
+.cmp td:nth-child(2){color:var(--text-primary)}.cmp td:nth-child(3){color:var(--text-muted)}
+.cmp tbody tr:hover{background:rgba(224,181,102,.03)}
+.sampleblock{max-width:760px;margin:0 auto;background:var(--bg-elevated);border:1px solid var(--line);border-left:3px solid var(--accent-deep);border-radius:16px;padding:26px 28px}
+.sampleblock .sq{font-family:'Fraunces',serif;font-style:italic;font-size:19px;line-height:1.5;color:var(--voice);margin-bottom:12px}
+.sampleblock p{color:var(--text-secondary);font-size:15px;line-height:1.7}
+.chatnote{text-align:center;font-size:11.5px;color:var(--text-muted);margin-top:12px}
+
+.rel{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:860px;margin:0 auto}
+.rcard{display:flex;gap:13px;align-items:flex-start;background:var(--bg-elevated);border:1px solid var(--line);border-radius:14px;padding:18px;transition:border-color .2s var(--ease)}
+.rcard:hover{border-color:rgba(224,181,102,.35)}
+.rcard .ic{width:34px;height:34px;border-radius:10px;background:rgba(224,181,102,.10);border:1px solid rgba(224,181,102,.22);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.rcard .ic svg{width:16px;height:16px;color:var(--accent-deep)}
+.rcard h3{font-size:15px;margin-bottom:3px}.rcard p{font-size:12.5px;color:var(--text-muted);line-height:1.5}
+
+.quote{text-align:center;max-width:680px;margin:0 auto;font-family:'Fraunces',serif;font-style:italic;font-size:clamp(21px,2.8vw,27px);line-height:1.5;color:var(--voice)}
+.quote span{color:var(--accent-deep)}
+
+.faq-list{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+details.faq{background:var(--bg-elevated);border:1px solid var(--line);border-radius:13px;padding:4px 18px;transition:border-color .2s var(--ease)}
+details.faq[open]{border-color:rgba(224,181,102,.3)}
+details.faq summary{list-style:none;cursor:pointer;padding:15px 0;font-weight:600;font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary::after{content:'+';color:var(--accent-deep);font-size:20px}details.faq[open] summary::after{content:'–'}
+details.faq p{color:var(--text-secondary);font-size:14.5px;line-height:1.65;padding:0 0 16px}
+
+.cta{text-align:center;max-width:680px;margin:0 auto;background:radial-gradient(120% 120% at 50% 0%,rgba(224,181,102,.08),var(--bg-elevated));border:1px solid rgba(224,181,102,.22);border-radius:22px;padding:44px 28px}
+.cta h2{font-size:clamp(28px,3.6vw,38px);margin-bottom:12px}.cta p{color:var(--text-secondary);margin-bottom:24px}
+
+footer{border-top:1px solid var(--line);margin-top:40px;padding:46px 0 30px;color:var(--text-muted);font-size:13px}
+.fcols{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:24px;margin-bottom:30px}
+.fcols h4{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px}
+.fcols a{display:block;color:var(--text-secondary);font-size:13.5px;margin-bottom:7px}
+.fdisc{border-top:1px solid var(--line);padding-top:18px;font-size:12px;line-height:1.6}
+@media(max-width:760px){.steps,.who,.get-grid,.proof,.rel,.fcols{grid-template-columns:1fr}.tabs{display:none}}
+</style></head>
+<body>
+
+<nav class="nav">
+  <div class="brand"><svg width="22" height="22" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>cosmogram</div>
+  <div class="tabs"><a class="tab">Kosmogram</a><a class="tab">Kalendarz</a><a class="tab on">Cosmo Match</a><a class="tab">Cosmo Chat</a><a class="tab">Blog</a><a class="tab">Cennik</a></div>
+  <div class="navr"><a class="btn ghost sm">Zaloguj</a><a class="btn line sm">Załóż konto</a></div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="bg"></div>
+  <div class="in">
+    <h1>Jak naprawdę<br><span class="hl">działacie razem</span></h1>
+    <p class="lead">Cosmo Match to <b style="color:var(--voice);font-weight:500">synastria</b> — porównanie dwóch całych kosmogramów, nie samych znaków. Pokazujemy synergie, napięcia, styl komunikacji i miłości: Twoje planety z planetami drugiej osoby. Więcej niż „Waga i Byk pasują".</p>
+    <a class="btn primary lg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="4.5"/><circle cx="16" cy="16" r="4.5"/><path d="M11 11l2 2"/></svg>Sprawdź kompatybilność →</a>
+    <p class="reass">Wystarczą daty i miejsca urodzenia obu osób — godziny dodaj, jeśli je znasz</p>
+  </div>
+</header>
+
+<!-- DEFINICJA -->
+<section>
+  <div class="wrap"><div class="define">
+    <span class="eyebrow">Czym jest synastria?</span>
+    <p><b>Synastria</b> to astrologiczne porównanie dwóch kosmogramów, które pokazuje, jak układają się energie między dwojgiem ludzi. Zamiast pytać „czy te znaki pasują", patrzy na <b>aspekty</b> — kąty między planetami obu osób — i z nich czyta mocne strony oraz wyzwania relacji.</p>
+  </div></div>
+</section>
+
+<!-- JAK TO DZIAŁA -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Jak to działa</span><h2>Trzy kroki do mapy Waszej relacji</h2></div>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Podajesz dwie daty</h3><p>Data i miejsce urodzenia obu osób. Godzinę dodaj, jeśli znasz — uściśla wynik, ale nie jest konieczna.</p></div>
+      <div class="step"><div class="n">2</div><h3>Nakładamy Wasze kosmogramy</h3><p>Wyliczamy położenie planet obu osób i kąty (aspekty) między nimi — to z nich czyta się relację. Precyzja jak u zawodowego astrologa.</p></div>
+      <div class="step"><div class="n">3</div><h3>Czytasz mapę relacji</h3><p>Po polsku, bez żargonu: gdzie się wzmacniacie, gdzie iskrzy i co z tym zrobić.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- DLA KOGO -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Dla kogo</span><h2>Nie tylko dla par</h2></div>
+    <div class="who">
+      <div class="wcard"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20.3l-1.3-1.2C6 14.8 3.5 12.5 3.5 9.4 3.5 7 5.4 5.2 7.7 5.2c1.3 0 2.6.6 3.4 1.6.8-1 2.1-1.6 3.4-1.6 2.3 0 4.2 1.8 4.2 4.2 0 3.1-2.5 5.4-7.2 9.7L12 20.3z"/></svg></div><h3>Pary romantyczne</h3><p>Gdzie jest chemia, gdzie naturalne napięcia i jak je przepracować. Bez złudzeń, ale z nadzieją.</p></div>
+      <div class="wcard"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3"/><path d="M3.5 20c0-3.3 2.4-5 5.5-5s5.5 1.7 5.5 5"/><circle cx="17.5" cy="9.5" r="2.2"/><path d="M16.5 14.2c2.7 0 4 1.4 4 3.8"/></svg></div><h3>Przyjaźnie i rodzina</h3><p>Dlaczego z jedną osobą rozmawiasz godzinami, a z inną po 5 minutach nie masz już co powiedzieć.</p></div>
+      <div class="wcard"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div><h3>Partnerzy biznesowi</h3><p>Jak uzupełniają się Wasze style działania, kto lepiej widzi detale, kto myśli strategicznie.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CO DOSTAJESZ -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Co dostajesz w analizie</span><h2>Pełna mapa relacji, nie jedna liczba</h2></div>
+    <div class="get"><div class="get-grid">
+      <div class="gi"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 12a3 3 0 0 1 3-3h2.5a3.5 3.5 0 0 1 0 7H13M15 12a3 3 0 0 1-3 3H9.5a3.5 3.5 0 0 1 0-7H11"/></svg></span><div><h3>Wynik kompatybilności</h3><p>Procentowy wynik z wyjaśnieniem — co go buduje, co obniża.</p></div></div>
+      <div class="gi"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l1.8 4.9L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg></span><div><h3>Synergie</h3><p>Miejsca, gdzie Wasze planety wzmacniają się nawzajem.</p></div></div>
+      <div class="gi tense"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></span><div><h3>Napięcia</h3><p>Obszary tarcia — i jak je świadomie przepracować.</p></div></div>
+      <div class="gi"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg></span><div><h3>Komunikacja</h3><p>Jak rozmawiać, żeby się naprawdę rozumieć — nie tylko słyszeć.</p></div></div>
+      <div class="gi"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20.3l-1.3-1.2C6 14.8 3.5 12.5 3.5 9.4 3.5 7 5.4 5.2 7.7 5.2c1.3 0 2.6.6 3.4 1.6.8-1 2.1-1.6 3.4-1.6 2.3 0 4.2 1.8 4.2 4.2 0 3.1-2.5 5.4-7.2 9.7L12 20.3z"/></svg></span><div><h3>Styl miłości</h3><p>Jak każde z Was kocha — daje i przyjmuje czułość, czego potrzebuje, by czuć się kochane.</p></div></div>
+      <div class="gi"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg></span><div><h3>Wskazówki praktyczne</h3><p>Konkretne rady, nie poetyckie ogólniki.</p></div></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- DOWÓD: wizualizacja synastrii + wymiary -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Sednowy obraz</span><h2>Dwa kosmogramy, jedna mapa</h2><p>Nakładamy Wasze koła i rysujemy aspekty między planetami — harmonijne złotem, napięte terakotą. To pokazuje to, czego nie da kalkulator znaków.</p></div>
+    <div class="proof">
+      <div class="vis"><img src="https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/hf_20260617_131542_b3855484-9960-4a3d-9676-1fbba64dac7c.png" alt="Wizualizacja synastrii — dwa nałożone kosmogramy"></div>
+      <div class="dims">
+        <div class="score">82% <small>kompatybilności</small></div>
+        <div class="dim"><div class="dr"><span>Komunikacja</span><b>88</b></div><div class="bar"><i style="width:88%"></i></div></div>
+        <div class="dim"><div class="dr"><span>Emocje</span><b>79</b></div><div class="bar"><i style="width:79%"></i></div></div>
+        <div class="dim"><div class="dr"><span>Namiętność</span><b>84</b></div><div class="bar"><i style="width:84%"></i></div></div>
+        <div class="dim t"><div class="dr"><span>Konflikt</span><b>41</b></div><div class="bar"><i style="width:41%"></i></div></div>
+        <div class="dim"><div class="dr"><span>Długoterminowość</span><b>76</b></div><div class="bar"><i style="width:76%"></i></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TABELA -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Dlaczego to głębsze</span><h2>Synastria a „dopasowanie znaków"</h2></div>
+    <table class="cmp">
+      <thead><tr><th></th><th>Synastria (Cosmo Match)</th><th>Dopasowanie znaków</th></tr></thead>
+      <tbody>
+        <tr><td>Na czym oparte</td><td>Porównuje dwa pełne kosmogramy i kąty między planetami</td><td>Patrzy tylko na znaki Słońca obu osób</td></tr>
+        <tr><td>Personalizacja</td><td>Opisuje konkretnie Waszą parę</td><td>Jedna z 78 gotowych kombinacji znaków</td></tr>
+        <tr><td>Co pokazuje</td><td>Komunikację, emocje, namiętność, konflikt i trwałość</td><td>Krótkie „pasują / nie pasują"</td></tr>
+        <tr><td>Wskazówki</td><td>Podpowiada, jak świadomie przepracować napięcia</td><td>Nie daje żadnych</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- FRAGMENT ANALIZY (dowód) -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Tak to brzmi</span><h2>Fragment analizy relacji</h2></div>
+    <div class="sampleblock">
+      <p class="sq">„Wasze emocje rozmawiają ze sobą łatwo — często wyczuwacie swoje nastroje bez słów."</p>
+      <p>Iskrzy gdzie indziej: jedna osoba potrzebuje więcej bliskości, druga — więcej przestrzeni. To nie wada, tylko rytm do wspólnego ustawienia. Klucz nie brzmi „więcej" albo „mniej", lecz „umówmy się, kiedy jedno, a kiedy drugie".</p>
+      <p class="chatnote">Ilustracja. Realna analiza wychodzi z Waszych dwóch kosmogramów.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CYTAT -->
+<section>
+  <div class="wrap"><p class="quote">„Nie chodzi o to, czy pasujecie — <span>chodzi o to, jak rozumieć siebie nawzajem."</span></p></div>
+</section>
+
+<!-- POWIĄZANE -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">Najpierw i potem</span><h2>Cały ekosystem Cosmogram</h2></div>
+    <div class="rel">
+      <a class="rcard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></span><div><h3>Kosmogram</h3><p>Najpierw poznaj swój — Match porównuje dwa kosmogramy.</p></div></a>
+      <a class="rcard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span><div><h3>Kalendarz</h3><p>Twoje Dni Mocy i prognoza na dziś, tydzień, miesiąc, rok.</p></div></a>
+      <a class="rcard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg></span><div><h3>Cosmo Chat</h3><p>Astrea — dopytaj o Waszą relację własnymi słowami.</p></div></a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="eyebrow">FAQ</span><h2>Najczęstsze pytania o synastrię</h2></div>
+    <div class="faq-list">
+      <details class="faq"><summary>Czym jest synastria?</summary><p>Synastria to porównanie dwóch kosmogramów urodzeniowych w celu zrozumienia dynamiki relacji. Analizuje aspekty — kąty między planetami obu osób — które pokazują mocne strony i wyzwania związku.</p></details>
+      <details class="faq"><summary>Czym różni się od dopasowania znaków zodiaku?</summary><p>Dopasowanie znaków patrzy tylko na Słońce obu osób (jedna z 78 kombinacji). Synastria porównuje całe kosmogramy — wszystkie planety i aspekty między nimi — więc jest osobista i znacznie dokładniejsza.</p></details>
+      <details class="faq"><summary>Czy potrzebuję godziny urodzenia obu osób?</summary><p>Nie jest konieczna — wystarczą daty i miejsca. Godzina zwiększa dokładność (dokłada Księżyc, Ascendent i domy, ważne w relacji); bez niej policzymy analizę przybliżoną, opartą na planetach niezależnych od godziny.</p></details>
+      <details class="faq"><summary>Czy działa dla przyjaźni i relacji zawodowych?</summary><p>Tak. Synastria opisuje każdą relację dwóch osób — romantyczną, przyjacielską, rodzinną i zawodową. Akcent interpretacji dobieramy do typu relacji.</p></details>
+      <details class="faq"><summary>Które planety są najważniejsze w relacji?</summary><p>W romansie przede wszystkim Wenus i Mars (miłość i pożądanie) oraz Słońce i Księżyc (tożsamość i emocje). W relacjach zawodowych większą wagę mają Merkury i Saturn.</p></details>
+      <details class="faq"><summary>Czy to wróżenie?</summary><p>Nie. Traktujemy astrologię jak symboliczne lustro do lepszego rozumienia się nawzajem, a nie wyrocznię. Treści mają charakter refleksyjny i rozrywkowy.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section>
+  <div class="wrap"><div class="cta">
+    <h2>Zbadaj swoją relację</h2>
+    <p>Utwórz konto, wygeneruj kosmogram i porównaj go z kim chcesz — partnerem, przyjacielem, rodzicem.</p>
+    <a class="btn primary lg">Utwórz konto za darmo →</a>
+    <p class="reass" style="margin-top:16px">Bez karty · pierwszy kosmogram za darmo · Twoich danych nie sprzedajemy</p>
+  </div></div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fcols">
+      <div><div class="brand" style="margin-bottom:10px"><svg width="20" height="20" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>cosmogram</div><p style="color:var(--text-muted);max-width:230px">Twój kosmiczny przewodnik — astrologia i AI w jednym miejscu.</p></div>
+      <div><h4>Produkt</h4><a>Kosmogram</a><a>Horoskop dzienny</a><a>Cosmo Match</a><a>Kosmogram dziecka</a><a>Cennik</a></div>
+      <div><h4>Zasoby</h4><a>Blog</a><a>Jak działa AI</a></div>
+      <div><h4>Legal</h4><a>Regulamin</a><a>Polityka prywatności</a><a>Polityka cookies</a></div>
+    </div>
+    <div class="fdisc">Treści mają charakter refleksyjno-rozrywkowy i nie stanowią porady medycznej, psychologicznej, prawnej ani finansowej.<br>© 2026 Cosmogram · Swiss Ephemeris · Anthropic Claude</div>
+  </div>
+</footer>
+
+<!-- ===== JSON-LD wzór do wdrożenia (CC) ===== -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Czym jest synastria?","acceptedAnswer":{"@type":"Answer","text":"Synastria to porównanie dwóch kosmogramów urodzeniowych, które analizuje aspekty między planetami obu osób, by pokazać mocne strony i wyzwania relacji."}},
+{"@type":"Question","name":"Czym synastria różni się od dopasowania znaków zodiaku?","acceptedAnswer":{"@type":"Answer","text":"Dopasowanie znaków patrzy tylko na Słońce. Synastria porównuje całe kosmogramy obu osób i aspekty między planetami."}},
+{"@type":"Question","name":"Czy działa dla przyjaźni i relacji zawodowych?","acceptedAnswer":{"@type":"Answer","text":"Tak, synastria opisuje każdą relację dwóch osób — romantyczną, przyjacielską, rodzinną i zawodową."}}
+]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"HowTo","name":"Jak sprawdzić kompatybilność w synastrii","step":[
+{"@type":"HowToStep","name":"Podajesz dwie daty","text":"Data i miejsce urodzenia obu osób; godzina opcjonalnie, uściśla wynik."},
+{"@type":"HowToStep","name":"Nakładamy Wasze kosmogramy","text":"Położenie planet obu osób i kąty (aspekty) między nimi."},
+{"@type":"HowToStep","name":"Czytasz mapę relacji","text":"Po polsku: synergie, napięcia i wskazówki."}
+]}
+</script>
+</body></html>

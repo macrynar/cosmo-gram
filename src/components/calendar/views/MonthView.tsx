@@ -7,11 +7,14 @@ import type { DayData } from "@/lib/chart-engine";
 import {
   PgWeatherZone,
   PgNarrZone,
+  PgInterpretButton,
   PgWhenBest,
   PgWindowsList,
   DayIcon,
   PROGNOZA_STYLES,
-  summarizeWindows,
+  summarizePeriodWeather,
+  characterLine,
+  plOkno,
   MONTH_SHORT,
   type ProgInterpretation,
   type WeatherKind,
@@ -56,7 +59,14 @@ export default function MonthView({
   const daysInMonth = new Date(year, month, 0).getDate();
 
   // Month-level weather from fastWindows — same source as per-day icons → consistent header + grid
-  const { intensity, character, kind: monthKind, orbSrc } = summarizeWindows(fastWindows);
+  const headerWeather = summarizePeriodWeather(fastWindows, { refMax: 90, denseAt: 6 });
+  const favCount   = fastWindows.filter(w => w.favorable).length;
+  const unfavCount = fastWindows.length - favCount;
+  const monthSub =
+    fastWindows.length === 0 ? "Spokojny miesiąc — dobry na regenerację" :
+    unfavCount === 0         ? `${fastWindows.length} ${plOkno(fastWindows.length)} · same sprzyjające` :
+    favCount === 0           ? `${fastWindows.length} ${plOkno(fastWindows.length)} · same wymagające` :
+                               `${fastWindows.length} ${plOkno(fastWindows.length)} · ${favCount} sprzyjające, ${unfavCount} wymagające`;
 
   // Per-day weather: use pre-computed windowDateMap (fast planets only) for natural daily variation.
   // Slow outer planets (Uran/Neptun/Saturn) move <0.1°/day and would dominate every day the same way
@@ -128,18 +138,9 @@ export default function MonthView({
       <PgWeatherZone
         eyebrow={eyebrow}
         theme={interp?.theme ?? `${monthName} ${year}`}
-        desc={
-          interp?.summary ??
-          (interpLoading ? "Generuję interpretację miesiąca…" :
-           interpError   ? "Interpretacja chwilowo niedostępna." :
-           !isPremium    ? "Interpretacja AI dostępna w planie Plus." :
-                           "Ładowanie…")
-        }
-        sub={`${fastWindows.length} aktywnych okien`}
-        intensity={intensity}
-        character={character}
-        kind={monthKind}
-        orbSrc={orbSrc}
+        desc={interp?.summary ?? characterLine(headerWeather, fastWindows.length)}
+        sub={monthSub}
+        intensity={headerWeather.intensity}
       />
 
       <section className="pg-timeline">
@@ -193,37 +194,22 @@ export default function MonthView({
           <span><DayIcon kind="calm" size={14} /> spokojny</span>
         </div>
         <div className="pg-hint">Kliknij dzień → szczegóły dnia</div>
+        {!interp && (
+          <PgInterpretButton
+            label="Generuj interpretację miesiąca"
+            loading={interpLoading}
+            error={interpError}
+            isPremium={isPremium}
+            onClick={fetchInterp}
+          />
+        )}
       </section>
 
-      {isPremium && !interp && !interpLoading && (
-        <section className="pg-narr">
-          <button
-            onClick={fetchInterp}
-            style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "11px 20px", borderRadius: 12, fontSize: 14, fontWeight: 600,
-              border: "1px solid rgba(224,181,102,.40)", background: "rgba(224,181,102,.06)",
-              color: "var(--pg-deep)", cursor: "pointer", transition: ".2s",
-              fontFamily: "inherit",
-            }}
-          >
-            Generuj interpretację miesiąca
-          </button>
-          {interpError && (
-            <p style={{ fontSize: 13, color: "var(--pg-tense)", marginTop: 10 }}>
-              Nie udało się wygenerować — spróbuj ponownie.
-            </p>
-          )}
-        </section>
-      )}
-
-      {isPremium && (interp || interpLoading) && (
+      {isPremium && interp?.narr && (
         <PgNarrZone
-          narr={interp?.narr ?? null}
-          sources={interp?.sources ?? []}
-          reflection={interp?.reflection ?? null}
-          loading={interpLoading}
-          isPremium={isPremium}
+          narr={interp.narr}
+          sources={interp.sources ?? []}
+          reflection={interp.reflection ?? null}
         />
       )}
 
