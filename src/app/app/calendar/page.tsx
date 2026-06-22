@@ -457,7 +457,7 @@ export default function CalendarPage() {
 
         {/* Onboarding coachmarks */}
         {showOnboarding && (
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4">
+          <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] md:bottom-8 left-1/2 -translate-x-1/2 z-[60] w-full max-w-sm px-4">
             <div className="glass-card rounded-2xl p-5 border border-white/12 shadow-2xl space-y-3">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Jak czytać prognozę
