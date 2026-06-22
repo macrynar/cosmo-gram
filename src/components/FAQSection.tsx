@@ -13,7 +13,7 @@ const faq = [
   },
   {
     q: "Co dokładnie dostanę w darmowej wersji?",
-    a: "Kosmogram natalny z pełnym wykresem, interpretację AI kluczowych pozycji, Astro Match dla jednej pary i dzienny horoskop. To solidny wstęp — Premium dokłada głębię i pełne moduły.",
+    a: "Kosmogram urodzeniowy z pełnym wykresem, interpretację AI kluczowych pozycji, Astro Match dla jednej pary i dzienny horoskop. To solidny wstęp — Premium dokłada głębię i pełne moduły.",
   },
 ];
 

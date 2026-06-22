@@ -489,7 +489,7 @@ export default function CosmogramPage() {
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
                 }}>
-                  kosmogram natalny
+                  kosmogram urodzeniowy
                 </span>
               </h1>
               <p className="text-sm" style={{ color: "var(--text-muted)" }}>Obliczenia astronomiczne · Swiss Ephemeris · Interpretacja Astrei</p>

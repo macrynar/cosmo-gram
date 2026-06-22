@@ -22,6 +22,12 @@
     }
   ],
   "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "cosmo-gram.com" }],
+      "destination": "https://www.cosmo-gram.com/:path*",
+      "permanent": true
+    },
     { "source": "/generate",           "destination": "/app/cosmogram",        "permanent": true },
     { "source": "/astro-match",        "destination": "/app/match",            "permanent": true },
     { "source": "/astro-match/:path*", "destination": "/app/match/:path*",     "permanent": true },

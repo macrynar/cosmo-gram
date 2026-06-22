@@ -297,7 +297,7 @@ function SignupWizard() {
                   Kiedy przyszłeś na świat?
                 </h2>
                 <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-                  To jedyne dane potrzebne do stworzenia Twojego kosmogramu natalnego. Bezpłatnie.
+                  To jedyne dane potrzebne do stworzenia Twojego kosmogramu urodzeniowego. Bezpłatnie.
                 </p>
 
                 <div className="space-y-3">

@@ -26,17 +26,17 @@ export default function AuthCallback() {
       setRedirectTarget(redirect);
 
       let sess: { access_token: string } | null = null;
+      let freshOAuth = false;
 
       if (code) {
-        const { data } = await supabase.auth.exchangeCodeForSession(code);
-        if (data.session) {
-          sess = data.session;
-          fetch("/api/email/welcome", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${data.session.access_token}` },
-          }).catch(() => {});
-        }
-      } else {
+        // PKCE exchange. May fail harmlessly if the Supabase client's
+        // detectSessionInUrl already consumed the code — we recover via getSession below.
+        const { data } = await supabase.auth.exchangeCodeForSession(code).catch(() => ({ data: { session: null } }));
+        if (data.session) { sess = data.session; freshOAuth = true; }
+      }
+
+      // Fallback: covers (a) already-consumed code, (b) returning user with a live session.
+      if (!sess) {
         const { data } = await supabase.auth.getSession();
         if (data.session) sess = data.session;
       }
@@ -44,6 +44,13 @@ export default function AuthCallback() {
       if (!sess) {
         router.replace("/login");
         return;
+      }
+
+      if (freshOAuth) {
+        fetch("/api/email/welcome", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${sess.access_token}` },
+        }).catch(() => {});
       }
 
       setSession(sess);
