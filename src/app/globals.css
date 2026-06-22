@@ -47,6 +47,10 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     overscroll-behavior: none;
+    /* PWA standalone: keep all in-flow content below the iOS status bar.
+       The fixed navbar carries its own inset, so the gap below it is preserved.
+       Decorative fixed inset-0 backgrounds still fill behind the status bar. */
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   /* Ensure safe-area padding is available */
