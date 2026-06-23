@@ -36,12 +36,16 @@ export async function generateLetterContent(params: {
   chart: NatalChart;
   userId: string;
   modelOverride?: string;
+  /** Listy eventowe: deterministyczne fakty tranzytu do zacytowania (z events.ts). */
+  eventContext?: string;
 }): Promise<GeneratedLetter> {
   const { template, chart, userId } = params;
 
   const resolved = resolvePlacements(chart, template.placement_inputs);
-  if (!resolved.text.trim()) {
-    throw new LetterGenerationError(`Brak placementów dla ${template.slug} (pusty fundament)`);
+  const eventContext = params.eventContext?.trim();
+  const placementsText = [resolved.text, eventContext].filter(Boolean).join("\n\n");
+  if (!placementsText.trim()) {
+    throw new LetterGenerationError(`Brak fundamentu dla ${template.slug}`);
   }
 
   const version = await resolvePromptVersion(template.prompt_slug, userId);
@@ -53,15 +57,15 @@ export async function generateLetterContent(params: {
   const maxTokens = version.config.max_tokens ?? (template.kind === "report" ? 4000 : 1400);
   const baseUser = renderTemplate(version.user_prompt_template, {
     title: template.title,
-    placements: resolved.text,
+    placements: placementsText,
   });
 
   const mockFixture = mockFixtureFor(template);
   let best = "";
   let validation: LetterValidation = { ok: false, reasons: ["nie wygenerowano"], words: 0 };
 
-  // Maks. 2 podejścia: drugie z notką korygującą wg powodów walidacji.
-  for (let attempt = 0; attempt < 2; attempt++) {
+  // Do 3 podejść: kolejne z notką korygującą wg powodów walidacji (tylko gdy walidacja zawiedzie).
+  for (let attempt = 0; attempt < 3; attempt++) {
     const userPrompt = attempt === 0
       ? baseUser
       : `${baseUser}\n\nPOPRZEDNIA WERSJA MIAŁA PROBLEMY: ${validation.reasons.join("; ")}. Popraw i napisz list jeszcze raz, trzymając się głosu i struktury.`;
@@ -81,6 +85,7 @@ export async function generateLetterContent(params: {
       wordMin: template.word_min,
       wordMax: template.word_max,
       kind: template.kind,
+      isEvent: template.trigger_type === "event",
     });
 
     if (content) best = content;
@@ -94,7 +99,7 @@ export async function generateLetterContent(params: {
     model,
     ai_prompt_version: `${template.prompt_slug}@${version.version}`,
     prompt_version_id: version.id,
-    placement_snapshot: resolved.snapshot,
+    placement_snapshot: eventContext ? { ...resolved.snapshot, event_context: eventContext } : resolved.snapshot,
     signature_label: resolved.signatureLabel,
     validation,
   };
