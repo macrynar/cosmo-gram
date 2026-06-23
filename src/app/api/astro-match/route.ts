@@ -297,16 +297,23 @@ Napisz 8 modułów synastrii zgodnych z tymi scores. Każda interpretacja: 160�
 
     const fullResult = buildResult(aiResult, topAspects, planetPositions);
 
-    // Strip premium categories server-side; first category (Komunikacja) is always free
+    // Free: pokaż za darmo NAJMOCNIEJSZY wymiar (pełna treść), a dla pozostałych
+    // zostaw tylko {name, score} — same liczby sprzedają lepiej niż pełny blur.
     const safeResult: CompatibilityResult = isPaidUser
       ? fullResult
-      : {
-          overallScore:    fullResult.overallScore,
-          summary:         fullResult.summary,
-          categories:      fullResult.categories.slice(0, 1),
-          aspects:         fullResult.aspects,
-          planetPositions: fullResult.planetPositions,
-        };
+      : (() => {
+          const cats = fullResult.categories;
+          const freeIdx = cats.reduce((mi, c, i) => (c.score > cats[mi].score ? i : mi), 0);
+          return {
+            overallScore:    fullResult.overallScore,
+            summary:         fullResult.summary,
+            categories:      cats.map((c, i) =>
+              i === freeIdx ? c : { name: c.name, score: c.score, interpretation: "", insight: "" }
+            ),
+            aspects:         fullResult.aspects,
+            planetPositions: fullResult.planetPositions,
+          };
+        })();
 
     return NextResponse.json({
       result: safeResult,
