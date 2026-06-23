@@ -31,6 +31,14 @@ const INTRO_STYLES = `
 }
 `;
 
+// Statusy pokazywane w środku koła podczas generowania (cyklują)
+const LOAD_STEPS = [
+  "Nakładamy Wasze kosmogramy…",
+  "Liczymy aspekty synastrii…",
+  "Astrea odczytuje Wasze połączenia…",
+  "Składamy interpretację…",
+];
+
 type SavedMatch = {
   id: string; name: string;
   person1_name: string; person2_name: string;
@@ -56,6 +64,7 @@ export default function AstroMatchPage() {
   const [resultIsPremium, setResultIsPremium] = useState(false);
   const [resultNames, setResultNames] = useState({ p1: "", p2: "" });
   const [loading, setLoading]   = useState(false);
+  const [loadStep, setLoadStep] = useState(0);
   const [error, setError]       = useState("");
   const [showPaywall, setShowPaywall] = useState(false);
   const [showShare, setShowShare]     = useState(false);
@@ -65,6 +74,13 @@ export default function AstroMatchPage() {
   const authHeader: Record<string, string> = session
     ? { Authorization: `Bearer ${session.access_token}` }
     : {};
+
+  // Cykluj statusy w loaderze (reset robi handleSubmit przy starcie)
+  useEffect(() => {
+    if (!loading) return;
+    const id = setInterval(() => setLoadStep(s => (s + 1) % LOAD_STEPS.length), 2200);
+    return () => clearInterval(id);
+  }, [loading]);
 
   const loadAll = useCallback(async () => {
     if (!session) return;
@@ -128,7 +144,7 @@ export default function AstroMatchPage() {
     e.preventDefault();
     if (!person1 || !person2) return;
 
-    setLoading(true); setError(""); setResult(null);
+    setLoading(true); setLoadStep(0); setError(""); setResult(null);
     try {
       const res = await fetch("/api/astro-match", {
         method: "POST",
@@ -345,6 +361,30 @@ export default function AstroMatchPage() {
                   <div className="mxl-scan" />
                   <div className="mxl-iring mxl-iring-b" />
                   <div className="mxl-iring" />
+                </div>
+
+                {/* Status czynności — w środku koła */}
+                <div style={{
+                  position: "absolute", inset: 0, display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  pointerEvents: "none", padding: "0 36px", textAlign: "center",
+                }}>
+                  <AnimatePresence mode="wait">
+                    <motion.p
+                      key={loadStep}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                      style={{
+                        margin: 0, fontFamily: "'Fraunces', serif", fontStyle: "italic",
+                        fontSize: "16px", lineHeight: 1.4, color: "#E9DCC0",
+                        textShadow: "0 2px 16px rgba(0,0,0,.75)",
+                      }}
+                    >
+                      {LOAD_STEPS[loadStep]}
+                    </motion.p>
+                  </AnimatePresence>
                 </div>
               </div>
             </motion.div>

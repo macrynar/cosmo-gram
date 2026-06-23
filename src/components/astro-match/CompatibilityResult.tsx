@@ -77,11 +77,20 @@ function findCat(categories: CompatibilityCategory[], keys: readonly string[], f
   ) ?? null;
 }
 
-// Split text: first sentence → lead (Fraunces italic), rest → body
+// Split text: first sentence → lead (Fraunces italic), rest → body.
+// Astrea czasem owija lead w markdownową kursywę (*…* / _…_); cytat renderujemy jako
+// czysty tekst, więc markery trzeba zdjąć (inaczej widać gołą gwiazdkę na początku).
+function stripEmphasis(s: string): string {
+  return s.replace(/^[\s*_]+/, "").replace(/[\s*_]+$/, "");
+}
+
 function splitLead(text: string): [string, string] {
-  const m = text.match(/^([^.!?]+[.!?])\s*/);
-  if (!m) return [text, ""];
-  return [m[1], text.slice(m[0].length)];
+  const clean = text.trim();
+  const m = clean.match(/^([^.!?]+[.!?])\s*/);
+  const rawLead = m ? m[1] : clean;
+  let body = m ? clean.slice(m[0].length) : "";
+  if (/^[*_]/.test(rawLead)) body = body.replace(/^[\s*_]+/, ""); // osierocony domykający marker
+  return [stripEmphasis(rawLead), body];
 }
 
 // ─── Score count-up ───────────────────────────────────────────────────────────
@@ -211,8 +220,8 @@ function buildMatchModule(
   const hasContent = !!cat?.interpretation;
   const [lead, body] = hasContent ? splitLead(cat!.interpretation) : ["", ""];
   const score = cat?.score ?? 0;
-  // cytat (nagłówek rozdziału) — bez kropki na końcu, jak w natalu
-  const quote = (hasContent ? lead || def.hook : def.hook).replace(/[.…\s]+$/, "");
+  // cytat (nagłówek rozdziału) — czysty tekst: bez markerów markdown i kropki na końcu
+  const quote = (hasContent ? lead || def.hook : def.hook).replace(/[*_]/g, "").replace(/[.…\s]+$/, "");
   const content = hasContent
     ? `${body || lead}${cat!.insight ? `\n\n**→ ${cat!.insight}**` : ""}`
     : LOCKED_FILLER;

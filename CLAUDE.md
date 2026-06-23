@@ -43,7 +43,7 @@ AI:         Anthropic Claude Sonnet 4.6 (primary)
             API keys TYLKO w edge functions, NIGDY frontend
 
 Astro:      Swiss Ephemeris (swisseph-wasm lub pyswisseph)
-            System domów: [USTAW PO ROZMOWIE Z KOLEŻANKĄ]
+            System domów: Equal House (domy równe) — calculateEqualHouses() w src/lib/chart-engine.ts
 
 Geocoding:  Google Places API
 Payments:   Stripe Subscriptions + Checkout + Tax
@@ -90,7 +90,7 @@ Hosting:    Vercel + Supabase
 
 ## Co robić gdy coś idzie źle
 
-- **AI generuje gówniany output** → nie zmieniaj kodu, zmień prompt. Zapisz problem w PROGRESS.md, eskaluj do Maca - on dogada z astrolożką.
+- **AI generuje gówniany output** → nie zmieniaj kodu, zmień prompt. Popraw interpretację zgodnie z best practices astrologicznymi (ma być trafna, angażująca i personalna), zapisz problem w PROGRESS.md. Kontrolę jakości treści Mac robi poza Claude.
 - **Astro compute się nie zgadza z Astro.com** → pokaż Macowi tabelę porównawczą zanim ruszysz dalej. Może być źle skonfigurowany system domów, timezone, albo wersja efemeryd.
 - **Stripe webhook nie działa** → sprawdź Stripe Dashboard logs + Supabase function logs. Często to webhook secret mismatch.
 - **PWA install nie pokazuje się** → Lighthouse PWA audit, sprawdź manifest.json + service worker.
@@ -103,13 +103,13 @@ Hosting:    Vercel + Supabase
 - Naming komponentów, struktura folderów
 - Wybór biblioteki gdy są 2-3 podobne (wybierz najbardziej popularną/maintainowaną)
 - Drobne optymalizacje
+- **Jakość interpretacji astrologicznej** — pisz prompty i treść zgodnie z best practices astrologicznymi: trafne, angażujące, personalne. Astrolog nie jest częścią procesu; kontrolę jakości Mac robi poza Claude.
 
 **Zapytaj Maca:**
 - Zmiana w produkcie (dodanie/usunięcie feature)
 - Zmiana w pricing / monetyzacji
 - Zmiana w copy / voice
 - Sytuacja gdzie spec się nie zgadza z rzeczywistością techniczną
-- Cokolwiek związanego z astrologiczną treścią (to domena koleżanki, Mac to przekaże)
 
 **Zapytaj Maca + zaproponuj 2-3 opcje:**
 - Decyzja architektoniczna z trade-offami

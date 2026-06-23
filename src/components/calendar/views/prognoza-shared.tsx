@@ -85,7 +85,7 @@ export const PROGNOZA_STYLES = `
 .pg-hint { font-size:12px;color:var(--pg-muted);margin-top:12px;text-align:center; }
 
 /* Interpretation CTA — sits inside the forecast module */
-.pg-interp-cta { margin-top:18px;padding-top:16px;border-top:1px solid var(--pg-line); }
+.pg-interp-cta { margin-top:18px;padding-top:16px;border-top:1px solid var(--pg-line);text-align:center; }
 .pg-interp-btn {
   display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;
   font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;

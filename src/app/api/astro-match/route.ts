@@ -245,54 +245,55 @@ Napisz 8 modułów synastrii zgodnych z tymi scores. Każda interpretacja: 160�
     }
 
     console.log("[astro-match] calling Sonnet 4.6 for", name1, "×", name2);
-    let rawText = "";
-    try {
-      rawText = await aiComplete({
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
-        maxTokens: 8000,
-        model: "claude-sonnet-4-6",
-        task: "astro-match",
-      });
-      console.log("[astro-match] AI response length:", rawText.length, "chars");
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      console.error("[astro-match] AI call error:", errMsg);
-      return NextResponse.json({ error: `[astro-match] AI call failed: ${errMsg}` }, { status: 500 });
-    }
 
-    let aiResult: CompatibilityResult;
-    try {
-      const aiParsed = extractJson(rawText);
-      // Enforce deterministic scores — overwrite whatever AI returned
-      aiResult = {
-        ...aiParsed,
-        overallScore: scores.overall,
-        categories: aiParsed.categories.map(cat => {
-          const scoreMap: Record<string, number> = {
-            "Komunikacja i zrozumienie":         scores.communication,
-            "Przyciąganie i chemia":              scores.passion,
-            "Więź emocjonalna i bezpieczeństwo": scores.emotional,
-            "Wartości i wspólny kierunek":        scores.values,
-            "Niezależność i bliskość":            scores.independence,
-            "Wyzwania i napięcia":                scores.challenge,
-            "Trwałość i przyszłość":              scores.longevity,
-            "Przeznaczenie i lekcja":             scores.destiny,
-            // backward compat (old saves)
-            "Komunikacja":       scores.communication,
-            "Namiętność":        scores.passion,
-            "Wspólne wartości":  scores.values,
-            "Wyzwania":          scores.challenge,
-            "Długoterminowość":  scores.longevity,
-          };
-          return { ...cat, score: scoreMap[cat.name] ?? cat.score };
-        }),
-      };
-    } catch (parseErr) {
-      const errMsg = parseErr instanceof Error ? parseErr.message : String(parseErr);
-      console.error("[astro-match] JSON parse error:", errMsg);
-      console.error("[astro-match] raw (first 800 chars):", rawText.slice(0, 800));
-      return NextResponse.json({ error: `[astro-match] JSON parse failed: ${errMsg} | raw: ${rawText.slice(0, 300)}` }, { status: 500 });
+    // Score'y są deterministyczne — nadpisujemy to, co zwróci AI (po nazwie kategorii).
+    const scoreMap: Record<string, number> = {
+      "Komunikacja i zrozumienie":         scores.communication,
+      "Przyciąganie i chemia":              scores.passion,
+      "Więź emocjonalna i bezpieczeństwo": scores.emotional,
+      "Wartości i wspólny kierunek":        scores.values,
+      "Niezależność i bliskość":            scores.independence,
+      "Wyzwania i napięcia":                scores.challenge,
+      "Trwałość i przyszłość":              scores.longevity,
+      "Przeznaczenie i lekcja":             scores.destiny,
+      // backward compat (stare zapisy)
+      "Komunikacja":       scores.communication,
+      "Namiętność":        scores.passion,
+      "Wspólne wartości":  scores.values,
+      "Wyzwania":          scores.challenge,
+      "Długoterminowość":  scores.longevity,
+    };
+
+    // Do 2 prób — ucięty/zepsuty JSON bywa niedeterministyczny (sampling). Gdy obie
+    // padną, schodzimy do wyniku deterministycznego (mock) zamiast zwracać błąd userowi.
+    // Score'y i koło są realne nawet w mocku; tekst zastępczy + baner „nowy match".
+    let aiResult: CompatibilityResult | null = null;
+    for (let attempt = 1; attempt <= 2 && !aiResult; attempt++) {
+      try {
+        const rawText = await aiComplete({
+          system: SYSTEM_PROMPT,
+          messages: [{ role: "user", content: userMessage }],
+          maxTokens: 12000,
+          model: "claude-sonnet-4-6",
+          task: "astro-match",
+        });
+        console.log(`[astro-match] AI response length (próba ${attempt}):`, rawText.length, "chars");
+        const aiParsed = extractJson(rawText);
+        if (!Array.isArray(aiParsed.categories) || aiParsed.categories.length === 0) {
+          throw new Error("brak categories[]");
+        }
+        aiResult = {
+          ...aiParsed,
+          overallScore: scores.overall,
+          categories: aiParsed.categories.map(cat => ({ ...cat, score: scoreMap[cat.name] ?? cat.score })),
+        };
+      } catch (err) {
+        console.error(`[astro-match] próba ${attempt} nieudana:`, err instanceof Error ? err.message : String(err));
+      }
+    }
+    if (!aiResult) {
+      console.error("[astro-match] AI/parse nieudane 2× — fallback deterministyczny (mock)");
+      aiResult = mockResult(name1, name2, scores);
     }
 
     const fullResult = buildResult(aiResult, topAspects, planetPositions);

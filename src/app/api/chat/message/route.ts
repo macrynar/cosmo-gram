@@ -9,6 +9,7 @@ import type { SystemBlock } from "@/lib/deepseek";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { STYLE_BLOCK } from "@/lib/moduleSpecs";
 import { getTransitsForDate, getDayWeather, getUpcomingSignificantTransits } from "@/lib/astro/transits";
+import type { CompatibilityResult } from "@/app/api/astro-match/route";
 
 const FREE_CHAT_MESSAGES = 3;
 const PREMIUM_MONTHLY_LIMIT = 150;
@@ -93,6 +94,52 @@ Gdzie w moim kosmogramie to widać?
 Co czujesz, gdy o tym myślisz?
 Czy sens to dla Ciebie proces?
 
+Jeśli nie masz dobrych pytań — pomiń całą sekcję ===PYTANIA===.
+
+${STYLE_BLOCK}`;
+
+// ─── System prompt — SYNASTRIA (rozmowa o relacji dwóch osób) ───────────────────
+
+const CHAT_SYNASTRY_SYSTEM_PROMPT = `Jesteś Astrea — astrolożka światowej klasy, specjalistka od synastrii (analizy relacji między dwoma kosmogramami). Rozmawiasz z osobą o KONKRETNEJ relacji dwojga ludzi — ich gotową analizę synastrii masz w kontekście. Czytasz to, co dzieje się MIĘDZY tymi kartami, jak doświadczony astrolog: nie analizujesz każdej osoby osobno, tylko ich więź. Marka: symboliczne lustro do refleksji nad relacją, nie wyrocznia i nie automat do wróżb.
+
+# ZASADA NR 1 — TO ROZMOWA O RELACJI, NIE O JEDNEJ OSOBIE
+Czytasz synastrię: przyciąganie, komunikację, czułość, napięcia, trwałość i wspólny kierunek między tymi dwiema osobami. Każda obserwacja oparta o KONKRETNY element z analizy w kontekście — wymiar (z jego liczbą) albo aspekt między planetami. NIGDY nie zmyślaj aspektów, których nie ma w kontekście. Score'y są deterministyczne — nie podważaj ich i nie zmieniaj liczb; pisz spójnie z nimi (wysoki = łatwość i dar, niski = obszar świadomej pracy).
+
+# ZASADA NR 2 — ODPOWIADAJ NA PYTANIE
+Pierwsze zdanie to ODPOWIEDŹ na pytanie o tę relację, nie nazwa planety ani opis aspektu. Astrologia to Twoje NARZĘDZIE, nie temat rozmowy. Najpierw mów, co widzisz w tej więzi; dopiero potem — jeśli pasuje — pokaż, skąd to wiesz. Nie zaczynaj dwóch odpowiedzi z rzędu tym samym schematem.
+
+# JAK CZYTAĆ RELACJĘ
+- Wymiary z analizy (komunikacja, chemia, więź emocjonalna, wartości, niezależność, wyzwania, trwałość, przeznaczenie) — liczba pokazuje, gdzie jest łatwo, a gdzie trzeba świadomej pracy. To Twój punkt wyjścia.
+- Aspekty między kartami: Wenus–Mars (chemia, pożądanie), Księżyc–Księżyc i Księżyc–Wenus (czułość, poczucie bezpieczeństwa), Merkury (rozmowa, rozumienie się), Słońce–Księżyc (wzajemne dopełnienie), Saturn (trwałość i zobowiązanie, ale i ciężar), Pluton i Węzły (głębia, transformacja, karmiczny wątek).
+- SYNTETYZUJ — znajdź główny wątek tej relacji, nie wyliczaj aspektów po kolei.
+
+# CZEGO NIE ROBIĆ
+- Maks. 1–2 elementy astrologiczne na odpowiedź, wplecione w zdanie — nie lista.
+- Zero żargonu w treści (orb, koniunkcja, kwadratura, opozycja, trygon, sekstyl, „aplikujący") — tłumacz na ludzki: spotkanie/złączenie, napięcie/tarcie, biegunowość, łatwy przepływ, dobre wsparcie.
+- Zero clichés: „dusza bliźniacza", „przeznaczenie pisane w gwiazdach", „idealna para", „kosmiczne połączenie", „druga połówka".
+- Mów po imieniu obu osób lub bezosobowo — nigdy ról płciowych ani form ze slashem („byłeś/aś").
+- Jeśli nic z analizy naprawdę nie pasuje do pytania — odpowiedz mądrze, bez naciągania astrologii na siłę.
+
+# TON I FORMA
+- Mów jak mądry człowiek, nie jak podręcznik. Ciepło, konkretnie, bez lania wody.
+- 80–220 słów; krócej przy prostym pytaniu. Nigdy ściana tekstu.
+- Markdown: pogrubienie 1–2 kluczowych fraz. Bez nagłówków — to rozmowa, nie raport. Krótkie akapity.
+- Pamiętasz wcześniejsze wiadomości — możesz nawiązywać, ale nie zaczynaj od tego.
+- Możesz zakończyć JEDNYM krótkim pytaniem zwrotnym, jeśli realnie pcha rozmowę. Nie przesłuchuj.
+
+# GRANICE BEZPIECZEŃSTWA (ZAWSZE)
+- Zero wyroków o relacji: NIE mów „rozstaniecie się", „to nie przetrwa", „to toksyczne", „on/ona Cię zdradzi". Opisuj tendencję i dynamikę, nie przepowiednię.
+- Przy wzmiance o przemocy, lęku, depresji, samookaleczeniu, myślach samobójczych — NAJPIERW empatyczne uznanie (nie minimalizuj), POTEM delikatne przekierowanie do specjalisty. Nie astrologizuj krzywdy ani zdrowia.
+- Zero porad prawnych, medycznych, finansowych. Pokaż dynamikę relacji, nie rekomendację życiową.
+- Tylko astrologia — zero tarota, czakr, numerologii.
+- Zero koachingowych ogólników („zaufaj procesowi", „słuchaj serca") i wypełniaczy („fascynujące", „ciekawe").
+- Zero „musisz", „na pewno", „zawsze", „nigdy".
+
+# FORMAT ODPOWIEDZI
+Zwróć najpierw treść jako czysty Markdown z PRAWDZIWYMI akapitami (rozdzielaj akapity pustą linią — NIGDY nie wpisuj znaków „\\n" jako tekstu).
+Następnie, jeśli masz dobre propozycje, dodaj osobną linię z dokładnie:
+===PYTANIA===
+i pod nią 2 pytania, które TA OSOBA mogłaby zadać Ci dalej o tę relację — w PIERWSZEJ osobie, jej głosem, jakby pisała je sama. Każde w osobnej linii, max 55 znaków, bez numeracji i bez cudzysłowów.
 Jeśli nie masz dobrych pytań — pomiń całą sekcję ===PYTANIA===.
 
 ${STYLE_BLOCK}`;
@@ -188,6 +235,44 @@ function buildNatalContext(
     promptContext,
     `\nAspekty natalne:\n${aspectLines}`,
     `\nWęzły:\n${nodeLine}`,
+  ].filter(Boolean).join("\n");
+}
+
+// ─── Synastry context builder (chat o relacji) ──────────────────────────────────
+
+const SYNASTRY_TIERS: [number, string][] = [
+  [90, "Splecione gwiazdy"],
+  [75, "Silne przyciąganie"],
+  [60, "Rosnąca więź"],
+  [45, "Nauka przez tarcie"],
+  [0,  "Dwa różne nieba"],
+];
+
+// Buduje kontekst z ZAPISANEJ analizy synastrii (compatibility_data). Tabela
+// matches nie trzyma lat/lng, więc nie przeliczamy kart — korzystamy z gotowych,
+// deterministycznych score'ów + aspektów + opisu zapisanych przy tworzeniu matcha.
+function buildSynastryContext(name1: string, name2: string, data: CompatibilityResult): string {
+  const score = data.overallScore ?? 0;
+  const tier = SYNASTRY_TIERS.find(([m]) => score >= m)?.[1] ?? "";
+
+  const dims = (data.categories ?? [])
+    .map(c => {
+      const ins = c.insight?.trim() ? ` — ${c.insight.trim()}` : "";
+      return `- ${c.name}: ${c.score}/100${ins}`;
+    })
+    .join("\n");
+
+  const aspectLines = (data.aspects ?? [])
+    .slice(0, 8)
+    .map(a => `- ${name1}: ${a.planet_a} (${a.sign_a}) ${ASPECT_PL[a.type] ?? a.type} ${name2}: ${a.planet_b} (${a.sign_b})`)
+    .join("\n");
+
+  return [
+    `Relacja: ${name1} × ${name2}`,
+    `Ogólne dopasowanie: ${score}/100${tier ? ` — ${tier}` : ""}`,
+    data.summary?.trim() ? `Podsumowanie analizy: ${data.summary.trim()}` : "",
+    dims ? `\nWymiary relacji (score 0–100, obliczone deterministycznie — nie zmieniaj liczb):\n${dims}` : "",
+    aspectLines ? `\nNajmocniejsze aspekty między kartami:\n${aspectLines}` : "",
   ].filter(Boolean).join("\n");
 }
 
@@ -287,7 +372,7 @@ export async function POST(req: NextRequest) {
   const { conversationId, content, chartContextType, chartContextId } = await req.json() as {
     conversationId: string;
     content: string;
-    chartContextType?: "natal" | "child";
+    chartContextType?: "natal" | "child" | "match";
     chartContextId?: string;
   };
 
@@ -327,45 +412,62 @@ export async function POST(req: NextRequest) {
 
   if (!conv) return NextResponse.json({ error: "Nie znaleziono rozmowy" }, { status: 404 });
 
-  // Get chart context
+  // Get chart context — natal/child kosmogram, lub synastria (relacja) gdy type === "match"
   let natalContext = "";
   let chartPersonName = "";
   let natalChart: NatalChart | null = null;
+  let synastryContext = "";
   try {
-    let chartData: NatalChart | null = null;
-
-    if (chartContextId && chartContextType === "child") {
+    if (chartContextType === "match" && chartContextId) {
       const { data } = await supabaseAdmin
-        .from("children")
-        .select("chart_data, name")
+        .from("matches")
+        .select("person1_name, person2_name, overall_score, compatibility_data")
         .eq("id", chartContextId)
         .eq("user_id", user.id)
         .single();
-      if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
-    } else if (chartContextId && chartContextType === "natal") {
-      const { data } = await supabaseAdmin
-        .from("readings")
-        .select("chart_data, name")
-        .eq("id", chartContextId)
-        .eq("user_id", user.id)
-        .single();
-      if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
+      if (data?.compatibility_data) {
+        synastryContext = buildSynastryContext(
+          data.person1_name || "Osoba 1",
+          data.person2_name || "Osoba 2",
+          data.compatibility_data as CompatibilityResult,
+        );
+      }
     } else {
-      const { data } = await supabaseAdmin
-        .from("readings")
-        .select("chart_data, name")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
-    }
+      let chartData: NatalChart | null = null;
 
-    if (chartData) {
-      natalChart = chartData;
-      const bd = chartData.birthData;
-      const { promptContext, aspects, nodes } = calculateChart({ date: bd.date, time: bd.time, lat: bd.lat, lng: bd.lng, place: bd.place });
-      natalContext = buildNatalContext(promptContext, aspects, nodes, chartPersonName || undefined);
+      if (chartContextId && chartContextType === "child") {
+        const { data } = await supabaseAdmin
+          .from("children")
+          .select("chart_data, name")
+          .eq("id", chartContextId)
+          .eq("user_id", user.id)
+          .single();
+        if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
+      } else if (chartContextId && chartContextType === "natal") {
+        const { data } = await supabaseAdmin
+          .from("readings")
+          .select("chart_data, name")
+          .eq("id", chartContextId)
+          .eq("user_id", user.id)
+          .single();
+        if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
+      } else {
+        const { data } = await supabaseAdmin
+          .from("readings")
+          .select("chart_data, name")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+        if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
+      }
+
+      if (chartData) {
+        natalChart = chartData;
+        const bd = chartData.birthData;
+        const { promptContext, aspects, nodes } = calculateChart({ date: bd.date, time: bd.time, lat: bd.lat, lng: bd.lng, place: bd.place });
+        natalContext = buildNatalContext(promptContext, aspects, nodes, chartPersonName || undefined);
+      }
     }
   } catch { /* use empty context */ }
 
@@ -400,11 +502,18 @@ export async function POST(req: NextRequest) {
     transitSection,
   ].filter(Boolean).join("\n\n");
 
+  const isSynastry = synastryContext.length > 0;
   const systemBlocks: SystemBlock[] = [
-    { type: "text", text: CHAT_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
-    natalContext
-      ? { type: "text", text: `# Kosmogram tej osoby\n\n${natalContext}`, cache_control: { type: "ephemeral" } }
-      : { type: "text", text: "Osoba nie ma jeszcze wygenerowanego kosmogramu — możesz zadawać pytania o datę urodzenia lub sugerować generowanie wykresu." },
+    {
+      type: "text",
+      text: isSynastry ? CHAT_SYNASTRY_SYSTEM_PROMPT : CHAT_SYSTEM_PROMPT,
+      cache_control: { type: "ephemeral" },
+    },
+    isSynastry
+      ? { type: "text", text: `# Relacja — analiza synastrii\n\n${synastryContext}`, cache_control: { type: "ephemeral" } }
+      : natalContext
+        ? { type: "text", text: `# Kosmogram tej osoby\n\n${natalContext}`, cache_control: { type: "ephemeral" } }
+        : { type: "text", text: "Osoba nie ma jeszcze wygenerowanego kosmogramu — możesz zadawać pytania o datę urodzenia lub sugerować generowanie wykresu." },
     ...(dynamicPart.trim() ? [{ type: "text" as const, text: dynamicPart }] : []),
   ];
 

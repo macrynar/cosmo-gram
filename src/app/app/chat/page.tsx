@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Plus, Info, X, ChevronDown, User, Baby } from "lucide-react";
+import { Send, Plus, Info, X, ChevronDown, User, Baby, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/components/AuthContext";
@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Message = { role: "user" | "assistant"; content: string; followups?: string[] };
-type ChartOption = { id: string; type: "natal" | "child"; name: string; birth_date: string };
+type ChartOption = { id: string; type: "natal" | "child" | "match"; name: string; birth_date: string };
 type Conversation = {
   id: string; title: string; updated_at: string;
   last_message_at: string | null; summary_updated_at: string | null;
@@ -256,6 +256,7 @@ export default function ChatPage() {
 
   // Original state
   const [charts, setCharts]               = useState<ChartOption[]>([]);
+  const [matches, setMatches]             = useState<ChartOption[]>([]);
   const [selectedChart, setSelectedChart] = useState<ChartOption | null>(null);
   const [showChartPicker, setShowChartPicker] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -353,6 +354,22 @@ export default function ChatPage() {
     if (data?.length > 0 && !selectedChart) setSelectedChart(data[0]);
   }, [session, authHeader, selectedChart]);
 
+  const loadMatches = useCallback(async () => {
+    if (!session) return;
+    const res = await fetch("/api/get-matches", { headers: authHeader() });
+    if (!res.ok) return;
+    const { matches: data } = await res.json() as {
+      matches: Array<{ id: string; name: string | null; person1_name: string; person2_name: string; overall_score: number | null }>;
+    };
+    setMatches((data ?? []).map(m => ({
+      id: m.id,
+      type: "match" as const,
+      name: m.name || `${m.person1_name} × ${m.person2_name}`,
+      // birth_date trzyma podpis prawej kolumny w pickerze — dla relacji pokazujemy wynik
+      birth_date: typeof m.overall_score === "number" ? `${m.overall_score}/100` : "",
+    })));
+  }, [session, authHeader]);
+
   const loadConversations = useCallback(async () => {
     if (!session) return;
     const res = await fetch("/api/chat/conversations", { headers: authHeader() });
@@ -396,10 +413,11 @@ export default function ChatPage() {
 
   useEffect(() => {
     loadCharts();
+    loadMatches();
     loadConversations().then(convs => { if (convs) maybeTriggerSummary(convs); });
     loadStatus();
     checkDataWarning();
-  }, [loadCharts, loadConversations, loadStatus, maybeTriggerSummary, checkDataWarning]);
+  }, [loadCharts, loadMatches, loadConversations, loadStatus, maybeTriggerSummary, checkDataWarning]);
 
   // Powrót ze Stripe po zakupie paczki — odśwież status, pokaż potwierdzenie, wyczyść URL
   useEffect(() => {
@@ -430,7 +448,7 @@ export default function ChatPage() {
     try {
       const s = JSON.parse(localStorage.getItem("chat_chart_ctx") ?? "{}") as Record<string, { id: string; type: string }>;
       const ctx = s[convId];
-      return ctx ? (charts.find(c => c.id === ctx.id) ?? null) : null;
+      return ctx ? ([...charts, ...matches].find(c => c.id === ctx.id) ?? null) : null;
     } catch { return null; }
   }
 
@@ -635,6 +653,7 @@ export default function ChatPage() {
   }
 
   async function deleteConversation(convId: string) {
+    if (!window.confirm("Usunąć tę rozmowę? Tej operacji nie można cofnąć.")) return;
     await fetch(`/api/chat/delete?id=${convId}`, { method: "DELETE", headers: authHeader() });
     track("chat_history_deleted", { conv_id: convId });
     setConversations(prev => prev.filter(c => c.id !== convId));
@@ -724,7 +743,7 @@ export default function ChatPage() {
                     fontSize: "12px", color: "#877FA0", display: "block",
                     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                   }}>
-                    {ctx.type === "child" ? "◇ " : "○ "}{ctx.name}
+                    {ctx.type === "match" ? "⟡ " : ctx.type === "child" ? "◇ " : "○ "}{ctx.name}
                   </span>
                 )}
               </div>
@@ -735,12 +754,16 @@ export default function ChatPage() {
                 <button
                   onClick={e => { e.stopPropagation(); deleteConversation(c.id); }}
                   title="Usuń rozmowę"
+                  aria-label="Usuń rozmowę"
                   style={{
-                    background: "none", border: "none", color: "#877FA0",
-                    cursor: "pointer", padding: "2px", opacity: 0, fontSize: "16px", lineHeight: 1,
+                    background: "none", border: "none",
+                    color: isMobile ? "#9A6470" : "#877FA0",
+                    cursor: "pointer", padding: isMobile ? "4px 7px" : "2px",
+                    margin: isMobile ? "-2px -3px" : 0,
+                    opacity: isMobile ? 0.75 : 0, fontSize: "18px", lineHeight: 1,
                   }}
                   onMouseEnter={e => { const b = e.currentTarget; b.style.opacity = "1"; b.style.color = "#e26060"; }}
-                  onMouseLeave={e => { const b = e.currentTarget; b.style.opacity = "0"; b.style.color = "#877FA0"; }}
+                  onMouseLeave={e => { const b = e.currentTarget; b.style.opacity = isMobile ? "0.75" : "0"; b.style.color = isMobile ? "#9A6470" : "#877FA0"; }}
                 >
                   ×
                 </button>
@@ -926,7 +949,7 @@ export default function ChatPage() {
                   </h1>
 
                   {/* Chart picker */}
-                  {session && charts.length > 1 && (
+                  {session && (charts.length > 1 || matches.length > 0) && (
                     <div ref={chartPickerRef} style={{ position: "relative", width: "100%", maxWidth: "400px", marginBottom: "14px" }}>
                       <button
                         onClick={() => setShowChartPicker(v => !v)}
@@ -938,11 +961,15 @@ export default function ChatPage() {
                           backdropFilter: "blur(8px)", fontFamily: "inherit",
                         }}
                       >
-                        {selectedChart?.type === "child"
+                        {selectedChart?.type === "match"
+                          ? <Users size={13} style={{ color: "#E0B566", flexShrink: 0 }} />
+                          : selectedChart?.type === "child"
                           ? <Baby size={13} style={{ color: "#E0B566", flexShrink: 0 }} />
                           : <User size={13} style={{ color: "#E0B566", flexShrink: 0 }} />}
                         <span style={{ flex: 1, textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {selectedChart ? `${selectedChart.name} · ${selectedChart.birth_date}` : "Wybierz kosmogram…"}
+                          {selectedChart
+                            ? (selectedChart.birth_date ? `${selectedChart.name} · ${selectedChart.birth_date}` : selectedChart.name)
+                            : "Wybierz kontekst…"}
                         </span>
                         <ChevronDown size={13} style={{ color: "#877FA0", flexShrink: 0, transform: showChartPicker ? "rotate(180deg)" : "none", transition: ".2s" }} />
                       </button>
@@ -970,6 +997,29 @@ export default function ChatPage() {
                               <span style={{ color: "#877FA0", fontSize: "11px", flexShrink: 0 }}>{c.birth_date}</span>
                             </button>
                           ))}
+                          {matches.length > 0 && (
+                            <>
+                              <div style={{ padding: "9px 14px 4px", fontSize: "10px", letterSpacing: ".18em", textTransform: "uppercase", color: "#6F6788", borderTop: "1px solid #1E1930", marginTop: "2px" }}>
+                                Relacje
+                              </div>
+                              {matches.map(m => (
+                                <button key={m.id}
+                                  onMouseDown={() => { setSelectedChart(m); setShowChartPicker(false); }}
+                                  style={{
+                                    width: "100%", textAlign: "left", padding: "10px 14px",
+                                    display: "flex", alignItems: "center", gap: "8px",
+                                    background: selectedChart?.id === m.id ? "rgba(224,181,102,.08)" : "none",
+                                    border: "none", color: "#F4F1EA", fontSize: "13px",
+                                    cursor: "pointer", fontFamily: "inherit",
+                                  }}
+                                >
+                                  <Users size={12} style={{ color: "#E0B566", flexShrink: 0 }} />
+                                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</span>
+                                  <span style={{ color: "#877FA0", fontSize: "11px", flexShrink: 0 }}>{m.birth_date}</span>
+                                </button>
+                              ))}
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1113,12 +1163,12 @@ export default function ChatPage() {
                   }}>
                     {activeConv?.title !== "Nowa rozmowa" && activeConv?.title
                       ? activeConv.title
-                      : "czyta Twój kosmogram"}
+                      : selectedChart?.type === "match" ? "czyta Waszą relację" : "czyta Twój kosmogram"}
                   </span>
                 </div>
 
                 {/* Chart picker (multi-chart, active state) */}
-                {session && charts.length > 1 && (
+                {session && (charts.length > 1 || matches.length > 0) && (
                   <div ref={chartPickerRef} style={{ position: "relative", flexShrink: 0 }}>
                     <button
                       onClick={() => setShowChartPicker(v => !v)}
@@ -1129,7 +1179,7 @@ export default function ChatPage() {
                         color: "#B6AFC6", fontSize: "12px", cursor: "pointer", fontFamily: "inherit",
                       }}
                     >
-                      {selectedChart?.type === "child" ? <Baby size={12} /> : <User size={12} />}
+                      {selectedChart?.type === "match" ? <Users size={12} /> : selectedChart?.type === "child" ? <Baby size={12} /> : <User size={12} />}
                       <span style={{ maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {selectedChart?.name ?? "—"}
                       </span>
@@ -1158,6 +1208,28 @@ export default function ChatPage() {
                             <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
                           </button>
                         ))}
+                        {matches.length > 0 && (
+                          <>
+                            <div style={{ padding: "9px 14px 4px", fontSize: "10px", letterSpacing: ".18em", textTransform: "uppercase", color: "#6F6788", borderTop: "1px solid #1E1930", marginTop: "2px" }}>
+                              Relacje
+                            </div>
+                            {matches.map(m => (
+                              <button key={m.id}
+                                onMouseDown={() => { setSelectedChart(m); setShowChartPicker(false); }}
+                                style={{
+                                  width: "100%", textAlign: "left", padding: "10px 14px",
+                                  display: "flex", alignItems: "center", gap: "8px",
+                                  background: selectedChart?.id === m.id ? "rgba(224,181,102,.08)" : "none",
+                                  border: "none", color: "#F4F1EA", fontSize: "13px",
+                                  cursor: "pointer", fontFamily: "inherit",
+                                }}
+                              >
+                                <Users size={12} style={{ color: "#E0B566", flexShrink: 0 }} />
+                                <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</span>
+                              </button>
+                            ))}
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
