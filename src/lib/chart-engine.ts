@@ -48,7 +48,7 @@ function calculateAngles(date: Date, lat: number, lng: number): { asc: number; m
   const T      = (jd - 2451545.0) / 36525;
   const eps    = (23.439291111 - 0.013004167 * T) * DEG;
 
-  let mcRad = Math.atan2(Math.sin(ramcR), Math.cos(ramcR) * Math.cos(eps));
+  const mcRad = Math.atan2(Math.sin(ramcR), Math.cos(ramcR) * Math.cos(eps));
   let mc = ((mcRad / DEG) + 360) % 360;
   if (ramc > 180 && mc < 180) mc += 180;
   if (ramc < 180 && mc > 180) mc -= 180;
@@ -56,8 +56,8 @@ function calculateAngles(date: Date, lat: number, lng: number): { asc: number; m
 
   const numerator   = Math.cos(ramcR);
   const denominator = -(Math.sin(ramcR) * Math.cos(eps) + Math.tan(latR) * Math.sin(eps));
-  let ascRad = Math.atan2(numerator, denominator);
-  let asc = ((ascRad / DEG) + 360) % 360;
+  const ascRad = Math.atan2(numerator, denominator);
+  const asc = ((ascRad / DEG) + 360) % 360;
 
   return { asc, mc };
 }

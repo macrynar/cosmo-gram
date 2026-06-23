@@ -46,7 +46,7 @@ export function useStreak(): StreakResult {
     const stored = load();
     const today  = todayStr();
     const yesterday = yesterdayStr();
-    let next = { ...stored };
+    const next = { ...stored };
 
     if (stored.lastDate === today) {
       // already counted today — just hydrate state
