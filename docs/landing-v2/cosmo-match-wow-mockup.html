@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="pl"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cosmo Match — WOW reveal · mockup</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-base:#0B0912; --bg-elevated:#14101F; --text-primary:#F4F1EA; --text-secondary:#B6AFC6;
+  --text-muted:#877FA0; --accent:#FFAE3D; --accent-deep:#E0B566; --voice:#E9DCC0;
+  --line:#2B2540; --line-soft:rgba(182,175,198,.14); --tense:#E2654A; --rose:#f5879a;
+  --grad-ember:linear-gradient(135deg,#FFC56B 0%,#FFAE3D 45%,#F08F2E 100%);
+  --grad-text:linear-gradient(110deg,#FFF8EC 0%,#FFD9A0 55%,#E8BE78 100%);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{margin:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:radial-gradient(130% 90% at 50% -5%,#1A1530 0%,#0B0912 62%) fixed var(--bg-base);
+  color:var(--text-primary); font-family:'General Sans',system-ui,sans-serif;
+  padding-bottom:120px; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+/* film grain */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:70;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ── nav ── */
+.nav{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;
+  border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,9,18,.72);backdrop-filter:blur(10px);z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;font-size:15px}
+.tabs{display:flex;gap:2px}
+.tab{padding:8px 14px;border-radius:999px;color:var(--text-muted);font-size:13.5px;text-decoration:none;cursor:pointer}
+.tab.on{color:var(--voice);background:rgba(224,181,102,.10);border:1px solid var(--line)}
+.ava{width:32px;height:32px;border-radius:50%;border:1px solid var(--accent-deep);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--accent-deep)}
+@media(max-width:720px){.tabs{display:none}}
+
+.wrap{max-width:1040px;margin:0 auto;padding:40px 20px 0;text-align:center}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;border:1px solid var(--line);background:var(--bg-elevated);color:var(--accent-deep);font-size:12.5px}
+h1{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(32px,5vw,50px);margin:14px 0 6px;letter-spacing:-.01em;
+  background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.lede{color:var(--text-muted);font-size:14.5px;margin-bottom:24px}
+.matchbar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:26px}
+.chip{padding:9px 17px;border-radius:999px;border:1px solid var(--line);background:var(--bg-elevated);color:var(--text-secondary);font-size:13.5px;cursor:pointer;transition:.2s var(--ease)}
+.chip:hover{border-color:var(--accent-deep)}
+.chip.on{border-color:var(--accent-deep);color:var(--voice);background:rgba(224,181,102,.07)}
+.chip.ghost{border-style:dashed;color:var(--text-muted)}
+
+/* ── HERO ── */
+.hero{position:relative;border:1px solid var(--line);border-radius:28px;overflow:hidden;padding:28px 22px 36px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(26,21,48,.55) 0%,var(--bg-base) 72%);text-align:center}
+.kompat{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
+.names{font-size:15px;color:var(--text-secondary);margin-bottom:16px}
+.names b{color:var(--text-primary);font-weight:600}.names .x{color:var(--accent-deep);margin:0 9px}
+
+/* wheel block */
+.wheelWrap{position:relative;width:min(440px,90vw);aspect-ratio:1;margin:0 auto 6px}
+.wheelWrap .hf{position:absolute;inset:3%;width:94%;height:94%;object-fit:cover;border-radius:50%;
+  opacity:.62;filter:saturate(116%);
+  animation:spin 200s linear infinite, breathe 12s var(--ease) infinite}
+.wheelWrap .hfglow{position:absolute;inset:-6%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,174,61,.14) 0,rgba(255,174,61,.05) 42%,transparent 66%);
+  animation:breathe 7s var(--ease) infinite}
+.wheelWrap .scrim{position:absolute;left:50%;top:50%;width:66%;height:66%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(11,9,18,.95) 0,rgba(11,9,18,.72) 38%,rgba(11,9,18,.28) 62%,transparent 80%)}
+.wheelWrap svg{position:relative;display:block;width:100%;height:100%;z-index:2}
+.wheelWrap .particles{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+.core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:3;pointer-events:none;transition:opacity .55s var(--ease)}
+.core .num{font-size:clamp(52px,13vw,68px);font-weight:700;line-height:1;letter-spacing:-.02em;color:#fff;
+  font-variant-numeric:tabular-nums;text-shadow:0 0 28px rgba(255,174,61,.45)}
+.core .den{font-size:13px;color:var(--text-muted);margin-top:2px}
+
+/* legend */
+.legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;font-size:11.5px;color:var(--text-muted);margin:4px 0 2px}
+.legend i{display:inline-block;width:14px;height:0;border-top:2px solid;vertical-align:middle;margin-right:5px}
+.legend .dot{width:9px;height:9px;border-radius:50%;border-top:none;border:1px solid}
+
+.tier{font-family:'Fraunces',serif;font-style:italic;font-size:clamp(20px,4.5vw,24px);color:var(--voice);margin:10px 0 8px}
+.topasp{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--accent-deep);
+  border:1px solid var(--line);background:rgba(224,181,102,.06);border-radius:999px;padding:6px 14px;margin-bottom:14px}
+.summary{max-width:600px;margin:0 auto;color:var(--text-secondary);font-size:15px;line-height:1.7}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+
+/* ── INTERPRETACJA: rozdziały (układ jak kosmogram natalny) ── */
+.chapters{margin-top:30px;text-align:left}
+.ch-eyebrow{text-align:center;font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px}
+.ch-nav{display:flex;flex-wrap:wrap;gap:5px 3px;justify-content:center;border-bottom:1px solid var(--line);padding-bottom:13px}
+.ch-chip{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;border:1px solid transparent;background:none;color:var(--text-muted);font-size:13.5px;cursor:pointer;font-family:inherit;transition:.2s var(--ease);white-space:nowrap}
+.ch-chip:hover{color:var(--voice)}
+.ch-chip .mk{display:inline-flex;align-items:center;color:var(--accent-deep);font-size:12px}
+.ch-chip.locked .mk{opacity:.55}
+.ch-chip.on{color:var(--voice);border-color:var(--accent-deep);background:rgba(224,181,102,.08)}
+.ch-panel{position:relative;border:1px solid var(--line);border-top:none;border-radius:0 0 22px 22px;background:var(--bg-elevated);padding:26px 26px 28px;min-height:236px;overflow:hidden;transition:opacity .35s var(--ease)}
+.pk{display:flex;align-items:center;gap:9px;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent-deep);margin-bottom:15px}
+.pk .ic{font-size:15px}
+.ch-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:16px}
+.ch-headline{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:clamp(20px,3.3vw,27px);line-height:1.28;color:var(--voice);max-width:78%}
+.ch-score{font-size:13px;color:var(--text-muted);white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right;padding-top:6px}
+.ch-score b{display:block;color:var(--accent-deep);font-size:30px;font-family:'Fraunces',serif;line-height:1}
+.bar{height:6px;border-radius:999px;background:rgba(182,175,198,.08);margin:0 0 18px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px;width:0;background:linear-gradient(to right,rgba(224,181,102,.6),var(--accent));transition:width .9s var(--ease)}
+.lead,.ch-prose .body{}
+.body{font-size:14.5px;line-height:1.7;color:var(--text-secondary)}
+.insight{margin-top:14px;font-size:13px;line-height:1.55;color:var(--accent-deep);border-top:1px solid var(--line);padding-top:13px}
+.badge-free{display:inline-block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#201405;background:var(--grad-ember);padding:3px 9px;border-radius:999px;font-weight:600;margin-left:10px;vertical-align:middle}
+.ch-panel.locked .ch-prose{filter:blur(7px);opacity:.4;user-select:none;pointer-events:none}
+.ch-lock{position:absolute;left:0;right:0;bottom:0;top:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;padding:0 22px;cursor:pointer;
+  background:linear-gradient(180deg,transparent,rgba(20,16,31,.45) 34%,rgba(20,16,31,.93) 72%)}
+.ch-lock .ic{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);background:rgba(224,181,102,.08)}
+.ch-lock .why{font-size:13px;color:var(--text-secondary);max-width:340px}
+.ch-lock .unlock{margin-top:2px;padding:9px 20px;border-radius:999px;border:1px solid var(--accent-deep);color:var(--voice);font-size:13px;background:transparent;cursor:pointer;font-family:inherit}
+.ch-lock .unlock:hover{background:rgba(224,181,102,.1)}
+@media(max-width:640px){.ch-nav{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start}.ch-headline{max-width:100%;font-size:20px}.ch-panel{padding:22px 18px 24px}.ch-head{flex-direction:column;gap:6px}.ch-score{text-align:left}.ch-score b{display:inline;font-size:22px}}
+
+/* ── PAYWALL ── */
+.paywall{margin-top:24px;border:1px solid var(--line);border-radius:20px;padding:24px;text-align:center;
+  background:radial-gradient(ellipse at 50% 0%,rgba(94,72,162,.12),transparent 70%),var(--bg-elevated)}
+.paywall p{color:var(--text-secondary);font-size:14.5px;margin-bottom:16px;max-width:560px;margin-inline:auto}
+.paywall .hi{color:var(--voice)}
+.cta{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:999px;background:var(--grad-ember);color:#201405;font-weight:600;border:none;cursor:pointer;box-shadow:0 0 40px rgba(255,174,61,.18);font-size:14.5px;font-family:inherit;text-decoration:none}
+.cta:hover{filter:brightness(1.05)}
+
+/* ── ACTIONS (next steps) ── */
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px;text-align:left}
+@media(max-width:640px){.actions{grid-template-columns:1fr}}
+.act{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:18px;background:var(--bg-elevated);padding:17px 18px;cursor:pointer;transition:.2s var(--ease)}
+.act:hover{border-color:var(--accent-deep);background:rgba(224,181,102,.05)}
+.act .ai{width:42px;height:42px;flex:0 0 auto;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid var(--line);background:rgba(224,181,102,.06);color:var(--accent-deep)}
+.act b{display:block;font-size:14.5px;font-weight:600;color:var(--text-primary)}
+.act span{font-size:12.5px;color:var(--text-muted)}
+.act .arr{margin-left:auto;color:var(--accent-deep)}
+
+/* ── reveal helpers ── */
+.rv{opacity:0;transform:translateY(14px)}
+.rv.show{opacity:1;transform:none;transition:opacity .55s var(--ease),transform .55s var(--ease)}
+.hero.fade{opacity:0;transform:scale(.97)}
+.hero.fade.show{opacity:1;transform:none;transition:opacity .6s var(--ease),transform .8s var(--ease)}
+
+/* ── WHEEL INTRO — cinematic reveal wewnątrz koła (wycentrowane) ── */
+.wheelIntro{position:absolute;inset:0;z-index:6;border-radius:50%;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(circle,rgba(11,9,18,.32) 0,rgba(11,9,18,.74) 78%);transition:opacity .65s var(--ease)}
+.wheelIntro.hide{opacity:0;pointer-events:none}
+.wheelIntro .loadvid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.95;z-index:0}
+.wheelIntro .scan{position:absolute;width:130%;height:130%;border-radius:50%;z-index:1;
+  background:conic-gradient(from 0deg,transparent 0 66%,rgba(255,174,61,.22) 86%,transparent 100%);animation:spin 3.2s linear infinite}
+.wheelIntro .iring{position:absolute;width:58%;height:58%;border-radius:50%;border:1px solid rgba(224,181,102,.4);z-index:1;animation:breathe 2.6s var(--ease) infinite}
+.wheelIntro .iring.b{width:74%;height:74%;border-style:dashed;border-color:rgba(224,181,102,.18);animation:spin 16s linear infinite}
+@keyframes spinr{to{transform:rotate(-360deg)}}
+
+/* ── SHARE modal ── */
+.modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:24px;
+  background:rgba(5,4,10,.78);backdrop-filter:blur(8px)}
+.modal.on{display:flex}
+.sheet{width:min(380px,92vw);text-align:center}
+.sheet h4{font-family:'Fraunces',serif;font-weight:500;font-size:19px;color:var(--voice);margin-bottom:4px}
+.sheet .sub{font-size:12.5px;color:var(--text-muted);margin-bottom:16px}
+.scard{position:relative;width:min(290px,72vw);aspect-ratio:9/16;margin:0 auto 18px;border-radius:22px;overflow:hidden;border:1px solid var(--line);
+  background:linear-gradient(180deg,#1A1530,#0B0912)}
+.scard .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.8}
+.scard .veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,9,18,.25) 0%,rgba(11,9,18,.1) 38%,rgba(11,9,18,.82) 100%)}
+.scard .in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:26px 20px;color:#fff}
+.scard .brand{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;letter-spacing:.02em;opacity:.92}
+.scard .ek{margin-top:auto;font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.scard .nm{font-size:15px;margin:5px 0 8px;color:#fff}
+.scard .nm b{font-weight:600}.scard .nm .x{color:var(--accent);margin:0 6px}
+.scard .big{font-family:'Fraunces',serif;font-size:62px;line-height:1;color:#fff;text-shadow:0 0 24px rgba(255,174,61,.5)}
+.scard .big small{font-size:18px;color:rgba(255,255,255,.6)}
+.scard .tr{font-family:'Fraunces',serif;font-style:italic;font-size:17px;color:var(--accent-deep);margin:8px 0 12px}
+.scard .ta{font-size:11.5px;color:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:5px 12px}
+.scard .foot{margin-top:14px;font-size:11px;color:rgba(255,255,255,.6);letter-spacing:.04em}
+.sheet .srow{display:flex;gap:10px;justify-content:center}
+.sheet .srow button{flex:1;max-width:160px;padding:12px;border-radius:14px;font-size:13.5px;cursor:pointer;font-family:inherit;font-weight:500}
+.sheet .b-dl{background:var(--grad-ember);color:#201405;border:none}
+.sheet .b-cl{background:transparent;border:1px solid var(--line);color:var(--text-secondary)}
+.sheet .b-cl:hover{border-color:var(--accent-deep)}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);z-index:95;
+  background:var(--bg-elevated);border:1px solid var(--accent-deep);color:var(--voice);font-size:13px;
+  padding:11px 20px;border-radius:999px;opacity:0;transition:.3s var(--ease);pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── bottom control dock ── */
+.dock{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:60;display:flex;gap:6px;align-items:center;
+  padding:7px 9px;border-radius:999px;background:rgba(20,16,31,.92);border:1px solid var(--line);backdrop-filter:blur(10px);
+  box-shadow:0 8px 30px rgba(0,0,0,.5);flex-wrap:wrap;justify-content:center;max-width:94vw}
+.dock .lbl{font-size:11px;color:var(--text-muted);padding:0 6px}
+.dock button{border:none;background:none;color:var(--text-muted);font-size:12.5px;padding:7px 12px;border-radius:999px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.dock button.on{background:rgba(224,181,102,.16);color:var(--voice)}
+.dock .sep{width:1px;height:20px;background:var(--line)}
+.dock .replay{color:var(--accent-deep)}
+.dock .replay:hover{background:rgba(224,181,102,.1)}
+</style></head>
+<body>
+
+<nav class="nav">
+  <div class="brand">
+    <svg width="22" height="22" viewBox="-52 -52 104 104" fill="var(--text-primary)"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>
+    cosmogram
+  </div>
+  <div class="tabs"><a class="tab">Kosmogram</a><a class="tab">Kalendarz</a><a class="tab on">Cosmo Match</a><a class="tab">Cosmo Chat</a></div>
+  <div class="ava">MR</div>
+</nav>
+
+<div class="wrap">
+  <span class="pill">♡ Analiza kompatybilności</span>
+  <h1>Cosmo Match</h1>
+  <p class="lede">Dwa kosmogramy nałożone na siebie · Twoje unikalne koło synastrii · Interpretacja Astrei</p>
+
+  <div class="matchbar" id="matchbar"></div>
+
+  <section class="hero" id="hero">
+    <div class="kompat">Kompatybilność</div>
+    <div class="names" id="names"></div>
+
+    <div class="wheelWrap" id="wheelWrap">
+      <div class="hfglow"></div>
+      <img class="hf" id="hf" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+      <svg id="wheel" viewBox="0 0 400 400" aria-label="Koło synastrii"></svg>
+      <canvas class="particles" id="particles"></canvas>
+      <div class="scrim"></div>
+      <div class="core"><div class="num" id="num">0</div><div class="den">/ 100</div></div>
+      <div class="wheelIntro hide" id="wheelIntro">
+        <video class="loadvid" id="loadvid" muted loop playsinline preload="auto" onerror="this.style.display='none'"></video>
+        <div class="scan"></div>
+        <div class="iring b"></div>
+        <div class="iring"></div>
+      </div>
+    </div>
+
+    <div class="legend rv">
+      <span><i style="border-color:#FFC56B"></i><span id="lgA">Osoba A</span></span>
+      <span><i style="border-color:#EAD9B0"></i><span id="lgB">Osoba B</span></span>
+      <span><i style="border-color:var(--accent-deep)"></i>harmonijny</span>
+      <span><i style="border-color:var(--tense);border-top-style:dashed"></i>napięty</span>
+    </div>
+
+    <div class="tier rv" id="tier"></div>
+    <div class="rv" id="topwrap"><span class="topasp" id="topasp"></span></div>
+    <p class="summary rv" id="summary"></p>
+
+    <div class="chapters">
+      <div class="ch-eyebrow">8 wymiarów Waszej więzi</div>
+      <div class="ch-nav" id="chNav"></div>
+      <div class="ch-panel" id="chPanel"></div>
+    </div>
+
+    <div class="paywall rv" id="paywall">
+      <p>Odblokowałeś <span class="hi" id="pwFree">najmocniejszy wymiar</span> za darmo. Odblokuj <span class="hi">pozostałe 7 modułów pełnej analizy</span> — przyciąganie, więź, wartości, niezależność, wyzwania, przyszłość i przeznaczenie — w planie Plus.</p>
+      <button class="cta">Przejdź na Plus →</button>
+    </div>
+
+    <div class="actions rv" id="actions">
+      <div class="act" id="shareAct">
+        <div class="ai">⤴</div>
+        <div><b>Pobierz grafikę na Stories</b><span>Karta 9:16 z Waszym wynikiem</span></div>
+        <div class="arr">→</div>
+      </div>
+      <div class="act" id="transitAct">
+        <div class="ai">☉</div>
+        <div><b>Jak ten tydzień wpływa na Was</b><span>Tranzyty dla Waszej relacji</span></div>
+        <div class="arr">→</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- share modal -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h4>Pokaż światu Waszą więź</h4>
+    <div class="sub">Gotowa karta 9:16 — wrzuć na Instagram Stories</div>
+    <div class="scard">
+      <img class="bg" id="sbg" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+      <div class="veil"></div>
+      <div class="in">
+        <div class="brand">
+          <svg width="16" height="16" viewBox="-52 -52 104 104" fill="#fff"><path d="M 28.79,-40.86 A 50,50 0 1,0 28.79,40.86 A 40,40 0 1,1 28.79,-40.86 Z"/><circle cx="10" cy="0" r="9"/></svg>
+          cosmogram
+        </div>
+        <div class="ek" style="margin-top:18px">Kompatybilność</div>
+        <div class="nm" id="sNm"></div>
+        <div class="big"><span id="sBig">92</span><small>/100</small></div>
+        <div class="tr" id="sTier"></div>
+        <span class="ta" id="sTop"></span>
+        <div class="foot">cosmogram.app/match</div>
+      </div>
+    </div>
+    <div class="srow">
+      <button class="b-dl" id="dlBtn">Pobierz PNG</button>
+      <button class="b-cl" id="clBtn">Zamknij</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- control dock -->
+<div class="dock">
+  <span class="lbl">Para:</span>
+  <button data-pair="0" class="on">92</button>
+  <button data-pair="1">71</button>
+  <button data-pair="2">47</button>
+  <div class="sep"></div>
+  <span class="lbl">Plan:</span>
+  <button data-prem="0" class="on">Free</button>
+  <button data-prem="1">Plus</button>
+  <div class="sep"></div>
+  <button class="replay" id="replay">↻ Odtwórz reveal</button>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   Cosmo Match — interaktywny mock-up "WOW reveal"
+   Koło synastrii liczone z prawdziwych długości planet (mini-port
+   src/lib/astro/synastry.ts) → dwie różne pary = dwa różne koła.
+   ════════════════════════════════════════════════════════════ */
+
+const HF_BASE='https://d8j0ntlcm91z4.cloudfront.net/user_3EFduSqbvnymFyBD7x7Gq2XzuOp/';
+/* 5 istniejących grafik więzi (per stopień kompatybilności) — z obecnego modułu Cosmo Match */
+const BOND={
+  s90:HF_BASE+'hf_20260613_123451_1f1fb056-8570-489b-9857-00a91d0b824e.png',
+  s75:HF_BASE+'hf_20260613_123931_832f2f7c-364e-48d3-b12d-e7ef6ae31e19.png',
+  s60:HF_BASE+'hf_20260613_123935_4406add3-cd37-4f4b-bad2-bc7d1f045227.png',
+  s45:HF_BASE+'hf_20260613_123938_3891e468-254e-4156-a48a-5923fcbd2a0c.png',
+  s0 :HF_BASE+'hf_20260613_123453_bba903c6-c990-4327-b5b1-eacc52916f37.png',
+};
+const bondFor=s=>s>=90?BOND.s90:s>=75?BOND.s75:s>=60?BOND.s60:s>=45?BOND.s45:BOND.s0;
+/* cinematic reveal (Higgsfield, kling3_0_turbo 9:16) — tło sekwencji ładowania / reuse pod Reels/ads */
+const REVEAL_VID=HF_BASE+'hf_20260622_194835_7615490c-6df2-4780-b9b6-2afc673fc438.mp4';
+
+const VS='︎'; /* wymusza glif TEKSTOWY (cienki, złoty) zamiast emoji (fioletowy kwadrat) */
+const PLANET_SYMBOL={"Słońce":"☉"+VS,"Księżyc":"☽"+VS,"Merkury":"☿"+VS,"Wenus":"♀"+VS,"Mars":"♂"+VS,"Jowisz":"♃"+VS,"Saturn":"♄"+VS,"Uran":"♅"+VS,"Neptun":"♆"+VS,"Pluton":"♇"+VS,"Ascendent":"Asc"};
+const ZODIAC=["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"].map(s=>s+VS);
+const ASTRO_RE=/[☉☽☿♀♂♃♄♅♆♇♈-♓]/g; const txtGlyph=s=>s.replace(ASTRO_RE,m=>m+VS); /* złote glify tekstowe w UI */
+const ANG={conjunction:0,sextile:60,square:90,trine:120,opposition:180};
+const ORB={conjunction:7,opposition:7,square:6,trine:6,sextile:5};
+const PW={"Słońce":1,"Księżyc":.9,"Wenus":.85,"Mars":.85,"Saturn":.8,"Ascendent":.9,"Merkury":.75,"Jowisz":.7,"Pluton":.65,"Uran":.5,"Neptun":.45};
+const AW={conjunction:1,opposition:.9,trine:.85,square:.8,sextile:.7};
+const ASPECT_PL={conjunction:"koniunkcja",sextile:"sekstyl",trine:"trygon",square:"kwadratura",opposition:"opozycja"};
+
+/* długości ekliptyczne planet (deg) — przykładowi ludzie */
+const P={
+  Maciej:{"Słońce":277,"Księżyc":158,"Merkury":262,"Wenus":305,"Mars":201,"Jowisz":337,"Saturn":259,"Uran":264,"Neptun":276,"Pluton":218,"Ascendent":248},
+  Joanna:{"Słońce":72,"Księżyc":312,"Merkury":81,"Wenus":48,"Mars":124,"Jowisz":96,"Saturn":251,"Uran":268,"Neptun":278,"Pluton":220,"Ascendent":95},
+  Asia:{"Słońce":252,"Księżyc":24,"Merkury":240,"Wenus":281,"Mars":9,"Jowisz":200,"Saturn":265,"Uran":272,"Neptun":281,"Pluton":222,"Ascendent":140},
+  "Michał":{"Słońce":345,"Księżyc":200,"Merkury":350,"Wenus":18,"Mars":95,"Jowisz":40,"Saturn":262,"Uran":270,"Neptun":279,"Pluton":219,"Ascendent":300},
+};
+
+const DIMS=[
+  {key:"kom",ic:"◇",short:"Komunikacja",name:"Komunikacja i zrozumienie",
+    hook:"Rozmowa, która czasem łączy, czasem mija się o włos.",
+    gen:"Wasze umysły pracują w innym tempie — gdy dacie sobie chwilę na doprecyzowanie, różnica zaczyna być siłą, nie tarciem."},
+  {key:"prz",ic:"♡",short:"Chemia",name:"Przyciąganie i chemia",
+    hook:"Magnetyzm, który czujecie, zanim padnie pierwsze słowo.",
+    gen:"Przyciąganie jest tu realne; pytanie brzmi, czy umiecie je podsycać, gdy opadnie pierwszy żar."},
+  {key:"wiez",ic:"☾",short:"Więź",name:"Więź emocjonalna i bezpieczeństwo",
+    hook:"Poczucie bycia „u siebie” przy drugiej osobie.",
+    gen:"Bliskość przychodzi Wam naturalnie; pielęgnowana małymi gestami, nie spowszednieje."},
+  {key:"wart",ic:"◈",short:"Wartości",name:"Wartości i wspólny kierunek",
+    hook:"To, co naprawdę budujecie razem.",
+    gen:"W kluczowych sprawach patrzycie w podobnym kierunku — wspólny cel spaja Was mocniej niż chwilowe emocje."},
+  {key:"niez",ic:"✧",short:"Niezależność",name:"Niezależność i bliskość",
+    hook:"Ile wolności, ile „my”.",
+    gen:"Przestrzeni i bliskości potrzebujecie w różnych proporcjach — jawna umowa o granicach oszczędzi Wam napięć."},
+  {key:"wyzw",ic:"✦",short:"Wyzwania",name:"Wyzwania i napięcia",
+    hook:"Punkty zapalne, które uczą najwięcej.",
+    gen:"Tarcie nie jest wrogiem — świadomie prowadzone, staje się motorem rozwoju Waszej relacji."},
+  {key:"trw",ic:"∞",short:"Trwałość",name:"Trwałość i przyszłość",
+    hook:"Co spaja Was na długo.",
+    gen:"Fundament jest solidny; konsekwencja w codziennych wyborach zamienia potencjał w trwałość."},
+  {key:"przezn",ic:"✷",short:"Przeznaczenie",name:"Przeznaczenie i lekcja",
+    hook:"Po co się spotkaliście.",
+    gen:"W tej relacji jest wątek lekcji — to, czego uczycie się nawzajem, zostaje na długo po wszystkim."},
+];
+const LOCKED_FILLER="Pełna interpretacja Astrei dla tego wymiaru: jak działa między Wami na co dzień, gdzie jest Wasza siła, a gdzie pole do pracy — z konkretnymi wskazówkami opartymi na aspektach Waszej pary.";
+const LOCKSVG='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#E0B566" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const TEASE={
+  kom:"Jak się dogadujecie, gdzie się mijacie i co otwiera między wami szczerą rozmowę…",
+  prz:"Magnetyzm, pożądanie i iskra — jak się w sobie rozpalacie i co podtrzymuje napięcie…",
+  wiez:"Bliskość, czułość i poczucie bycia „u siebie” przy drugiej osobie…",
+  wart:"Cele, światopogląd i to, co naprawdę razem budujecie…",
+  niez:"Równowaga wolności i „my” — ile przestrzeni, ile bycia razem…",
+  wyzw:"Punkty zapalne, które — świadomie prowadzone — stają się motorem rozwoju…",
+  trw:"Potencjał na długo — co naprawdę was spaja i co buduje zobowiązanie…",
+  przezn:"Po co się spotkaliście — wątek karmiczny i lekcja, którą sobie wnosicie…",
+};
+
+const PAIRS=[
+  {a:"Maciej",b:"Joanna",score:92,top:"☉ Słońce ↔ ♀ Wenus · trygon",topPlain:"Słońce ↔ Wenus (trygon)",
+   scores:{kom:67,prz:90,wiez:84,wart:80,niez:58,wyzw:44,trw:76,przezn:88},
+   full:{lead:"Między wami iskrzy od pierwszego spojrzenia.",
+     body:"Wenus Macieja w czułym trygonie do Marsa Joanny tworzy magnetyzm, który trudno zignorować — pożądanie miesza się tu z autentyczną fascynacją. To przyciąganie, które nie gaśnie po kilku tygodniach, bo karmi je ciekawość, nie tylko chemia.",
+     insight:"Gdy napięcie rośnie, nie uciekajcie w rutynę — to odrobina nieprzewidywalności podtrzymuje między wami ogień."}},
+  {a:"Maciej",b:"Asia",score:71,top:"☽ Księżyc ↔ ♂ Mars · sekstyl",topPlain:"Księżyc ↔ Mars (sekstyl)",
+   scores:{kom:64,prz:73,wiez:82,wart:69,niez:66,wyzw:52,trw:70,przezn:60},
+   full:{lead:"Przy sobie łatwo wam o spokój.",
+     body:"Spotkanie Księżyców w zgodnym aspekcie daje poczucie bezpieczeństwa, którego rzadko trzeba tłumaczyć słowami. Wyczuwacie nawzajem nastroje, a obecność drugiej osoby działa kojąco — to fundament, na którym reszta może spokojnie rosnąć.",
+     insight:"Nie bierzcie tej łatwości za pewnik — krótkie „jak się masz naprawdę?” potrafi pogłębić to, co już macie."}},
+  {a:"Maciej",b:"Michał",score:47,top:"♄ Saturn ↔ ☉ Słońce · kwadratura",topPlain:"Saturn ↔ Słońce (kwadratura)",
+   scores:{kom:45,prz:58,wiez:49,wart:53,niez:44,wyzw:74,trw:50,przezn:79},
+   full:{lead:"Spotkaliście się nie przez przypadek.",
+     body:"Głębokie aspekty Plutona i Saturna nadają tej relacji ciężar lekcji — przyciąga was coś, czego jeszcze nie nazwaliście. To więź, która zmienia: czasem pod górę, ale zawsze zostawia ślad.",
+     insight:"Pytajcie siebie, czego ta relacja was uczy — ta odpowiedź jest tu ważniejsza niż komfort."}},
+];
+
+const TIERS=[
+  {min:90,label:"Splecione gwiazdy",tense:false},
+  {min:75,label:"Silne przyciąganie",tense:false},
+  {min:60,label:"Rosnąca więź",tense:false},
+  {min:45,label:"Nauka przez tarcie",tense:true},
+  {min:0,label:"Dwa różne nieba",tense:true},
+];
+const SUMMARY={
+  "Splecione gwiazdy":"Wasza relacja to rzadkie, magnetyczne przyciąganie — dwa nieba, które rozumieją się niemal bez słów. Wspólne wartości i głęboka więź dają fundament, na którym łatwo budować trwałość.",
+  "Rosnąca więź":"Wiele was łączy, reszty trzeba się nauczyć. To więź, która rośnie, gdy oboje dajecie sobie przestrzeń na różnice — przyciąganie jest realne, ale potrzebuje uważności.",
+  "Nauka przez tarcie":"Spotkanie przez kontrast. Uczycie się siebie nawzajem — czasem pod górę. To, co iskrzy, potrafi i przyciągać, i męczyć; klucz to świadomość, czego każde z was naprawdę potrzebuje.",
+};
+const tierFor=s=>TIERS.find(t=>s>=t.min);
+
+/* ── astro helpers ── */
+const CX=200,CY=200,R_ZO=185,R_ZI=165,R_A=148,R_B=112,R_LA=140,R_LB=104;
+const lonToXY=(lon,r)=>{const a=-Math.PI/2-lon*Math.PI/180;return{x:CX+r*Math.cos(a),y:CY+r*Math.sin(a)};};
+const angleDiff=(a,b)=>{const d=Math.abs(a-b)%360;return d>180?360-d:d;};
+const harsh=new Set(["Saturn","Mars","Pluton","Uran"]);
+function harmonyOf(t,pa,pb){if(t==="trine"||t==="sextile")return"harmonious";if(t==="square"||t==="opposition")return"tense";return(harsh.has(pa)||harsh.has(pb))?"tense":"intense";}
+function aspColor(h){return h==="harmonious"?"#E0B566":h==="tense"?"#E0865A":"rgba(182,175,198,.7)";}
+
+function computeAspects(a,b){
+  const A=P[a],B=P[b],out=[];
+  for(const na in A)for(const nb in B){
+    const d=angleDiff(A[na],B[nb]);let best=null;
+    for(const t in ANG){const orb=Math.abs(d-ANG[t]);if(orb>ORB[t])continue;if(!best||orb<best.orb)best={type:t,orb};}
+    if(!best)continue;
+    const imp=((PW[na]??.5)+(PW[nb]??.5))/2*AW[best.type]*(1-best.orb/ORB[best.type]);
+    out.push({pa:na,pb:nb,lonA:A[na],lonB:B[nb],type:best.type,orb:Math.round(best.orb*10)/10,harmony:harmonyOf(best.type,na,nb),imp});
+  }
+  return out.sort((x,y)=>y.imp-x.imp);
+}
+
+const NS="http://www.w3.org/2000/svg";
+function el(n,attrs){const e=document.createElementNS(NS,n);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+let lineEls=[],planetEls=[];
+function buildWheel(a,b,animate){
+  const svg=document.getElementById('wheel');svg.innerHTML='';lineEls=[];planetEls=[];
+  // zodiac ring
+  svg.appendChild(el('circle',{cx:CX,cy:CY,r:R_ZO,fill:'none',stroke:'rgba(212,175,55,.28)','stroke-width':1}));
+  svg.appendChild(el('circle',{cx:CX,cy:CY,r:R_ZI,fill:'none',stroke:'rgba(212,175,55,.18)','stroke-width':.5}));
+  for(let i=0;i<12;i++){
+    const s=lonToXY(i*30,R_ZO),si=lonToXY(i*30,R_ZI),mid=lonToXY(i*30+15,(R_ZO+R_ZI)/2);
+    if(i%2===0){const e2=lonToXY(i*30+30,R_ZO),ei=lonToXY(i*30+30,R_ZI);
+      svg.appendChild(el('path',{d:`M ${s.x} ${s.y} A ${R_ZO} ${R_ZO} 0 0 0 ${e2.x} ${e2.y} L ${ei.x} ${ei.y} A ${R_ZI} ${R_ZI} 0 0 1 ${si.x} ${si.y} Z`,fill:'rgba(212,175,55,.04)'}));}
+    svg.appendChild(el('line',{x1:s.x,y1:s.y,x2:si.x,y2:si.y,stroke:'rgba(212,175,55,.16)','stroke-width':.5}));
+    const tx=el('text',{x:mid.x,y:mid.y,'text-anchor':'middle','dominant-baseline':'middle','font-size':11,fill:'rgba(224,181,102,.6)','font-family':'Georgia, "Times New Roman", serif'});tx.textContent=ZODIAC[i];svg.appendChild(tx);
+  }
+  svg.appendChild(el('circle',{cx:CX,cy:CY,r:128,fill:'none',stroke:'rgba(212,175,55,.12)','stroke-width':.5}));
+  svg.appendChild(el('circle',{cx:CX,cy:CY,r:R_B-14,fill:'none',stroke:'rgba(212,175,55,.08)','stroke-width':.5}));
+
+  // pierścień stopni (jak na ekranie kosmogramu) — co 5°, dłuższe co 30°
+  for(let d=0;d<360;d+=5){const o=lonToXY(d,R_ZI-2),q=lonToXY(d,d%30===0?R_ZI-12:R_ZI-7);
+    svg.appendChild(el('line',{x1:o.x,y1:o.y,x2:q.x,y2:q.y,stroke:'rgba(224,181,102,.22)','stroke-width':d%30===0?.8:.4}));}
+
+  // aspect lines (top 14)
+  const asp=computeAspects(a,b).slice(0,14);
+  asp.forEach(ap=>{
+    const f=lonToXY(ap.lonA,R_LA),t=lonToXY(ap.lonB,R_LB);
+    const len=Math.hypot(t.x-f.x,t.y-f.y);
+    const ln=el('line',{x1:f.x,y1:f.y,x2:t.x,y2:t.y,stroke:aspColor(ap.harmony),'stroke-width':ap.harmony==='tense'?1:.9,'stroke-linecap':'round'});
+    if(ap.harmony==='tense')ln.setAttribute('stroke-dasharray',`4 3`);
+    if(animate){ln.style.opacity=0;ln.style.strokeDasharray=len;ln.style.strokeDashoffset=len;}
+    else{ln.style.opacity=.5;}
+    ln.dataset.len=len;ln.dataset.tense=ap.harmony==='tense'?1:0;
+    svg.appendChild(ln);lineEls.push(ln);
+  });
+
+  // planets
+  const addP=(name,lon,r,stroke,fill,delayIdx,total)=>{
+    const pos=lonToXY(lon,r);const g=el('g',{});
+    g.appendChild(el('circle',{cx:pos.x,cy:pos.y,r:9.5,fill:'rgba(11,9,18,.92)',stroke,'stroke-width':.9}));
+    const tx=el('text',{x:pos.x,y:pos.y,'text-anchor':'middle','dominant-baseline':'middle','font-size':name==='Ascendent'?7:10,fill,'font-family':'Georgia, "Times New Roman", serif'});
+    tx.textContent=PLANET_SYMBOL[name]??name[0];g.appendChild(tx);
+    if(animate)g.style.opacity=0;
+    svg.appendChild(g);planetEls.push(g);
+  };
+  let idx=0;const aN=Object.keys(P[a]),bN=Object.keys(P[b]);
+  aN.forEach(n=>addP(n,P[a][n],R_A,'rgba(255,197,107,.75)','#FFC56B',idx++));
+  bN.forEach(n=>addP(n,P[b][n],R_B,'rgba(234,217,176,.7)','#EAD9B0',idx++));
+
+  // center
+  const c1=el('text',{x:CX,y:CY-7,'text-anchor':'middle','font-size':9,fill:'rgba(212,175,55,.4)','letter-spacing':'.08em'});c1.textContent='SYNASTRIA';svg.appendChild(c1);
+  const c2=el('text',{x:CX,y:CY+8,'text-anchor':'middle','font-size':8,fill:'rgba(255,255,255,.18)'});c2.textContent=asp.length+' aspektów';svg.appendChild(c2);
+}
+
+/* ── reveal helpers ── */
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let timers=[];const T=(fn,ms)=>timers.push(setTimeout(fn,ms));const clearT=()=>{timers.forEach(clearTimeout);timers=[];};
+function show(elm,delay){elm.style.transitionDelay=(delay||0)+'ms';elm.classList.add('show');}
+function hideRv(){document.querySelectorAll('.rv').forEach(e=>{e.classList.remove('show');e.style.transitionDelay='';});}
+
+function countUp(target){
+  const num=document.getElementById('num');const start=performance.now(),dur=1300;
+  function tick(now){const t=Math.min((now-start)/dur,1);num.textContent=Math.round((1-Math.pow(1-t,3))*target);if(t<1)requestAnimationFrame(tick);}
+  requestAnimationFrame(tick);
+}
+
+let state={pi:0,prem:false};
+
+function paint(){
+  const p=PAIRS[state.pi];const tier=tierFor(p.score);
+  document.getElementById('names').innerHTML=`<b>${p.a}</b><span class="x">×</span><b>${p.b}</b>`;
+  document.getElementById('lgA').textContent=p.a;document.getElementById('lgB').textContent=p.b;
+  document.getElementById('tier').textContent=tier.label;
+  document.getElementById('topasp').innerHTML=`<span style="opacity:.7">Wasz najsilniejszy aspekt:</span> ${txtGlyph(p.top)}`;
+  document.getElementById('summary').textContent=SUMMARY[tier.label]||SUMMARY["Rosnąca więź"];
+  document.documentElement.style.setProperty('--tier-accent',tier.tense?'var(--tense)':'var(--accent-deep)');
+  // najmocniejszy wymiar = darmowy; ustaw aktywny rozdział na niego
+  state.sk=strongestKey(p);
+  state.ci=DIMS.findIndex(d=>d.key===state.sk);
+  document.getElementById('pwFree').textContent=DIMS.find(d=>d.key===state.sk).name.toLowerCase();
+  buildNav(state.animate);
+  renderPanel();
+}
+
+function strongestKey(p){let k=DIMS[0].key,mx=-1;DIMS.forEach(d=>{if(p.scores[d.key]>mx){mx=p.scores[d.key];k=d.key;}});return k;}
+
+const LOCK_SM='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+
+function buildNav(animate){
+  const p=PAIRS[state.pi],sk=strongestKey(p),nav=document.getElementById('chNav');nav.innerHTML='';
+  DIMS.forEach((d,i)=>{
+    const free=state.prem||d.key===sk;
+    const b=document.createElement('button');
+    b.className='ch-chip rv'+(i===state.ci?' on':'')+(free?'':' locked');
+    if(!animate)b.classList.add('show');
+    b.innerHTML=`<span class="mk">${free?'✓':LOCK_SM}</span>${i+1}. ${d.short}`;
+    b.onclick=()=>setChapter(i);
+    nav.appendChild(b);
+  });
+}
+
+function renderPanel(){
+  const p=PAIRS[state.pi],sk=strongestKey(p),d=DIMS[state.ci],sc=p.scores[d.key];
+  const strongest=d.key===sk,free=state.prem||strongest;
+  const panel=document.getElementById('chPanel');panel.className='ch-panel'+(free?'':' locked');
+  const headline=strongest?p.full.lead:d.hook;
+  const prose=strongest
+    ?`<p class="body">${p.full.body}</p><div class="insight">→ ${p.full.insight}</div>`
+    :(free?`<p class="body">${d.gen}</p>`:`<p class="body">${LOCKED_FILLER}</p>`);
+  panel.innerHTML=`
+    <div class="pk"><span class="ic">${d.ic}</span>${d.name}${strongest?'<span class="badge-free">Darmowy wgląd</span>':''}</div>
+    <div class="ch-head"><div class="ch-headline">„${headline}”</div><div class="ch-score"><b>${sc}</b>/100</div></div>
+    <div class="bar"><i id="chBar" data-w="${sc}"></i></div>
+    <div class="ch-prose">${prose}</div>
+    ${free?'':`<div class="ch-lock"><div class="ic">${LOCKSVG}</div><div class="why">Dlaczego <b style="color:var(--accent-deep)">${sc}/100</b>? Odblokuj pełną interpretację tego wymiaru.</div><button class="unlock">Odblokuj →</button></div>`}`;
+  if(!free)panel.querySelector('.ch-lock').onclick=()=>setPrem(true);
+}
+
+function fillChBar(){const b=document.getElementById('chBar');if(b)b.style.width=(b.dataset.w||0)+'%';}
+
+function setChapter(i){
+  state.ci=i;
+  document.querySelectorAll('#chNav .ch-chip').forEach((c,j)=>c.classList.toggle('on',j===i));
+  const panel=document.getElementById('chPanel');panel.style.opacity=0;
+  setTimeout(()=>{renderPanel();requestAnimationFrame(()=>{panel.style.opacity=1;fillChBar();});},140);
+}
+
+function render(animate){
+  clearT();
+  const p=PAIRS[state.pi];state.animate=animate&&!reduce;
+  document.getElementById('hf').src=bondFor(p.score);
+  buildWheel(p.a,p.b,state.animate);
+  paint();
+  const panel=document.getElementById('chPanel'),intro=document.getElementById('wheelIntro'),
+        core=document.querySelector('.core'),legend=document.querySelector('.legend');
+  if(!state.animate){
+    intro.classList.add('hide');core.style.opacity=1;
+    document.getElementById('num').textContent=p.score;
+    lineEls.forEach(l=>{l.style.opacity=.5;l.style.strokeDashoffset=0;});
+    planetEls.forEach(g=>g.style.opacity=1);
+    document.querySelectorAll('.rv').forEach(e=>e.classList.add('show'));
+    panel.style.opacity=1;fillChBar();startParticles();return;
+  }
+  // ── cinematic reveal: kino gra WEWNĄTRZ koła, treść odsłania się etapami ──
+  hideRv();panel.style.opacity=0;core.style.opacity=0;intro.classList.remove('hide');
+  document.getElementById('num').textContent=0;
+  const lv=document.getElementById('loadvid');if(lv){try{if(!lv.src)lv.src=REVEAL_VID;lv.currentTime=0;lv.play&&lv.play().catch(()=>{});}catch(e){}}
+  // intro (kino w kole, bez napisów) → koło
+  T(()=>{intro.classList.add('hide');core.style.opacity=1;startParticles();
+    planetEls.forEach((g,i)=>{g.style.transition='opacity .5s var(--ease)';g.style.transitionDelay=(60+i*55)+'ms';g.style.opacity=1;});
+    lineEls.forEach((l,i)=>{l.style.transition='stroke-dashoffset .55s var(--ease), opacity .55s var(--ease)';l.style.transitionDelay=(520+i*80)+'ms';l.style.strokeDashoffset=0;l.style.opacity=.5;});
+  },2800);
+  T(()=>countUp(p.score),3150);
+  T(()=>{show(legend);show(document.getElementById('tier'));},3450);
+  T(()=>show(document.getElementById('topwrap')),3650);
+  T(()=>show(document.getElementById('summary')),3800);
+  T(()=>{document.querySelectorAll('#chNav .ch-chip').forEach((c,i)=>show(c,i*55));panel.style.opacity=1;fillChBar();},4050);
+  T(()=>{show(document.getElementById('paywall'));show(document.getElementById('actions'));},4800);
+}
+
+/* ── controls ── */
+function setPair(i,animate){state.pi=i;document.querySelectorAll('[data-pair]').forEach(b=>b.classList.toggle('on',+b.dataset.pair===i));render(animate);}
+function setPrem(on){state.prem=on;document.querySelectorAll('[data-prem]').forEach(b=>b.classList.toggle('on',(+b.dataset.prem===1)===on));
+  buildNav(false);renderPanel();fillChBar();
+  document.getElementById('paywall').style.display=on?'none':'';}
+
+document.getElementById('matchbar').innerHTML=
+  PAIRS.map((p,i)=>`<button class="chip${i===0?' on':''}" data-mb="${i}">${p.a} × ${p.b}</button>`).join('')+
+  `<button class="chip ghost">＋ Nowy match</button>`;
+document.querySelectorAll('[data-mb]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-mb]').forEach(x=>x.classList.remove('on'));b.classList.add('on');setPair(+b.dataset.mb,true);});
+document.querySelectorAll('[data-pair]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-mb]').forEach(x=>x.classList.toggle('on',+x.dataset.mb===+b.dataset.pair));setPair(+b.dataset.pair,true);});
+document.querySelectorAll('[data-prem]').forEach(b=>b.onclick=()=>setPrem(+b.dataset.prem===1));
+document.getElementById('replay').onclick=()=>render(true);
+
+/* ── share modal ── */
+function openShare(){
+  const p=PAIRS[state.pi],tier=tierFor(p.score);
+  document.getElementById('sbg').src=bondFor(p.score);
+  document.getElementById('sNm').innerHTML=`<b>${p.a}</b><span class="x">×</span><b>${p.b}</b>`;
+  document.getElementById('sBig').textContent=p.score;
+  document.getElementById('sTier').textContent=tier.label;
+  document.getElementById('sTop').textContent=p.topPlain;
+  document.getElementById('modal').classList.add('on');
+}
+document.getElementById('shareAct').onclick=openShare;
+document.getElementById('clBtn').onclick=()=>document.getElementById('modal').classList.remove('on');
+document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')e.currentTarget.classList.remove('on');};
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200);}
+document.getElementById('dlBtn').onclick=()=>toast('Generuję grafikę 9:16…  (w apce: realny PNG)');
+document.getElementById('transitAct').onclick=()=>toast('→ Przejście do horoskopu tranzytowego pary');
+
+/* ── mikroanimacja: pływające + orbitujące złote particle wokół koła ── */
+let particleRAF=0,particlesBound=false;
+function startParticles(){
+  const cv=document.getElementById('particles'),wrap=document.getElementById('wheelWrap');
+  if(!cv||!wrap)return;
+  let ctx=null;try{ctx=cv.getContext&&cv.getContext('2d');}catch(e){}if(!ctx)return;
+  let dim;
+  function size(){const r=wrap.getBoundingClientRect();const dpr=Math.min(window.devicePixelRatio||1,2);
+    cv.width=Math.max(1,r.width*dpr);cv.height=Math.max(1,r.height*dpr);
+    cv.style.width=r.width+'px';cv.style.height=r.height+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);dim={w:r.width,h:r.height};}
+  size();
+  const R=()=>Math.min(dim.w,dim.h)/2, CXp=()=>dim.w/2, CYp=()=>dim.h/2;
+  const N=window.matchMedia('(max-width:640px)').matches?18:32;
+  const drift=[],orbit=[];
+  for(let i=0;i<N;i++)drift.push({a:Math.random()*6.28,r:(.16+Math.random()*.9),sp:(Math.random()*.0005+.00015)*(Math.random()<.5?-1:1),rad:Math.random()*1.3+.5,tw:Math.random()*6.28,tws:Math.random()*.02+.008,dr:(Math.random()-.5)*.0007});
+  for(let i=0;i<6;i++)orbit.push({a:Math.random()*6.28,r:.5+i*.082,sp:(.0009-i*.00009)*(i%2?-1:1),rad:i<2?2.2:1.6});
+  function dot(x,y,rd,al){ctx.beginPath();ctx.fillStyle='rgba(255,201,120,'+al+')';ctx.shadowColor='rgba(255,174,61,.7)';ctx.shadowBlur=rd*4;ctx.arc(x,y,rd,0,6.2832);ctx.fill();ctx.shadowBlur=0;}
+  if(particleRAF)cancelAnimationFrame(particleRAF);
+  if(reduce){ctx.clearRect(0,0,dim.w,dim.h);drift.slice(0,12).forEach(p=>dot(CXp()+Math.cos(p.a)*p.r*R(),CYp()+Math.sin(p.a)*p.r*R(),p.rad,.28));return;}
+  function frame(){
+    ctx.clearRect(0,0,dim.w,dim.h);const rr=R();
+    drift.forEach(p=>{p.a+=p.sp;p.r+=p.dr;if(p.r<.15||p.r>1.02)p.dr*=-1;p.tw+=p.tws;
+      const al=(.16+Math.abs(Math.sin(p.tw))*.5)*.62;dot(CXp()+Math.cos(p.a)*p.r*rr,CYp()+Math.sin(p.a)*p.r*rr,p.rad,al);});
+    orbit.forEach(p=>{p.a+=p.sp;dot(CXp()+Math.cos(p.a)*p.r*rr,CYp()+Math.sin(p.a)*p.r*rr,p.rad,.85);});
+    particleRAF=requestAnimationFrame(frame);
+  }
+  frame();
+  if(!particlesBound){particlesBound=true;let t;window.addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>startParticles(),200);});}
+}
+
+/* start */
+setPair(0,true);
+</script>
+</body></html>

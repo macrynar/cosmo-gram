@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Plus, Share2, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import PersonBirthForm, { type PersonData, type SavedReadingOption } from "@/components/astro-match/PersonBirthForm";
@@ -13,6 +13,23 @@ import { useAuth } from "@/components/AuthContext";
 import { useSubscription } from "@/components/SubscriptionContext";
 import { track } from "@/components/PostHogProvider";
 import type { CompatibilityResult } from "@/app/api/astro-match/route";
+
+// Cinematic intro „kino w kole" — zastępuje stary loader tekstowy (bez napisów)
+const INTRO_STYLES = `
+@keyframes mxl-spin    { to { transform: rotate(360deg); } }
+@keyframes mxl-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+.mxl-glow  { animation: mxl-breathe 7s ease-in-out infinite; }
+.mxl-scan  { position:absolute; width:130%; height:130%; border-radius:50%;
+  background: conic-gradient(from 0deg, transparent 0 66%, rgba(255,174,61,.22) 86%, transparent 100%);
+  animation: mxl-spin 3.2s linear infinite; }
+.mxl-iring { position:absolute; width:58%; height:58%; border-radius:50%;
+  border:1px solid rgba(224,181,102,.4); animation: mxl-breathe 2.6s ease-in-out infinite; }
+.mxl-iring-b { width:74%; height:74%; border-style:dashed; border-color:rgba(224,181,102,.18);
+  animation: mxl-spin 16s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .mxl-glow,.mxl-scan,.mxl-iring,.mxl-iring-b { animation:none!important; }
+}
+`;
 
 type SavedMatch = {
   id: string; name: string;
@@ -279,26 +296,48 @@ export default function AstroMatchPage() {
         )}
 
 
-        {/* ── Loading AI ── */}
+        {/* ── Loading: cinematic intro „kino w kole" (bez napisów) ── */}
         <AnimatePresence>
           {loading && (
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{
-                borderRadius: "24px", padding: "64px 24px", textAlign: "center",
-                background: "rgba(20,16,31,.65)", border: "1px solid #2B2540",
-                backdropFilter: "blur(18px)", marginBottom: "24px",
-              }}
+              transition={{ duration: 0.4 }}
+              style={{ textAlign: "center", marginBottom: "24px" }}
             >
-              <div style={{
-                width: "56px", height: "56px", borderRadius: "50%", margin: "0 auto 20px",
-                border: "1.5px solid rgba(224,181,102,.20)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <Loader2 size={24} style={{ color: "#FFAE3D", opacity: .7, animation: "spin 1s linear infinite" }} />
+              <style dangerouslySetInnerHTML={{ __html: INTRO_STYLES }} />
+
+              {/* Header — spójny z hero, dla płynnego przejścia w koło */}
+              <div style={{ fontSize: "11px", letterSpacing: ".3em", textTransform: "uppercase", color: "#877FA0", marginBottom: "4px" }}>
+                Kompatybilność
               </div>
-              <p style={{ fontSize: "14px", fontWeight: 500, color: "#E0B566" }}>Odczytujemy połączenia…</p>
-              <p style={{ fontSize: "12px", marginTop: "8px", color: "#877FA0" }}>Obliczamy aspekty synastrii i generujemy interpretację</p>
+              <div style={{ fontSize: "14px", color: "#B6AFC6", marginBottom: "18px" }}>
+                <b style={{ color: "#F4F1EA" }}>{person1?.name || "Osoba 1"}</b>
+                <span style={{ color: "#E0B566", margin: "0 8px" }}>×</span>
+                <b style={{ color: "#F4F1EA" }}>{person2?.name || "Osoba 2"}</b>
+              </div>
+
+              <div style={{ position: "relative", width: "min(440px,90vw)", aspectRatio: "1", margin: "0 auto" }}>
+                <div className="mxl-glow" style={{
+                  position: "absolute", inset: "-6%", borderRadius: "50%", pointerEvents: "none",
+                  background: "radial-gradient(circle, rgba(255,174,61,.16) 0, rgba(255,174,61,.05) 42%, transparent 66%)",
+                }} />
+                <div style={{
+                  position: "absolute", inset: 0, borderRadius: "50%", overflow: "hidden",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "1px solid rgba(224,181,102,.16)",
+                  background: "radial-gradient(circle, rgba(11,9,18,.32) 0, rgba(11,9,18,.74) 78%)",
+                }}>
+                  <video
+                    src="/assets/match/match-reveal.mp4"
+                    muted loop playsInline autoPlay preload="auto"
+                    onError={e => { (e.currentTarget as HTMLVideoElement).style.display = "none"; }}
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: .95 }}
+                  />
+                  <div className="mxl-scan" />
+                  <div className="mxl-iring mxl-iring-b" />
+                  <div className="mxl-iring" />
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -474,7 +513,7 @@ export default function AstroMatchPage() {
                 Potwierdź usunięcie
               </p>
               <p style={{ fontSize: "16px", fontWeight: 600, color: "#E9DCC0", marginBottom: "6px" }}>
-                Usunąć „{label}"?
+                Usunąć „{label}”?
               </p>
               <p style={{ fontSize: "13px", color: "#877FA0", lineHeight: 1.5, marginBottom: "24px" }}>
                 Tej operacji nie można cofnąć. Analiza i wyniki zostaną trwale usunięte.

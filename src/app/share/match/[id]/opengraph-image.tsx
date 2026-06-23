@@ -17,6 +17,11 @@ const ASPECT_TYPE_PL: Record<string, string> = {
   opposition:  "naprzeciw",
 };
 
+const TIERS: [number, string][] = [
+  [90, "Splecione gwiazdy"], [75, "Silne przyciąganie"], [60, "Rosnąca więź"],
+  [45, "Nauka przez tarcie"], [0, "Dwa różne nieba"],
+];
+
 export default async function Image({ params }: Props) {
   const { id } = await params;
 
@@ -36,10 +41,11 @@ export default async function Image({ params }: Props) {
     ? `${topAspect.planet_a} ${ASPECT_TYPE_PL[topAspect.type] ?? "aspekt"} ${topAspect.planet_b}`
     : null;
 
+  const tierLabel = score !== null ? (TIERS.find(([m]) => score >= m)?.[1] ?? "") : "";
   const scoreColor =
-    score && score >= 75 ? "#a78bfa" :
-    score && score >= 50 ? "#f59e0b" :
-    "#f87171";
+    score !== null && score >= 75 ? "#FFC56B" :
+    score !== null && score >= 45 ? "#E0B566" :
+    "#E0865A";
 
   return new ImageResponse(
     (
@@ -51,22 +57,22 @@ export default async function Image({ params }: Props) {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "#050508",
+          background: "#0B0912",
           fontFamily: "Georgia, serif",
           gap: "20px",
           position: "relative",
         }}
       >
-        {/* Rose/pink glow */}
+        {/* Amber glow */}
         <div
           style={{
             position: "absolute",
             top: 0,
             left: "50%",
             transform: "translateX(-50%)",
-            width: "800px",
-            height: "400px",
-            background: "radial-gradient(ellipse at 50% 0%, rgba(244,63,94,0.18) 0%, transparent 70%)",
+            width: "900px",
+            height: "440px",
+            background: "radial-gradient(ellipse at 50% 0%, rgba(255,174,61,0.16) 0%, rgba(90,72,162,0.10) 45%, transparent 72%)",
           }}
         />
 
@@ -78,30 +84,32 @@ export default async function Image({ params }: Props) {
             gap: "8px",
             padding: "6px 18px",
             borderRadius: "999px",
-            border: "0.5px solid rgba(244,63,94,0.35)",
-            background: "rgba(244,63,94,0.08)",
+            border: "1px solid rgba(224,181,102,0.35)",
+            background: "rgba(224,181,102,0.08)",
             fontSize: "13px",
-            letterSpacing: "0.20em",
+            letterSpacing: "0.22em",
             textTransform: "uppercase",
-            color: "rgba(251,113,133,0.90)",
+            color: "#E0B566",
           }}
         >
-          ♥ Cosmo Match
+          Cosmo Match
         </div>
 
         {/* Names */}
         <div
           style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "20px",
             fontSize: "68px",
             fontWeight: 500,
-            color: "#ffffff",
+            color: "#F4F1EA",
             letterSpacing: "-0.01em",
             lineHeight: 1.1,
-            textAlign: "center",
           }}
         >
-          {name1}{" "}
-          <span style={{ color: "#FFAE3D" }}>×</span>{" "}
+          {name1}
+          <span style={{ color: "#E0B566" }}>×</span>
           {name2}
         </div>
 
@@ -113,21 +121,21 @@ export default async function Image({ params }: Props) {
               alignItems: "center",
               gap: "12px",
               fontSize: "28px",
-              color: "rgba(255,255,255,0.55)",
+              color: "rgba(182,175,198,0.75)",
             }}
           >
             Zgodność:{" "}
-            <span
-              style={{
-                fontSize: "56px",
-                fontWeight: 700,
-                color: scoreColor,
-                lineHeight: 1,
-              }}
-            >
+            <span style={{ fontSize: "56px", fontWeight: 700, color: scoreColor, lineHeight: 1 }}>
               {score}
             </span>
             <span style={{ fontSize: "22px" }}>/100</span>
+          </div>
+        )}
+
+        {/* Tier label */}
+        {tierLabel && (
+          <div style={{ fontSize: "30px", fontStyle: "italic", color: "#E9DCC0" }}>
+            {tierLabel}
           </div>
         )}
 
@@ -136,12 +144,12 @@ export default async function Image({ params }: Props) {
           <div
             style={{
               fontSize: "20px",
-              color: "rgba(212,175,55,0.70)",
+              color: "rgba(224,181,102,0.75)",
               letterSpacing: "0.06em",
               textAlign: "center",
             }}
           >
-            ✦ {aspectLabel}
+            {aspectLabel}
           </div>
         )}
 
@@ -151,12 +159,12 @@ export default async function Image({ params }: Props) {
             position: "absolute",
             bottom: "32px",
             fontSize: "15px",
-            color: "rgba(255,255,255,0.25)",
+            color: "rgba(135,127,160,0.55)",
             letterSpacing: "0.15em",
             textTransform: "uppercase",
           }}
         >
-          cosmo-gram.com
+          cosmo-gram.com/match
         </div>
       </div>
     ),

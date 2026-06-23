@@ -73,9 +73,11 @@ interface Props {
   sourceChips?:  string[];
   onPaywall?:    () => void;
   iconOverride?: LucideIcon;
+  /** Gdy podane, lock overlay pokazuje wynik zamiast „Dostępne w planie Plus" (Cosmo Match — „liczba sprzedaje"). */
+  lockedScore?:  number;
 }
 
-export default function ModuleCard({ module, isPremiumUser, index, sourceChips, onPaywall, iconOverride }: Props) {
+export default function ModuleCard({ module, isPremiumUser, index, sourceChips, onPaywall, iconOverride, lockedScore }: Props) {
   const isLocked = module.isPremium && !isPremiumUser;
   const Icon     = iconOverride ?? MODULE_ICON[module.id] ?? Star;
 
@@ -328,7 +330,16 @@ export default function ModuleCard({ module, isPremiumUser, index, sourceChips, 
           >
             {module.title}
           </p>
-          <p className="text-xs text-slate-500">Dostępne w planie Plus</p>
+          {lockedScore != null ? (
+            <>
+              <p style={{ fontFamily: "var(--font-fraunces), serif", fontWeight: 700, fontSize: "34px", lineHeight: 1, color: "#E0B566", fontVariantNumeric: "tabular-nums" }}>
+                {lockedScore}<span style={{ fontSize: "16px", color: "rgba(135,127,160,0.65)" }}>/100</span>
+              </p>
+              <p className="text-xs text-slate-500">Dlaczego {lockedScore}/100? Odblokuj pełną interpretację.</p>
+            </>
+          ) : (
+            <p className="text-xs text-slate-500">Dostępne w planie Plus</p>
+          )}
           <div
             className="mt-1 px-4 py-1.5 rounded-full text-xs font-semibold"
             style={{ background: "rgba(224,181,102,0.12)", border: "0.5px solid rgba(224,181,102,0.35)", color: "#E0B566" }}
