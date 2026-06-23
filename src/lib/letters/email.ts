@@ -38,6 +38,7 @@ export async function sendLetterEmail(params: { userId: string; userLetterId: st
 
   const template = await getLetterTemplate(letter.letter_slug as string);
   const title = template?.title ?? "List od Astrei";
+  const subjectPhrase = template?.subject_phrase ?? `Oto ${title}`;
   const preview = buildPreview(letter.content_md as string, 220);
   const unsubUrl = `${BASE_URL}/api/email/unsubscribe?id=${userId}&type=letters`;
 
@@ -50,7 +51,7 @@ export async function sendLetterEmail(params: { userId: string; userLetterId: st
   await new Resend(process.env.RESEND_API_KEY).emails.send({
     from: FROM,
     to: email,
-    subject: `✦ Nowy list od Astrei: „${title}”`,
+    subject: `Wiadomość od Astrei: ${subjectPhrase}`,
     html,
     headers: { "List-Unsubscribe": `<${unsubUrl}>` },
   });

@@ -37,6 +37,7 @@ export interface LetterTemplate {
   kind: LetterKind;
   wellbeing_level: WellbeingLevel;
   prompt_slug: string;
+  subject_phrase: string | null;  // część „Oto …" tematu maila
   word_min: number;
   word_max: number;
   sort_order: number;

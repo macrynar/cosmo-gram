@@ -75,7 +75,8 @@ async function main() {
 
     sections.push(`
       <div style="margin:0 0 48px;padding:0 0 40px;border-bottom:1px solid rgba(212,175,55,0.15)">
-        <p style="color:rgba(212,175,55,0.55);font-size:11px;letter-spacing:0.25em;text-transform:uppercase;margin:0 0 8px">List od Astrei · ${t.wellbeing_level}</p>
+        <p style="color:rgba(212,175,55,0.7);font-size:12px;letter-spacing:0.04em;margin:0 0 4px">✉ Temat maila: <strong style="color:#E0B566">Wiadomość od Astrei: ${t.subject_phrase ?? "Oto " + t.title}</strong></p>
+        <p style="color:#5f586e;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 8px">${t.wellbeing_level}</p>
         <h1 style="color:#F4F1EA;font-size:28px;font-weight:400;margin:0 0 10px;font-family:Georgia,serif">${t.title}</h1>
         <p style="display:inline-block;margin:0 0 20px;padding:4px 12px;border-radius:999px;background:rgba(255,174,61,0.10);border:1px solid rgba(255,174,61,0.25);color:#E0B566;font-size:12px">✦ ${gen.signature_label}</p>
         ${mdToHtml(gen.content_md)}
@@ -102,7 +103,7 @@ async function main() {
 
   console.log(`\n→ Wysyłam ${sections.length} listów na ${TO}…`);
   const res = await new Resend(process.env.RESEND_API_KEY!).emails.send({
-    from: FROM, to: TO, subject: "✦ Astrea przeczytała kosmogram — 4 listy w środku", html,
+    from: FROM, to: TO, subject: "Wiadomość od Astrei — 4 próbki tematów", html,
   });
   console.log("   Resend:", JSON.stringify(res.data ?? res.error));
 }

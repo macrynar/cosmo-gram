@@ -29,6 +29,7 @@ const chart: NatalChart = {
 const base: Omit<LetterTemplate, "slug" | "title" | "placement_inputs" | "wellbeing_level" | "prompt_slug"> = {
   id: "t", theme: "x", trigger_type: "time", trigger_value: { days_from_natal: 5 },
   tier: "free", kind: "letter", word_min: 250, word_max: 450, sort_order: 1, is_active: true, created_at: "now",
+  subject_phrase: "Oto test",
 };
 
 describe("generateLetterContent (AI_MOCK)", () => {
