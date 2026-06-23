@@ -232,6 +232,8 @@ type AiCompleteParams = {
   model?: string;
   task?: string;
   responseFormat?: "json_object";
+  /** Pod AI_MOCK: ścieżka fixture względem tests/fixtures/ai/ (np. "letters/standard.md"). */
+  mockFixture?: string;
 };
 
 export async function aiComplete({
@@ -241,11 +243,12 @@ export async function aiComplete({
   temperature,
   model: modelOverride,
   task = "chat",
+  mockFixture,
 }: AiCompleteParams): Promise<string> {
   if (process.env.AI_DISABLED === "true") throw new AiDisabledError();
   if (process.env.AI_MOCK === "true") {
     return fs.readFileSync(
-      path.join(process.cwd(), "tests", "fixtures", "ai", "chat-response.txt"),
+      path.join(process.cwd(), "tests", "fixtures", "ai", mockFixture ?? "chat-response.txt"),
       "utf-8"
     );
   }
