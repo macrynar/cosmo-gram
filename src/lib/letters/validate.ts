@@ -1,7 +1,15 @@
 // Walidacja treści listu/raportu przed zapisem: długość, brak predykcji,
 // brak żargonu w ciele (podpis fundamentu wyłączony), struktura, obcy alfabet.
 
-import { containsForeignScript, endsWithSentence } from "@/lib/text-validation";
+import { containsForeignScript } from "@/lib/text-validation";
+
+// Zdanie zakończone . ! ? … — po których mogą stać cudzysłowy/nawiasy zamykające
+// (też typograficzne ” ’ », których używają listy). Bez tego pytanie w cudzysłowie
+// na końcu ciała dawało fałszywy alarm „ucięte zdanie".
+const SENTENCE_END_PL = /[.!?…][)\]"'»”’]*\s*$/u;
+function endsLikeSentence(s: string): boolean {
+  return SENTENCE_END_PL.test(s.trimEnd());
+}
 
 export interface LetterValidation {
   ok: boolean;
@@ -57,7 +65,7 @@ export function validateLetterContent(
 
   const { body, signature } = splitSignature(text);
   if (!signature) reasons.push("brak podpisu fundamentu");
-  if (!endsWithSentence(body)) reasons.push("ucięte zdanie w ciele");
+  if (!endsLikeSentence(body)) reasons.push("ucięte zdanie w ciele");
   if (PREDICTION_RE.test(body)) reasons.push("predykcja konkretnego zdarzenia");
 
   const jargonHit = BODY_JARGON.find((j) => new RegExp(`\\b${j}`, "i").test(body));

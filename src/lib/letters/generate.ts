@@ -34,6 +34,7 @@ export async function generateLetterContent(params: {
   template: LetterTemplate;
   chart: NatalChart;
   userId: string;
+  modelOverride?: string;
 }): Promise<GeneratedLetter> {
   const { template, chart, userId } = params;
 
@@ -47,7 +48,7 @@ export async function generateLetterContent(params: {
     throw new LetterGenerationError(`Brak aktywnego promptu „${template.prompt_slug}" w prompt_versions`);
   }
 
-  const model = version.config.model ?? "claude-sonnet-4-6";
+  const model = params.modelOverride ?? version.config.model ?? "claude-sonnet-4-6";
   const maxTokens = version.config.max_tokens ?? (template.kind === "report" ? 4000 : 1400);
   const baseUser = renderTemplate(version.user_prompt_template, {
     title: template.title,

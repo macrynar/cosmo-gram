@@ -47,6 +47,21 @@ describe("validateLetterContent", () => {
     expect(r.reasons.some((x) => x.startsWith("za krótki"))).toBe(true);
   });
 
+  it("przepuszcza list kończący się pytaniem w typograficznym cudzysłowie (U+201D)", () => {
+    const open = String.fromCharCode(0x201e);  // „
+    const close = String.fromCharCode(0x201d); // ”
+    const md = `Masz w sobie kierunek, który czujesz, zanim potrafisz go nazwać, i to jest właśnie ta cicha, ciepła pewność, że jesteś tu po coś, co tylko Ty możesz wnieść.
+
+Kiedy idziesz za tym, co naprawdę Cię rozpala, świat zaczyna odpowiadać, a Ty czujesz, że jesteś na swoim miejscu, choćby droga była kręta i powolna, bo sens jest kierunkiem każdego dnia.
+
+Może warto dziś zatrzymać się i zapytać siebie: ${open}gdzie ostatnio poczułam, że jestem najbardziej sobą?${close}
+
+*Na podstawie Twojego Słońca, węzła północnego i Medium Coeli.*`;
+    const r = validateLetterContent(md, { wordMin: 30, wordMax: 450, kind: "letter" });
+    expect(r.reasons).not.toContain("ucięte zdanie w ciele");
+    expect(r.ok).toBe(true);
+  });
+
   it("splitSignature wydziela podpis kursywą", () => {
     const { body, signature } = splitSignature("Treść listu.\n\n*Na podstawie Twojego Słońca.*");
     expect(signature).toContain("Na podstawie");
