@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { getActiveLetterTemplates, generateAndStore, deliverUserLetter, ensureUserLetterRow } from "@/lib/letters/store";
 import { planDripAction, type DripTemplateLite, type DripExistingLite } from "@/lib/letters/schedule";
+import { sendLetterEmail } from "@/lib/letters/email";
 import { AiDisabledError } from "@/lib/deepseek";
 
 // Vercel Cron — dzienny drip listów. Pre-generacja 24-48 h przed dostarczeniem,
@@ -91,8 +92,12 @@ export async function GET(req: NextRequest) {
       // 3. Dostarczenie, gdy dzień nadszedł i odstęp pozwala
       if (plan.deliver) {
         const res = await deliverUserLetter(rowId);
-        if (res.delivered) delivered++;
-        // Email powiadamiający = Faza 4 (wpinany w tę ścieżkę).
+        if (res.delivered) {
+          delivered++;
+          await sendLetterEmail({ userId, userLetterId: rowId }).catch((e) =>
+            console.error(`[cron/letters-drip] email failed userId=${userId}:`, e)
+          );
+        }
       }
     } catch (err) {
       if (err instanceof AiDisabledError) break;

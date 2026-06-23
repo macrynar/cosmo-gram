@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import { Settings, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { ROUTES, BRAND } from "@/lib/routes";
+import InboxBell from "@/components/inbox/InboxBell";
 
 const PUBLIC_NAV = [
   { label: ROUTES.public.cosmogram.label,   href: ROUTES.public.cosmogram.path },
@@ -149,6 +150,7 @@ export default function Navbar() {
 
           {/* Desktop right */}
           <div className="hidden md:flex items-center gap-3">
+            {isApp && user && <InboxBell />}
             {!loading && (
               user ? (
                 <div className="relative" ref={dropdownRef}>
@@ -244,15 +246,18 @@ export default function Navbar() {
           {/* Mobile: avatar + hamburger (hamburger hidden on /app/* — bottom nav handles navigation) */}
           <div className="md:hidden flex items-center gap-2">
             {!loading && user && isApp ? (
-              // App pages: avatar taps to settings, no hamburger
-              <Link
-                href={ROUTES.app.settings.path}
-                aria-label="Konto"
-                className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-[#050508] shadow-[0_0_10px_rgba(212,175,55,0.3)] active:scale-95 transition-transform duration-100"
-                style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
-              >
-                {getInitials(user.email)}
-              </Link>
+              // App pages: koperta + avatar (avatar → ustawienia, brak hamburgera)
+              <>
+                <InboxBell size={36} />
+                <Link
+                  href={ROUTES.app.settings.path}
+                  aria-label="Konto"
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-[#050508] shadow-[0_0_10px_rgba(212,175,55,0.3)] active:scale-95 transition-transform duration-100"
+                  style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
+                >
+                  {getInitials(user.email)}
+                </Link>
+              </>
             ) : (
               // Public pages: avatar (display) + hamburger menu
               <>
