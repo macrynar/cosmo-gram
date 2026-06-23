@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import type { NatalChart } from "@/lib/astro-types";
 import type { TransitWindow, SkyEvent } from "@/lib/astro/layers";
 import type { DayData } from "@/lib/chart-engine";
@@ -11,12 +10,12 @@ import {
   PgWhenBest,
   PgWindowsList,
   DayIcon,
+  useProgInterpretation,
   PROGNOZA_STYLES,
   summarizePeriodWeather,
   characterLine,
   plOkno,
   MONTH_SHORT,
-  type ProgInterpretation,
   type WeatherKind,
 } from "./prognoza-shared";
 
@@ -84,40 +83,15 @@ export default function MonthView({
     }
   }
 
-  // AI interpretation
-  const [interp, setInterp] = useState<ProgInterpretation | null>(null);
-  const [interpLoading, setInterpLoading] = useState(false);
-  const [interpError, setInterpError] = useState(false);
-  const [activeChip, setActiveChip] = useState<string | null>(null);
-
-  const fetchInterp = useCallback(async () => {
-    if (!readingId || !session || !isPremium) return;
-    setInterpLoading(true);
-    setInterp(null);
-    setInterpError(false);
-    const dateKey = `${year}-${String(month).padStart(2, "0")}-01`;
-    try {
-      const res = await fetch("/api/prognoza-interpretation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ reading_id: readingId, zoom: "miesiac", date: dateKey }),
-      });
-      if (res.ok) {
-        setInterp(await res.json() as ProgInterpretation);
-      } else {
-        setInterpError(true);
-      }
-    } catch {
-      setInterpError(true);
-    } finally {
-      setInterpLoading(false);
-    }
-  }, [readingId, session, isPremium, year, month]);
-
-  // Interpretation generated on demand (no auto-fetch)
+  // AI interpretation — auto-restores from server cache, generated on demand (button)
+  const { interp, loading: interpLoading, error: interpError, generate: fetchInterp } =
+    useProgInterpretation({
+      zoom:      "miesiac",
+      date:      `${year}-${String(month).padStart(2, "0")}-01`,
+      readingId,
+      isPremium,
+      session,
+    });
 
   // Grid offset: first day of month (ISO — 0=Sun, 1=Mon...) → offset so week starts Mon
   const firstDay = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
@@ -214,10 +188,10 @@ export default function MonthView({
       )}
 
       <PgWhenBest
-        whenBest={interp?.whenBest ?? null}
-        activeChip={activeChip}
-        onChip={setActiveChip}
+        chart={chart}
+        horizonDays={90}
         isPremium={isPremium}
+        scopeLabel="najbliższych miesiącach"
       />
 
       <PgWindowsList

@@ -435,6 +435,7 @@ export default function CalendarPage() {
                 {horizon === "year" && (
                   <YearView
                     seasons={shownSeasons}
+                    chart={selectedReading.chart_data}
                     isPremium={isPremium}
                     readingId={selectedId}
                     year={year}
