@@ -238,6 +238,9 @@ export default function AstroMatchPage() {
                 {matches.map(m => {
                   const isActive = m.id === selectedId;
                   const label    = m.name || `${m.person1_name} × ${m.person2_name}`;
+                  const dateLabel = m.created_at
+                    ? new Date(m.created_at).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "2-digit" })
+                    : null;
                   return (
                     <div
                       key={m.id}
@@ -255,9 +258,15 @@ export default function AstroMatchPage() {
                           fontSize: "14px", cursor: "pointer", fontFamily: "inherit",
                           background: "transparent", border: "none",
                           color: isActive ? "#E9DCC0" : "#B6AFC6",
+                          display: "inline-flex", alignItems: "center", gap: "8px",
                         }}
                       >
                         {label}
+                        {dateLabel && (
+                          <span style={{ fontSize: "11px", color: "#877FA0", fontVariantNumeric: "tabular-nums" }}>
+                            {dateLabel}
+                          </span>
+                        )}
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(m.id); }}
@@ -379,6 +388,7 @@ export default function AstroMatchPage() {
                 animate={animate}
                 selectedMatchId={selectedId}
                 onShare={() => { track("match_shared"); setShowShare(true); }}
+                onNewMatch={handleNew}
               />
             </motion.div>
           )}

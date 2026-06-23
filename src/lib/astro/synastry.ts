@@ -222,6 +222,9 @@ export function getSynastryScore(aspects: SynastryAspect[]): SynastryScores {
     if (a.planet_a === "Saturn" || a.planet_b === "Saturn") destiny += c * 0.5;
   }
 
+  // Clamp 30–95 to ŚWIADOMA decyzja produktowa: żaden wymiar nie spada do brutalnego
+  // 0–20 ("jesteście niedopasowani") ani nie wbija 100 ("ideał") — wynik ma być
+  // realistyczny, ale nie zniechęcający. NIE zmieniać bez rozmowy z astrolożką.
   return {
     overall:       clamp(Math.round(overall), 30, 95),
     communication: clamp(Math.round(communication), 30, 95),
