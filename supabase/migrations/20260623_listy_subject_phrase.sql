@@ -10,7 +10,7 @@ update astrea_letter_templates set subject_phrase = case slug
   when 'twoje-dary'             then 'Oto Twoje talenty'
   when 'twoj-cien'              then 'Oto Twój cień'
   when 'twoja-sciezka'          then 'Oto Twoja ścieżka'
-  when 'twoj-wzorzec-karmiczny' then 'Oto Twój wzorzec karmiczny'
+  when 'twoj-wzorzec-karmiczny' then 'Oto lekcja dla Twojej duszy'
   when 'jak-mowisz-i-myslisz'   then 'Oto jak mówisz i myślisz'
   else subject_phrase end
 where slug in ('twoja-misja','twoj-wewnetrzny-swiat','jak-kochasz','twoje-dary',
