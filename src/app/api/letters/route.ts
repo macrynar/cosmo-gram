@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
   const { data: template } = await supabaseAdmin
     .from("astrea_letter_templates")
-    .select("title, kind")
+    .select("title, kind, tier")
     .eq("slug", letter.letter_slug)
     .maybeSingle();
 
@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
     id: letter.id,
     title: template?.title ?? "List od Astrei",
     kind: template?.kind ?? "letter",
+    tier: template?.tier ?? "premium",
     content_md: letter.content_md,
     signature_label: snapshot.signature_label ?? null,
     read_at: letter.read_at,

@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Mail, FileText, Bell, Sparkles, X, ChevronLeft } from "lucide-react";
+import Link from "next/link";
+import { Mail, FileText, Bell, Sparkles, X, ChevronLeft, Lock } from "lucide-react";
 import { useInbox, type InboxItemT } from "@/components/inbox/InboxProvider";
+import { useSubscription } from "@/components/SubscriptionContext";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -33,6 +35,7 @@ const PANEL_BG = "#0E0B18";
 
 export default function InboxOverlay() {
   const { isOpen, items, loading, close, openItem, activeLetter, letterLoading, closeLetter } = useInbox();
+  const { isPro } = useSubscription();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -197,6 +200,25 @@ export default function InboxOverlay() {
                   {activeLetter.content_md}
                 </ReactMarkdown>
               </div>
+
+              {!isPro && activeLetter.tier === "free" && (
+                <div style={{ marginTop: 36, padding: "24px 22px", borderRadius: 16, background: "rgba(255,174,61,0.06)", border: "1px solid rgba(255,174,61,0.22)", textAlign: "center" }}>
+                  <Lock size={20} strokeWidth={1.5} color="#FFB23E" style={{ margin: "0 auto 12px" }} />
+                  <p style={{ color: "#E9DCC0", fontSize: 16, lineHeight: 1.5, margin: "0 0 8px", fontFamily: "var(--font-cormorant), Georgia, serif" }}>
+                    To dopiero pierwszy list.
+                  </p>
+                  <p style={{ color: "#B6AFC6", fontSize: 13.5, lineHeight: 1.65, margin: "0 0 18px" }}>
+                    Kolejne — o Twoich emocjach, miłości, darach i cieniu — Astrea pisze tylko dla subskrybentów.
+                  </p>
+                  <Link
+                    href="/pricing"
+                    onClick={close}
+                    style={{ display: "inline-block", padding: "12px 28px", borderRadius: 999, background: "linear-gradient(135deg, #FFC56B, #FFAE3D)", color: "#201405", fontSize: 14, fontWeight: 600, textDecoration: "none" }}
+                  >
+                    Odblokuj kolejne listy →
+                  </Link>
+                </div>
+              )}
             </article>
           )}
         </div>

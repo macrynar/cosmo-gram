@@ -18,6 +18,7 @@ export interface ActiveLetter {
   id: string;
   title: string;
   kind: "letter" | "report";
+  tier: "free" | "premium" | "one_time";
   content_md: string;
   signature_label: string | null;
 }
