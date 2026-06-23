@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
+import { InboxProvider } from "@/components/inbox/InboxProvider";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -26,8 +27,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   return (
-    <div className="app-bottom-safe">
-      {children}
-    </div>
+    <InboxProvider>
+      <div className="app-bottom-safe">
+        {children}
+      </div>
+    </InboxProvider>
   );
 }

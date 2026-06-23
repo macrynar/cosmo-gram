@@ -381,6 +381,18 @@ NEXT_PUBLIC_POSTHOG_HOST=
 
 ---
 
+### [2026-06-23] Listy od Astrei — P0 (Fazy 1–5)
+
+Nowy mechanizm retencji premium (North Star: retencja płatnych 30 dni). Astrea pisze dawkowane listy odsłaniające warstwy kosmogramu; free teaser „Twoja misja" → ściana → premium drip. Szczegóły i weryfikacja: `docs/LISTY-VERIFY.md`.
+
+- **Wdrożone:** model danych + katalog 8 listów (migracje na prodzie), silnik generacji (Sonnet, resolver deterministyczny, cache), scheduler dripu (pre-gen + dyscyplina ≥7 dni), skrzynka in-app (koperta z badge, drawer/sheet, czytnik), email open-loop (Resend), free teaser + ściana paywall.
+- **RLS:** treści listów = najwrażliwsza warstwa; owner-only + test negatywny (na żywo + regresja vitest). Treść nigdy w `ai_call_logs`.
+- **Branch:** `feat/listy-od-astrei` (5 commitów). 333 testy zielone, typecheck czysty.
+- **Odroczone:** Faza 6 (listy eventowe), Faza 7 (raporty + Stripe), Faza 8 (golden/E2E/PostHog), wzmianka w mailu tygodniowym.
+- **TODO Maca:** polityka prywatności (treści egzystencjalne), ceny raportów, kontrola jakości treści, zestaw MVP.
+
+---
+
 ## Definicja „release gotowy"
 1. Natal i Child przechodzą testy manualne bez regresji.
 2. Brak nowych błędów 5xx na głównych endpointach AI.

@@ -9,6 +9,10 @@
       "schedule": "0 3 * * *"
     },
     {
+      "path": "/api/cron/letters-drip",
+      "schedule": "0 4 * * *"
+    },
+    {
       "path": "/api/cron/cleanup-chat-sessions",
       "schedule": "0 3 1 * *"
     },

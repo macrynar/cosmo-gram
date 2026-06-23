@@ -16,6 +16,7 @@ import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine
 import type { ChildModule } from "@/lib/schemas/childModule";
 import { useAuth } from "@/components/AuthContext";
 import { useSubscription } from "@/components/SubscriptionContext";
+import { useInbox } from "@/components/inbox/InboxProvider";
 import { track } from "@/components/PostHogProvider";
 import PaywallModal from "@/components/PaywallModal";
 import ShareModal from "@/components/ShareModal";
@@ -60,6 +61,7 @@ function sunSignName(chart: NatalChart | null | undefined): string | undefined {
 export default function CosmogramPage() {
   const { session, user, loading: authLoading } = useAuth();
   const { isPro, isLoading: subLoading } = useSubscription();
+  const { refresh: refreshInbox } = useInbox();
 
   const [activeTab, setActiveTab] = useState<Tab>("natal");
   const [childNudge, setChildNudge] = useState(false);
@@ -286,6 +288,10 @@ export default function CosmogramPage() {
           const defaultName = data.name.trim() || `${data.place.split(",")[0]} · ${data.date}`;
           setReadings(prev => [{ id, name: defaultName, birth_date: data.date, birth_time: data.time, birth_place: data.place, chart_data: newChart, interpretation: "", daily_reading: "", created_at: new Date().toISOString() }, ...prev]);
           setSelectedId(id);
+          // Free teaser „Twoja misja" — wabik konwersji. Idempotentny, fire-and-refresh.
+          fetch("/api/letters/teaser", { method: "POST", headers: { ...authHeader } })
+            .then(() => refreshInbox())
+            .catch(() => {});
         }
       }
     } catch (err) {
