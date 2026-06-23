@@ -64,8 +64,8 @@ export async function generateLetterContent(params: {
   let best = "";
   let validation: LetterValidation = { ok: false, reasons: ["nie wygenerowano"], words: 0 };
 
-  // Maks. 2 podejścia: drugie z notką korygującą wg powodów walidacji.
-  for (let attempt = 0; attempt < 2; attempt++) {
+  // Do 3 podejść: kolejne z notką korygującą wg powodów walidacji (tylko gdy walidacja zawiedzie).
+  for (let attempt = 0; attempt < 3; attempt++) {
     const userPrompt = attempt === 0
       ? baseUser
       : `${baseUser}\n\nPOPRZEDNIA WERSJA MIAŁA PROBLEMY: ${validation.reasons.join("; ")}. Popraw i napisz list jeszcze raz, trzymając się głosu i struktury.`;
@@ -85,6 +85,7 @@ export async function generateLetterContent(params: {
       wordMin: template.word_min,
       wordMax: template.word_max,
       kind: template.kind,
+      isEvent: template.trigger_type === "event",
     });
 
     if (content) best = content;

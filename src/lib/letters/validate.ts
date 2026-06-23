@@ -26,6 +26,11 @@ const PREDICTION_RE = /\b(spotkasz|zostaniesz|wydarzy się|czeka cię|poznasz ko
 const GENDERED_RE = /(?<!\p{L})\p{L}*(łeś|łaś|łbyś|łabyś)(?!\p{L})/u;
 const SLASH_FORM_RE = /(?<!\p{L})\p{L}+\/\p{L}+(?!\p{L})/u;
 
+/** Czy tekst zawiera formę rodzajową w 2. osobie (do pętli korekty). */
+export function hasGenderedForm(text: string): boolean {
+  return GENDERED_RE.test(text) || SLASH_FORM_RE.test(text);
+}
+
 // Żargon, którego nie wolno w ciele listu. Podpis fundamentu (kursywa na końcu)
 // jest wyłączony z tego sprawdzenia. Słońce/Księżyc świadomie pominięte
 // (to też zwykłe słowa polszczyzny — ryzyko fałszywych trafień).
@@ -55,7 +60,7 @@ export function splitSignature(md: string): { body: string; signature: string | 
 
 export function validateLetterContent(
   md: string,
-  opts: { wordMin: number; wordMax: number; kind: "letter" | "report" }
+  opts: { wordMin: number; wordMax: number; kind: "letter" | "report"; isEvent?: boolean }
 ): LetterValidation {
   const reasons: string[] = [];
   const text = (md ?? "").trim();
@@ -75,8 +80,11 @@ export function validateLetterContent(
   if (PREDICTION_RE.test(body)) reasons.push("predykcja konkretnego zdarzenia");
   if (GENDERED_RE.test(body) || SLASH_FORM_RE.test(body)) reasons.push("forma rodzajowa");
 
-  const jargonHit = BODY_JARGON.find((j) => new RegExp(`\\b${j}`, "i").test(body));
-  if (jargonHit) reasons.push(`żargon w ciele: „${jargonHit}”`);
+  // Listy eventowe muszą cytować tranzyt (np. „Saturn wraca…") — nazwa planety w ciele dozwolona.
+  if (!opts.isEvent) {
+    const jargonHit = BODY_JARGON.find((j) => new RegExp(`\\b${j}`, "i").test(body));
+    if (jargonHit) reasons.push(`żargon w ciele: „${jargonHit}”`);
+  }
 
   return { ok: reasons.length === 0, reasons, words };
 }
