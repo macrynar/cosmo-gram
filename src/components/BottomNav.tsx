@@ -2,22 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Star, CalendarDays, MessageCircle, Heart, User } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import type { FC, SVGProps } from "react";
+import {
+  KosmogramIcon,
+  PrognozaIcon,
+  ChatIcon,
+  MatchIcon,
+  KontoIcon,
+} from "@/components/icons/NavIcons";
 
 type Tab = {
   href:    string;
   label:   string;
-  icon:    LucideIcon;
+  icon:    FC<SVGProps<SVGSVGElement>>;
   center?: boolean;
 };
 
 const TABS: Tab[] = [
-  { href: "/app/cosmogram", label: "Kosmogram", icon: Star },
-  { href: "/app/calendar",  label: "Prognoza",   icon: CalendarDays },
-  { href: "/app/chat",      label: "Chat",        icon: MessageCircle, center: true },
-  { href: "/app/match",     label: "Match",       icon: Heart },
-  { href: "/app/settings",  label: "Konto",       icon: User },
+  { href: "/app/cosmogram", label: "Kosmogram", icon: KosmogramIcon },
+  { href: "/app/calendar",  label: "Prognoza",   icon: PrognozaIcon },
+  { href: "/app/chat",      label: "Chat",        icon: ChatIcon, center: true },
+  { href: "/app/match",     label: "Match",       icon: MatchIcon },
+  { href: "/app/settings",  label: "Konto",       icon: KontoIcon },
 ];
 
 export default function BottomNav() {
