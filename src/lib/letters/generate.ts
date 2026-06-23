@@ -36,12 +36,16 @@ export async function generateLetterContent(params: {
   chart: NatalChart;
   userId: string;
   modelOverride?: string;
+  /** Listy eventowe: deterministyczne fakty tranzytu do zacytowania (z events.ts). */
+  eventContext?: string;
 }): Promise<GeneratedLetter> {
   const { template, chart, userId } = params;
 
   const resolved = resolvePlacements(chart, template.placement_inputs);
-  if (!resolved.text.trim()) {
-    throw new LetterGenerationError(`Brak placementów dla ${template.slug} (pusty fundament)`);
+  const eventContext = params.eventContext?.trim();
+  const placementsText = [resolved.text, eventContext].filter(Boolean).join("\n\n");
+  if (!placementsText.trim()) {
+    throw new LetterGenerationError(`Brak fundamentu dla ${template.slug}`);
   }
 
   const version = await resolvePromptVersion(template.prompt_slug, userId);
@@ -53,7 +57,7 @@ export async function generateLetterContent(params: {
   const maxTokens = version.config.max_tokens ?? (template.kind === "report" ? 4000 : 1400);
   const baseUser = renderTemplate(version.user_prompt_template, {
     title: template.title,
-    placements: resolved.text,
+    placements: placementsText,
   });
 
   const mockFixture = mockFixtureFor(template);
@@ -94,7 +98,7 @@ export async function generateLetterContent(params: {
     model,
     ai_prompt_version: `${template.prompt_slug}@${version.version}`,
     prompt_version_id: version.id,
-    placement_snapshot: resolved.snapshot,
+    placement_snapshot: eventContext ? { ...resolved.snapshot, event_context: eventContext } : resolved.snapshot,
     signature_label: resolved.signatureLabel,
     validation,
   };

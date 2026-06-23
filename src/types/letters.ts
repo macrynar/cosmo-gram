@@ -6,7 +6,7 @@ export type LetterKind = "letter" | "report";
 export type WellbeingLevel = "standard" | "delikatny";
 export type TriggerType = "time" | "event";
 export type LetterStatus = "scheduled" | "generated" | "delivered" | "read";
-export type LetterSource = "drip" | "one_time_purchase";
+export type LetterSource = "drip" | "event" | "one_time_purchase";
 export type InboxType = "letter" | "report" | "announcement" | "system" | "forecast";
 
 // Które deterministyczne punkty kosmogramu zasilają prompt listu.
@@ -56,6 +56,7 @@ export interface UserLetter {
   ai_prompt_version: string | null;
   model: string | null;
   source: LetterSource;
+  event_key: string | null;
   deliver_at: string | null;
   generated_at: string | null;
   delivered_at: string | null;

@@ -60,7 +60,7 @@ export interface GenerateResult {
 
 // Generuje treść dla istniejącego wiersza user_letters i zapisuje (status → generated).
 // Idempotentne: jeśli content_md już jest — nie rusza (cache, koszt, spójność emocjonalna).
-export async function generateAndStore(userLetterId: string): Promise<GenerateResult> {
+export async function generateAndStore(userLetterId: string, opts?: { eventContext?: string }): Promise<GenerateResult> {
   const { data: ul } = await supabaseAdmin
     .from("user_letters")
     .select("*")
@@ -76,7 +76,7 @@ export async function generateAndStore(userLetterId: string): Promise<GenerateRe
   const chart = await getPrimaryChartForUser(row.user_id);
   if (!chart) return { generated: false, reason: "no_chart" };
 
-  const gen = await generateLetterContent({ template, chart, userId: row.user_id });
+  const gen = await generateLetterContent({ template, chart, userId: row.user_id, eventContext: opts?.eventContext });
 
   await supabaseAdmin
     .from("user_letters")
@@ -155,22 +155,24 @@ export async function deliverUserLetter(userLetterId: string): Promise<DeliverRe
 export async function ensureUserLetterRow(params: {
   userId: string;
   slug: string;
-  source: "drip" | "one_time_purchase";
+  source: "drip" | "event" | "one_time_purchase";
   deliverAt?: string | null;
+  eventKey?: string | null;
 }): Promise<string | null> {
-  const { userId, slug, source, deliverAt } = params;
-  const { data: existing } = await supabaseAdmin
+  const { userId, slug, source, deliverAt, eventKey } = params;
+  let q = supabaseAdmin
     .from("user_letters")
     .select("id")
     .eq("user_id", userId)
     .eq("letter_slug", slug)
-    .eq("source", source)
-    .maybeSingle();
+    .eq("source", source);
+  if (source === "event") q = q.eq("event_key", eventKey ?? "");
+  const { data: existing } = await q.maybeSingle();
   if (existing?.id) return existing.id as string;
 
   const { data: created } = await supabaseAdmin
     .from("user_letters")
-    .insert({ user_id: userId, letter_slug: slug, source, status: "scheduled", deliver_at: deliverAt ?? null })
+    .insert({ user_id: userId, letter_slug: slug, source, status: "scheduled", deliver_at: deliverAt ?? null, event_key: eventKey ?? null })
     .select("id")
     .single();
   return (created?.id as string | undefined) ?? null;
