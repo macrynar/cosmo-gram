@@ -4,6 +4,7 @@
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { generateLetterContent } from "@/lib/letters/generate";
 import { splitSignature } from "@/lib/letters/validate";
+import { getPostHogClient } from "@/lib/posthog-server";
 import type { NatalChart } from "@/lib/astro-types";
 import type { LetterTemplate, UserLetter } from "@/types/letters";
 
@@ -135,6 +136,16 @@ export async function deliverUserLetter(userLetterId: string): Promise<DeliverRe
     .update({ status: "delivered", delivered_at: now })
     .eq("id", userLetterId)
     .in("status", ["scheduled", "generated"]); // nie cofaj read/delivered
+
+  if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+    try {
+      getPostHogClient().capture({
+        distinctId: row.user_id,
+        event: "letter_delivered",
+        properties: { letter_slug: row.letter_slug, kind: template.kind, source: row.source },
+      });
+    } catch { /* telemetria best-effort */ }
+  }
 
   return { delivered: true, inboxId: inbox?.id as string | undefined };
 }

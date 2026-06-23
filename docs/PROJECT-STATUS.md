@@ -2,7 +2,7 @@
 title: Cosmogram — Project Status
 type: project-status
 owner: Mac
-last_updated: 2026-06-14
+last_updated: 2026-06-23
 ---
 
 # Cosmogram — dokument statusu projektu
@@ -381,15 +381,16 @@ NEXT_PUBLIC_POSTHOG_HOST=
 
 ---
 
-### [2026-06-23] Listy od Astrei — P0 (Fazy 1–5)
+### [2026-06-23] Listy od Astrei — P0 (Fazy 1–5) NA PRODUKCJI
 
-Nowy mechanizm retencji premium (North Star: retencja płatnych 30 dni). Astrea pisze dawkowane listy odsłaniające warstwy kosmogramu; free teaser „Twoja misja" → ściana → premium drip. Szczegóły i weryfikacja: `docs/LISTY-VERIFY.md`.
+Nowy mechanizm retencji premium (North Star: retencja płatnych 30 dni) — **wdrożony na produkcji**. Astrea pisze dawkowane listy odsłaniające warstwy kosmogramu; free teaser „Twoja misja" → ściana → premium drip. Silnik gotowy też pod Raporty (P1). Szczegóły i weryfikacja: `docs/LISTY-VERIFY.md`.
 
-- **Wdrożone:** model danych + katalog 8 listów (migracje na prodzie), silnik generacji (Sonnet, resolver deterministyczny, cache), scheduler dripu (pre-gen + dyscyplina ≥7 dni), skrzynka in-app (koperta z badge, drawer/sheet, czytnik), email open-loop (Resend), free teaser + ściana paywall.
-- **RLS:** treści listów = najwrażliwsza warstwa; owner-only + test negatywny (na żywo + regresja vitest). Treść nigdy w `ai_call_logs`.
-- **Branch:** `feat/listy-od-astrei` (5 commitów). 333 testy zielone, typecheck czysty.
-- **Odroczone:** Faza 6 (listy eventowe), Faza 7 (raporty + Stripe), Faza 8 (golden/E2E/PostHog), wzmianka w mailu tygodniowym.
-- **TODO Maca:** polityka prywatności (treści egzystencjalne), ceny raportów, kontrola jakości treści, zestaw MVP.
+- **Wdrożenie:** PR #52 → main (merge `e0d5297`), Vercel deploy OK, smoke test prod (`/api/inbox`, `/api/letters` → 401). Migracje na prodzie. CI Listów zielone (Build/Lint/Typecheck/Unit/Vercel); E2E i Security audit czerwone **pre-existing** (już czerwone na main — flaky E2E + `npm audit` na `@babel`/`@opentelemetry`, do osobnego sprzątnięcia).
+- **Co żyje:** free teaser przy każdej generacji kosmogramu; cron `letters-drip` (Vercel, 04:00 UTC) dawkuje płatnikom (1/tydzień, pre-gen 24–48 h); skrzynka in-app (koperta z badge, drawer/sheet, czytnik); maile „Wiadomość od Astrei: Oto …" (Resend, open-loop, opt-out).
+- **Jakość/bezpieczeństwo:** Sonnet + korekta gender-neutral (Haiku) + walidacja (długość, predykcje, żargon, forma rodzajowa); generacja raz + cache. RLS owner-only + test negatywny; treść nigdy w `ai_call_logs`. 336 testów zielone.
+- **Metryki (PostHog, od launchu):** `inbox_opened`, `letter_opened`, `letter_email_clicked`, `letter_paywall_hit` (klient), `letter_delivered` (serwer).
+- **Odroczone:** Faza 6 (listy eventowe z `transits.ts`), Faza 7 (raporty + Stripe one-time; tabela `letter_purchases` gotowa), Faza 8 (golden testy per szablon, E2E pod `AI_MOCK`), `report_purchased/opened`, wzmianka o liście w mailu tygodniowym.
+- **TODO Maca:** polityka prywatności (treści egzystencjalne), ceny raportów (test 49 zł / 99 zł pakiet), kontrola jakości treści (poza Claude), ostateczny zestaw MVP, ew. „Wiadomość" vs „List" w temacie maila.
 
 ---
 

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { useAuth } from "@/components/AuthContext";
+import { track } from "@/components/PostHogProvider";
 import InboxOverlay from "@/components/inbox/InboxOverlay";
 
 export interface InboxItemT {
@@ -80,13 +81,14 @@ export function InboxProvider({ children }: { children: ReactNode }) {
     if (token) refresh();
   }, [token, refresh]);
 
-  const open = useCallback(() => { setIsOpen(true); refresh(); }, [refresh]);
+  const open = useCallback(() => { setIsOpen(true); refresh(); track("inbox_opened"); }, [refresh]);
   const close = useCallback(() => { setIsOpen(false); setActiveLetter(null); }, []);
 
   // Auto-otwarcie ze skrzynki z maila (?inbox=1)
   useEffect(() => {
     if (!autoOpened.current && token && new URLSearchParams(window.location.search).get("inbox") === "1") {
       autoOpened.current = true;
+      track("letter_email_clicked");
       open();
     }
   }, [token, open]);
@@ -105,6 +107,7 @@ export function InboxProvider({ children }: { children: ReactNode }) {
     }
 
     if ((item.type === "letter" || item.type === "report") && item.ref_id) {
+      track("letter_opened", { type: item.type, ref_id: item.ref_id });
       setLetterLoading(true);
       try {
         const res = await fetch(`/api/letters?id=${item.ref_id}`, { headers: { Authorization: `Bearer ${token}` } });
