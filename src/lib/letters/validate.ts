@@ -20,6 +20,12 @@ export interface LetterValidation {
 // Predykcje konkretnych zdarzeń — zakazane (introspekcja, nie wyrocznia).
 const PREDICTION_RE = /\b(spotkasz|zostaniesz|wydarzy się|czeka cię|poznasz kogoś|będziesz mieć)\b/i;
 
+// Formy rodzajowe w 2. osobie — zakazane (forma neutralna). Czasowniki czasu
+// przeszłego/trybu przypuszczającego (-łeś/-łaś/-łbyś/-łabyś) + slash-formy.
+// Granice słowa przez lookaround na \p{L} — \b zawodzi na polskich diakrytykach (ś, ć…).
+const GENDERED_RE = /(?<!\p{L})\p{L}*(łeś|łaś|łbyś|łabyś)(?!\p{L})/u;
+const SLASH_FORM_RE = /(?<!\p{L})\p{L}+\/\p{L}+(?!\p{L})/u;
+
 // Żargon, którego nie wolno w ciele listu. Podpis fundamentu (kursywa na końcu)
 // jest wyłączony z tego sprawdzenia. Słońce/Księżyc świadomie pominięte
 // (to też zwykłe słowa polszczyzny — ryzyko fałszywych trafień).
@@ -67,6 +73,7 @@ export function validateLetterContent(
   if (!signature) reasons.push("brak podpisu fundamentu");
   if (!endsLikeSentence(body)) reasons.push("ucięte zdanie w ciele");
   if (PREDICTION_RE.test(body)) reasons.push("predykcja konkretnego zdarzenia");
+  if (GENDERED_RE.test(body) || SLASH_FORM_RE.test(body)) reasons.push("forma rodzajowa");
 
   const jargonHit = BODY_JARGON.find((j) => new RegExp(`\\b${j}`, "i").test(body));
   if (jargonHit) reasons.push(`żargon w ciele: „${jargonHit}”`);

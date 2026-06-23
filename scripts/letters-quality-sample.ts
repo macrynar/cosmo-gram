@@ -20,12 +20,13 @@ const SLUGS = ["twoja-misja", "jak-kochasz", "twoje-dary", "twoj-cien"];
 
 function inline(s: string): string {
   return s
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#F4F1EA;font-weight:700">$1</strong>')
     .replace(/\*(.+?)\*/g, '<em style="color:#B6AFC6">$1</em>');
 }
 function mdToHtml(md: string): string {
   return md.trim().split(/\n\n+/).map((b) => {
     const t = b.trim();
+    if (/^(-{3,}|\*{3,}|_{3,})$/.test(t)) return ""; // gołe poziome linie — pomiń
     if (t.startsWith("## ")) return `<h2 style="color:#E9DCC0;font-size:20px;font-weight:400;margin:26px 0 10px;font-family:Georgia,serif">${inline(t.slice(3))}</h2>`;
     if (t.startsWith("### ")) return `<h3 style="color:#E9DCC0;font-size:17px;margin:20px 0 8px">${inline(t.slice(4))}</h3>`;
     return `<p style="margin:0 0 16px;line-height:1.8;color:#D2CCDE;font-size:16px">${inline(t)}</p>`;
@@ -84,8 +85,11 @@ async function main() {
 
   const html = `<!DOCTYPE html><html lang="pl"><body style="background:#0B0912;margin:0;padding:0;font-family:Georgia,serif">
     <div style="max-width:620px;margin:0 auto;padding:40px 24px">
-      <p style="color:rgba(212,175,55,0.6);font-size:10px;letter-spacing:0.3em;text-transform:uppercase;text-align:center;margin:0 0 8px">✦ COSMOGRAM ✦</p>
-      <h2 style="color:#F4F1EA;text-align:center;font-weight:400;font-size:22px;margin:0 0 6px">Listy od Astrei — próbki jakości</h2>
+      <div style="text-align:center;margin:0 0 8px">
+        <img src="https://www.cosmo-gram.com/apple-touch-icon.png" width="48" height="48" alt="Cosmogram" style="border-radius:12px;display:inline-block" />
+      </div>
+      <p style="color:rgba(212,175,55,0.7);font-size:11px;letter-spacing:0.35em;text-transform:uppercase;text-align:center;margin:0 0 24px">Cosmogram</p>
+      <h2 style="color:#F4F1EA;text-align:center;font-weight:400;font-size:22px;margin:0 0 6px;font-family:Georgia,serif">Listy od Astrei — próbki jakości</h2>
       <p style="color:#877FA0;text-align:center;font-size:13px;margin:0 0 36px">4 tematy na przykładowym kosmogramie (${BIRTH.date}, ${BIRTH.place}). To NIE Twój wykres — do oceny pisania i głosu.</p>
       ${sections.join("")}
       <p style="color:#5f586e;font-size:11px;text-align:center;margin:24px 0 0">Wygenerowane silnikiem Listów (Sonnet, prompty z prompt_versions). Throwaway.</p>
@@ -98,7 +102,7 @@ async function main() {
 
   console.log(`\n→ Wysyłam ${sections.length} listów na ${TO}…`);
   const res = await new Resend(process.env.RESEND_API_KEY!).emails.send({
-    from: FROM, to: TO, subject: "Listy od Astrei — próbki jakości (4 tematy)", html,
+    from: FROM, to: TO, subject: "✦ Astrea przeczytała kosmogram — 4 listy w środku", html,
   });
   console.log("   Resend:", JSON.stringify(res.data ?? res.error));
 }

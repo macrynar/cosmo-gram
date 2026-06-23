@@ -1,5 +1,5 @@
 import {
-  Body, Button, Container, Head, Heading, Hr, Html, Preview, Section, Text,
+  Body, Button, Container, Head, Heading, Hr, Html, Img, Preview, Section, Text,
 } from "@react-email/components";
 import * as React from "react";
 
@@ -15,9 +15,10 @@ export default function LetterEmail({ appUrl, title, preview, unsubUrl }: Props)
       <Body style={{ background: "#050508", fontFamily: "Georgia, serif", margin: 0, padding: 0 }}>
         <Container style={{ maxWidth: 560, margin: "0 auto", padding: "40px 24px" }}>
 
-          <Section style={{ textAlign: "center", marginBottom: 28 }}>
-            <Text style={{ color: "rgba(212,175,55,0.6)", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", margin: 0 }}>
-              ✦ COSMOGRAM ✦
+          <Section style={{ textAlign: "center", marginBottom: 24 }}>
+            <Img src={`${appUrl}/apple-touch-icon.png`} width="48" height="48" alt="Cosmogram" style={{ borderRadius: 12, display: "inline-block" }} />
+            <Text style={{ color: "rgba(212,175,55,0.7)", fontSize: 11, letterSpacing: "0.35em", textTransform: "uppercase", margin: "10px 0 0" }}>
+              Cosmogram
             </Text>
           </Section>
 

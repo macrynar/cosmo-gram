@@ -41,6 +41,17 @@ describe("validateLetterContent", () => {
     expect(r.reasons.some((x) => x.startsWith("żargon w ciele"))).toBe(true);
   });
 
+  it("łapie formę rodzajową w ciele (czułeś)", () => {
+    const md = "Kiedyś czułeś, że to za dużo, a dziś wiesz, że masz w sobie siłę, by iść dalej każdego dnia, krok po kroku, bez pośpiechu i bez presji.\n\n*Na podstawie Twojego Słońca.*";
+    const r = validateLetterContent(md, { wordMin: 20, wordMax: 450, kind: "letter" });
+    expect(r.reasons).toContain("forma rodzajowa");
+  });
+
+  it("przepuszcza fixtures bez form rodzajowych", () => {
+    expect(validateLetterContent(fix("standard.md"), LETTER).reasons).not.toContain("forma rodzajowa");
+    expect(validateLetterContent(fix("delikatny.md"), LETTER).reasons).not.toContain("forma rodzajowa");
+  });
+
   it("łapie zbyt krótki tekst", () => {
     const md = "Jesteś kimś wyjątkowym i masz w sobie światło.\n\n*Na podstawie Twojego Słońca.*";
     const r = validateLetterContent(md, LETTER);

@@ -1,6 +1,6 @@
 To, czego w sobie nie lubisz, często pilnuje czegoś cennego.
 
-Jest w Tobie miejsce, do którego zaglądasz niechętnie — surowy wewnętrzny głos, który mówi, że musisz bardziej, lepiej, że jeszcze nie zasłużyłaś. Łatwo wziąć go za prawdę o sobie. A to tylko stary strażnik, który kiedyś nauczył się, że bezpieczniej jest się pilnować, niż dać się zaskoczyć. Nie jesteś tym głosem. Po prostu go w sobie nosisz.
+Jest w Tobie miejsce, do którego zaglądasz niechętnie — surowy wewnętrzny głos, który mówi, że musisz bardziej, lepiej, że jeszcze za mało. Łatwo wziąć go za prawdę o sobie. A to tylko stary strażnik, który kiedyś nauczył się, że bezpieczniej jest się pilnować, niż dać się zaskoczyć. Nie jesteś tym głosem. Po prostu go w sobie nosisz.
 
 Bywa, że ta sama siła, która Cię uciska, jest też źródłem Twojej głębi. Tam, gdzie czujesz lęk, że jesteś niewystarczająca, mieszka również zdolność do prawdziwej, dorosłej odpowiedzialności. Tam, gdzie dźwigasz coś ciężkiego z przeszłości, leży materiał na siłę, której nikt nie da Ci z zewnątrz — możesz ją w sobie powoli wyhodować.
 

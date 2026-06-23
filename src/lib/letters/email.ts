@@ -50,7 +50,7 @@ export async function sendLetterEmail(params: { userId: string; userLetterId: st
   await new Resend(process.env.RESEND_API_KEY).emails.send({
     from: FROM,
     to: email,
-    subject: "Astrea napisała do Ciebie list",
+    subject: `✦ Nowy list od Astrei: „${title}”`,
     html,
     headers: { "List-Unsubscribe": `<${unsubUrl}>` },
   });

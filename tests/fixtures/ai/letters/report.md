@@ -1,4 +1,4 @@
-Przyszłaś tu z jednym pytaniem, które brzmi prościej, niż jest naprawdę: co zrobić z karierą. Nie chodzi o to, jaką firmę wybrać ani jaki tytuł wpisać w wizytówkę. Chodzi o to, jak ułożyć pracę tak, żeby nie odbierała Ci energii, tylko ją oddawała — żeby to, co robisz przez większość dni swojego życia, było po Twojej stronie, a nie przeciwko Tobie. Ten raport jest próbą zebrania całego Twojego wykresu w jedną odpowiedź na to pytanie.
+Przychodzisz tu z jednym pytaniem, które brzmi prościej, niż jest naprawdę: co zrobić z karierą. Nie chodzi o to, jaką firmę wybrać ani jaki tytuł wpisać w wizytówkę. Chodzi o to, jak ułożyć pracę tak, żeby nie odbierała Ci energii, tylko ją oddawała — żeby to, co robisz przez większość dni swojego życia, było po Twojej stronie, a nie przeciwko Tobie. Ten raport jest próbą zebrania całego Twojego wykresu w jedną odpowiedź na to pytanie.
 
 ## Napięcie, które Cię napędza
 
@@ -12,7 +12,7 @@ Twoja dojrzałość zawodowa zaczyna się w dniu, w którym przestajesz traktowa
 
 Z całego Twojego wykresu wyłania się dość spójny obraz tego, jak powinna wyglądać Twoja praca — nie konkretny zawód, ale jego kształt.
 
-Po pierwsze, potrzebujesz widoczności. Nie w sensie sławy, ale w sensie autorstwa: chcesz, żeby było widać, że to Ty coś zrobiłaś, żeby Twoja praca miała twarz. Role, w których znikasz w anonimowym trybie i wykonujesz cudze polecenia bez śladu siebie, powoli Cię gaszą, nawet jeśli są dobrze płatne i bezpieczne.
+Po pierwsze, potrzebujesz widoczności. Nie w sensie sławy, ale w sensie autorstwa: chcesz, żeby było widać, że to Ty coś tworzysz, żeby Twoja praca miała twarz. Role, w których znikasz w anonimowym trybie i wykonujesz cudze polecenia bez śladu siebie, powoli Cię gaszą, nawet jeśli są dobrze płatne i bezpieczne.
 
 Po drugie, potrzebujesz poczucia, że budujesz coś trwałego. Praca dorywcza, w której wszystko jest tymczasowe i nic nie zostaje, męczy Cię bardziej niż innych. Rozkwitasz tam, gdzie możesz wracać do tego samego dzieła przez lata i patrzeć, jak rośnie — gdzie Twój wysiłek się kumuluje, a nie rozpływa.
 
@@ -34,7 +34,7 @@ Jest też druga, jaśniejsza nuta. W tym samym okresie pojawia się przestrzeń 
 
 ## Co z tym zrobić — trzy ruchy
 
-Pierwszy ruch: nazwij swój podpis. Usiądź i opisz w jednym zdaniu, co chcesz, żeby było widać, że zrobiłaś Ty. Nie stanowisko, tylko wkład. To zdanie stanie się Twoim filtrem na okazje — wszystko, co je realizuje, jest dla Ciebie; wszystko, co je rozmywa, prawdopodobnie nie.
+Pierwszy ruch: nazwij swój podpis. Usiądź i opisz w jednym zdaniu, co chcesz, żeby było po Tobie widać. Nie stanowisko, tylko wkład. To zdanie stanie się Twoim filtrem na okazje — wszystko, co je realizuje, jest dla Ciebie; wszystko, co je rozmywa, prawdopodobnie nie.
 
 Drugi ruch: wybierz jedno dzieło na dłużej. Zamiast rozpraszać się na wiele tymczasowych projektów, wskaż jedną rzecz, do której chcesz wracać przez najbliższe lata, i pozwól, żeby się kumulowała. Twoja siła ujawnia się w czasie, nie w zrywie.
 

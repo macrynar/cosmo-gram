@@ -5,6 +5,7 @@
 import { aiComplete } from "@/lib/deepseek";
 import { resolvePromptVersion, renderTemplate } from "@/lib/promptResolver";
 import { resolvePlacements } from "@/lib/letters/resolver";
+import { correctLetterText } from "@/lib/letters/correct";
 import { validateLetterContent, type LetterValidation } from "@/lib/letters/validate";
 import type { NatalChart } from "@/lib/astro-types";
 import type { LetterTemplate } from "@/types/letters";
@@ -74,7 +75,8 @@ export async function generateLetterContent(params: {
       mockFixture,
     });
 
-    const content = (raw ?? "").trim();
+    // Korekta językowa (gender-neutral) PRZED walidacją — wzór z natalu.
+    const content = await correctLetterText((raw ?? "").trim());
     validation = validateLetterContent(content, {
       wordMin: template.word_min,
       wordMax: template.word_max,
