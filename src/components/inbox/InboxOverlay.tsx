@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Mail, FileText, Bell, Sparkles, X, ChevronLeft, Lock } from "lucide-react";
 import { useInbox, type InboxItemT } from "@/components/inbox/InboxProvider";
 import { useSubscription } from "@/components/SubscriptionContext";
+import { track } from "@/components/PostHogProvider";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -53,6 +54,13 @@ export default function InboxOverlay() {
       return () => { document.body.style.overflow = prev; };
     }
   }, [isOpen]);
+
+  // Telemetria: ściana paywall pokazana free userowi
+  useEffect(() => {
+    if (activeLetter && !isPro && activeLetter.tier === "free") {
+      track("letter_paywall_hit", { id: activeLetter.id });
+    }
+  }, [activeLetter, isPro]);
 
   const panelMotion = isMobile
     ? { initial: { y: "100%" }, animate: { y: 0 }, exit: { y: "100%" } }
