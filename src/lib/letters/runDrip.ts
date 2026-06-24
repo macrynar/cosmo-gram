@@ -75,10 +75,15 @@ export async function runLettersDrip(now: Date = new Date()): Promise<DripResult
       .map((d) => new Date(d as string)).sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
     const freqOK = !lastDeliveredAt || now.getTime() - lastDeliveredAt.getTime() >= MIN_GAP_DAYS * DAY_MS;
 
+    // „Twoja misja" zawsze pierwsza — eventy wchodzą dopiero, gdy user ma już
+    // dostarczony list fundamentalny (drip). Inaczej pierwszy kontakt z Astreą
+    // mógłby być ciężkim listem eventowym zamiast afirmującej misji.
+    const hasFoundational = all.some((l) => l.source === "drip" && (l.status === "delivered" || l.status === "read"));
+
     try {
       let handled = false;
       const chart = chartFor(userId);
-      if (freqOK && chart) {
+      if (freqOK && chart && hasFoundational) {
         const deliveredKeys = new Set(all.filter((l) => l.source === "event").map((l) => l.event_key ?? ""));
         const ev = detectEvents(chart, now).find((e) => !deliveredKeys.has(e.event_key));
         if (ev) {
