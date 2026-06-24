@@ -5,8 +5,12 @@
  * All CSS is injected via dangerouslySetInnerHTML (Turbopack-safe, pg-* prefix).
  */
 
+import { useState, useMemo, useEffect, useCallback } from "react";
 import GeneratingLoader from "@/components/GeneratingLoader";
 import { orbOpacity, intensityLabel, intensityOrb } from "@/lib/astro/periodWeather";
+import { bestWindowForDomain, type WhenBestAnswer } from "@/lib/astro/whenBest";
+import { WHEN_BEST_CHIPS } from "@/lib/astro/domains";
+import type { NatalChart } from "@/lib/astro-types";
 
 // ─── Design tokens → CSS string ──────────────────────────────────────────────
 
@@ -59,7 +63,7 @@ export const PROGNOZA_STYLES = `
   border:2px solid rgba(224,181,102,.2);border-top-color:var(--pg-deep);
   animation:pg-spin .75s linear infinite;vertical-align:middle;margin-right:8px;flex-shrink:0;
 }
-.pg-loading-row { display:flex;align-items:center;gap:0;color:var(--pg-muted);font-size:13px; }
+.pg-loading-row { display:flex;align-items:center;justify-content:center;gap:0;color:var(--pg-muted);font-size:13px; }
 
 .pg-gauge { display:inline-flex;align-items:center;gap:11px;margin-top:16px;position:relative;z-index:1; }
 .pg-gauge-label { font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--pg-muted); }
@@ -355,9 +359,64 @@ export type ProgInterpretation = {
   narr:       string;
   sources:    string[];
   reflection: string;
-  whenBest:   Record<string, string>;
   cached?:    boolean;
 };
+
+type ProgZoom = "dzis" | "tydzien" | "miesiac" | "rok";
+
+/**
+ * Shared interpretation state for every prognoza view.
+ * - On mount (and whenever the period changes) it silently checks the server-side
+ *   cache (check_only) and restores any saved interpretation → persists across page
+ *   reloads and re-logins.
+ * - `generate()` triggers a fresh AI generation (button click).
+ */
+export function useProgInterpretation(opts: {
+  zoom:       ProgZoom;
+  date:       string;
+  readingId?: string;
+  isPremium:  boolean;
+  session?:   { access_token: string } | null;
+}) {
+  const { zoom, date, readingId, isPremium } = opts;
+  const token = opts.session?.access_token;
+
+  const [interp,  setInterp]  = useState<ProgInterpretation | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState(false);
+
+  const run = useCallback(async (checkOnly: boolean) => {
+    if (!readingId || !token || !isPremium) return;
+    if (!checkOnly) { setLoading(true); setError(false); }
+    try {
+      const res = await fetch("/api/prognoza-interpretation", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body:    JSON.stringify({ reading_id: readingId, zoom, date, ...(checkOnly ? { check_only: true } : {}) }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && typeof data.narr === "string") setInterp(data as ProgInterpretation);
+        else if (!checkOnly) setError(true);
+      } else if (!checkOnly) {
+        setError(true);
+      }
+    } catch {
+      if (!checkOnly) setError(true);
+    } finally {
+      if (!checkOnly) setLoading(false);
+    }
+  }, [readingId, token, isPremium, zoom, date]);
+
+  useEffect(() => {
+    setInterp(null);
+    setError(false);
+    run(true);
+  }, [run]);
+
+  const generate = useCallback(() => run(false), [run]);
+  return { interp, loading, error, generate };
+}
 
 // ─── Zone: Weather ────────────────────────────────────────────────────────────
 
@@ -496,39 +555,89 @@ export function PgNarrZone({ narr, sources, reflection }: NarrProps) {
 }
 
 // ─── Zone: When Best ─────────────────────────────────────────────────────────
+// The answer is computed deterministically from the natal chart (bestWindowForDomain),
+// NOT from AI — so each domain returns its own real transit window (no repeated dates).
+// Shown only on the Month (90-day horizon) and Year (365-day horizon) views, where a
+// "best window" actually has room to mean something.
 
-const CHIPS = ["Nowy biznes", "Miłość", "Pieniądze", "Ważna rozmowa", "Odpoczynek"];
+const WB_CHIPS = WHEN_BEST_CHIPS.filter(c => !c.premium);
 
-type WhenBestProps = {
-  whenBest:   Record<string, string> | null;
-  activeChip: string | null;
-  onChip:     (k: string) => void;
-  isPremium:  boolean;
+const MONTH_GEN: Record<number, string> = {
+  1: "stycznia", 2: "lutego", 3: "marca", 4: "kwietnia", 5: "maja", 6: "czerwca",
+  7: "lipca", 8: "sierpnia", 9: "września", 10: "października", 11: "listopada", 12: "grudnia",
 };
 
-export function PgWhenBest({ whenBest, activeChip, onChip, isPremium }: WhenBestProps) {
-  const answer = (activeChip && whenBest?.[activeChip]) ?? null;
+function wbParts(iso: string) {
+  const d = new Date(iso + "T12:00:00Z");
+  return { day: d.getUTCDate(), month: d.getUTCMonth() + 1, year: d.getUTCFullYear() };
+}
+
+function wbExact(iso: string): string {
+  const { day, month } = wbParts(iso);
+  return `${day} ${MONTH_GEN[month]}`;
+}
+
+function wbRange(start: string, end: string): string {
+  const s = wbParts(start);
+  const e = wbParts(end);
+  if (s.month === e.month && s.year === e.year) return `${s.day}–${e.day} ${MONTH_SHORT[s.month]}`;
+  return `${s.day} ${MONTH_SHORT[s.month]} – ${e.day} ${MONTH_SHORT[e.month]}`;
+}
+
+function WhenBestLine({ label, answer, scopeLabel }: { label: string; answer: WhenBestAnswer; scopeLabel: string }) {
+  if (!answer) return <span>Brak wyraźnego okna w {scopeLabel}.</span>;
+  if (answer.kind === "quiet") {
+    return (
+      <span>
+        Najlepszy czas na <b>odpoczynek</b>:{" "}
+        <span className="when">{wbRange(answer.start, answer.end)}</span> · {answer.days} dni spokoju
+      </span>
+    );
+  }
+  return (
+    <span>
+      Najlepsze okno na <b>{label.toLowerCase()}</b>:{" "}
+      <span className="when">{wbRange(answer.rangeStart, answer.rangeEnd)}</span> · peak {wbExact(answer.peakDate)}
+    </span>
+  );
+}
+
+type WhenBestProps = {
+  chart:       NatalChart;
+  horizonDays: number;   // 90 = Month view, 365 = Year view
+  isPremium:   boolean;
+  scopeLabel:  string;   // empty-state copy, e.g. "najbliższych miesiącach" / "tym roku"
+};
+
+export function PgWhenBest({ chart, horizonDays, isPremium, scopeLabel }: WhenBestProps) {
+  const [activeChip, setActiveChip] = useState<string | null>(null);
+
+  const answer = useMemo<WhenBestAnswer>(() => {
+    if (!activeChip || !isPremium) return null;
+    const chip = WB_CHIPS.find(c => c.label === activeChip);
+    if (!chip) return null;
+    try { return bestWindowForDomain(chart, chip.domain, horizonDays); }
+    catch { return null; }
+  }, [activeChip, isPremium, chart, horizonDays]);
+
   return (
     <section className="pg-best">
       <div className="pg-best-head">Kiedy najlepiej…?</div>
       <div className="pg-chips">
-        {CHIPS.map(k => (
+        {WB_CHIPS.map(c => (
           <button
-            key={k}
-            className={`pg-chip${activeChip === k ? " on" : ""}`}
-            onClick={() => onChip(k)}
+            key={c.label}
+            className={`pg-chip${activeChip === c.label ? " on" : ""}`}
+            onClick={() => setActiveChip(prev => prev === c.label ? null : c.label)}
           >
-            {k}
+            {c.label}
           </button>
         ))}
       </div>
       <div className="pg-answer">
         {!isPremium && <span>Aktywuj Premium, by zobaczyć najlepsze okna.</span>}
-        {isPremium && !activeChip && <span>Wybierz obszar, a Astrea wskaże najlepsze okno.</span>}
-        {isPremium && answer && (
-          <span>Najlepsze okno na <b>{activeChip?.toLowerCase()}</b>: <span className="when">{answer}</span></span>
-        )}
-        {isPremium && activeChip && !answer && <span>Brak wyraźnego okna w tym widoku.</span>}
+        {isPremium && !activeChip && <span>Wybierz obszar, a wskażemy najlepsze okno z Twojego kosmogramu.</span>}
+        {isPremium && activeChip && <WhenBestLine label={activeChip} answer={answer} scopeLabel={scopeLabel} />}
       </div>
     </section>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits";
 import type { NatalChart } from "@/lib/astro-types";
 import type { TransitWindow, SkyEvent } from "@/lib/astro/layers";
@@ -9,9 +8,8 @@ import {
   PgTimelineDay,
   PgNarrZone,
   PgInterpretButton,
-  PgWhenBest,
   PgWindowsList,
-  type ProgInterpretation,
+  useProgInterpretation,
   PROGNOZA_STYLES,
   summarizePeriodWeather,
   characterLine,
@@ -53,33 +51,9 @@ export default function TodayView({
   const eyebrow   = `Pogoda · Dziś`;
   const title     = `${dayName}, ${dayNum} ${monthName}`;
 
-  // AI interpretation — generated on demand (button below)
-  const [interp, setInterp]         = useState<ProgInterpretation | null>(null);
-  const [interpLoading, setInterpLoading] = useState(false);
-  const [interpError, setInterpError]     = useState(false);
-  const [activeChip, setActiveChip]       = useState<string | null>(null);
-
-  const fetchInterp = useCallback(async () => {
-    if (!readingId || !session || !isPremium) return;
-    setInterpLoading(true);
-    setInterpError(false);
-    try {
-      const res = await fetch("/api/prognoza-interpretation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ reading_id: readingId, zoom: "dzis", date: todayStr }),
-      });
-      if (res.ok) setInterp(await res.json() as ProgInterpretation);
-      else setInterpError(true);
-    } catch {
-      setInterpError(true);
-    } finally {
-      setInterpLoading(false);
-    }
-  }, [readingId, session, isPremium, todayStr]);
+  // AI interpretation — auto-restores from server cache, generated on demand (button below)
+  const { interp, loading: interpLoading, error: interpError, generate: fetchInterp } =
+    useProgInterpretation({ zoom: "dzis", date: todayStr, readingId, isPremium, session });
 
   // Day timeline (top 4 transits by score — detailed view, all planets)
   const topTransits = transits.slice(0, 4);
@@ -144,13 +118,6 @@ export default function TodayView({
           reflection={interp.reflection ?? null}
         />
       )}
-
-      <PgWhenBest
-        whenBest={interp?.whenBest ?? null}
-        activeChip={activeChip}
-        onChip={setActiveChip}
-        isPremium={isPremium}
-      />
 
       <PgWindowsList
         title="Nadchodzące okna"

@@ -10,6 +10,37 @@ import { z } from "zod";
 
 export const runtime = "nodejs";
 
+/**
+ * Robustly turn a model response into a JSON object:
+ *  1. slice from the first "{" to the last "}" (drops any preamble / ```json fences),
+ *  2. if that still won't parse, escape raw control characters left unescaped INSIDE
+ *     string values — the #1 cause of JSON.parse failures (model puts a real line
+ *     break between <p> blocks). Structural newlines (between fields) are left alone.
+ */
+function parseLenientJson(raw: string): Record<string, unknown> | null {
+  const start = raw.indexOf("{");
+  const end   = raw.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+  const body = raw.slice(start, end + 1);
+
+  try { return JSON.parse(body) as Record<string, unknown>; } catch { /* try repair */ }
+
+  let out   = "";
+  let inStr = false;
+  let esc   = false;
+  for (const ch of body) {
+    if (esc)         { out += ch; esc = false; continue; }
+    if (ch === "\\") { out += ch; esc = true;  continue; }
+    if (ch === '"')  { inStr = !inStr; out += ch; continue; }
+    if (inStr && (ch === "\n" || ch === "\r" || ch === "\t")) {
+      out += ch === "\n" ? "\\n" : ch === "\r" ? "\\r" : "\\t";
+      continue;
+    }
+    out += ch;
+  }
+  try { return JSON.parse(out) as Record<string, unknown>; } catch { return null; }
+}
+
 const BodySchema = z.object({
   reading_id: z.string().uuid(),
   zoom:       z.enum(["dzis", "tydzien", "miesiac", "rok"]),
@@ -25,23 +56,16 @@ STRUKTURA ODPOWIEDZI (JSON):
   "summary": "1 zdanie po ludzku bez żargonu astrologicznego",
   "narr": "3-4 akapity interpretacji po ludzku, bez nazw aspektów, każdy <p>treść</p>",
   "sources": ["zwięzła fraza astro np. 'Uran napina Ascendent'", "..."],
-  "reflection": "1 pytanie lub refleksja na ten okres",
-  "whenBest": {
-    "Nowy biznes": "daty · krótkie wyjaśnienie",
-    "Miłość": "daty · krótkie wyjaśnienie",
-    "Pieniądze": "daty · krótkie wyjaśnienie",
-    "Ważna rozmowa": "daty · krótkie wyjaśnienie",
-    "Odpoczynek": "daty · krótkie wyjaśnienie"
-  }
+  "reflection": "1 pytanie lub refleksja na ten okres"
 }
 
 ZASADY:
 - Pisz w 2. osobie: "masz", "czujesz", "możesz"
 - Główna narracja BEZ nazw planet i aspektów — tylko ludzkie konsekwencje
-- Konkretne daty w whenBest (dzień/zakres + miesiąc po polsku)
-- Jeśli brak okien — "spokojny okres · naładuj baterie" dla odpoczynku
+- Dokończ każdy akapit — nie urywaj zdań w połowie
 - TYLKO poprawna polszczyzna, bez angielskich słów
-- Odpowiedź WYŁĄCZNIE w formacie JSON (bez markdown wokół)
+- Odpowiedź WYŁĄCZNIE jako jeden obiekt JSON: zacznij od { i zakończ na }, bez tekstu przed/po, bez bloków markdown
+- W wartościach tekstowych NIE używaj surowych znaków nowej linii — akapity zapisz w jednej linii jako "<p>...</p><p>...</p>"
 
 ${STYLE_BLOCK}`;
 
@@ -83,7 +107,7 @@ export async function POST(req: NextRequest) {
     .from("week_interpretations")
     .select("content")
     .eq("reading_id", readingId)
-    .eq("iso_week", `prognoza-${zoom}-${dateKey}`)
+    .eq("iso_week", `prognoza-v2-${zoom}-${dateKey}`)
     .maybeSingle();
 
   if (cached?.content) {
@@ -147,38 +171,39 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    let rawJson = "";
+    type ProgJson = {
+      theme: string; summary: string; narr: string;
+      sources: string[]; reflection: string;
+    };
+    let parsed: ProgJson | null = null;
     const models = ["claude-haiku-4-5-20251001", "claude-sonnet-4-6"];
     for (const model of models) {
       const candidate = await aiComplete({
         model,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: `Stwórz interpretację prognozy:\n\n${context}` }],
-        maxTokens: 1000,
+        maxTokens: 2000,
         task: "prognoza-interpretation",
+        mockFixture: "prognoza/interpretation-01.json",
       });
-      // Try to parse as JSON
-      try {
-        const cleaned = candidate.replace(/^```json\s*/i, "").replace(/\s*```$/, "").trim();
-        JSON.parse(cleaned);
-        rawJson = cleaned;
+      const obj = parseLenientJson(candidate);
+      if (obj && typeof obj.narr === "string" && typeof obj.theme === "string") {
+        parsed = obj as ProgJson;
         break;
-      } catch {
-        // not valid JSON, try next model
       }
     }
 
-    if (!rawJson) return NextResponse.json({ error: "Błąd jakości AI" }, { status: 500 });
+    if (!parsed) return NextResponse.json({ error: "Błąd jakości AI" }, { status: 500 });
 
-    // Optionally run text correction on narr field
-    const parsed = JSON.parse(rawJson) as {
-      theme: string; summary: string; narr: string;
-      sources: string[]; reflection: string;
-      whenBest: Record<string, string>;
-    };
-
+    // Run language correction on the prose fields (narr + summary), in parallel so
+    // it doesn't add wall-clock latency.
     try {
-      parsed.narr = await correctCalendarText(parsed.narr, "prognoza-narr");
+      const [narr, summary] = await Promise.all([
+        correctCalendarText(parsed.narr, "prognoza-narr"),
+        correctCalendarText(parsed.summary, "prognoza-summary"),
+      ]);
+      parsed.narr = narr;
+      parsed.summary = summary;
     } catch {
       // correction optional
     }
@@ -188,10 +213,10 @@ export async function POST(req: NextRequest) {
     await supabaseAdmin.from("week_interpretations").upsert({
       user_id:        user.id,
       reading_id:     readingId,
-      iso_week:       `prognoza-${zoom}-${dateKey}`,
+      iso_week:       `prognoza-v2-${zoom}-${dateKey}`,
       content:        finalJson,
       transits_used:  [],
-      prompt_version: "prognoza-v1",
+      prompt_version: "prognoza-v2",
       model:          "claude-haiku-4-5-20251001",
     });
 

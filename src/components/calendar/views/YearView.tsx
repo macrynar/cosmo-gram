@@ -1,23 +1,25 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useRef } from "react";
 import type { Season } from "@/lib/astro/layers";
+import type { NatalChart } from "@/lib/astro-types";
 import {
   PgWeatherZone,
   PgNarrZone,
   PgInterpretButton,
   PgWhenBest,
   PgWindowsList,
+  useProgInterpretation,
   PROGNOZA_STYLES,
   summarizePeriodWeather,
   characterLine,
   plSezon,
   arcPath,
-  type ProgInterpretation,
 } from "./prognoza-shared";
 
 type Props = {
   seasons:   Season[];
+  chart:     NatalChart;
   isPremium: boolean;
   readingId: string | null;
   year:      number;
@@ -31,7 +33,7 @@ function toRad(deg: number) { return deg * Math.PI / 180; }
 
 type ArcTip = { name: string; dates: string; desc: string; visible: boolean; x: number; y: number };
 
-export default function YearView({ seasons, isPremium, readingId, year, onDayClick, session }: Props) {
+export default function YearView({ seasons, chart, isPremium, readingId, year, onDayClick, session }: Props) {
   const now     = new Date();
   const curMonth = now.getMonth(); // 0-indexed
 
@@ -39,35 +41,15 @@ export default function YearView({ seasons, isPremium, readingId, year, onDayCli
   // Slow planets carry higher scores, so seasons use a larger reference max.
   const headerWeather = summarizePeriodWeather(seasons, { refMax: 150, denseAt: 3 });
 
-  // AI interpretation
-  const [interp, setInterp] = useState<ProgInterpretation | null>(null);
-  const [interpLoading, setInterpLoading] = useState(false);
-  const [interpError, setInterpError] = useState(false);
-  const [activeChip, setActiveChip] = useState<string | null>(null);
-
-  const fetchInterp = useCallback(async () => {
-    if (!readingId || !session || !isPremium) return;
-    setInterpLoading(true);
-    setInterp(null);
-    setInterpError(false);
-    const dateKey = `${year}-06-15`;
-    try {
-      const res = await fetch("/api/prognoza-interpretation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ reading_id: readingId, zoom: "rok", date: dateKey }),
-      });
-      if (res.ok) setInterp(await res.json() as ProgInterpretation);
-      else setInterpError(true);
-    } catch {
-      setInterpError(true);
-    } finally {
-      setInterpLoading(false);
-    }
-  }, [readingId, session, isPremium, year]);
+  // AI interpretation — auto-restores from server cache, generated on demand (button)
+  const { interp, loading: interpLoading, error: interpError, generate: fetchInterp } =
+    useProgInterpretation({
+      zoom:      "rok",
+      date:      `${year}-06-15`,
+      readingId: readingId ?? undefined,
+      isPremium,
+      session,
+    });
 
   // Interpretation generated on demand (no auto-fetch)
 
@@ -307,10 +289,10 @@ export default function YearView({ seasons, isPremium, readingId, year, onDayCli
       )}
 
       <PgWhenBest
-        whenBest={interp?.whenBest ?? null}
-        activeChip={activeChip}
-        onChip={setActiveChip}
+        chart={chart}
+        horizonDays={365}
         isPremium={isPremium}
+        scopeLabel="tym roku"
       />
 
       <PgWindowsList
