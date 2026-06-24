@@ -20,7 +20,14 @@ export type PendingChart = {
   place:       string;
   lat:         number;
   lng:         number;
+  grammaticalForm: "kobieta" | "mezczyzna" | "neutralna";
 };
+
+const FORM_OPTIONS: { value: "kobieta" | "mezczyzna" | "neutralna"; label: string }[] = [
+  { value: "kobieta",   label: "Kobieta" },
+  { value: "mezczyzna", label: "Mężczyzna" },
+  { value: "neutralna", label: "Neutralnie" },
+];
 
 type GeoResult = { displayName: string; lat: number; lng: number };
 type Step      = 1 | 2 | 3;
@@ -115,6 +122,7 @@ function SignupWizard() {
   const [dropOpen,     setDropOpen]     = useState(false);
   const [geocoding,    setGeocoding]    = useState(false);
   const [s1Error,      setS1Error]      = useState("");
+  const [grammaticalForm, setGrammaticalForm] = useState<"kobieta" | "mezczyzna" | "neutralna">("mezczyzna");
   const debounceRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const placeRef     = useRef<HTMLDivElement>(null);
   const geoResultRef = useRef<GeoResult | null>(null);
@@ -189,6 +197,7 @@ function SignupWizard() {
       name: name.trim(), date,
       time: timeUnknown ? "" : time, timeUnknown,
       place: place.displayName, lat: place.lat, lng: place.lng,
+      grammaticalForm,
     };
     localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
     setStep(2);
@@ -376,6 +385,30 @@ function SignupWizard() {
                         ))}
                       </div>
                     )}
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Jak mamy się do Ciebie zwracać?</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {FORM_OPTIONS.map((opt) => {
+                      const active = grammaticalForm === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setGrammaticalForm(opt.value)}
+                          className="px-2 py-2 rounded-xl text-xs font-medium transition-all duration-300"
+                          style={{
+                            background: active ? "rgba(212,175,55,0.14)" : "rgba(255,255,255,0.03)",
+                            border: `1px solid ${active ? "rgba(212,175,55,0.5)" : "rgba(255,255,255,0.08)"}`,
+                            color: active ? "#F3E5AB" : "#94a3b8",
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 

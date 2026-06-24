@@ -139,6 +139,7 @@ export default function GeneratePage() {
 
   async function handleFormSubmit(data: {
     name: string; date: string; time: string; place: string; lat: number; lng: number; timeUnknown: boolean;
+    grammaticalForm: "kobieta" | "mezczyzna" | "neutralna";
   }) {
     if (session && !subLoading && !isPro && readings.length >= 1) {
       setShowPaywall(true);
@@ -201,6 +202,7 @@ export default function GeneratePage() {
             chart: newChart,
             interpretation: interpretationText,
             dailyReading: "",
+            grammaticalForm: data.grammaticalForm,
           }),
         });
         if (saveRes.ok) {

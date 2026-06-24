@@ -19,6 +19,7 @@ interface Props {
     lat: number;
     lng: number;
     timeUnknown: boolean;
+    grammaticalForm: GrammaticalForm;
   }) => void;
   loading: boolean;
   onDateChange?: (date: string) => void;
@@ -26,10 +27,20 @@ interface Props {
   maxAge?: number;
   nameLabel?: string;
   submitLabel?: string;
+  defaultForm?: GrammaticalForm;
+  showGrammaticalForm?: boolean;
 }
 
-export default function BirthForm({ onSubmit, loading, onDateChange, requireName, maxAge, nameLabel, submitLabel }: Props) {
+type GrammaticalForm = "kobieta" | "mezczyzna" | "neutralna";
+const FORM_OPTIONS: { value: GrammaticalForm; label: string }[] = [
+  { value: "kobieta",   label: "Kobieta" },
+  { value: "mezczyzna", label: "Mężczyzna" },
+  { value: "neutralna", label: "Neutralnie" },
+];
+
+export default function BirthForm({ onSubmit, loading, onDateChange, requireName, maxAge, nameLabel, submitLabel, defaultForm, showGrammaticalForm = true }: Props) {
   const [name, setName]               = useState("");
+  const [grammaticalForm, setGrammaticalForm] = useState<GrammaticalForm>(defaultForm ?? "mezczyzna");
   const [date, setDate]               = useState("");
   const [time, setTime]               = useState("");
   const [timeUnknown, setTimeUnknown] = useState(false);
@@ -131,6 +142,7 @@ export default function BirthForm({ onSubmit, loading, onDateChange, requireName
       lat: loc.lat,
       lng: loc.lng,
       timeUnknown,
+      grammaticalForm,
     });
   }
 
@@ -157,6 +169,35 @@ export default function BirthForm({ onSubmit, loading, onDateChange, requireName
           className={inputClass}
         />
       </div>
+
+      {/* Forma gramatyczna — jak Astrea ma się zwracać */}
+      {showGrammaticalForm && (
+      <div>
+        <label className="flex items-center gap-1 text-xs font-medium text-slate-400 mb-1.5">
+          Jak mamy się do Ciebie zwracać?
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {FORM_OPTIONS.map((opt) => {
+            const active = grammaticalForm === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setGrammaticalForm(opt.value)}
+                className="px-2 py-2 rounded-xl text-xs font-medium transition-all duration-300"
+                style={{
+                  background: active ? "rgba(212,175,55,0.14)" : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${active ? "rgba(212,175,55,0.5)" : "rgba(255,255,255,0.08)"}`,
+                  color: active ? "#F3E5AB" : "#94a3b8",
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      )}
 
       {/* Date + Time — always side by side */}
       <div className="grid grid-cols-2 gap-3">

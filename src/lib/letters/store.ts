@@ -4,6 +4,7 @@
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { generateLetterContent } from "@/lib/letters/generate";
 import { splitSignature } from "@/lib/letters/validate";
+import { asForm, type GrammaticalForm } from "@/lib/letters/form";
 import { getPostHogClient } from "@/lib/posthog-server";
 import type { NatalChart } from "@/lib/astro-types";
 import type { LetterTemplate, UserLetter } from "@/types/letters";
@@ -39,17 +40,18 @@ export async function getActiveLetterTemplates(kind: "letter" | "report" = "lett
   return (data as LetterTemplate[] | null) ?? [];
 }
 
-// Wykres „główny" usera: jawny primary_reading_id, inaczej najstarszy (jak cron horoskopu).
-export async function getPrimaryChartForUser(userId: string): Promise<NatalChart | null> {
+// Wykres „główny" usera + jego forma gramatyczna: jawny primary_reading_id, inaczej najstarszy.
+export async function getPrimaryChartForUser(userId: string): Promise<{ chart: NatalChart; grammaticalForm: GrammaticalForm } | null> {
   const [{ data: readings }, { data: pref }] = await Promise.all([
-    supabaseAdmin.from("readings").select("id, chart_data, created_at").eq("user_id", userId).order("created_at", { ascending: true }),
+    supabaseAdmin.from("readings").select("id, chart_data, created_at, grammatical_form").eq("user_id", userId).order("created_at", { ascending: true }),
     supabaseAdmin.from("user_preferences").select("primary_reading_id").eq("user_id", userId).maybeSingle(),
   ]);
   if (!readings?.length) return null;
   const primaryId = (pref?.primary_reading_id as string | null) ?? null;
-  const byId = new Map(readings.map((r) => [r.id, r.chart_data as NatalChart | null]));
-  const chart = (primaryId ? byId.get(primaryId) : null) ?? (readings[0].chart_data as NatalChart | null);
-  return chart ?? null;
+  const primary = (primaryId ? readings.find((r) => r.id === primaryId) : null) ?? readings[0];
+  const chart = primary.chart_data as NatalChart | null;
+  if (!chart) return null;
+  return { chart, grammaticalForm: asForm(primary.grammatical_form) };
 }
 
 export interface GenerateResult {
@@ -73,10 +75,10 @@ export async function generateAndStore(userLetterId: string, opts?: { eventConte
   const template = await getLetterTemplate(row.letter_slug);
   if (!template) return { generated: false, reason: "no_template" };
 
-  const chart = await getPrimaryChartForUser(row.user_id);
-  if (!chart) return { generated: false, reason: "no_chart" };
+  const primary = await getPrimaryChartForUser(row.user_id);
+  if (!primary) return { generated: false, reason: "no_chart" };
 
-  const gen = await generateLetterContent({ template, chart, userId: row.user_id, eventContext: opts?.eventContext });
+  const gen = await generateLetterContent({ template, chart: primary.chart, userId: row.user_id, eventContext: opts?.eventContext, grammaticalForm: primary.grammaticalForm });
 
   await supabaseAdmin
     .from("user_letters")
