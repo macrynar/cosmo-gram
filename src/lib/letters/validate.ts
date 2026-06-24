@@ -20,16 +20,10 @@ export interface LetterValidation {
 // Predykcje konkretnych zdarzeń — zakazane (introspekcja, nie wyrocznia).
 const PREDICTION_RE = /\b(spotkasz|zostaniesz|wydarzy się|czeka cię|poznasz kogoś|będziesz mieć)\b/i;
 
-// Formy rodzajowe w 2. osobie — zakazane (forma neutralna). Czasowniki czasu
-// przeszłego/trybu przypuszczającego (-łeś/-łaś/-łbyś/-łabyś) + slash-formy.
-// Granice słowa przez lookaround na \p{L} — \b zawodzi na polskich diakrytykach (ś, ć…).
-const GENDERED_RE = /(?<!\p{L})\p{L}*(łeś|łaś|łbyś|łabyś)(?!\p{L})/u;
+// Rodzaj dopasowujemy do formy gramatycznej usera (męska/żeńska/neutralna), więc
+// formy rodzajowe są OK. Zakazane są tylko slash-formy („gotowy/a", „byłeś/aś").
+// Granica słowa przez lookaround na \p{L} — \b zawodzi na polskich diakrytykach.
 const SLASH_FORM_RE = /(?<!\p{L})\p{L}+\/\p{L}+(?!\p{L})/u;
-
-/** Czy tekst zawiera formę rodzajową w 2. osobie (do pętli korekty). */
-export function hasGenderedForm(text: string): boolean {
-  return GENDERED_RE.test(text) || SLASH_FORM_RE.test(text);
-}
 
 // Żargon, którego nie wolno w ciele listu. Podpis fundamentu (kursywa na końcu)
 // jest wyłączony z tego sprawdzenia. Słońce/Księżyc świadomie pominięte
@@ -78,7 +72,7 @@ export function validateLetterContent(
   if (!signature) reasons.push("brak podpisu fundamentu");
   if (!endsLikeSentence(body)) reasons.push("ucięte zdanie w ciele");
   if (PREDICTION_RE.test(body)) reasons.push("predykcja konkretnego zdarzenia");
-  if (GENDERED_RE.test(body) || SLASH_FORM_RE.test(body)) reasons.push("forma rodzajowa");
+  if (SLASH_FORM_RE.test(body)) reasons.push("slash-forma");
 
   // Listy eventowe muszą cytować tranzyt (np. „Saturn wraca…") — nazwa planety w ciele dozwolona.
   if (!opts.isEvent) {

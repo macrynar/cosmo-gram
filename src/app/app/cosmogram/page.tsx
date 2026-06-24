@@ -40,6 +40,7 @@ type Tab = "natal" | "child";
 type BirthFormData = {
   name: string; date: string; time: string; place: string;
   lat: number; lng: number; timeUnknown: boolean;
+  grammaticalForm: "kobieta" | "mezczyzna" | "neutralna";
 };
 
 function ageFromDate(dateStr: string): number | null {
@@ -281,6 +282,7 @@ export default function CosmogramPage() {
             name: data.name.trim() || undefined,
             birthDate: data.date, birthTime: data.time, birthPlace: data.place,
             chart: newChart, interpretation: "", dailyReading: "",
+            grammaticalForm: data.grammaticalForm,
           }),
         });
         if (saveRes.ok) {
@@ -711,6 +713,7 @@ export default function CosmogramPage() {
                   maxAge={17}
                   nameLabel="Imię dziecka"
                   submitLabel="Oblicz kosmogram"
+                  showGrammaticalForm={false}
                 />
               </motion.div>
             )}

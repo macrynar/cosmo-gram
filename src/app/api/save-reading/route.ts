@@ -22,9 +22,13 @@ export async function POST(req: NextRequest) {
     interpretation: string;
     dailyReading: string;
     promptVersionId?: string;
+    grammaticalForm?: string;
   };
 
   const name = body.name?.trim() || `${body.birthPlace.split(",")[0]} · ${body.birthDate}`;
+  const grammaticalForm = ["kobieta", "mezczyzna", "neutralna"].includes(body.grammaticalForm ?? "")
+    ? body.grammaticalForm
+    : "mezczyzna";
 
   const { data: inserted, error } = await supabaseAdmin.from("readings").insert({
     user_id: user.id,
@@ -35,6 +39,7 @@ export async function POST(req: NextRequest) {
     chart_data: body.chart,
     interpretation: body.interpretation,
     daily_reading: body.dailyReading,
+    grammatical_form: grammaticalForm,
     ...(body.promptVersionId ? { prompt_version_id: body.promptVersionId } : {}),
   }).select("id").single();
 

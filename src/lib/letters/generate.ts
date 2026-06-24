@@ -7,6 +7,7 @@ import { resolvePromptVersion, renderTemplate } from "@/lib/promptResolver";
 import { resolvePlacements } from "@/lib/letters/resolver";
 import { correctLetterText } from "@/lib/letters/correct";
 import { validateLetterContent, type LetterValidation } from "@/lib/letters/validate";
+import { formDirective, DEFAULT_FORM, type GrammaticalForm } from "@/lib/letters/form";
 import type { NatalChart } from "@/lib/astro-types";
 import type { LetterTemplate } from "@/types/letters";
 
@@ -38,15 +39,18 @@ export async function generateLetterContent(params: {
   modelOverride?: string;
   /** Listy eventowe: deterministyczne fakty tranzytu do zacytowania (z events.ts). */
   eventContext?: string;
+  /** Forma gramatyczna usera (rodzaj copy). Domyślnie męska. */
+  grammaticalForm?: GrammaticalForm;
 }): Promise<GeneratedLetter> {
   const { template, chart, userId } = params;
+  const grammaticalForm = params.grammaticalForm ?? DEFAULT_FORM;
 
   const resolved = resolvePlacements(chart, template.placement_inputs);
   const eventContext = params.eventContext?.trim();
-  const placementsText = [resolved.text, eventContext].filter(Boolean).join("\n\n");
-  if (!placementsText.trim()) {
+  if (!resolved.text.trim() && !eventContext) {
     throw new LetterGenerationError(`Brak fundamentu dla ${template.slug}`);
   }
+  const placementsText = [formDirective(grammaticalForm), resolved.text, eventContext].filter(Boolean).join("\n\n");
 
   const version = await resolvePromptVersion(template.prompt_slug, userId);
   if (!version) {
@@ -79,8 +83,8 @@ export async function generateLetterContent(params: {
       mockFixture,
     });
 
-    // Korekta językowa (gender-neutral) PRZED walidacją — wzór z natalu.
-    const content = await correctLetterText((raw ?? "").trim());
+    // Korekta językowa (egzekwuje wybraną formę) PRZED walidacją — wzór z natalu.
+    const content = await correctLetterText((raw ?? "").trim(), grammaticalForm);
     validation = validateLetterContent(content, {
       wordMin: template.word_min,
       wordMax: template.word_max,
