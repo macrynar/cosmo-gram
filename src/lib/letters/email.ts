@@ -8,7 +8,9 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 import { getLetterTemplate, buildPreview } from "@/lib/letters/store";
 
 const FROM = process.env.RESEND_FROM ?? "Cosmogram <hello@cosmo-gram.com>";
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.cosmo-gram.com";
+// Maile ZAWSZE wskazują na produkcję — NIGDY NEXT_PUBLIC_APP_URL (bywa localhostem
+// przy lokalnym/ręcznym uruchomieniu). Override tylko świadomie przez EMAIL_APP_URL.
+const BASE_URL = process.env.EMAIL_APP_URL ?? "https://www.cosmo-gram.com";
 
 export interface SendLetterEmailResult {
   sent: boolean;
