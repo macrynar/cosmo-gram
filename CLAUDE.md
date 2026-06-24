@@ -1,141 +1,58 @@
-# CLAUDE.md - skeleton dla repo Cosmogram
+# Cosmogram — instrukcja dla Claude Code
 
-> Skopiuj zawartość poniżej do pliku `CLAUDE.md` w korzeniu repo Cosmogram. Claude Code automatycznie go odczyta przy starcie i będzie respektował te instrukcje przez całą sesję.
+Cosmogram to mobilna appka **AI + astrologia** dla rynku PL (domena **www.cosmo-gram.com**). Kosmogram natalny jako centrum wartości; kalendarz tranzytów, Cosmo Match, Cosmo Chat i Listy od Astrei budują retencję; monetyzacja = subskrypcja premium (Stripe) + pakiety czatu.
 
-> Linia oddzielająca: poniżej kopiuj wszystko aż do końca pliku.
+**Zanim zaczniesz:** przeczytaj `docs/PROJECT-STATUS.md` — żywe źródło prawdy (stack, wdrożone funkcje, schemat DB, env vars, znane ograniczenia, release log, priorytety). Ten plik (CLAUDE.md) to tylko reguły pracy.
 
----
+## Stack (decyzje podjęte, NIE re-litygować)
 
-# Cosmogram - Instrukcja dla Claude Code
+- **Frontend:** Next.js 16 **App Router** + React 19 + TypeScript + Tailwind 4 + Framer Motion. Mobile-first PWA.
+- **Backend:** **Next.js API routes** (`src/app/api/*`, ~70 endpointów) — brak osobnego serwera, brak Supabase Edge Functions.
+- **Dane/Auth:** Supabase (Postgres + Auth + **RLS**). Migracje w `supabase/migrations/`.
+- **AI:** Anthropic — **Haiku 4.5** (`claude-haiku-4-5-20251001`, szybkie) + **Sonnet 4.6** (`claude-sonnet-4-6`, jakość). Klucz `ANTHROPIC_API_KEY` **tylko server-side**. Każdy endpoint AI ma deterministyczny fallback.
+- **Astro:** `astronomy-engine` + `tz-lookup`. System domów: **Equal House** (`calculateEqualHouses()` w `src/lib/chart-engine.ts`).
+- **Reszta:** Stripe (subskrypcja + webhook), Resend (`hello@cosmo-gram.com`), PostHog, Sentry, Upstash (rate limit). Hosting + Cron: **Vercel**.
 
-Jesteś developerem pracującym nad Cosmogram - aplikacją łączącą astrologię i AI dla polskiego rynku. Mac (właściciel projektu) używa Claude Code w Visual Studio do vibe codingu pierwszej wersji w 7 dni.
+## Gdzie co jest
 
-## Najważniejsze: zanim cokolwiek zrobisz
+- `src/app/*` — routes (kebab-case); `src/app/app/*` — strefa zalogowana; `src/app/api/*` — backend.
+- `src/lib/*` — logika: `chart-engine.ts`, `astro/`, `calendar/`, `letters/`, `prompts/`, walidatory, `supabase*.ts`.
+- `src/components/*` — UI (PascalCase). `src/emails/*` — szablony React Email.
+- **Prompty AI** żyją w rejestrze w DB (resolwowane przez `src/lib/promptResolver.ts`, edytowane w panelu admina + `/api/admin-prompt`) — NIE hardcoduj ich w kodzie.
 
-1. Przeczytaj `docs/spec.md` - pełna specyfikacja produktu, personas, funkcje, data model
-2. Przeczytaj `docs/prompts.md` - wszystkie prompty AI (one są core produktu, nie tylko dodatek)
-3. Przeczytaj `docs/dev-guide.md` - tech stack, folder structure, env vars, anti-patterns
-4. Przeczytaj `docs/plan.md` - 7-dniowy harmonogram, krok po kroku co robimy każdego dnia
-5. Sprawdź `docs/PROGRESS.md` - co już zostało zrobione w poprzednich dniach (jeśli plik istnieje)
+## Konwencje
 
-## Zasady pracy z Macem
+- Komponenty/typy: PascalCase. Hooki: `useCoś`. API routes/foldery: kebab-case. DB: snake_case. Env: SCREAMING_SNAKE_CASE.
+- **Całe copy w UI: polski.** Głos „Astrei" — gender-neutral, ciepły, „symboliczne lustro", nie wyrocznia.
+- Output AI renderuj `react-markdown`. Zapis readingu zawsze z `ai_prompt_version`. Daily reading cache 24h (nie generuj 2× w 24h).
+- Commity krótkie, po polsku („Dodaj onboarding flow", „Fix paywall trigger"). Nowa migracja zamiast edycji wdrożonej.
 
-- **Mac mówi wprost i krótko.** Big picture przed detalami. Bez ścian tekstu.
-- **Nie używaj żargonu i akronimów bez wyjaśnienia.** "PWA" - tak, ale wytłumacz raz. "MVP", "P0/P1", "RAG", "TBD" - unikaj.
-- **Kwestionuj jego decyzje aktywnie.** Mac sam o tym pisał - ma tendencję do skrótów myślowych. Jeśli widzisz że plan ma dziurę - powiedz to wprost.
-- **Daj opcje, nie jedną drogę.** Gdy są trade-offy techniczne - pokaż 2-3 warianty, niech on wybierze.
-- **Pilnuj fokusu.** Jeden dzień = jeden focus. Nie próbuj robić wszystkiego naraz.
-- **Mniej formy, więcej dynamiki.** Nadmierna struktura go drażni. Krótkie commity, krótkie messages.
+## Jak pracować z Makiem (skrót)
 
-## Tech stack (decisions made, NIE re-litygować)
+Big picture przed detalami, bez ścian tekstu. **Kwestionuj wprost** gdy plan ma dziurę. Przy trade-offach daj 2-3 opcje, nie jedną drogę. Update po kroku: `✓ zrobione / → teraz / ? pytanie`.
 
-```
-Frontend:   React 18 + Vite 5 + TypeScript + Tailwind 3 + shadcn/ui
-            Zustand (state), TanStack Query (server state)
-            PWA - service worker + manifest, Web Push API
-            Mobile-first, no SSR
+## Always / Ask / Never
 
-Backend:    Supabase (Postgres + Auth + Edge Functions Deno + Storage)
-            No custom server. Edge functions dla AI i astro.
+- **Zawsze sam:** implementacja w ramach stacku, naming, struktura folderów, wybór biblioteki, **jakość interpretacji astro** (pisz wg best practices: trafnie, angażująco, personalnie — astrolog nie jest w procesie, kontrolę jakości Mac robi poza Claude).
+- **Pytaj Maca:** zmiana produktu (dodanie/usunięcie feature), spec niezgodny z rzeczywistością techniczną.
+- **NIGDY bez zgody Maca:** zmiana **pricingu / logiki Stripe**; zmiana **copy / głosu** widocznego dla usera.
 
-AI:         Anthropic Claude Sonnet 4.6 (primary)
-            OpenAI GPT-4o (fallback)
-            API keys TYLKO w edge functions, NIGDY frontend
+## Gotchas — tu Claude już poległ (żywa lista, dopisuj)
 
-Astro:      Swiss Ephemeris (swisseph-wasm lub pyswisseph)
-            System domów: Equal House (domy równe) — calculateEqualHouses() w src/lib/chart-engine.ts
+- **Auth/redirecty:** używaj domeny **www** (apex → www psuł Google login). Linki w mailach: **zawsze prod URL** `www.cosmo-gram.com`, nigdy `localhost`.
+- **JSON z AI bywa zepsuty** — przepuść przez `src/lib/jsonRepair.ts`, retry + deterministyczny fallback. Nie zakładaj poprawnego JSON.
+- **Walidatory tekstu** muszą obsłużyć cudzysłowy typograficzne (`„ "`), nie tylko `"`.
+- **iOS:** inputy `date`/`time` wystają bez resetu `appearance`. Sprawdzaj na mobile.
+- **Czas urodzenia nieznany** → ASC/domy liczone na południe, `house = null`. Nie prezentuj domów jako pewnych.
+- **Astro ≠ Astro.com?** Pokaż Macowi tabelę porównawczą zanim ruszysz dalej (zwykle system domów / timezone / wersja efemeryd).
+- **Słaby output AI** → nie zmieniaj kodu, **zmień prompt**. Chat to structured prompting z kontekstem natal+tranzyty, **nie** „RAG".
 
-Geocoding:  Google Places API
-Payments:   Stripe Subscriptions + Checkout + Tax
-Analytics:  PostHog
-Email:      Resend
-Hosting:    Vercel + Supabase
-```
+## Weryfikacja (definicja „done")
 
-## Konwencje kodu
+1. Przed większą zmianą: w 1-2 zdaniach opisz **jak ją zweryfikujesz**.
+2. Zanim powiesz „działa": **`npm run typecheck` + `npm run lint` + `npm run test` (vitest) zielone.** Zmiana w astro/walidatorach → dopisz/odpal test.
+3. Kryterium gotowości: zielone checki, feature działa w przeglądarce, zero nowych błędów w konsoli.
 
-- **Komponenty React:** PascalCase (`NatalChartView.tsx`)
-- **Hooki:** `useCoś` (`useNatalChart.ts`)
-- **Edge functions:** kebab-case (`ai-natal/`, `astro-compute/`)
-- **DB tables/columns:** snake_case (`birth_data`, `ai_prompt_version`)
-- **TypeScript types:** PascalCase (`type BirthData = ...`)
-- **Env vars:** SCREAMING_SNAKE_CASE
-- **Routes:** kebab-case (`/astro-match`, `/chat`)
-- **CSS:** Tailwind utility-first
-- **Wszystkie copy w UI:** polski
-- **Commit messages:** krótkie, po polsku, w stylu "Dodaj onboarding flow", "Fix paywall trigger"
+## Utrzymanie
 
-## Workflow dla każdego dnia
-
-1. **Start dnia:** przeczytaj odpowiednią sekcję w `docs/plan.md` (Dzień X)
-2. **Zacznij od pytania jeśli coś niejasne** - nie zgaduj, dopytaj Maca
-3. **Pracuj nad zadaniami z planu w kolejności** - nie skacz
-4. **Po każdym dużym kroku - commituj** (mniej więcej co 1-2 godziny pracy)
-5. **Test po każdej feature** - nie wierz że działa, sprawdź że działa
-6. **Koniec dnia:** zaktualizuj `docs/PROGRESS.md` swoimi notatkami (co zrobione, decyzje, problemy, koszty tokenów jeśli relewantne)
-7. **Powiadom Maca:** krótko, big picture, "Dzień X gotowy, działa X, Y, Z, mam pytanie o A".
-
-## Anti-patterns (NIE rób tych rzeczy)
-
-- API keys w frontendzie (tylko `VITE_*` public)
-- AI calls bezpośrednio z frontend (zawsze przez edge function)
-- AI calls bez cache tam gdzie się da (daily reading musi cache 24h)
-- AI output bez markdown rendering (użyj `react-markdown`)
-- Generowanie tego samego readingu dwa razy w 24h
-- Hardcodowanie promptów w kodzie (używaj `packages/prompts/` lub `docs/prompts.md` jako source of truth)
-- Brak `ai_prompt_version` przy zapisie reading
-- "RAG" jako nazwa architektury chata (to NIE jest RAG, to structured prompting z natal+transit context)
-- Server-side rendering / server components (to jest PWA, client-rendered)
-- Native mobile (nie teraz, dopiero przy 1000+ płatnych userów)
-
-## Co robić gdy coś idzie źle
-
-- **AI generuje gówniany output** → nie zmieniaj kodu, zmień prompt. Popraw interpretację zgodnie z best practices astrologicznymi (ma być trafna, angażująca i personalna), zapisz problem w PROGRESS.md. Kontrolę jakości treści Mac robi poza Claude.
-- **Astro compute się nie zgadza z Astro.com** → pokaż Macowi tabelę porównawczą zanim ruszysz dalej. Może być źle skonfigurowany system domów, timezone, albo wersja efemeryd.
-- **Stripe webhook nie działa** → sprawdź Stripe Dashboard logs + Supabase function logs. Często to webhook secret mismatch.
-- **PWA install nie pokazuje się** → Lighthouse PWA audit, sprawdź manifest.json + service worker.
-- **Push notifications nie działają na iOS** → potwierdzone, działa tylko jeśli user zainstalował PWA jako appkę. Nie próbuj fix.
-
-## Pytania do Maca - kiedy pytać, kiedy decydować sam
-
-**Decyduj sam:**
-- Implementacja techniczna w ramach stacku
-- Naming komponentów, struktura folderów
-- Wybór biblioteki gdy są 2-3 podobne (wybierz najbardziej popularną/maintainowaną)
-- Drobne optymalizacje
-- **Jakość interpretacji astrologicznej** — pisz prompty i treść zgodnie z best practices astrologicznymi: trafne, angażujące, personalne. Astrolog nie jest częścią procesu; kontrolę jakości Mac robi poza Claude.
-
-**Zapytaj Maca:**
-- Zmiana w produkcie (dodanie/usunięcie feature)
-- Zmiana w pricing / monetyzacji
-- Zmiana w copy / voice
-- Sytuacja gdzie spec się nie zgadza z rzeczywistością techniczną
-
-**Zapytaj Maca + zaproponuj 2-3 opcje:**
-- Decyzja architektoniczna z trade-offami
-- Wybór między 2 podejściami z różnymi konsekwencjami
-
-## Format komunikacji z Macem
-
-Po skończonej sesji / istotnym kroku - krótki update:
-
-```
-✓ [Co zrobione]
-→ [Co teraz]
-? [Pytanie jeśli jest]
-```
-
-NIE: ściana tekstu, listy bullet na 30 pozycji, wyjaśnianie procesu krok po kroku jeśli nie pytał.
-
-## Aktualizacja tego pliku
-
-Jeśli w trakcie pracy okaże się że coś tu jest złe lub brakuje czegoś - **dopisz to do tego pliku**. CLAUDE.md ewoluuje z projektem.
-
-## Linki do pełnych dokumentów
-
-- `docs/spec.md` - pełna specyfikacja
-- `docs/prompts.md` - prompty AI
-- `docs/dev-guide.md` - tech stack i konwencje
-- `docs/plan.md` - 7-dniowy harmonogram
-- `docs/brief.md` - kontekst biznesowy projektu
-- `docs/PROGRESS.md` - dziennik postępu (tworzony w trakcie)
+CLAUDE.md ewoluuje — jeśli coś tu jest złe lub trafiasz na nowy gotcha, **dopisz go**. Stan funkcji/DB/release trzymaj w `docs/PROJECT-STATUS.md`, nie tutaj.
