@@ -316,10 +316,10 @@ export default function HeroSky() {
           background:"radial-gradient(closest-side,rgba(11,9,18,.62) 0%,rgba(11,9,18,.35) 55%,transparent 100%)",
         }} />
         <h1 style={{ fontSize:"clamp(38px,6.5vw,72px)",fontWeight:700,lineHeight:1.05,letterSpacing:"-.02em",marginBottom:28 }}>
-          <span className="landing-reveal landing-d1" style={{ display:"block" }}>Twój głęboki portret,</span>
+          <span className="landing-reveal landing-d1" style={{ display:"block" }}>Horoskop, który</span>
           <span className="landing-reveal landing-d2" style={{ display:"block" }}>
-            odczytany{" "}
-            <span style={{ background:"var(--grad-text)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text" }}>z&nbsp;nieba</span>
+            <span style={{ background:"var(--grad-text)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text" }}>naprawdę</span>
+            {" "}jest o&nbsp;Tobie.
           </span>
         </h1>
         <p className="landing-reveal landing-d3" style={{ fontSize:"clamp(16px,1.6vw,19.5px)",lineHeight:1.6,color:"var(--text-secondary)",maxWidth:660,margin:"0 auto 44px" }}>
