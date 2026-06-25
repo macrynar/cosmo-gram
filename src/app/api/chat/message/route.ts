@@ -5,6 +5,7 @@ import { calculateChart } from "@/lib/chart-engine";
 import type { NatalAspect, ChartNodes } from "@/lib/chart-engine";
 import { hasActiveSubscription, getUserSubscription } from "@/lib/subscription";
 import type { NatalChart } from "@/lib/astro-types";
+import { getPrimaryReadingId } from "@/lib/readings";
 import type { SystemBlock } from "@/lib/deepseek";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { STYLE_BLOCK } from "@/lib/moduleSpecs";
@@ -452,14 +453,18 @@ export async function POST(req: NextRequest) {
           .single();
         if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
       } else {
-        const { data } = await supabaseAdmin
-          .from("readings")
-          .select("chart_data, name")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-        if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
+        // Brak jawnego wyboru → profil główny (primary_reading_id, inaczej najstarszy),
+        // spójnie z resztą aplikacji — NIE ostatnio dodany.
+        const primaryId = await getPrimaryReadingId(user.id);
+        if (primaryId) {
+          const { data } = await supabaseAdmin
+            .from("readings")
+            .select("chart_data, name")
+            .eq("id", primaryId)
+            .eq("user_id", user.id)
+            .single();
+          if (data?.chart_data) { chartData = data.chart_data as NatalChart; chartPersonName = data.name; }
+        }
       }
 
       if (chartData) {
