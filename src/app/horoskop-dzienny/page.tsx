@@ -222,7 +222,7 @@ export default function DailyHoroscopePage() {
               Żeby wygenerować horoskop dzienny, potrzebujemy co najmniej jednego zapisanego kosmogramu.
             </p>
             <Link
-              href="/generate"
+              href="/app/cosmogram"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm bg-gradient-to-r from-amber-700 to-amber-500 text-white shadow-lg shadow-amber-950/40 hover:shadow-amber-800/40 transition-all"
             >
               <CosmoIcon className="w-4 h-4" />
@@ -240,7 +240,7 @@ export default function DailyHoroscopePage() {
                 onSelect={handleSelect}
                 onDelete={handleDelete}
                 onRename={handleRename}
-                onNew={() => router.push("/generate")}
+                onNew={() => router.push("/app/cosmogram")}
                 newLabel="Nowy kosmogram"
               />
             </div>

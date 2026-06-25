@@ -240,7 +240,7 @@ export default function DailyHoroscopePage() {
                 onSelect={handleSelect}
                 onDelete={handleDelete}
                 onRename={handleRename}
-                onNew={() => router.push("/generate")}
+                onNew={() => router.push("/app/cosmogram")}
                 newLabel="Nowy kosmogram"
               />
             </div>

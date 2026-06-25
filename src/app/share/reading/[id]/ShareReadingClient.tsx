@@ -49,7 +49,7 @@ function InlineCTA() {
         Te 8 rozdziałów powstało z jednej daty urodzenia. Zobacz swoje.
       </p>
       <Link
-        href="/generate"
+        href="/signup"
         className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all shadow-lg"
         style={{
           background: "linear-gradient(135deg, rgba(212,175,55,0.92), rgba(197,160,89,0.92))",
@@ -71,7 +71,7 @@ function EndCTA() {
         Twoje niebo wygląda inaczej — sprawdź jak.
       </p>
       <Link
-        href="/generate"
+        href="/signup"
         className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all"
         style={{
           background: "rgba(212,175,55,0.12)",
@@ -229,7 +229,7 @@ export default function ShareReadingClient({
         <ShareCTA
           accent="gold"
           text="Chcesz poznać swój kosmogram?"
-          href="/generate"
+          href="/signup"
           label="Stwórz swój kosmogram — bezpłatnie"
           icon={<CosmoIcon className="w-4 h-4" />}
         />
