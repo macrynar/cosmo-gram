@@ -102,19 +102,31 @@ export default function ModuleNav({ visibleIds, allIds, shortNames }: Props) {
     document.dispatchEvent(new CustomEvent("cosmo-module-expanded", { detail: { id } }));
   }
 
-  // Compute underline position relative to the sticky container
+  // Active-tab underline. Positioned with offsetLeft/offsetWidth relative to the
+  // (relative) tab strip and rendered *inside* it, so it scrolls together with the
+  // tabs — the indicator can never drift away from its chapter when the strip is
+  // horizontally scrolled (8 chapters overflow on narrow widths).
   useEffect(() => {
-    const currentId = activeId ?? visibleIds[0] ?? null;
-    if (!currentId || !containerRef.current) { setUnderline(null); return; }
-    const btn = buttonRefs.current.get(currentId);
-    if (!btn) { setUnderline(null); return; }
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const btnRect       = btn.getBoundingClientRect();
-    setUnderline({
-      left:  btnRect.left - containerRect.left,
-      width: btnRect.width,
-    });
+    const update = () => {
+      const currentId = activeId ?? visibleIds[0] ?? null;
+      const btn = currentId ? buttonRefs.current.get(currentId) : null;
+      if (!btn) { setUnderline(null); return; }
+      setUnderline({ left: btn.offsetLeft, width: btn.offsetWidth });
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, [activeId, visibleIds]);
+
+  // Keep the active tab in view: when reading scrolls the active chapter past the
+  // edge of the (overflowing) strip, bring it back horizontally — so the last
+  // chapters (incl. the 8th) are reachable and the indicator never sits off-screen.
+  useEffect(() => {
+    if (!activeId) return;
+    buttonRefs.current.get(activeId)?.scrollIntoView({
+      behavior: "smooth", inline: "nearest", block: "nearest",
+    });
+  }, [activeId]);
 
   if (visibleIds.length === 0) return null;
 
@@ -128,22 +140,8 @@ export default function ModuleNav({ visibleIds, allIds, shortNames }: Props) {
         backdropFilter: "blur(16px)",
       }}
     >
-      {/* Underline centered on active tab */}
-      <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "rgba(224,181,102,0.07)" }}>
-        {underline && (
-          <div
-            className="absolute h-full transition-all duration-400"
-            style={{
-              left:       underline.left,
-              width:      underline.width,
-              background: "rgba(224,181,102,0.70)",
-            }}
-          />
-        )}
-      </div>
-
       {/* Chapter tabs */}
-      <div ref={navRef} className="flex items-center gap-1 overflow-x-auto scrollbar-none max-w-[70ch] mx-auto">
+      <div ref={navRef} className="relative flex items-center gap-1 overflow-x-auto scrollbar-none max-w-[70ch] mx-auto">
         {ids.map((id, i) => {
           const isVisible = visibleIds.includes(id);
           const isActive  = id === activeId;
@@ -181,6 +179,19 @@ export default function ModuleNav({ visibleIds, allIds, shortNames }: Props) {
             </button>
           );
         })}
+
+        {/* Active-tab underline — lives inside the scroll content so it always tracks
+            its chapter, even when the strip is horizontally scrolled. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute bottom-0 h-px transition-all duration-300"
+          style={{
+            left:       underline?.left ?? 0,
+            width:      underline?.width ?? 0,
+            opacity:    underline ? 1 : 0,
+            background: "rgba(224,181,102,0.70)",
+          }}
+        />
       </div>
     </div>
   );
