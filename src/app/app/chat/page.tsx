@@ -349,9 +349,13 @@ export default function ChatPage() {
     if (!session) return;
     const res = await fetch("/api/get-all-charts", { headers: authHeader() });
     if (!res.ok) return;
-    const { charts: data } = await res.json() as { charts: ChartOption[] };
+    const { charts: data, primaryReadingId } = await res.json() as { charts: ChartOption[]; primaryReadingId: string | null };
     setCharts(data ?? []);
-    if (data?.length > 0 && !selectedChart) setSelectedChart(data[0]);
+    // Domyślny czat = profil główny (gwiazdka = primary_reading_id), nie ostatnio dodany.
+    if (data?.length > 0 && !selectedChart) {
+      const primary = data.find(c => c.type === "natal" && c.id === primaryReadingId);
+      setSelectedChart(primary ?? data[0]);
+    }
   }, [session, authHeader, selectedChart]);
 
   const loadMatches = useCallback(async () => {

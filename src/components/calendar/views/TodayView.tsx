@@ -55,22 +55,23 @@ export default function TodayView({
   const { interp, loading: interpLoading, error: interpError, generate: fetchInterp } =
     useProgInterpretation({ zoom: "dzis", date: todayStr, readingId, isPremium, session });
 
-  // Day timeline (top 4 transits by score — detailed view, all planets)
-  const topTransits = transits.slice(0, 4);
+  // Day timeline — budowany z TYCH SAMYCH szybkich okien co interpretacja (dayWindows),
+  // więc cichy dzień czyta się jako cichy w obu miejscach. Wolne planety (Uran/Neptun/
+  // Saturn) ruszają się <0.1°/dzień i jako dzienne „napięcie/wsparcie" były mylące.
   const PLANET_GLYPH: Record<string, string> = {
     "Słońce": "☉", "Księżyc": "☽", "Merkury": "☿", "Wenus": "♀", "Mars": "♂",
     "Jowisz": "♃", "Saturn": "♄", "Uran": "♅", "Neptun": "♆", "Pluton": "♇",
   };
   const nowHour  = now.getHours() + now.getMinutes() / 60;
   const nowPct   = Math.round((nowHour / 24) * 100);
-  const dayMoments = topTransits.map((t, i) => {
+  const dayMoments = dayWindows.slice(0, 4).map((w, i) => {
     const spreadPcts = [20, 38, 58, 76];
     return {
       x:    spreadPcts[i] ?? 20 + i * 18,
-      glyph: PLANET_GLYPH[t.transitPlanet] ?? t.transitPlanet[0],
-      kind:  (t.favorable ? "harm" : "tense") as "harm" | "tense",
-      word:  t.favorable ? "wsparcie" : "napięcie",
-      desc:  `${t.transitPlanet} ${t.aspectType} ${t.natalPoint} — orb ${t.orbDegrees.toFixed(1)}°`,
+      glyph: PLANET_GLYPH[w.transitPlanet] ?? w.transitPlanet[0],
+      kind:  (w.favorable ? "harm" : "tense") as "harm" | "tense",
+      word:  w.favorable ? "wsparcie" : "napięcie",
+      desc:  `${w.transitPlanet} – ${w.natalPoint}`,
     };
   });
 
@@ -99,7 +100,9 @@ export default function TodayView({
           <b>{title}</b>
         </div>
         <PgTimelineDay moments={dayMoments} nowPct={nowPct} />
-        <div className="pg-hint">Złoto = wsparcie · terakota = napięcie · najedź po szczegół</div>
+        {dayMoments.length > 0 && (
+          <div className="pg-hint">Złoto = wsparcie · terakota = napięcie · najedź po szczegół</div>
+        )}
         {!interp && (
           <PgInterpretButton
             label="Generuj interpretację dnia"

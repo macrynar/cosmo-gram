@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { getPrimaryReadingId } from "@/lib/readings";
 
 export type ChartOption = {
   id: string;
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
   const token = authHeader.replace("Bearer ", "");const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
   if (authError || !user) return NextResponse.json({ error: "Nieprawidłowy token" }, { status: 401 });
 
-  const [{ data: readings }, { data: children }] = await Promise.all([
+  const [{ data: readings }, { data: children }, primaryReadingId] = await Promise.all([
     supabaseAdmin
       .from("readings")
       .select("id, name, birth_date, birth_place, chart_data")
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(20),
+    getPrimaryReadingId(user.id),
   ]);
 
   const charts: ChartOption[] = [
@@ -48,5 +50,5 @@ export async function GET(req: NextRequest) {
     })),
   ];
 
-  return NextResponse.json({ charts });
+  return NextResponse.json({ charts, primaryReadingId });
 }

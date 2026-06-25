@@ -205,7 +205,10 @@ export async function correctCalendarText(text: string, task: string): Promise<s
       model,
       system:    CALENDAR_CORRECTION_SYSTEM,
       messages:  [{ role: "user", content: text }],
-      maxTokens: Math.min(Math.ceil(text.length * 1.2 / 4), 800),
+      // Korekta jest ~tej samej długości co wejście. Polski jest gęstszy tokenowo
+      // (~2.5–3 znaki/token), więc dawne /4 zaniżało budżet i URYWAŁO tekst w połowie
+      // zdania. text.length/2 to bezpieczna górna granica tokenów + zapas.
+      maxTokens: Math.min(Math.ceil(text.length / 2) + 256, 2048),
       task:      `cal-correction:${task}`,
     });
     if (!corrected || corrected.length > text.length * 2) return text; // sanity
