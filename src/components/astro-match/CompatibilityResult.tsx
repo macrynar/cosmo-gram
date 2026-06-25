@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { MessageCircle, Flame, Moon, Compass, Feather, Swords, Infinity as InfinityIcon, Sparkles, Sun, Users, ArrowRight, type LucideIcon } from "lucide-react";
+import { MessageCircle, Flame, Moon, Compass, Feather, Swords, Infinity as InfinityIcon, Sparkles } from "lucide-react";
 import type { CompatibilityResult, CompatibilityCategory } from "@/app/api/astro-match/route";
 import SynastryWheel, { SynastryLegend, PLANET_SYMBOL, ASPECT_TYPE_LABEL } from "@/components/match/SynastryWheel";
 import ModuleCard from "@/components/generate/ModuleCard";
@@ -28,8 +28,6 @@ const MATCH_STYLES = `
 @media (prefers-reduced-motion: reduce) {
   .mx-hf,.mx-hfglow { animation: none!important; }
 }
-.mx-actions { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:22px; }
-@media (max-width:640px) { .mx-actions { grid-template-columns:1fr; } }
 `;
 
 // ─── Tier mapping ─────────────────────────────────────────────────────────────
@@ -240,48 +238,6 @@ function buildMatchModule(
   };
 }
 
-// ─── Karta „następny krok" (most do reszty aplikacji) ───────────────────────────
-
-function ActionCard({
-  Icon, title, subtitle, href, onClick,
-}: {
-  Icon: LucideIcon; title: string; subtitle: string; href?: string; onClick?: () => void;
-}) {
-  const base: React.CSSProperties = {
-    display: "flex", alignItems: "center", gap: "14px", width: "100%", textAlign: "left",
-    border: "1px solid #2B2540", borderRadius: "18px", background: "#14101F",
-    padding: "17px 18px", cursor: "pointer", textDecoration: "none", color: "inherit",
-    fontFamily: "inherit", transition: "border-color .2s, background .2s",
-  };
-  const onEnter = (e: React.MouseEvent<HTMLElement>) => {
-    e.currentTarget.style.borderColor = "#E0B566";
-    e.currentTarget.style.background = "rgba(224,181,102,.05)";
-  };
-  const onLeave = (e: React.MouseEvent<HTMLElement>) => {
-    e.currentTarget.style.borderColor = "#2B2540";
-    e.currentTarget.style.background = "#14101F";
-  };
-  const inner = (
-    <>
-      <span style={{
-        width: "42px", height: "42px", flex: "0 0 auto", borderRadius: "12px",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        border: "1px solid #2B2540", background: "rgba(224,181,102,.06)", color: "#E0B566",
-      }}>
-        <Icon size={20} />
-      </span>
-      <span style={{ display: "block" }}>
-        <b style={{ display: "block", fontSize: "14.5px", fontWeight: 600, color: "#F4F1EA" }}>{title}</b>
-        <span style={{ fontSize: "12.5px", color: "#877FA0" }}>{subtitle}</span>
-      </span>
-      <ArrowRight size={16} style={{ marginLeft: "auto", color: "#E0B566", flex: "0 0 auto" }} />
-    </>
-  );
-  return href
-    ? <a href={href} style={base} onMouseEnter={onEnter} onMouseLeave={onLeave}>{inner}</a>
-    : <button type="button" onClick={onClick} style={base} onMouseEnter={onEnter} onMouseLeave={onLeave}>{inner}</button>;
-}
-
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 type Props = {
@@ -299,7 +255,7 @@ type Props = {
 export default function CompatibilityResultView({
   result, person1Name, person2Name,
   isPremiumUser = false, onPaywall,
-  animate = true, selectedMatchId, onShare, onNewMatch,
+  animate = true, selectedMatchId, onShare,
 }: Props) {
   const reduce  = useReducedMotion();
   const anim    = animate && !reduce;       // reduced-motion → stan końcowy bez ruchu
@@ -563,30 +519,7 @@ export default function CompatibilityResultView({
         </motion.div>
       )}
 
-      {/* ── Następny krok (most do reszty aplikacji) ── */}
-      <motion.div
-        className="mx-actions"
-        initial={anim ? { opacity: 0, y: 8 } : false}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: anim ? 2.2 : 0, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <ActionCard
-          Icon={Sun}
-          title="Jak ten tydzień wpływa na Waszą relację"
-          subtitle="Tranzyty i prognoza dla Was"
-          href="/app/calendar"
-        />
-        {onNewMatch && (
-          <ActionCard
-            Icon={Users}
-            title="Porównaj z kolejną osobą"
-            subtitle="Zrób nowy match"
-            onClick={onNewMatch}
-          />
-        )}
-      </motion.div>
-
-      {/* ── Share + pobierz grafikę ── */}
+      {/* ── Share ── */}
       {selectedMatchId && (
         <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginTop: "24px", flexWrap: "wrap" }}>
           {onShare && (
@@ -604,20 +537,6 @@ export default function CompatibilityResultView({
               ⤴ Udostępnij wynik
             </button>
           )}
-          <a
-            href={`/api/match-story/${selectedMatchId}`}
-            download={`cosmo-match-${selectedMatchId}.png`}
-            style={{
-              display: "inline-flex", gap: "8px", alignItems: "center",
-              padding: "11px 22px", borderRadius: "999px",
-              border: "1px solid #2B2540", background: "transparent",
-              color: "#E9DCC0", fontSize: "14px", textDecoration: "none", fontFamily: "inherit",
-            }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#E0B566"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#2B2540"; }}
-          >
-            ⤓ Pobierz grafikę (Stories)
-          </a>
         </div>
       )}
     </div>

@@ -303,7 +303,7 @@ export default function NatalWheelDemo() {
           Tak wygląda kosmogram
         </div>
         <h2 data-reveal style={{ fontSize:"clamp(32px,4vw,44px)",fontWeight:700,lineHeight:1.1,letterSpacing:"-.015em",marginBottom:20 }}>
-          To nie horoskop z&nbsp;gazety. To kilkadziesiąt stron o&nbsp;Tobie.
+          To nie horoskop z&nbsp;gazety. To Twój indywidualny portret astrologiczny.
         </h2>
         <p data-reveal style={{ fontSize:19,lineHeight:1.6,color:"var(--text-secondary)",marginBottom:36 }}>
           O tym, jak kochasz, czego unikasz i&nbsp;co przychodzi Ci łatwiej niż innym. Napisane tak, że czyta się jak list od kogoś, kto zna Cię od dawna.
