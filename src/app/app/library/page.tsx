@@ -83,7 +83,11 @@ export default function ChildrenPage() {
         headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({ name: data.name, birthDate: data.date, placements, aspects, nodes }),
       });
-      if (!aiRes.ok) throw new Error("Błąd generowania interpretacji");
+      if (!aiRes.ok) {
+        const e = await aiRes.json().catch(() => ({})) as { error?: string };
+        if (e.error === "FREE_LIMIT" || e.error === "MONTHLY_LIMIT") { setShowPaywall(true); return; }
+        throw new Error("Błąd generowania interpretacji");
+      }
       const { modules } = await aiRes.json() as { modules: ChildModule[] };
       if (!modules || modules.length === 0) throw new Error("Błąd generowania interpretacji");
       const interpretation = JSON.stringify(modules);
@@ -247,7 +251,8 @@ export default function ChildrenPage() {
                 <button
                   onClick={() => {
                     if (subLoading) return;
-                    if (!isPro) { setShowPaywall(true); return; }
+                    // Free: 1 dziecko gratis (2/6 modułów); kolejne za paywallem.
+                    if (!isPro && children.length >= 1) { setShowPaywall(true); return; }
                     setError("");
                     setShowModal(true);
                   }}

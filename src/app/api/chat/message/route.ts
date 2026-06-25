@@ -11,9 +11,8 @@ import { checkRateLimit } from "@/lib/rateLimiter";
 import { STYLE_BLOCK } from "@/lib/moduleSpecs";
 import { getTransitsForDate, getDayWeather, getUpcomingSignificantTransits } from "@/lib/astro/transits";
 import type { CompatibilityResult } from "@/app/api/astro-match/route";
+import { FREE_CHAT_MESSAGES, PREMIUM_MONTHLY_CHAT_LIMIT } from "@/lib/pricing";
 
-const FREE_CHAT_MESSAGES = 3;
-const PREMIUM_MONTHLY_LIMIT = 150;
 // Proactive opener threshold: score at which a transit warrants an opener
 const PROACTIVE_OPENER_THRESHOLD = 25;
 
@@ -330,7 +329,7 @@ async function checkQuota(userId: string, convIds: string[]): Promise<QuotaResul
     .eq("role", "user")
     .gte("created_at", periodStart.toISOString());
 
-  if ((count ?? 0) < PREMIUM_MONTHLY_LIMIT) return { status: "ok", consumesCredit: false };
+  if ((count ?? 0) < PREMIUM_MONTHLY_CHAT_LIMIT) return { status: "ok", consumesCredit: false };
 
   const credits = await getChatCredits(userId);
   if (credits > 0) return { status: "ok", consumesCredit: true };

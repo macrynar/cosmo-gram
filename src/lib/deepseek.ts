@@ -20,7 +20,7 @@ function getClient(): Anthropic {
   return new Anthropic({ apiKey });
 }
 
-async function logAiCall(entry: {
+export async function logAiCall(entry: {
   task: string;
   model: string;
   input_tokens?: number;
@@ -28,6 +28,8 @@ async function logAiCall(entry: {
   latency_ms?: number;
   status: "ok" | "error" | "retry";
   error_msg?: string;
+  /** Per-user cost attribution (§2.8). Null/undefined dla anonimowych / systemowych (cron) wywołań. */
+  user_id?: string | null;
 }) {
   // Fire-and-forget — never let logging break the main call
   void supabaseAdmin.from("ai_call_logs").insert(entry);
@@ -43,7 +45,8 @@ export async function generateModuleWithRetry(
   systemPrompt:     string,
   userPrompt:       string,
   expectedModuleId: string,
-  attempt           = 0
+  attempt           = 0,
+  userId?:          string | null,
 ): Promise<AstroModuleAIOutput> {
   if (process.env.AI_DISABLED === "true") throw new AiDisabledError();
   if (process.env.AI_MOCK === "true") {
@@ -73,7 +76,7 @@ export async function generateModuleWithRetry(
 
     const result = AstroModuleAIOutputSchema.parse({ ...obj, id: expectedModuleId });
 
-    logAiCall({ task: `natal-module:${expectedModuleId}`, model, input_tokens, output_tokens, latency_ms, status: "ok" });
+    logAiCall({ task: `natal-module:${expectedModuleId}`, model, input_tokens, output_tokens, latency_ms, status: "ok", user_id: userId });
     return result;
 
   } catch (err) {
@@ -82,7 +85,7 @@ export async function generateModuleWithRetry(
 
     if (attempt < MAX_RETRIES) {
       console.warn(`[karta] module ${expectedModuleId} attempt ${attempt + 1} failed:`, errDetail);
-      logAiCall({ task: `natal-module:${expectedModuleId}`, model, latency_ms, status: "retry", error_msg: errDetail.slice(0, 500) });
+      logAiCall({ task: `natal-module:${expectedModuleId}`, model, latency_ms, status: "retry", error_msg: errDetail.slice(0, 500), user_id: userId });
 
       let retryPrompt = userPrompt;
       if (err instanceof z.ZodError) {
@@ -91,12 +94,12 @@ export async function generateModuleWithRetry(
       }
 
       await new Promise(r => setTimeout(r, BACKOFF_MS[attempt]));
-      return generateModuleWithRetry(systemPrompt, retryPrompt, expectedModuleId, attempt + 1);
+      return generateModuleWithRetry(systemPrompt, retryPrompt, expectedModuleId, attempt + 1, userId);
     }
 
     const finalMsg = `Module ${expectedModuleId} failed after ${MAX_RETRIES} retries: ${errDetail}`;
     console.error(`[karta] ${finalMsg}`);
-    logAiCall({ task: `natal-module:${expectedModuleId}`, model, latency_ms, status: "error", error_msg: finalMsg.slice(0, 500) });
+    logAiCall({ task: `natal-module:${expectedModuleId}`, model, latency_ms, status: "error", error_msg: finalMsg.slice(0, 500), user_id: userId });
     throw new Error(finalMsg);
   }
 }
@@ -129,7 +132,8 @@ ZWRÓĆ: TYLKO poprawiony obiekt JSON. Zero komentarza, zero \`\`\`json wrapper�
 Jeśli nie ma błędów — zwróć oryginalny JSON bez zmian.`;
 
 export async function correctModuleWithHaiku(
-  module: AstroModuleAIOutput
+  module: AstroModuleAIOutput,
+  userId?: string | null,
 ): Promise<AstroModuleAIOutput> {
   if (process.env.AI_DISABLED === "true" || process.env.AI_MOCK === "true") {
     return module;
@@ -169,6 +173,7 @@ export async function correctModuleWithHaiku(
       latency_ms,
       status: "ok",
       error_msg: diffChars > 0 ? `diff_chars:${diffChars}` : undefined,
+      user_id: userId,
     });
 
     return corrected;
@@ -177,7 +182,7 @@ export async function correctModuleWithHaiku(
     const latency_ms = Date.now() - t0;
     const errDetail  = err instanceof Error ? err.message : JSON.stringify(err);
     console.warn(`[karta] correction pass failed for ${module.id}:`, errDetail);
-    logAiCall({ task: `natal-correction:${module.id}`, model, latency_ms, status: "error", error_msg: errDetail.slice(0, 500) });
+    logAiCall({ task: `natal-correction:${module.id}`, model, latency_ms, status: "error", error_msg: errDetail.slice(0, 500), user_id: userId });
     return module;
   }
 }
@@ -235,6 +240,8 @@ type AiCompleteParams = {
   model?: string;
   task?: string;
   responseFormat?: "json_object";
+  /** Per-user cost attribution (§2.8). */
+  userId?: string | null;
   /** Pod AI_MOCK: ścieżka fixture względem tests/fixtures/ai/ (np. "letters/standard.md"). */
   mockFixture?: string;
 };
@@ -246,6 +253,7 @@ export async function aiComplete({
   temperature,
   model: modelOverride,
   task = "chat",
+  userId,
   mockFixture,
 }: AiCompleteParams): Promise<string> {
   if (process.env.AI_DISABLED === "true") throw new AiDisabledError();
@@ -272,14 +280,14 @@ export async function aiComplete({
     const input_tokens  = response.usage?.input_tokens;
     const output_tokens = response.usage?.output_tokens;
 
-    logAiCall({ task, model, input_tokens, output_tokens, latency_ms, status: "ok" });
+    logAiCall({ task, model, input_tokens, output_tokens, latency_ms, status: "ok", user_id: userId });
 
     return (response.content[0] as Anthropic.TextBlock).text?.trim() ?? "";
 
   } catch (err) {
     const latency_ms = Date.now() - t0;
     const errDetail  = err instanceof Error ? err.message : JSON.stringify(err);
-    logAiCall({ task, model, latency_ms, status: "error", error_msg: errDetail.slice(0, 500) });
+    logAiCall({ task, model, latency_ms, status: "error", error_msg: errDetail.slice(0, 500), user_id: userId });
     throw err;
   }
 }

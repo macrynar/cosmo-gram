@@ -5,6 +5,8 @@ import { hasActiveSubscription } from "@/lib/subscription";
 import type { GenerationContext } from "@/lib/moduleSpecs";
 import { FREE_MODULE_IDS } from "@/lib/moduleSpecs";
 import { checkRateLimit } from "@/lib/rateLimiter";
+import { checkUsageLimit, incrementUsage } from "@/lib/usageLimits";
+import { PREMIUM_MONTHLY_GENERATION_CAP } from "@/lib/pricing";
 import type { ModuleId } from "@/lib/schemas/astroModule";
 
 export const maxDuration = 120;
@@ -65,6 +67,16 @@ export async function POST(req: NextRequest) {
     // body.onlyModuleIds is used for single-module retry; falls back to tier-based restriction
     const onlyModuleIds = body.onlyModuleIds ?? (isPaid ? undefined : FREE_MODULE_IDS);
 
+    // Cap 5/mc tylko dla premium i tylko dla pełnej generacji nowej karty
+    // (retry pojedynczego modułu przekazuje onlyModuleIds → nie liczy się jako nowa karta).
+    const isFullGeneration = !body.onlyModuleIds;
+    if (isPaid && isFullGeneration) {
+      const { allowed } = await checkUsageLimit(user.id, "natal", { limit: PREMIUM_MONTHLY_GENERATION_CAP, scope: "month" });
+      if (!allowed) {
+        return NextResponse.json({ error: "MONTHLY_LIMIT" }, { status: 402 });
+      }
+    }
+
     const ctx: GenerationContext = {
       user_id:             user.id,
       chart_id:            body.chart_id,
@@ -75,7 +87,13 @@ export async function POST(req: NextRequest) {
       locationPrecisionKm: body.locationPrecisionKm ?? 10,
     };
 
-    const { modules, failedIds } = await generateNatalKarta(ctx, onlyModuleIds);
+    const { modules, failedIds, generatedCount } = await generateNatalKarta(ctx, onlyModuleIds);
+
+    // Inkrementuj cap tylko gdy faktycznie wygenerowano nową kartę (nie cache hit, nie retry).
+    if (isPaid && isFullGeneration && generatedCount > 0) {
+      await incrementUsage(user.id, "natal");
+    }
+
     return NextResponse.json({ modules, failedIds });
 
   } catch (err) {

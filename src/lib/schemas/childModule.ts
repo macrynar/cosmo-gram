@@ -37,9 +37,15 @@ export const ALL_CHILD_MODULE_IDS: ChildModuleId[] = [
   "temperament", "emotions", "learning", "talents", "parenting", "peers",
 ];
 
+// Freemium 2/6: free dostaje „kim jest dziecko" (temperament) + „potrzeby emocjonalne"
+// (emotions). Pozostałe 4 są premium-gated i NIE są generowane dla free (kontrola kosztu).
+export const FREE_CHILD_MODULE_IDS: ChildModuleId[] = ["temperament", "emotions"];
+export const PREMIUM_CHILD_MODULE_IDS: ChildModuleId[] =
+  ALL_CHILD_MODULE_IDS.filter(id => !FREE_CHILD_MODULE_IDS.includes(id));
+
 export const CHILD_MODULE_SPECS: Record<ChildModuleId, { title: string; shortName: string; isPremium: boolean }> = {
   temperament: { title: "Temperament",              shortName: "Temperament", isPremium: false },
-  emotions:    { title: "Świat emocji",             shortName: "Emocje",      isPremium: true  },
+  emotions:    { title: "Świat emocji",             shortName: "Emocje",      isPremium: false },
   learning:    { title: "Jak poznaje świat",        shortName: "Poznawanie",  isPremium: true  },
   talents:     { title: "Talenty i mocne strony",   shortName: "Talenty",     isPremium: true  },
   parenting:   { title: "Wskazówki dla rodzica",    shortName: "Rodzic",      isPremium: true  },

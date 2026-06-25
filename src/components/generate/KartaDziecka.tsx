@@ -253,7 +253,7 @@ export default function KartaDziecka({ child, isPremiumUser, interpretationLoadi
                 "Dobieram ciepłe słowa…",
               ]}
             />
-            <p className="text-slate-600 text-xs mt-1">6 modułów · może zająć 20–40 s</p>
+            <p className="text-slate-600 text-xs mt-1">{isPremiumUser ? "6 modułów" : "2 moduły"} · może zająć 20–40 s</p>
           </div>
         )}
 
@@ -292,8 +292,9 @@ export default function KartaDziecka({ child, isPremiumUser, interpretationLoadi
             <p className="text-slate-500 text-sm mb-2 max-w-xs mx-auto">
               Temperament · Emocje · Uczenie się · Talenty
             </p>
+            {/* TODO COPY (Mac) */}
             <p className="text-slate-600 text-xs mb-7 max-w-xs mx-auto">
-              1 moduł bezpłatny · 5 odblokowanych w planie Plus
+              2 moduły bezpłatne · 4 odblokowane w planie Plus
             </p>
 
             {genError && (
@@ -328,8 +329,9 @@ export default function KartaDziecka({ child, isPremiumUser, interpretationLoadi
         >
           <div className="flex items-center justify-center gap-1.5 mb-2">
             <Lock className="w-3.5 h-3.5" style={{ color: "#E0B566" }} />
+            {/* TODO COPY (Mac) */}
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              Odblokuj <span style={{ color: "#E0B566" }}>5 modułów</span> — emocje, poznawanie, talenty, wskazówki dla rodzica i rówieśnicy.
+              Odblokuj <span style={{ color: "#E0B566" }}>4 moduły</span> — poznawanie, talenty, wskazówki dla rodzica i rówieśnicy.
             </p>
           </div>
           <button

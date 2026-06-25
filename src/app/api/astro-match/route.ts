@@ -8,6 +8,26 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 import { aiComplete } from "@/lib/deepseek";
 import { repairJson } from "@/lib/jsonRepair";
 import { STYLE_BLOCK } from "@/lib/moduleSpecs";
+import { checkUsageLimit, incrementUsage } from "@/lib/usageLimits";
+import { FREE_GENERATION_LIMIT, PREMIUM_MONTHLY_GENERATION_CAP } from "@/lib/pricing";
+
+// Freemium: free → 1 match (lifetime), 3/8 modułów (summary + chemia + komunikacja);
+// premium → 5 matchy/mc, pełne 8. Capy delete-proof (§2.5).
+
+// Kolejność kanoniczna 8 wymiarów (scores deterministyczne dla wszystkich).
+const CATEGORY_NAMES = [
+  "Komunikacja i zrozumienie",
+  "Przyciąganie i chemia",
+  "Więź emocjonalna i bezpieczeństwo",
+  "Wartości i wspólny kierunek",
+  "Niezależność i bliskość",
+  "Wyzwania i napięcia",
+  "Trwałość i przyszłość",
+  "Przeznaczenie i lekcja",
+] as const;
+
+// Free dostaje interpretację tylko tych 2 (+ summary). Reszta = score-only, premium-gated.
+const FREE_CATEGORY_NAMES = ["Przyciąganie i chemia", "Komunikacja i zrozumienie"] as const;
 
 export type CompatibilityCategory = {
   name: string;
@@ -138,6 +158,61 @@ Zwróć WYŁĄCZNIE poprawny JSON (bez markdown, bez żadnego tekstu poza JSON):
   ]
 }`;
 
+// Free-tier prompt: tylko summary + 2 moduły. Krótszy = tańszy (mniejszy max_tokens).
+const FREE_SYSTEM_PROMPT = `JĘZYK: Pisz WYŁĄCZNIE po polsku. Zakaz cyrylicy i każdego innego języka. Każde słowo cyrylicą = output odrzucony.
+
+Jesteś doświadczonym astrologiem specjalizującym się w synastrii (analiza kompatybilności dwóch kart urodzeniowych).
+
+${STYLE_BLOCK}
+
+# ZAKAZ slash-form
+Nigdy: "oddałeś/aś", "byłeś/aś". Pisz po imieniu lub bezosobowo.
+
+# ZAKAZ żargonu — przetłumacz na ludzki
+"orb"→"bliski/ścisły", "koniunkcja"→"spotkanie", "kwadratura"→"napięcie", "opozycja"→"biegunowość", "trygon"→"harmonia", "sekstyl"→"dobre wsparcie".
+
+# ZAKAZ clichés
+"kosmiczne połączenie", "dusza bliźniacza", "przeznaczenie", "idealna para".
+
+# Zasady
+1. Analizuj aspekty MIĘDZY kartami (synastria). Każda obserwacja oparta o KONKRETNY aspekt z input.aspects. Zakaz fikcyjnych aspektów.
+2. Insight psychologiczny PRZED detalem technicznym.
+3. Pisz po imieniu lub bezosobowo — nigdy ról płciowych.
+
+# WAŻNE — scores deterministyczne
+Scores przekazane w inputcie. NIE zmieniaj liczb. Pisz copy spójne z liczbami (wysoki = łatwość, niski = świadoma praca).
+
+# LIMITY DŁUGOŚCI
+- summary: max 2 zdania (max 180 znaków)
+- interpretation każdej kategorii: 3 akapity, 160–220 słów. Lead (1 zdanie, głos Astrei), potem interpretacja z konkretnymi aspektami, na końcu praktyczne spostrzeżenie.
+- insight: DOKŁADNIE 1 zdanie (max 100 znaków).
+
+# KRYTYCZNE — poprawny JSON
+- W wartościach tekstowych NIE używaj prostego cudzysłowu ". Gdy musisz cytować — „ ” albo apostrof '.
+- Znak nowej linii wewnątrz stringa zapisz jako \\n.
+
+# Format odpowiedzi
+Zwróć WYŁĄCZNIE poprawny JSON (bez markdown, bez tekstu poza JSON):
+
+{
+  "overallScore": <liczba z inputu — nie zmieniaj>,
+  "summary": "<2 zdania, max 180 znaków>",
+  "categories": [
+    {
+      "name": "Przyciąganie i chemia",
+      "score": <passion z inputu>,
+      "interpretation": "<lead + 2 akapity, 160–220 słów. Mars-Wenus, Pluton-Wenus, V/VIII dom.>",
+      "insight": "<1 zdanie, max 100 znaków.>"
+    },
+    {
+      "name": "Komunikacja i zrozumienie",
+      "score": <communication z inputu>,
+      "interpretation": "<lead + 2 akapity, 160–220 słów. Merkury, Księżyc-Merkury, Mars-Merkury.>",
+      "insight": "<1 zdanie, max 100 znaków.>"
+    }
+  ]
+}`;
+
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
@@ -149,25 +224,23 @@ export async function POST(req: NextRequest) {
   if (rateLimitRes) return rateLimitRes;
 
   let isPaidUser = false;
+  let userId: string | null = null;
   try {
     const authHeader = req.headers.get("Authorization");
     if (authHeader) {
       const token = authHeader.replace("Bearer ", "");
       const { data: { user } } = await supabaseAdmin.auth.getUser(token);
       if (user) {
+        userId = user.id;
         isPaidUser = await resolveActiveSubscription(user.id, user.email);
-        if (isPaidUser) {
-          const monthStart = new Date();
-          monthStart.setDate(1);
-          monthStart.setHours(0, 0, 0, 0);
-          const { count } = await supabaseAdmin
-            .from("matches")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .gte("created_at", monthStart.toISOString());
-          if ((count ?? 0) >= 10) {
-            return NextResponse.json({ error: "MONTHLY_LIMIT" }, { status: 402 });
-          }
+        // Delete-proof cap: free 1 match (lifetime), premium 5/mc (§2.5).
+        const limitOpts = isPaidUser
+          ? { limit: PREMIUM_MONTHLY_GENERATION_CAP, scope: "month" as const }
+          : { limit: FREE_GENERATION_LIMIT, scope: "lifetime" as const };
+        const { allowed } = await checkUsageLimit(user.id, "match", limitOpts);
+        if (!allowed) {
+          // FREE_LIMIT → paywall (1. match gratis); MONTHLY_LIMIT → cap 5/mc.
+          return NextResponse.json({ error: isPaidUser ? "MONTHLY_LIMIT" : "FREE_LIMIT" }, { status: 402 });
         }
       }
     }
@@ -236,33 +309,17 @@ Scores (deterministyczne — NIE zmieniaj liczb w JSON):
 - longevity: ${scores.longevity}
 - destiny: ${scores.destiny}
 
-Napisz 8 modułów synastrii zgodnych z tymi scores. Każda interpretacja: 160–240 słów. Użyj aspektów z listy powyżej. Zwróć TYLKO JSON.`;
+${isPaidUser
+  ? "Napisz 8 modułów synastrii zgodnych z tymi scores. Każda interpretacja: 160–240 słów."
+  : "Napisz summary + DOKŁADNIE 2 moduły: „Przyciąganie i chemia” oraz „Komunikacja i zrozumienie”. Każda interpretacja: 160–220 słów."} Użyj aspektów z listy powyżej. Zwróć TYLKO JSON.`;
 
     if (!process.env.ANTHROPIC_API_KEY) {
       console.error("[astro-match] ANTHROPIC_API_KEY not set — returning mock");
-      const result = buildResult(mockResult(name1, name2, scores), topAspects, planetPositions);
+      const result = toTierResult(mockResult(name1, name2, scores), scores, isPaidUser, topAspects, planetPositions);
       return NextResponse.json({ result, isPaidUser, charts: { person1: r1.chart, person2: r2.chart } });
     }
 
     console.log("[astro-match] calling Sonnet 4.6 for", name1, "×", name2);
-
-    // Score'y są deterministyczne — nadpisujemy to, co zwróci AI (po nazwie kategorii).
-    const scoreMap: Record<string, number> = {
-      "Komunikacja i zrozumienie":         scores.communication,
-      "Przyciąganie i chemia":              scores.passion,
-      "Więź emocjonalna i bezpieczeństwo": scores.emotional,
-      "Wartości i wspólny kierunek":        scores.values,
-      "Niezależność i bliskość":            scores.independence,
-      "Wyzwania i napięcia":                scores.challenge,
-      "Trwałość i przyszłość":              scores.longevity,
-      "Przeznaczenie i lekcja":             scores.destiny,
-      // backward compat (stare zapisy)
-      "Komunikacja":       scores.communication,
-      "Namiętność":        scores.passion,
-      "Wspólne wartości":  scores.values,
-      "Wyzwania":          scores.challenge,
-      "Długoterminowość":  scores.longevity,
-    };
 
     // Do 2 prób — ucięty/zepsuty JSON bywa niedeterministyczny (sampling). Gdy obie
     // padną, schodzimy do wyniku deterministycznego (mock) zamiast zwracać błąd userowi.
@@ -271,22 +328,19 @@ Napisz 8 modułów synastrii zgodnych z tymi scores. Każda interpretacja: 160�
     for (let attempt = 1; attempt <= 2 && !aiResult; attempt++) {
       try {
         const rawText = await aiComplete({
-          system: SYSTEM_PROMPT,
+          system: isPaidUser ? SYSTEM_PROMPT : FREE_SYSTEM_PROMPT,
           messages: [{ role: "user", content: userMessage }],
-          maxTokens: 12000,
+          maxTokens: isPaidUser ? 12000 : 4500,
           model: "claude-sonnet-4-6",
-          task: "astro-match",
+          task: isPaidUser ? "astro-match" : "astro-match-free",
+          userId,
         });
         console.log(`[astro-match] AI response length (próba ${attempt}):`, rawText.length, "chars");
         const aiParsed = extractJson(rawText);
         if (!Array.isArray(aiParsed.categories) || aiParsed.categories.length === 0) {
           throw new Error("brak categories[]");
         }
-        aiResult = {
-          ...aiParsed,
-          overallScore: scores.overall,
-          categories: aiParsed.categories.map(cat => ({ ...cat, score: scoreMap[cat.name] ?? cat.score })),
-        };
+        aiResult = { ...aiParsed, overallScore: scores.overall };
       } catch (err) {
         console.error(`[astro-match] próba ${attempt} nieudana:`, err instanceof Error ? err.message : String(err));
       }
@@ -296,25 +350,13 @@ Napisz 8 modułów synastrii zgodnych z tymi scores. Każda interpretacja: 160�
       aiResult = mockResult(name1, name2, scores);
     }
 
-    const fullResult = buildResult(aiResult, topAspects, planetPositions);
+    // Kanoniczne 8 wymiarów: zawsze wszystkie {name, score} (deterministyczne), treść
+    // tylko dla tieru. Free → summary + FREE_CATEGORY_NAMES; reszta score-only. Gating
+    // wg ALLOWLISTY (nie obecności treści) → brak wycieku niezależnie od starych zapisów.
+    const safeResult = toTierResult(aiResult, scores, isPaidUser, topAspects, planetPositions);
 
-    // Free: pokaż za darmo NAJMOCNIEJSZY wymiar (pełna treść), a dla pozostałych
-    // zostaw tylko {name, score} — same liczby sprzedają lepiej niż pełny blur.
-    const safeResult: CompatibilityResult = isPaidUser
-      ? fullResult
-      : (() => {
-          const cats = fullResult.categories;
-          const freeIdx = cats.reduce((mi, c, i) => (c.score > cats[mi].score ? i : mi), 0);
-          return {
-            overallScore:    fullResult.overallScore,
-            summary:         fullResult.summary,
-            categories:      cats.map((c, i) =>
-              i === freeIdx ? c : { name: c.name, score: c.score, interpretation: "", insight: "" }
-            ),
-            aspects:         fullResult.aspects,
-            planetPositions: fullResult.planetPositions,
-          };
-        })();
+    // Udana generacja = utworzenie → inkrementuj delete-proof licznik (best-effort).
+    if (userId) await incrementUsage(userId, "match");
 
     return NextResponse.json({
       result: safeResult,
@@ -333,6 +375,38 @@ function buildResult(
   planetPositions: { a: PlanetPos[]; b: PlanetPos[] },
 ): CompatibilityResult {
   return { ...base, aspects, planetPositions };
+}
+
+// Buduje wynik w kanonicznej kolejności 8 wymiarów z deterministycznymi score'ami.
+// Treść (interpretation/insight) zostaje tylko dla modułów dozwolonych w tierze:
+// premium → wszystkie 8; free → tylko FREE_CATEGORY_NAMES (reszta score-only).
+function toTierResult(
+  base: CompatibilityResult,
+  scores: ReturnType<typeof getSynastryScore>,
+  isPaidUser: boolean,
+  aspects: SynastryAspect[],
+  planetPositions: { a: PlanetPos[]; b: PlanetPos[] },
+): CompatibilityResult {
+  const scoreFor: Record<string, number> = {
+    "Komunikacja i zrozumienie":         scores.communication,
+    "Przyciąganie i chemia":              scores.passion,
+    "Więź emocjonalna i bezpieczeństwo": scores.emotional,
+    "Wartości i wspólny kierunek":        scores.values,
+    "Niezależność i bliskość":            scores.independence,
+    "Wyzwania i napięcia":                scores.challenge,
+    "Trwałość i przyszłość":              scores.longevity,
+    "Przeznaczenie i lekcja":             scores.destiny,
+  };
+  const byName = new Map(base.categories.map(c => [c.name, c]));
+  const categories: CompatibilityCategory[] = CATEGORY_NAMES.map(name => {
+    const ai = byName.get(name);
+    const score = scoreFor[name] ?? ai?.score ?? 0;
+    const allowed = isPaidUser || (FREE_CATEGORY_NAMES as readonly string[]).includes(name);
+    return allowed && ai
+      ? { name, score, interpretation: ai.interpretation, insight: ai.insight }
+      : { name, score, interpretation: "", insight: "" };
+  });
+  return buildResult({ overallScore: scores.overall, summary: base.summary, categories }, aspects, planetPositions);
 }
 
 function extractJson(raw: string): CompatibilityResult {

@@ -141,14 +141,21 @@ const METERS_BY_MODULE: Record<string, [string, string, string]> = {
 
 // ─── User prompt builder ──────────────────────────────────────────────────────
 
+const ALL_MODULE_IDS = ["temperament", "emotions", "learning", "talents", "parenting", "peers"] as const;
+
 export function buildChildV2UserPrompt(params: {
   name: string;
   birthDate: string;
   placements: ChartPlacement[];
   aspects: NatalAspect[];
   nodes: ChartNodes;
+  /** Które moduły wygenerować. Domyślnie wszystkie 6 (premium). Free przekazuje 2 (kontrola kosztu). */
+  moduleIds?: readonly string[];
 }): string {
   const { name, birthDate, placements, aspects, nodes } = params;
+  const moduleIds = (params.moduleIds && params.moduleIds.length > 0)
+    ? ALL_MODULE_IDS.filter(id => params.moduleIds!.includes(id))
+    : ALL_MODULE_IDS;
   const ageYears  = calcAgeYears(birthDate);
   const ageGroup  = getAgeGroup(ageYears);
   const hasTime   = placements.some(p => p.house !== null && p.house !== undefined);
@@ -158,9 +165,7 @@ export function buildChildV2UserPrompt(params: {
     ? "\n⚠️ Brak godziny urodzenia — pomiń Ascendent i domy. Opieraj się wyłącznie na pozycjach planet w znakach.\n"
     : "";
 
-  const moduleInstructions = [
-    "temperament", "emotions", "learning", "talents", "parenting", "peers",
-  ].map((id, i) => {
+  const moduleInstructions = moduleIds.map((id, i) => {
     const meters      = METERS_BY_MODULE[id];
     const instruction = MODULE_INSTRUCTIONS[id];
     return `MODUŁ ${i + 1} — id="${id}"
@@ -174,7 +179,7 @@ ${timeNote}
 ${formatPlacements(placements, aspects, nodes, hasTime)}
 
 ═══ ZADANIE ═══
-Wywołaj narzędzie output_child_modules. Wypełnij 6 modułów dla ${childName} (${ageGroup}):
+Wywołaj narzędzie output_child_modules. Wygeneruj DOKŁADNIE ${moduleIds.length} ${moduleIds.length === 1 ? "moduł" : "moduły/-ów"} (TYLKO o id: ${moduleIds.map(id => `"${id}"`).join(", ")}) dla ${childName} (${ageGroup}). Nie dodawaj innych modułów:
 
 ${moduleInstructions}
 

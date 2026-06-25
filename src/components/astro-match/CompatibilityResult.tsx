@@ -65,6 +65,10 @@ const MODULE_DEFS = [
   { id: "przezn", short: "Przeznaczenie",name: "Przeznaczenie i lekcja",            icon: Sparkles,      keys: ["Przeznaczenie"],                hook: "Po co się spotkaliście" },
 ];
 
+// Free dostaje treść tylko dla tych 2 wymiarów (id z MODULE_DEFS): Chemia + Komunikacja.
+// Musi być spójne z FREE_CATEGORY_NAMES w /api/astro-match.
+const FREE_MATCH_MODULE_IDS = ["prz", "kom"];
+
 const LOCKED_FILLER =
   "Pełna interpretacja Astrei dla tego wymiaru — jak działa między Wami na co dzień, gdzie jest Wasza siła, a gdzie pole do pracy, z konkretnymi wskazówkami opartymi na aspektach Waszej pary.";
 
@@ -277,14 +281,13 @@ export default function CompatibilityResultView({
     ? `${PLANET_SYMBOL[topA.planet_a] ?? topA.planet_a} ${topA.planet_a} ↔ ${PLANET_SYMBOL[topA.planet_b] ?? topA.planet_b} ${topA.planet_b} · ${ASPECT_TYPE_LABEL[topA.type] ?? topA.type}`
     : null;
 
-  // 8 wymiarów → moduły w kształcie kart natalnych. Za darmo NAJMOCNIEJSZY wymiar
-  // (mocniejszy hook FOMO); pozostałe zablokowane (z widoczną liczbą). Blokada wg
-  // pozycji najmocniejszego, nie obecności treści → brak wycieku przy starych zapisach.
+  // 8 wymiarów → moduły w kształcie kart natalnych. Free (3/8) dostaje za darmo Chemię
+  // i Komunikację (+ summary w hero); reszta zablokowana (z widoczną liczbą). Blokada wg
+  // STAŁEJ ALLOWLISTY, nie obecności treści → brak wycieku przy starych zapisach.
   const dimCats  = MODULE_DEFS.map(def => findCat(result.categories, def.keys, def.name));
-  const freeIdx  = dimCats.reduce((mi, c, i) => ((c?.score ?? 0) > (dimCats[mi]?.score ?? 0) ? i : mi), 0);
-  const matchModules = MODULE_DEFS.map((def, i) => buildMatchModule(def, dimCats[i], i !== freeIdx));
+  const matchModules = MODULE_DEFS.map((def, i) => buildMatchModule(def, dimCats[i], !FREE_MATCH_MODULE_IDS.includes(def.id)));
   const allIds     = MODULE_DEFS.map(d => d.id);
-  const visibleIds = isPremiumUser ? allIds : [allIds[freeIdx]];
+  const visibleIds = isPremiumUser ? allIds : allIds.filter(id => FREE_MATCH_MODULE_IDS.includes(id));
   const shortNames = Object.fromEntries(MODULE_DEFS.map(d => [d.id, d.short]));
 
   return (
