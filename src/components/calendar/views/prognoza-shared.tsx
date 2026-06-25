@@ -136,6 +136,24 @@ a.pg-interp-lock:hover span { color:var(--pg-voice); }
   transition:.2s var(--pg-ease);pointer-events:none;z-index:3;
 }
 .pg-moment:hover .tip { opacity:1; }
+/* Quiet-day timeline: hour axis + calm marker */
+.pg-daytl .pg-hour {
+  position:absolute;top:33px;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;
+}
+.pg-daytl .pg-hour .hour-tick { width:1px;height:9px;background:var(--pg-line); }
+.pg-daytl .pg-hour .hour-lbl { font-size:9.5px;line-height:1;color:var(--pg-muted);font-variant-numeric:tabular-nums; }
+.pg-calm {
+  position:absolute;left:50%;top:72px;transform:translateX(-50%);
+  display:flex;align-items:center;gap:7px;white-space:nowrap;
+  padding:5px 14px;border-radius:999px;
+  border:1px solid var(--pg-line);background:var(--pg-elevated);
+  font-size:11.5px;letter-spacing:.04em;color:var(--pg-deep);
+}
+.pg-calm .dot {
+  width:6px;height:6px;border-radius:50%;background:var(--pg-deep);
+  box-shadow:0 0 8px 1px rgba(224,181,102,.45);
+}
 
 /* Week grid */
 .pg-week { display:grid;grid-template-columns:repeat(7,1fr);gap:8px; }
@@ -463,12 +481,24 @@ type DayMoment = {
   desc:  string;
 };
 
+const DAY_HOURS = [0, 6, 12, 18, 24];
+
 export function PgTimelineDay({ moments, nowPct }: { moments: DayMoment[]; nowPct: number }) {
+  const quiet = moments.length === 0;
   return (
     <div className="pg-daytl">
       <div className="track" />
+      {/* Cichy dzień: pokaż oś godzin + wskaźnik spokoju zamiast pustej linii */}
+      {quiet && DAY_HOURS.map(h => (
+        <div key={h} className="pg-hour" style={{ left: `${(h / 24) * 100}%` }}>
+          <span className="hour-tick" />
+          <span className="hour-lbl">{h}</span>
+        </div>
+      ))}
       <div className="now-line" style={{ left: `${nowPct}%` }} />
-      {moments.map((m, i) => (
+      {quiet ? (
+        <div className="pg-calm"><span className="dot" />spokojny dzień</div>
+      ) : moments.map((m, i) => (
         <div key={i} className={`pg-moment ${m.kind}`} style={{ left: `${m.x}%` }}>
           <div className="tip">{m.desc}</div>
           <div className="disc">{m.glyph}</div>
