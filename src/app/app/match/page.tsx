@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,6 +47,23 @@ type SavedMatch = {
   created_at: string;
 };
 
+// Match wygenerowany jako free ma puste interpretacje w 6 modułach premium.
+// Premium user otwierający taki match → dogenerowujemy pełną kartę (§2.5).
+const PREMIUM_MATCH_CATEGORIES = [
+  "Więź emocjonalna i bezpieczeństwo",
+  "Wartości i wspólny kierunek",
+  "Niezależność i bliskość",
+  "Wyzwania i napięcia",
+  "Trwałość i przyszłość",
+  "Przeznaczenie i lekcja",
+];
+
+function matchNeedsUpgrade(data: CompatibilityResult | null | undefined): boolean {
+  if (!data?.categories?.length) return false;
+  const byName = new Map(data.categories.map(c => [c.name, c]));
+  return PREMIUM_MATCH_CATEGORIES.some(n => !byName.get(n)?.interpretation?.trim());
+}
+
 export default function AstroMatchPage() {
   const { session } = useAuth();
   const { isPro } = useSubscription();
@@ -70,6 +87,13 @@ export default function AstroMatchPage() {
   const [showShare, setShowShare]     = useState(false);
   const [view, setView] = useState<"setup" | "result">("setup");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [upgradingId, setUpgradingId] = useState<string | null>(null);
+
+  // ref „aktualnie wyświetlany match" — po async regen sprawdzamy czy wciąż go pokazujemy.
+  const selectedIdRef = useRef<string | null>(null);
+  useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+  // matche, dla których już próbowaliśmy dogenerować w tej sesji (nie ponawiaj przy re-select / po błędzie).
+  const upgradeAttemptedRef = useRef<Set<string>>(new Set());
 
   const authHeader: Record<string, string> = session
     ? { Authorization: `Bearer ${session.access_token}` }
@@ -116,6 +140,33 @@ export default function AstroMatchPage() {
     setResult(m.compatibility_data);
     setResultIsPremium(isPro);
     setResultNames({ p1: m.person1_name, p2: m.person2_name });
+    void maybeUpgradeMatch(m);
+  }
+
+  // §2.5 — premium otwiera stary free-match → dogeneruj brakujące moduły i podmień zapis.
+  async function maybeUpgradeMatch(m: SavedMatch) {
+    if (!session || !isPro) return;
+    if (!matchNeedsUpgrade(m.compatibility_data)) return;
+    if (upgradeAttemptedRef.current.has(m.id)) return;
+    upgradeAttemptedRef.current.add(m.id);
+    setUpgradingId(m.id);
+    try {
+      const res = await fetch("/api/astro-match/upgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ matchId: m.id }),
+      });
+      if (res.ok) {
+        const { result: full } = await res.json() as { result?: CompatibilityResult };
+        if (full) {
+          setMatches(prev => prev.map(x => x.id === m.id
+            ? { ...x, compatibility_data: full, overall_score: full.overallScore }
+            : x));
+          if (selectedIdRef.current === m.id) setResult(full);
+        }
+      }
+    } catch { /* graceful — zostaw wersję free */ }
+    finally { setUpgradingId(curr => (curr === m.id ? null : curr)); }
   }
 
   function handleSelectMatch(id: string) {
@@ -407,6 +458,18 @@ export default function AstroMatchPage() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
+              {upgradingId === selectedId && (
+                <div style={{
+                  marginBottom: "16px", padding: "12px 18px", borderRadius: "14px",
+                  background: "rgba(224,181,102,.07)", border: "1px solid rgba(224,181,102,.22)",
+                  display: "flex", alignItems: "center", gap: "10px",
+                }}>
+                  <Loader2 size={14} style={{ animation: "spin 1s linear infinite", color: "#E0B566" }} />
+                  <span style={{ fontSize: "13px", color: "#E0B566" }}>
+                    Odblokowuję pełną analizę relacji — wszystkie 8 wymiarów…
+                  </span>
+                </div>
+              )}
               {result.summary?.includes("chwilowo niedostępna") && (
                 <div style={{
                   marginBottom: "16px", padding: "12px 18px", borderRadius: "14px",
