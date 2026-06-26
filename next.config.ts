@@ -41,6 +41,15 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  async redirects() {
+    return [
+      // Trasy-duplikaty bez własnego SEO — trwały redirect na kanoniczne odpowiedniki (T5).
+      // permanent:true → 308 (Google traktuje jak 301 dla SEO).
+      { source: "/horoskop-dzienny", destination: "/daily-horoscope", permanent: true },
+      { source: "/children", destination: "/for-kids", permanent: true },
+    ];
+  },
+
   async rewrites() {
     return [
       {
