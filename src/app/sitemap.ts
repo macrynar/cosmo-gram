@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 import { ROUTES } from "@/lib/routes";
-// import { getPublishedPosts } from "@/lib/blog"; // P1: odkomentuj, gdy powstanie warstwa bloga
+import { getPublishedPosts } from "@/lib/blog";
 
 const BASE_URL = "https://www.cosmo-gram.com";
 
@@ -30,14 +30,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route.path === "/" ? 1 : 0.7,
   }));
 
-  // P1 (po starcie bloga):
-  // const posts = await getPublishedPosts().catch(() => []);
-  // const blogEntries = posts.map(p => ({
-  //   url: `${BASE_URL}/blog/${p.slug}`,
-  //   lastModified: p.updatedAt,
-  //   changeFrequency: "monthly" as const,
-  //   priority: 0.6,
-  // }));
+  const blogEntries = getPublishedPosts().map((p) => ({
+    url: `${BASE_URL}/blog/${p.slug}`,
+    lastModified: new Date(p.frontmatter.updatedAt),
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
 
-  return [...staticEntries /*, ...blogEntries */];
+  return [...staticEntries, ...blogEntries];
 }
