@@ -7,6 +7,7 @@ import { AuthProvider } from "@/components/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import { SubscriptionProvider } from "@/components/SubscriptionContext";
 import { PostHogProvider } from "@/components/PostHogProvider";
+import OrganizationJsonLd from "@/components/seo/OrganizationJsonLd";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -32,8 +33,6 @@ const fraunces = Fraunces({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: "cover",
   themeColor: "#050508",
 };
@@ -86,6 +85,7 @@ export default function RootLayout({
         <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet" />
       </head>
       <body className={`${montserrat.variable} ${cormorant.variable} ${fraunces.variable} antialiased`}>
+        <OrganizationJsonLd />
         <PostHogProvider>
           <AuthProvider>
             <SubscriptionProvider>

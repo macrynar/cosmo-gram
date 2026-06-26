@@ -1,8 +1,8 @@
 {
-  "name": "Cosmo-gram",
-  "short_name": "Cosmo-gram",
+  "name": "Cosmogram",
+  "short_name": "Cosmogram",
   "description": "Twój głęboki portret, odczytany z nieba. Kosmogram, synastria, kalendarz i chat z Astreą.",
-  "start_url": "/generate",
+  "start_url": "/app/cosmogram",
   "display": "standalone",
   "background_color": "#03010d",
   "theme_color": "#050508",
@@ -33,13 +33,13 @@
   "shortcuts": [
     {
       "name": "Kosmogram",
-      "url": "/generate",
-      "description": "Twój kosmogram natury"
+      "url": "/app/cosmogram",
+      "description": "Twój kosmogram"
     },
     {
       "name": "Chat",
-      "url": "/chat",
-      "description": "Porozmawiaj z astrologiem AI"
+      "url": "/app/chat",
+      "description": "Porozmawiaj z Astreą"
     }
   ]
 }

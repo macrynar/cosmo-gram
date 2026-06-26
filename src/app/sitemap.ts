@@ -1,13 +1,16 @@
 import { MetadataRoute } from "next";
 import { ROUTES } from "@/lib/routes";
+// import { getPublishedPosts } from "@/lib/blog"; // P1: odkomentuj, gdy powstanie warstwa bloga
 
 const BASE_URL = "https://www.cosmo-gram.com";
 
 const INDEXED_PUBLIC_ROUTES = [
   ROUTES.public.home,
   ROUTES.public.cosmogram,
-  ROUTES.public.dailyHoroscope,
+  ROUTES.public.calendar,        // DODANE
   ROUTES.public.match,
+  ROUTES.public.chatPublic,      // DODANE (/cosmo-chat)
+  ROUTES.public.dailyHoroscope,
   ROUTES.public.forKids,
   ROUTES.public.pricing,
   ROUTES.public.blog,
@@ -19,11 +22,22 @@ const INDEXED_PUBLIC_ROUTES = [
   ROUTES.public.cookies,
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  return INDEXED_PUBLIC_ROUTES.map(route => ({
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const staticEntries = INDEXED_PUBLIC_ROUTES.map(route => ({
     url: `${BASE_URL}${route.path}`,
     lastModified: new Date(),
-    changeFrequency: route.path === "/" ? "daily" : "weekly",
+    changeFrequency: (route.path === "/" ? "daily" : "weekly") as "daily" | "weekly",
     priority: route.path === "/" ? 1 : 0.7,
   }));
+
+  // P1 (po starcie bloga):
+  // const posts = await getPublishedPosts().catch(() => []);
+  // const blogEntries = posts.map(p => ({
+  //   url: `${BASE_URL}/blog/${p.slug}`,
+  //   lastModified: p.updatedAt,
+  //   changeFrequency: "monthly" as const,
+  //   priority: 0.6,
+  // }));
+
+  return [...staticEntries /*, ...blogEntries */];
 }
