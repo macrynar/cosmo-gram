@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { ROUTES } from "@/lib/routes";
 import { getPublishedPosts } from "@/lib/blog";
+import { getAllMoonSigns } from "@/lib/pseo/moonSigns";
 
 const BASE_URL = "https://www.cosmo-gram.com";
 
@@ -14,6 +15,7 @@ const INDEXED_PUBLIC_ROUTES = [
   ROUTES.public.forKids,
   ROUTES.public.pricing,
   ROUTES.public.blog,
+  ROUTES.public.moonSigns,
   ROUTES.public.about,
   ROUTES.public.contact,
   ROUTES.public.howAiWorks,
@@ -37,5 +39,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticEntries, ...blogEntries];
+  const moonSignEntries = getAllMoonSigns().map((m) => ({
+    url: `${BASE_URL}/ksiezyc-w-znaku/${m.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
+  return [...staticEntries, ...blogEntries, ...moonSignEntries];
 }

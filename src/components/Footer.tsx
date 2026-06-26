@@ -17,6 +17,7 @@ const COLUMNS = [
     heading: "Zasoby",
     links: [
       { label: ROUTES.public.blog.label,       href: ROUTES.public.blog.path },
+      { label: ROUTES.public.moonSigns.label,  href: ROUTES.public.moonSigns.path },
       { label: ROUTES.public.howAiWorks.label, href: ROUTES.public.howAiWorks.path },
     ],
   },
