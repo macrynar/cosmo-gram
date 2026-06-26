@@ -43,10 +43,11 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     return [
-      // Trasy-duplikaty bez własnego SEO — trwały redirect na kanoniczne odpowiedniki (T5).
+      // Martwy duplikat /daily-horoscope bez inbound linków — trwały redirect na kanoniczną trasę.
       // permanent:true → 308 (Google traktuje jak 301 dla SEO).
       { source: "/horoskop-dzienny", destination: "/daily-horoscope", permanent: true },
-      { source: "/children", destination: "/for-kids", permanent: true },
+      // UWAGA: /children NIE redirectujemy — to żywa trasa feature'a Kosmogram Dziecka
+      // (back-link z /child/[id]). Indeksację blokuje disallow w src/app/robots.ts.
     ];
   },
 
