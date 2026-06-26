@@ -3,7 +3,7 @@ import { Cpu, Database, ShieldCheck } from "lucide-react";
 const badges = [
   {
     icon: Database,
-    label: "Swiss Ephemeris",
+    label: "Dane NASA",
     sub: "Precyzja astronomiczna",
   },
   {

@@ -251,6 +251,40 @@ NEXT_PUBLIC_POSTHOG_HOST=
 
 ---
 
+## Model biznesowy — cennik i limity (finalny, 2026-06-25)
+
+Decyzje zatwierdzone przez Maca. Pełny model kosztowo-marżowy (interaktywny, z formułami): `docs/Cosmogram_model_biznesowy.xlsx`. Stan: **zdecydowane, wdrożenie pending** — spec w `docs/IMPLEMENTACJA-cennik-limity-PROMPT.md`.
+
+### Cennik
+
+| Plan | Cena | Uwaga |
+|---|---|---|
+| Premium miesięczny | **24,99 zł / mc** | headline (z 19,99) |
+| Premium roczny | **199 zł / rok** (~16,58/mc, ~33% taniej) | lewar retencji P0 + cash upfront |
+| Paczka czatu Small | **12,99 zł** / 50 wiad. | z 9,99 (zbyt niska marża) |
+| Paczka czatu Medium | **34,99 zł** / 150 wiad. | z 24,99 (było stratne i podcinało sub) |
+| Paczka czatu Large | **199 zł** / 500 wiad. | bez zmian |
+
+Marża blended po kosztach AI: **~80%** (mc) / **~71%** (rok). Kontekst rynkowy: Nebula ~$25 USD/mc, Co-Star ~$15 USD — Cosmogram 2–4× tańszy. Bez triala (free ma sam łapać hooka).
+
+### Zasada freemium: free = CZĘŚCIOWY WOW interpretacji
+
+Free dostaje prawdziwą interpretację AI, ale część (3/8). Surowe dane bez interpretacji = słaby hook. Płatny payload jest generowany i gatowany po stronie serwera (nie „generuj pełne i schowaj").
+
+| Funkcja | FREE | PREMIUM |
+|---|---|---|
+| Kosmogram dorosłego | 1 karta własna, **3/8 modułów** (Rdzeń, Supermoce, Dziecko) + share | pełne 8 modułów (Miłość, Kariera, Cienie, Korzenie, Cel) + cudze karty, do **5/mc** |
+| Kosmogram dziecka | **2/6 modułów** (kim jest + potrzeby emocjonalne) | pełne 6 modułów, biblioteka, do **5/mc** |
+| Cosmo Match | 1 match, **3/8 modułów** (Ogólne, Chemia, Komunikacja) | pełne 8 + czat o relacji, do **5/mc**; zablokowane: Wyzwania, Trwałość, Przeznaczenie |
+| Cosmo Chat | 3 wiadomości łącznie → ściana | **50/mc** (z 150) + paczki top-up |
+| Kalendarz (interpr. dnia) | siatka + klasy dni + 1 teaser | bez limitu (fair-use 60/mc) + Dni Mocy + tydz./mc/rok |
+| Listy od Astrei | 1 list teaser → ściana | drip 1/tydzień + e-mail + skrzynka |
+| Horoskop dnia (e-mail) | opt-in wg znaku (per-znak ≈ $0) | + nagłówek personalny |
+
+### Capy anty-abuse (premium /mc)
+
+Natal / dziecko / match: **5/mc każdy**, liczone od **utworzeń** (nie aktywnych rekordów — inaczej delete+add omija limit). Czat: 50/mc + paczki. Koszt free usera ograniczony do ~$0,26 one-time (limit serwerowy 1× każdy + rate-limit signup). Przy pełnym abuse (5/5/5) marża wciąż dodatnia (~+6%).
+
 ## Znane ograniczenia i ryzyka
 
 | Ryzyko | Opis |
@@ -302,6 +336,17 @@ NEXT_PUBLIC_POSTHOG_HOST=
 ---
 
 ## Release log
+
+### [2026-06-25] Finalny model biznesowy — cennik, freemium, limity (DECYZJA, wdrożenie pending)
+
+Domknięto model monetyzacji (szczegóły: sekcja „Model biznesowy" wyżej + `docs/Cosmogram_model_biznesowy.xlsx`).
+
+- **Cennik zatwierdzony:** 24,99 zł/mc + 199 zł/rok; paczki czatu do przeceny (12,99 / 34,99 / 199). Bez triala.
+- **Freemium = częściowy wow:** natal 3/8, match 3/8, dziecko 2/6 modułów interpretacji za darmo; reszta płatna i gatowana serwerowo.
+- **Limity:** czat 50/mc (z 150) + paczki; natal/dziecko/match 5/mc (od utworzeń, delete-proof).
+- **Znalezione leaki (do naprawy):** `/api/astro-match` generuje pełne 8 modułów ($0,10) dla free bez limitu; `/api/ai-child` bez gatowania subskrypcji i limitu. Fix: generuj tylko wolne moduły + premium-gate + limit serwerowy.
+- **Marża:** blended ~80% (mc) / ~71% (rok); koszt free usera ograniczony ~$0,26 one-time.
+- **Spec wdrożeniowy dla Claude Code:** `docs/IMPLEMENTACJA-cennik-limity-PROMPT.md`.
 
 ### [2026-06-12 → 2026-06-14] Stabilizacja po redesignach + polish UX
 

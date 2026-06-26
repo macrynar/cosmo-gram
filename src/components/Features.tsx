@@ -15,7 +15,7 @@ const FEATURES = [
     highlights: [
       "Kosmogram urodzeniowy w 7 obszarach życia",
       "Kosmogram dziecka — temperament i potrzeby",
-      "Interpretacja AI oparta na Swiss Ephemeris",
+      "Interpretacja AI oparta na danych astronomicznych NASA",
     ],
     cta: { label: "Zobacz przykład", href: "/cosmogram" },
     accent: "rgba(212,175,55,0.18)",

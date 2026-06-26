@@ -502,7 +502,7 @@ export default function CosmogramPage() {
                   kosmogram urodzeniowy
                 </span>
               </h1>
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>Obliczenia astronomiczne · Swiss Ephemeris · Interpretacja Astrei</p>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>Dane astronomiczne NASA · Interpretacja Astrei</p>
             </motion.div>
 
             {/* History selector */}

@@ -309,7 +309,7 @@ export default function NatalWheelDemo() {
           O tym, jak kochasz, czego unikasz i&nbsp;co przychodzi Ci łatwiej niż innym. Napisane tak, że czyta się jak list od kogoś, kto zna Cię od dawna.
         </p>
         <p data-reveal style={{ fontSize:18,color:"var(--text-primary)",marginBottom:34 }}>
-          Obiecujemy jedno: w&nbsp;pierwszych trzech akapitach przeczytasz o&nbsp;sobie rzeczy, które czujesz od lat — a&nbsp;których nikt dotąd nie nazwał.
+          Obiecujemy jedno: w&nbsp;pierwszych trzech akapitach przeczytasz o&nbsp;sobie rzeczy, które czujesz od lat, a&nbsp;których nikt dotąd nie nazwał.
         </p>
         <Link href="/share/reading/eeffa42a-c51c-473c-add2-c4fbe94aaa33" data-reveal
           style={{ fontSize:16.5,padding:"15px 30px",display:"inline-block",

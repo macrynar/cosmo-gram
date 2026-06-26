@@ -68,7 +68,7 @@ export default function Footer() {
               />
             </Link>
             <p className="text-xs text-slate-600 max-w-[200px] leading-relaxed">
-              Twój kosmiczny przewodnik — astrologia i AI w jednym miejscu.
+              Twój kosmiczny przewodnik: astrologia i AI w jednym miejscu.
             </p>
           </div>
 
@@ -106,7 +106,7 @@ export default function Footer() {
             <p>© {year} UXIS Maciej Rynarzewski · NIP: 5423081327</p>
             <p>ul. Kołłątaja 32/12, 15-774 Białystok · <a href="mailto:hello@cosmo-gram.com" className="hover:text-slate-500 transition-colors">hello@cosmo-gram.com</a></p>
           </div>
-          <p>Swiss Ephemeris · Anthropic Claude</p>
+          <p>Dane NASA · Anthropic Claude</p>
         </div>
       </div>
     </footer>

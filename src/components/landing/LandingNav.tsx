@@ -44,7 +44,7 @@ export default function LandingNav() {
         {/* Logo */}
         <Link
           href="/"
-          aria-label="Cosmogram — strona główna"
+          aria-label="Cosmogram, strona główna"
           style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--text-primary)", zIndex: 21 }}
         >
           <svg width="30" height="30" viewBox="0 0 120 120" aria-hidden="true">
@@ -146,7 +146,7 @@ export default function LandingNav() {
           onClick={close}
           style={{ fontSize: 15, color: "var(--text-muted)", textDecoration: "none", marginTop: 12 }}
         >
-          Mam już konto — zaloguj
+          Mam już konto, zaloguj
         </Link>
       </div>
 

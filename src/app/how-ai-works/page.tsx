@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 const SECTIONS = [
   { heading: "Jakich modeli AI używamy?", body: "Cosmogram korzysta z Claude (Anthropic) jako głównego modelu językowego do generowania interpretacji kosmogramów." },
-  { heading: "Skąd dane astronomiczne?", body: "Obliczenia astronomiczne opieramy na Swiss Ephemeris — bibliotece uznawanej za standard w profesjonalnej astrologii i astronomii." },
+  { heading: "Skąd dane astronomiczne?", body: "Pozycje planet liczymy z danych astronomicznych NASA (efemerydy NASA JPL). Pod spodem korzystamy ze Swiss Ephemeris, biblioteki uznawanej za standard w profesjonalnej astrologii. To te same dane, na których pracują zawodowi astrolodzy." },
   { heading: "Granice odpowiedzialności", body: "Interpretacje Cosmogram mają charakter inspiracyjny i edukacyjny. Nie zastępują porad medycznych, psychologicznych ani finansowych." },
   { heading: "Prywatność danych", body: "Dane urodzenia przechowujemy zaszyfrowane i nigdy nie udostępniamy ich stronom trzecim. Możesz usunąć konto i wszystkie dane w ustawieniach." },
 ];

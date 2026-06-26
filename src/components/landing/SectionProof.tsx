@@ -6,7 +6,7 @@ export default function SectionProof() {
       sign: "Słońce w Pannie",
     },
     {
-      text: `„Nie wierzę w horoskopy. Ale to nie był horoskop — to był opis mojego sposobu działania, punkt po punkcie.”`,
+      text: `„Nie wierzę w horoskopy. Ale to nie był horoskop. To był opis mojego sposobu działania, punkt po punkcie.”`,
       who: "Paweł",
       sign: "Słońce w Skorpionie",
       delay: 100,
@@ -31,7 +31,7 @@ export default function SectionProof() {
         Czytasz o&nbsp;sobie i&nbsp;myślisz:<br />skąd oni to wiedzą?
       </h2>
       <p data-reveal style={{ fontSize:18.5,lineHeight:1.6,color:"var(--text-secondary)",maxWidth:640,margin:"0 auto 56px" }}>
-        Fragmenty pochodzą z&nbsp;prawdziwych kosmogramów — za zgodą ich właścicieli.
+        Fragmenty pochodzą z&nbsp;prawdziwych kosmogramów, za zgodą ich właścicieli.
       </p>
 
       <p data-reveal style={{

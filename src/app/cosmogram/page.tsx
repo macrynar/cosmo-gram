@@ -4,14 +4,14 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Kosmogram natalny — mapa nieba z chwili urodzenia · Cosmogram",
+  title: "Kosmogram natalny: mapa nieba z chwili urodzenia · Cosmogram",
   description:
-    "Kosmogram natalny (horoskop urodzeniowy) to mapa położenia planet w chwili Twoich narodzin. Interpretacja AI po polsku, obliczenia Swiss Ephemeris. Wygeneruj za darmo.",
+    "Kosmogram natalny (horoskop urodzeniowy) to mapa położenia planet w chwili Twoich narodzin. Interpretacja AI po polsku, obliczenia z danych astronomicznych NASA. Wygeneruj za darmo.",
   alternates: { canonical: "https://www.cosmo-gram.com/cosmogram" },
   openGraph: {
-    title: "Kosmogram natalny — mapa nieba z chwili urodzenia · Cosmogram",
+    title: "Kosmogram natalny: mapa nieba z chwili urodzenia · Cosmogram",
     description:
-      "Kosmogram natalny (horoskop urodzeniowy) to mapa położenia planet w chwili Twoich narodzin. Interpretacja AI po polsku, obliczenia Swiss Ephemeris. Wygeneruj za darmo.",
+      "Kosmogram natalny (horoskop urodzeniowy) to mapa położenia planet w chwili Twoich narodzin. Interpretacja AI po polsku, obliczenia z danych astronomicznych NASA. Wygeneruj za darmo.",
     url: "https://www.cosmo-gram.com/cosmogram",
   },
 };
@@ -22,7 +22,7 @@ const HERO_IMG =
 const FAQ_ITEMS = [
   {
     q: "Czym jest kosmogram?",
-    a: "Kosmogram (horoskop urodzeniowy, natalny) to mapa położenia Słońca, Księżyca i planet w chwili Twoich narodzin, obliczana z daty, godziny i miejsca urodzenia. Pokazuje Twój indywidualny układ — nie znak, pod który trafia 1/12 ludzi.",
+    a: "Kosmogram (horoskop urodzeniowy, natalny) to mapa położenia Słońca, Księżyca i planet w chwili Twoich narodzin, obliczana z daty, godziny i miejsca urodzenia. Pokazuje Twój indywidualny układ, nie znak, pod który trafia 1/12 ludzi.",
   },
   {
     q: "Czy kosmogram jest za darmo?",
@@ -30,15 +30,15 @@ const FAQ_ITEMS = [
   },
   {
     q: "Czy potrzebuję godziny urodzenia?",
-    a: "Do pełnego wyniku — tak. Godzina wyznacza Ascendent i domy, które zmieniają się co ok. dwie godziny. Bez godziny policzymy przybliżony kosmogram (bez Ascendentu i domów, z orientacyjną pozycją Księżyca).",
+    a: "Do pełnego wyniku tak. Godzina wyznacza Ascendent i domy, które zmieniają się co ok. dwie godziny. Bez godziny policzymy przybliżony kosmogram (bez Ascendentu i domów, z orientacyjną pozycją Księżyca).",
   },
   {
     q: "Czym kosmogram różni się od horoskopu z gazety?",
-    a: 'Horoskop „pod znak” patrzy tylko na Słońce i jest wspólny dla milionów osób. Kosmogram uwzględnia położenie wszystkich planet w Twoim momencie narodzin — dlatego jest osobisty i znacznie dokładniejszy.',
+    a: 'Horoskop „pod znak” patrzy tylko na Słońce i jest wspólny dla milionów osób. Kosmogram uwzględnia położenie wszystkich planet w Twoim momencie narodzin, dlatego jest osobisty i znacznie dokładniejszy.',
   },
   {
     q: "Skąd biorą się obliczenia?",
-    a: "Z efemeryd Swiss Ephemeris — tego samego źródła danych astronomicznych, którego używają zawodowi astrolodzy. Interpretację pisze AI po polsku, na podstawie wyliczonego układu.",
+    a: "Z danych astronomicznych NASA (efemeryd NASA JPL), na których opiera się Swiss Ephemeris, standard zawodowych astrologów. Interpretację pisze Astrea po polsku, dla Twojego konkretnego układu.",
   },
   {
     q: "Co to jest ascendent?",
@@ -46,15 +46,15 @@ const FAQ_ITEMS = [
   },
   {
     q: "Czy to wróżenie?",
-    a: "Nie. Traktujemy astrologię jak symboliczne lustro do autorefleksji, a nie wyrocznię. Treści mają charakter refleksyjny i rozrywkowy — nie zastępują porady medycznej, psychologicznej, prawnej ani finansowej.",
+    a: "Nie. Traktujemy astrologię jak symboliczne lustro do autorefleksji, a nie wyrocznię. Treści mają charakter refleksyjny i rozrywkowy, nie zastępują porady medycznej, psychologicznej, prawnej ani finansowej.",
   },
 ];
 
 const JSON_WEBPAGE = {
   "@context": "https://schema.org",
   "@type": "WebPage",
-  name: "Kosmogram natalny — mapa nieba z chwili urodzenia",
-  description: "Oblicz swój kosmogram natalny za darmo. Interpretacja AI po polsku, obliczenia Swiss Ephemeris.",
+  name: "Kosmogram natalny: mapa nieba z chwili urodzenia",
+  description: "Oblicz swój kosmogram natalny za darmo. Interpretacja AI po polsku, obliczenia z danych astronomicznych NASA.",
   url: "https://www.cosmo-gram.com/cosmogram",
   breadcrumb: {
     "@type": "BreadcrumbList",
@@ -97,7 +97,7 @@ const JSON_HOWTO = {
     {
       "@type": "HowToStep",
       name: "Liczymy wykres",
-      text: "Pozycje planet i domów ze Swiss Ephemeris.",
+      text: "Pozycje planet i domów z danych astronomicznych NASA.",
     },
     {
       "@type": "HowToStep",
@@ -237,12 +237,12 @@ export default function CosmogramPage() {
             }}
           >
             Kosmogram (horoskop urodzeniowy) to precyzyjna mapa położenia wszystkich planet
-            w momencie Twoich narodzin. U nas czyta go AI — po polsku, z głębią, jakiej nie da
-            darmowy kalkulator. Obliczenia oparte na Swiss Ephemeris.
+            w momencie Twoich narodzin. U nas czyta go AI po polsku, z głębią, jakiej nie da
+            darmowy kalkulator. Obliczenia oparte na danych astronomicznych NASA.
           </p>
           <Link href="/signup" style={btnPrimary}>
             <IconStar />
-            Wygeneruj swój kosmogram — za darmo
+            Wygeneruj swój kosmogram, za darmo
           </Link>
           <p style={{ marginTop: 14, fontSize: 12.5, color: "var(--text-muted)" }}>
             Potrzebujesz tylko daty, godziny i miejsca urodzenia · gotowe w kilkanaście sekund
@@ -270,7 +270,7 @@ export default function CosmogramPage() {
               <strong style={{ color: "var(--accent-deep)", fontWeight: 600 }}>
                 dacie, godzinie i miejscu urodzenia
               </strong>{" "}
-              — dlatego jest jedyny w swoim rodzaju, jak odcisk palca.
+              i dlatego jest jedyny w swoim rodzaju, jak odcisk palca.
             </p>
           </div>
         </div>
@@ -302,11 +302,11 @@ export default function CosmogramPage() {
               },
               {
                 n: "2", title: "Liczymy wykres",
-                desc: "Pozycje planet i domów ze Swiss Ephemeris — tych samych efemeryd, których używają zawodowi astrolodzy.",
+                desc: "Pozycje planet i domów z danych astronomicznych NASA, tych samych efemeryd, których używają zawodowi astrolodzy.",
               },
               {
                 n: "3", title: "AI pisze interpretację",
-                desc: "Po polsku, dla Twojego konkretnego układu planet — nie ogólniki ze znaku Słońca.",
+                desc: "Po polsku, dla Twojego konkretnego układu planet, nie ogólniki ze znaku Słońca.",
               },
             ].map((step) => (
               <div key={step.n} style={{ ...cardBase, padding: 22 }}>
@@ -338,7 +338,7 @@ export default function CosmogramPage() {
               Od Wielkiej Trójki po wszystkie planety
             </h2>
             <p style={{ color: "var(--text-secondary)", fontSize: 15.5 }}>
-              Zaczynamy od trzech filarów, potem reszta układu — i domy, i aspekty między planetami.
+              Zaczynamy od trzech filarów, potem reszta układu: i domy, i aspekty między planetami.
             </p>
           </div>
 
@@ -402,7 +402,7 @@ export default function CosmogramPage() {
           </div>
 
           <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 13, marginTop: 18 }}>
-            …a do tego 12 domów (obszary życia) i aspekty — kąty, które planety tworzą między sobą.
+            …a do tego 12 domów (obszary życia) i aspekty, czyli kąty, które planety tworzą między sobą.
           </p>
         </div>
       </section>
@@ -438,7 +438,7 @@ export default function CosmogramPage() {
                 {[
                   ["Na czym oparty", "data + godzina + miejsce urodzenia", "tylko znak Słońca"],
                   ["Personalizacja", "unikalny dla Ciebie", "wspólny dla 1/12 ludzi"],
-                  ["Dokładność", "pozycje wszystkich planet (Swiss Ephemeris)", "uproszczenie"],
+                  ["Dokładność", "pozycje wszystkich planet (dane astronomiczne NASA)", "uproszczenie"],
                   ["Głębia", "osobowość, relacje, kariera, emocje", "jedno zdanie na dzień"],
                 ].map(([label, a, b]) => (
                   <tr key={label}>
@@ -465,11 +465,11 @@ export default function CosmogramPage() {
           >
             <h3 style={{ ...serif, fontSize: 21, marginBottom: 4 }}>Ascendent i godzina urodzenia</h3>
             <p style={{ color: "var(--text-secondary)", fontSize: 15 }}>
-              Ascendent — znak wschodzący nad horyzontem w chwili narodzin — zmienia się mniej więcej
+              Ascendent, znak wschodzący nad horyzontem w chwili narodzin, zmienia się mniej więcej
               co dwie godziny. Dlatego do pełnego kosmogramu potrzebna jest dokładna{" "}
               <strong style={{ color: "var(--accent-deep)", fontWeight: 600 }}>godzina urodzenia</strong>
-              {" "}(znajdziesz ją w akcie urodzenia). Nie znasz godziny? Policzymy przybliżony kosmogram —
-              bez Ascendentu i domów, z orientacyjną pozycją Księżyca — wciąż wartościowy.
+              {" "}(znajdziesz ją w akcie urodzenia). Nie znasz godziny? Policzymy przybliżony kosmogram,
+              bez Ascendentu i domów, z orientacyjną pozycją Księżyca, wciąż wartościowy.
             </p>
           </div>
         </div>
@@ -495,7 +495,7 @@ export default function CosmogramPage() {
                 Kosmogram dziecka
               </h2>
               <p style={{ color: "var(--text-secondary)", fontSize: 15, marginBottom: 18 }}>
-                Interpretacja skupiona na tym, czego potrzebuje dziecko — nie na tym, kim będzie.
+                Interpretacja skupiona na tym, czego potrzebuje dziecko, nie na tym, kim będzie.
                 Pomaga rozumieć temperament, świat emocji i sposób uczenia się malucha, z konkretnymi
                 wskazówkami dla rodzica.
               </p>
@@ -510,7 +510,7 @@ export default function CosmogramPage() {
                   "Temperament i naturalne skłonności",
                   "Potrzeby emocjonalne i przywiązanie",
                   "Jak dziecko uczy się najlepiej",
-                  "Wskazówki dla rodzica — praktyczne",
+                  "Wskazówki dla rodzica: praktyczne",
                 ].map((item) => (
                   <li
                     key={item}
@@ -573,7 +573,7 @@ export default function CosmogramPage() {
               {
                 icon: <IconHeart />,
                 title: "Cosmo Match",
-                desc: "Synastria — nałóż swój kosmogram na kosmogram drugiej osoby i sprawdź kompatybilność.",
+                desc: "Synastria: nałóż swój kosmogram na kosmogram drugiej osoby i sprawdź kompatybilność.",
                 href: "/match",
               },
               {
@@ -585,7 +585,7 @@ export default function CosmogramPage() {
               {
                 icon: <IconChat />,
                 title: "Cosmo Chat",
-                desc: "Astrea — astrolog AI, który zna Twój układ planet i odpowiada własnym głosem.",
+                desc: "Astrea, astrolog AI, który zna Twój układ planet i odpowiada własnym głosem.",
                 href: "/app/chat",
               },
               {

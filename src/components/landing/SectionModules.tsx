@@ -35,7 +35,7 @@ export default function SectionModules() {
         Zaczyna się od kosmogramu.<br />Potem robi się ciekawie.
       </h2>
       <p data-reveal style={{ fontSize:18.5,lineHeight:1.6,color:"var(--text-secondary)",maxWidth:640,marginBottom:56 }}>
-        Twój kosmogram to centrum — kalendarz, dopasowania i&nbsp;rozmowy czerpią z&nbsp;niego wszystko, co wiedzą.
+        Twój kosmogram to centrum: kalendarz, dopasowania i&nbsp;rozmowy czerpią z&nbsp;niego wszystko, co wiedzą.
       </p>
 
       {/* Featured card */}
@@ -58,7 +58,7 @@ export default function SectionModules() {
           <span style={{ fontSize:26,color:"var(--accent)",display:"inline-block",marginBottom:18 }}>☉</span>
           <h3 style={{ fontSize:26,fontWeight:700,letterSpacing:"-.01em",marginBottom:12 }}>Kosmogram</h3>
           <p style={{ fontSize:16.5,lineHeight:1.65,color:"var(--text-secondary)",marginBottom:24 }}>
-            Portret, do którego się wraca. Osiem rozdziałów o&nbsp;Tobie: tożsamość, relacje, mocne strony i&nbsp;rzeczy do przepracowania — napisane językiem, który nie owija w&nbsp;bawełnę, ale też nie straszy.
+            Portret, do którego się wraca. Osiem rozdziałów o&nbsp;Tobie: tożsamość, relacje, mocne strony i&nbsp;rzeczy do przepracowania, napisane językiem, który nie owija w&nbsp;bawełnę, ale też nie straszy.
           </p>
           <Link href="/app/cosmogram" style={{ color:"var(--accent-deep)",textDecoration:"none",fontSize:15.5,fontWeight:500 }}>
             Zobacz przykładowy kosmogram →
@@ -80,7 +80,7 @@ export default function SectionModules() {
           {
             img: "/assets/landing/ill-kalendarz.png",
             title: "Kalendarz astrologiczny",
-            text: "Dni mocy i&nbsp;dni na przeczekanie — liczone z&nbsp;Twojego nieba, nie dla wszystkich Baranów naraz.",
+            text: "Dni mocy i&nbsp;dni na przeczekanie, liczone z&nbsp;Twojego nieba, nie dla wszystkich Baranów naraz.",
             link: "Zajrzyj do kalendarza →",
             href: "/app/calendar",
             delay: 100,

@@ -1,19 +1,19 @@
 const FAQS = [
   {
     q: "Nie wierzę w astrologię. Czy to coś dla mnie?",
-    a: "Nie musisz wierzyć. Potraktuj kosmogram jak lustro i&nbsp;dobrą rozmowę o&nbsp;sobie — zestaw trafnych pytań o&nbsp;to, jak działasz, kochasz i&nbsp;czego unikasz. Sceptycy piszą nam najdłuższe wiadomości.",
+    a: "Nie musisz wierzyć. Potraktuj kosmogram jak lustro i&nbsp;dobrą rozmowę o&nbsp;sobie: zestaw trafnych pytań o&nbsp;to, jak działasz, kochasz i&nbsp;czego unikasz. Sceptycy piszą nam najdłuższe wiadomości.",
   },
   {
     q: "Czym to się różni od horoskopów z internetu?",
-    a: "Horoskop z&nbsp;internetu to jeden tekst dla jednej dwunastej ludzkości. Tu wszystko liczymy z&nbsp;Twojego nieba — pozycji planet z&nbsp;dnia i&nbsp;miejsca Twoich narodzin, wyznaczonych z&nbsp;danych astronomicznych NASA co do stopnia.",
+    a: "Horoskop z&nbsp;internetu to jeden tekst dla jednej dwunastej ludzkości. Tu wszystko liczymy z&nbsp;Twojego nieba: pozycji planet z&nbsp;dnia i&nbsp;miejsca Twoich narodzin, wyznaczonych z&nbsp;danych astronomicznych NASA co do stopnia.",
   },
   {
     q: "Nie znam godziny urodzenia. Czy to problem?",
-    a: "Nie. Dostajesz pełny kosmogram z&nbsp;pozycji planet. Godzina dodaje ascendent i&nbsp;domy — możesz ją uzupełnić później. Podpowiadamy też, jak ją znaleźć: jest w&nbsp;akcie urodzenia, dostępnym w&nbsp;każdym USC.",
+    a: "Nie. Dostajesz pełny kosmogram z&nbsp;pozycji planet. Godzina dodaje ascendent i&nbsp;domy, możesz ją uzupełnić później. Podpowiadamy też, jak ją znaleźć: jest w&nbsp;akcie urodzenia, dostępnym w&nbsp;każdym USC.",
   },
   {
     q: "Czy moje dane są bezpieczne?",
-    a: "Dane urodzenia zostają u&nbsp;nas — Astrea pracuje wyłącznie na wyliczonych pozycjach planet, bez Twojego imienia i&nbsp;daty. Konto i&nbsp;wszystkie dane usuwasz jednym kliknięciem, kiedy zechcesz.",
+    a: "Dane urodzenia zostają u&nbsp;nas. Astrea pracuje wyłącznie na wyliczonych pozycjach planet, bez Twojego imienia i&nbsp;daty. Konto i&nbsp;wszystkie dane usuwasz jednym kliknięciem, kiedy zechcesz.",
   },
   {
     q: "Co dokładnie dostaję za darmo?",
@@ -35,7 +35,7 @@ export default function SectionFaq() {
           Pytania, które zadałby każdy rozsądny człowiek
         </h2>
         <p data-reveal style={{ fontSize:18.5,lineHeight:1.6,color:"var(--text-secondary)",maxWidth:640,margin:"0 auto 56px" }}>
-          Astrologia budzi wątpliwości — i&nbsp;dobrze. Oto uczciwe odpowiedzi.
+          Astrologia budzi wątpliwości. I&nbsp;dobrze. Oto uczciwe odpowiedzi.
         </p>
       </div>
 
