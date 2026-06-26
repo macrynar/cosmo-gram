@@ -46,6 +46,9 @@ Big picture przed detalami, bez ścian tekstu. **Kwestionuj wprost** gdy plan ma
 - **Czas urodzenia nieznany** → ASC/domy liczone na południe, `house = null`. Nie prezentuj domów jako pewnych.
 - **Astro ≠ Astro.com?** Pokaż Macowi tabelę porównawczą zanim ruszysz dalej (zwykle system domów / timezone / wersja efemeryd).
 - **Słaby output AI** → nie zmieniaj kodu, **zmień prompt**. Chat to structured prompting z kontekstem natal+tranzyty, **nie** „RAG".
+- **Free pali drogi Sonnet (LEAK do naprawy):** `/api/astro-match` generuje **pełne 8 modułów (~$0,10) dla każdego, też free, bez limitu** (cap 10/mc tylko dla płatnych). `/api/ai-child` — **brak gatowania subskrypcji i jakiegokolwiek limitu**. Reguła docelowa: dla free generuj **tylko wolne moduły** (natal 3/8, match 3/8, dziecko 2/6), resztę premium-gate + limit serwerowy. Nigdy „generuj pełne i schowaj przed userem".
+- **Capy anty-abuse licz od UTWORZEŃ, nie aktywnych rekordów** — inaczej user kasuje rekord i dodaje nowy, omijając limit miesięczny. `ai_call_logs` nie ma `user_id` → potrzebny delete-proof licznik (osobna tabela/kolumna miesięczna lub `user_id` w logu).
+- **Cennik zatwierdzony (2026-06-25):** 24,99 zł/mc + 199 zł/rok; czat 50/mc + paczki; capy 5/mc. Źródło prawdy: `docs/PROJECT-STATUS.md` (sekcja „Model biznesowy") + spec `docs/IMPLEMENTACJA-cennik-limity-PROMPT.md`. Te konkretne zmiany pricingu są **już zatwierdzone przez Maca**; nowe zmiany pricingu/copy nadal wymagają jego zgody.
 
 ## Weryfikacja (definicja „done")
 

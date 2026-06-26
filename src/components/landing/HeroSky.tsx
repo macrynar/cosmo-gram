@@ -323,7 +323,7 @@ export default function HeroSky() {
           </span>
         </h1>
         <p className="landing-reveal landing-d3" style={{ fontSize:"clamp(16px,1.6vw,19.5px)",lineHeight:1.6,color:"var(--text-secondary)",maxWidth:660,margin:"0 auto 44px" }}>
-          Cosmogram łączy dane astronomiczne NASA z&nbsp;wiedzą astrologiczną gromadzoną od tysięcy lat. Astrea — nasza AI tworzona razem z&nbsp;astrologami — zamienia je w&nbsp;portret, w&nbsp;którym rozpoznasz siebie, a&nbsp;nie jedną dwunastą ludzkości.
+          Cosmogram łączy dane astronomiczne NASA z&nbsp;wiedzą astrologiczną gromadzoną od tysięcy lat. Astrea, nasza AI tworzona razem z&nbsp;astrologami, zamienia je w&nbsp;portret, w&nbsp;którym rozpoznasz siebie, a&nbsp;nie jedną dwunastą ludzkości.
         </p>
         <div className="landing-reveal landing-d4">
           <Link

@@ -4,14 +4,14 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Cennik — Cosmogram",
+  title: "Cennik · Cosmogram",
   description:
-    "Zacznij za darmo, przejdź na Plus, gdy chcesz więcej. Cosmogram Plus 24,99 zł/mc lub 199 zł/rok — pełna interpretacja, Cosmo Match, Kosmogram dziecka i Cosmo Chat z Astreą. Anuluj kiedy chcesz.",
+    "Zacznij za darmo, przejdź na Plus, gdy chcesz więcej. Cosmogram Plus 24,99 zł/mc lub 199 zł/rok: pełna interpretacja, Cosmo Match, Kosmogram dziecka i Cosmo Chat z Astreą. Anuluj kiedy chcesz.",
   alternates: { canonical: "https://www.cosmo-gram.com/pricing" },
   openGraph: {
-    title: "Cennik — Cosmogram",
+    title: "Cennik · Cosmogram",
     description:
-      "Plan Free i Plus. Cosmogram — twój kosmiczny przewodnik — astrologia i AI w jednym miejscu.",
+      "Plan Free i Plus. Cosmogram, twój kosmiczny przewodnik, astrologia i AI w jednym miejscu.",
     url: "https://www.cosmo-gram.com/pricing",
     images: [{ url: "https://www.cosmo-gram.com/og-default.png", width: 1200, height: 630 }],
   },
@@ -24,7 +24,7 @@ const JSON_WEBPAGE = {
       "@type": "WebPage",
       "@id": "https://www.cosmo-gram.com/pricing",
       url: "https://www.cosmo-gram.com/pricing",
-      name: "Cennik — Cosmogram",
+      name: "Cennik · Cosmogram",
       description:
         "Plany Free i Plus. Zacznij bez opłat, przejdź na Plus gdy chcesz pełnej interpretacji i Cosmo Chatu z Astreą.",
       inLanguage: "pl",
@@ -67,35 +67,46 @@ const JSON_PRODUCT = {
   ],
 };
 
+// Jedno źródło prawdy dla FAQ: zasila i render, i JSON-LD FAQPage (nie rozjeżdżają się).
+const FAQ_ITEMS: { q: string; a: string }[] = [
+  {
+    q: "Czy mogę korzystać za darmo?",
+    a: "Tak. Plan Free jest bezpłatny na zawsze: pełny kosmogram z kołem, pierwszy rozdział interpretacji, jeden Cosmo Match i kilka pytań do Astrei. Konto zakładasz bez karty.",
+  },
+  {
+    q: "Co dokładnie odblokowuje Plus?",
+    a: "Pełną interpretację (wszystkie 8 rozdziałów), Cosmo Match z pełną analizą relacji (do 5 analiz miesięcznie), Kosmogram dziecka, Cosmo Chat z Astreą (50 wiadomości miesięcznie) z pełnym kontekstem Twojego kosmogramu oraz priorytetowe, dłuższe odpowiedzi AI.",
+  },
+  {
+    q: "Ile mogę rozmawiać z Astreą?",
+    a: "W planie Free masz 3 wiadomości na start. W Plus masz 50 wiadomości miesięcznie, a licznik odnawia się co okres rozliczeniowy. Gdy potrzebujesz więcej, możesz w każdej chwili doładować dodatkową paczkę wiadomości.",
+  },
+  {
+    q: "Ile kosztuje Plus?",
+    a: "24,99 zł miesięcznie lub 199 zł rocznie (16,58 zł/mc, oszczędzasz ~33%). Ceny brutto, bez ukrytych kosztów.",
+  },
+  {
+    q: "Czy mogę anulować w każdej chwili?",
+    a: "Tak. Subskrypcję anulujesz jednym kliknięciem w ustawieniach i zachowujesz dostęp do końca opłaconego okresu.",
+  },
+  {
+    q: "Jak wygląda płatność?",
+    a: "Bezpiecznie przez Stripe, kartą lub popularnymi metodami płatności. Nie przechowujemy danych Twojej karty.",
+  },
+  {
+    q: "Czy dostanę fakturę?",
+    a: "Tak, fakturę lub rachunek wystawiamy na życzenie po podaniu danych do rozliczenia.",
+  },
+];
+
 const JSON_FAQ = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "Czy moge korzystac za darmo?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Tak - plan Free jest bezplatny na zawsze: pelny kosmogram z kolem, pierwszy rozdzial interpretacji, jeden Cosmo Match i kilka pytan do Astrei.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Ile kosztuje Plus?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "24,99 zl miesiecznie lub 199 zl rocznie (oszczedzasz ~33%). Ceny brutto, bez ukrytych kosztow.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Czy moge anulowac w kazdej chwili?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Tak - anulujesz jednym kliknieciem i zachowujesz dostep do konca oplaconego okresu.",
-      },
-    },
-  ],
+  mainEntity: FAQ_ITEMS.map(({ q, a }) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: { "@type": "Answer", text: a },
+  })),
 };
 
 const wrap: React.CSSProperties = { maxWidth: 1000, margin: "0 auto", padding: "0 22px" };
@@ -184,7 +195,7 @@ export default function PricingPage() {
             </span>
           </h1>
           <p style={{ color: "#B6AFC6", fontSize: 16 }}>
-            Free na start, Plus dla tych, którzy chcą zejść głębiej w swój kosmogram. Bez ukrytych kosztów — anulujesz, kiedy zechcesz.
+            Free na start, Plus dla tych, którzy chcą zejść głębiej w swój kosmogram. Bez ukrytych kosztów, anulujesz, kiedy zechcesz.
           </p>
         </div>
 
@@ -235,7 +246,7 @@ export default function PricingPage() {
               <span style={{ color: "#877FA0", fontSize: 15 }}>na zawsze</span>
             </div>
             <div style={{ fontSize: 12, color: "#877FA0", marginBottom: 22 }}>
-              Konto bez karty — wystarczy e-mail.
+              Konto bez karty, wystarczy e-mail.
             </div>
 
             <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
@@ -244,12 +255,12 @@ export default function PricingPage() {
                 ["Interpretacja AI kluczowych pozycji", "3 rozdziały"],
                 ["Cosmo Match", "wynik + 3 moduły"],
                 ["Cosmo Chat", "3 wiadomości na start"],
-                ["Horoskop dzienny — raz dziennie", false],
+                ["Horoskop dzienny, raz dziennie", false],
               ] as [string, string | false][]).map(([label, detail], i) => (
                 <li key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14, color: "#B6AFC6" }}>
                   {CHECK_ICON}
                   <span>
-                    {detail ? <><strong style={{ color: "#F4F1EA" }}>{label}</strong> — {detail}</> : label}
+                    {detail ? <><strong style={{ color: "#F4F1EA" }}>{label}</strong>: {detail}</> : label}
                   </span>
                 </li>
               ))}
@@ -322,15 +333,15 @@ export default function PricingPage() {
             <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
               {([
                 ["Pełna interpretacja kosmogramu", "wszystkie 8 rozdziałów o Tobie"],
-                ["Cosmo Match — pełna analiza 8 wymiarów", "do 5 analiz miesięcznie: gdzie iskrzy, a gdzie tkwi potencjał"],
+                ["Cosmo Match: pełna analiza 8 wymiarów", "do 5 analiz miesięcznie: gdzie iskrzy, a gdzie tkwi potencjał"],
                 ["Kosmogram dziecka", "pełne 6 modułów i biblioteka"],
-                ["Cosmo Chat — 50 wiadomości miesięcznie", "z Astreą, z pełnym kontekstem Twojego kosmogramu (+ doładowania)"],
+                ["Cosmo Chat: 50 wiadomości miesięcznie", "z Astreą, z pełnym kontekstem Twojego kosmogramu (+ doładowania)"],
                 ["Priorytetowe, dłuższe i głębsze odpowiedzi AI", false],
               ] as [string, string | false][]).map(([label, detail], i) => (
                 <li key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14, color: "#B6AFC6" }}>
                   {CHECK_ICON}
                   <span>
-                    {detail ? <><strong style={{ color: "#F4F1EA" }}>{label}</strong> — {detail}</> : label}
+                    {detail ? <><strong style={{ color: "#F4F1EA" }}>{label}</strong>: {detail}</> : label}
                   </span>
                 </li>
               ))}
@@ -426,36 +437,7 @@ export default function PricingPage() {
             </div>
 
             <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
-              {[
-                {
-                  q: "Czy mogę korzystać za darmo?",
-                  a: "Tak. Plan Free jest bezpłatny na zawsze — pełny kosmogram z kołem, pierwszy rozdział interpretacji, jeden Cosmo Match i kilka pytań do Astrei. Konto zakładasz bez karty.",
-                },
-                {
-                  q: "Co dokładnie odblokowuje Plus?",
-                  a: "Pełną interpretację (wszystkie 8 rozdziałów), Cosmo Match z pełną analizą relacji (do 5 analiz miesięcznie), Kosmogram dziecka, Cosmo Chat z Astreą (50 wiadomości miesięcznie) z pełnym kontekstem Twojego kosmogramu oraz priorytetowe, dłuższe odpowiedzi AI.",
-                },
-                {
-                  q: "Ile mogę rozmawiać z Astreą?",
-                  a: "W planie Free masz 3 wiadomości na start. W Plus — 50 wiadomości miesięcznie, a licznik odnawia się co okres rozliczeniowy. Gdy potrzebujesz więcej, możesz w każdej chwili doładować dodatkową paczkę wiadomości.",
-                },
-                {
-                  q: "Ile kosztuje Plus?",
-                  a: "24,99 zł miesięcznie lub 199 zł rocznie (16,58 zł/mc — oszczędzasz ~33%). Ceny brutto, bez ukrytych kosztów.",
-                },
-                {
-                  q: "Czy mogę anulować w każdej chwili?",
-                  a: "Tak. Subskrypcję anulujesz jednym kliknięciem w ustawieniach — zachowujesz dostęp do końca opłaconego okresu, bez automatycznych pułapek.",
-                },
-                {
-                  q: "Jak wygląda płatność?",
-                  a: "Bezpiecznie przez Stripe — kartą lub popularnymi metodami płatności. Nie przechowujemy danych Twojej karty.",
-                },
-                {
-                  q: "Czy dostanę fakturę?",
-                  a: "Tak, fakturę lub rachunek wystawiamy na życzenie po podaniu danych do rozliczenia.",
-                },
-              ].map(({ q, a }, i) => (
+              {FAQ_ITEMS.map(({ q, a }, i) => (
                 <details
                   key={i}
                   style={{

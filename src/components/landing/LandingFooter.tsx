@@ -46,7 +46,7 @@ export default function LandingFooter() {
         fontSize:13, lineHeight:1.6, color:"var(--text-muted)",
         borderTop:"1px solid var(--line-soft)", paddingTop:24,
       }}>
-        Treści w&nbsp;Cosmogramie mają charakter refleksyjno-rozrywkowy — to symboliczne lustro, nie wyrocznia. Nie stanowią porady medycznej, psychologicznej, prawnej ani finansowej.<br />
+        Treści w&nbsp;Cosmogramie mają charakter refleksyjno-rozrywkowy, to symboliczne lustro, nie wyrocznia. Nie stanowią porady medycznej, psychologicznej, prawnej ani finansowej.<br />
         © 2026 Cosmogram
       </div>
     </footer>
