@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getPublishedPosts } from "@/lib/blog";
+import { getPublishedPosts, getCoverUrl } from "@/lib/blog";
 
 export const metadata: Metadata = {
   title: "Blog — Cosmogram",
@@ -67,6 +66,7 @@ export default function BlogPage() {
             >
               {posts.map((post) => {
                 const fm = post.frontmatter;
+                const coverUrl = getCoverUrl(post);
                 return (
                   <Link
                     key={post.slug}
@@ -74,12 +74,12 @@ export default function BlogPage() {
                     style={{ ...cardBase, overflow: "hidden", textDecoration: "none", display: "flex", flexDirection: "column" }}
                   >
                     <div style={{ position: "relative", aspectRatio: "1200 / 630", background: "var(--bg-base)" }}>
-                      <Image
-                        src={fm.cover}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={coverUrl}
                         alt={fm.coverAlt}
-                        fill
-                        sizes="(max-width: 640px) 100vw, 33vw"
-                        style={{ objectFit: "cover" }}
+                        loading="lazy"
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     </div>
                     <div style={{ padding: 20, display: "flex", flexDirection: "column", flex: 1 }}>

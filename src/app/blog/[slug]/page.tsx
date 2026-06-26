@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
@@ -10,7 +9,7 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { mdxComponents } from "@/components/blog/MdxComponents";
-import { getPostBySlug, getPublishedPosts } from "@/lib/blog";
+import { getPostBySlug, getPublishedPosts, getCoverUrl } from "@/lib/blog";
 
 const BASE_URL = "https://www.cosmo-gram.com";
 
@@ -46,13 +45,12 @@ export async function generateMetadata({
       publishedTime: fm.publishedAt,
       modifiedTime: fm.updatedAt,
       authors: [fm.author.name],
-      images: [{ url: `${BASE_URL}${fm.cover}`, width: 1200, height: 630, alt: fm.coverAlt }],
+      // og:image/twitter:image dostarcza automatycznie opengraph-image.tsx (konwencja Next).
     },
     twitter: {
       card: "summary_large_image",
       title,
       description: fm.excerpt,
-      images: [`${BASE_URL}${fm.cover}`],
     },
   };
 }
@@ -101,6 +99,7 @@ export default async function BlogPostPage({
 
   const fm = post.frontmatter;
   const url = `${BASE_URL}/blog/${fm.slug}`;
+  const coverUrl = getCoverUrl(post);
   const wasUpdated = fm.updatedAt > fm.publishedAt;
 
   const jsonBlogPosting = {
@@ -108,7 +107,7 @@ export default async function BlogPostPage({
     "@type": "BlogPosting",
     headline: fm.title,
     description: fm.excerpt,
-    image: `${BASE_URL}${fm.cover}`,
+    image: `${BASE_URL}${coverUrl}`,
     datePublished: fm.publishedAt,
     dateModified: fm.updatedAt,
     author: { "@type": "Person", name: fm.author.name, description: fm.author.bio },
@@ -192,15 +191,15 @@ export default async function BlogPostPage({
             </div>
           </header>
 
-          {/* Okładka */}
+          {/* Okładka (własny plik lub generowany szablon /blog/<slug>/opengraph-image) */}
           <div style={{ ...wrap, marginBottom: 32 }}>
-            <Image
-              src={fm.cover}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={coverUrl}
               alt={fm.coverAlt}
               width={1200}
               height={630}
-              priority
-              sizes="(max-width: 760px) 100vw, 760px"
+              fetchPriority="high"
               style={{ width: "100%", height: "auto", borderRadius: 16, border: "1px solid var(--line)" }}
             />
           </div>

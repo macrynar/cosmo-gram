@@ -10,7 +10,7 @@ export type BlogFrontmatter = {
   publishedAt: string;
   updatedAt: string;
   author: { name: string; bio: string };
-  cover: string;
+  cover?: string; // opcjonalny — brak = generowany szablon /blog/<slug>/opengraph-image
   coverAlt: string;
   category: string;
   tags: string[];
@@ -68,7 +68,7 @@ function validate(fm: Record<string, unknown>, file: string): BlogFrontmatter {
     publishedAt: str("publishedAt"),
     updatedAt: str("updatedAt"),
     author: { name: (author as { name: string }).name, bio: (author as { bio: string }).bio },
-    cover: str("cover"),
+    cover: typeof fm.cover === "string" && fm.cover.trim() !== "" ? fm.cover : undefined,
     coverAlt: str("coverAlt"),
     category: str("category"),
     tags: fm.tags as string[],
@@ -115,4 +115,12 @@ export function getPublishedPosts(): BlogPost[] {
 
 export function getPostBySlug(slug: string): BlogPost | null {
   return getAllPosts().find((p) => p.slug === slug) ?? null;
+}
+
+/**
+ * Jedyne źródło URL okładki (względny). Własny `cover` we frontmatterze →
+ * używamy go; brak → generowany szablon brandowy (next/og).
+ */
+export function getCoverUrl(post: BlogPost): string {
+  return post.frontmatter.cover ?? `/blog/${post.slug}/opengraph-image`;
 }
