@@ -9,6 +9,7 @@ export const ROUTES = {
     forKids:        { path: "/for-kids",        label: "Kosmogram dziecka" },
     pricing:        { path: "/pricing",         label: "Cennik" },
     blog:           { path: "/blog",            label: "Blog" },
+    moonSigns:      { path: "/ksiezyc-w-znaku", label: "Księżyc w znaku" },
     about:          { path: "/about",           label: "O projekcie" },
     contact:        { path: "/contact",         label: "Kontakt" },
     howAiWorks:     { path: "/how-ai-works",    label: "Jak działa AI" },
