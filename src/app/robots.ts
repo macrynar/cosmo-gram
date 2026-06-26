@@ -10,7 +10,10 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: [
           "/app/", "/login", "/signup", "/forgot-password", "/reset-password", "/auth/", "/api/",
-          // trasy-duplikaty /horoskop-dzienny i /children mają trwały 301 w next.config.ts (T5)
+          // /children — żywa trasa feature'a Kosmogram Dziecka (jeszcze poza nawigacją), ale duplikat
+          // /app/library bez własnego SEO → blokujemy indeksację, NIE redirectujemy (back-link by się psuł).
+          "/children",
+          // /horoskop-dzienny ma trwały 301 → /daily-horoscope w next.config.ts (nie listujemy redirectów).
         ],
       },
       {
