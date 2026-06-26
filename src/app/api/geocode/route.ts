@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimiter";
+import { geocodeSearch } from "@/lib/geocode";
 
 export async function GET(req: NextRequest) {
   const query = req.nextUrl.searchParams.get("q");
@@ -13,28 +14,7 @@ export async function GET(req: NextRequest) {
   if (rateLimitRes) return rateLimitRes;
 
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": "cosmo-gram/1.0 (astrology chart generator)" },
-    });
-    if (!res.ok) throw new Error("Nominatim error");
-    const data = await res.json();
-
-    const results = (data as Array<{
-      display_name: string;
-      lat: string;
-      lon: string;
-      type: string;
-      importance: number;
-    }>)
-      .filter((item) => item.importance > 0.3)
-      .slice(0, 5)
-      .map((item) => ({
-        displayName: item.display_name,
-        lat: parseFloat(item.lat),
-        lng: parseFloat(item.lon),
-      }));
-
+    const results = await geocodeSearch(query, 5);
     return NextResponse.json({ results });
   } catch {
     return NextResponse.json({ error: "Geocoding failed" }, { status: 500 });
