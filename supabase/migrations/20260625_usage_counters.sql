@@ -34,6 +34,7 @@ create or replace function increment_usage_counter(
 returns int
 language plpgsql
 security definer
+set search_path = public
 as $$
 declare
   v_count int;
