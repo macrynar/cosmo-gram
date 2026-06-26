@@ -16,10 +16,11 @@ export const FREE_CHAT_MESSAGES = 3;
 export const PREMIUM_MONTHLY_CHAT_LIMIT = 50; // z 150
 
 // ── Paczki czatu (wyświetlane ceny; kredyty bez zmian) ──
+// Ceny utrzymane (stare): 9,99 / 24,99 / 199 — zgodne z aktualnymi Stripe Price.
 export type ChatPackSize = "small" | "medium" | "large";
 export const CHAT_PACKS: { size: ChatPackSize; messages: number; price: string; badge?: string }[] = [
-  { size: "small",  messages: 50,  price: "12,99 zł" },
-  { size: "medium", messages: 150, price: "34,99 zł", badge: "Popularne" },
+  { size: "small",  messages: 50,  price: "9,99 zł" },
+  { size: "medium", messages: 150, price: "24,99 zł", badge: "Popularne" },
   { size: "large",  messages: 500, price: "199,00 zł" },
 ];
 

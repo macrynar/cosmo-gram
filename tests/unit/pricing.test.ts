@@ -18,10 +18,10 @@ describe("pricing config — model 2026-06-25", () => {
     expect(PREMIUM_MONTHLY_GENERATION_CAP).toBe(5);
   });
 
-  it("paczki czatu: kredyty 50/150/500, ceny przecenione", () => {
+  it("paczki czatu: kredyty 50/150/500, ceny stare (9,99/24,99/199)", () => {
     expect(CHAT_PACKS.map(p => p.messages)).toEqual([50, 150, 500]);
-    expect(CHAT_PACKS.find(p => p.size === "small")?.price).toBe("12,99 zł");
-    expect(CHAT_PACKS.find(p => p.size === "medium")?.price).toBe("34,99 zł");
+    expect(CHAT_PACKS.find(p => p.size === "small")?.price).toBe("9,99 zł");
+    expect(CHAT_PACKS.find(p => p.size === "medium")?.price).toBe("24,99 zł");
     expect(CHAT_PACKS.find(p => p.size === "large")?.price).toBe("199,00 zł");
   });
 });
