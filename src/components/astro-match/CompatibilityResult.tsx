@@ -312,7 +312,7 @@ export default function CompatibilityResultView({
 
         {/* ── Bond visual ── */}
         <div style={{
-          position: "relative", width: "min(440px,90vw)",
+          position: "relative", width: "min(440px,100%)",
           aspectRatio: "1", margin: "0 auto 6px",
         }}>
           {hasWheel ? (
