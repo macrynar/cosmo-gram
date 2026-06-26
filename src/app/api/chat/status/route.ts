@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { hasActiveSubscription, getUserSubscription } from "@/lib/subscription";
-
-const FREE_CHAT_MESSAGES = 3;
-const PREMIUM_MONTHLY_LIMIT = 150;
+import { FREE_CHAT_MESSAGES, PREMIUM_MONTHLY_CHAT_LIMIT } from "@/lib/pricing";
 
 async function getChatCredits(userId: string): Promise<number> {
   const { data } = await supabaseAdmin
@@ -69,7 +67,7 @@ export async function GET(req: NextRequest) {
 
   const credits = await getChatCredits(user.id);
   const used = count ?? 0;
-  const remaining = Math.max(0, PREMIUM_MONTHLY_LIMIT - used);
+  const remaining = Math.max(0, PREMIUM_MONTHLY_CHAT_LIMIT - used);
 
-  return NextResponse.json({ isPaid: true, limit: PREMIUM_MONTHLY_LIMIT, used, remaining, credits });
+  return NextResponse.json({ isPaid: true, limit: PREMIUM_MONTHLY_CHAT_LIMIT, used, remaining, credits });
 }

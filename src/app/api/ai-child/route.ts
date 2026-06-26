@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { CHILD_V2_SYSTEM, buildChildV2UserPrompt, calcAgeYears } from "@/lib/prompts/child-v2";
-import { ChildModuleAIOutputSchema, CHILD_MODULE_SPECS, type ChildModule, type ChildModuleId } from "@/lib/schemas/childModule";
+import { ChildModuleAIOutputSchema, CHILD_MODULE_SPECS, FREE_CHILD_MODULE_IDS, type ChildModule, type ChildModuleId } from "@/lib/schemas/childModule";
 import type { ChartPlacement, NatalAspect, ChartNodes } from "@/lib/chart-engine";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { resolveActiveSubscription } from "@/lib/subscription";
+import { checkUsageLimit, incrementUsage } from "@/lib/usageLimits";
+import { logAiCall } from "@/lib/deepseek";
+import { FREE_GENERATION_LIMIT, PREMIUM_MONTHLY_GENERATION_CAP } from "@/lib/pricing";
+
+// Freemium: free → 1 dziecko (lifetime), 2/6 modułów; premium → 5/mc, pełne 6.
 
 export const maxDuration = 180;
 
@@ -145,7 +151,7 @@ function getClient(): Anthropic {
 // or literal newlines can appear regardless of what Claude generates.
 const CHILD_MODULES_TOOL: Anthropic.Tool = {
   name: "output_child_modules",
-  description: "Zwróć 6 modułów interpretacji kosmogramu dziecka: temperament, emotions, learning, talents, parenting, peers",
+  description: "Zwróć DOKŁADNIE te moduły interpretacji kosmogramu dziecka, o które prosi instrukcja (id z zbioru: temperament, emotions, learning, talents, parenting, peers). Nie dodawaj modułów spoza listy w instrukcji.",
   input_schema: {
     type: "object",
     properties: {
@@ -193,6 +199,17 @@ export async function POST(req: NextRequest) {
   const rateLimitRes = await checkRateLimit("ai", user.id);
   if (rateLimitRes) return rateLimitRes;
 
+  // ── Subscription gate + delete-proof anti-abuse cap (§2.6) ──
+  const isPaid = await resolveActiveSubscription(user.id, user.email).catch(() => false);
+  const limitOpts = isPaid
+    ? { limit: PREMIUM_MONTHLY_GENERATION_CAP, scope: "month" as const }
+    : { limit: FREE_GENERATION_LIMIT, scope: "lifetime" as const };
+  const { allowed } = await checkUsageLimit(user.id, "child", limitOpts);
+  if (!allowed) {
+    // FREE_LIMIT → paywall (1. dziecko za darmo); MONTHLY_LIMIT → cap 5/mc.
+    return NextResponse.json({ error: isPaid ? "MONTHLY_LIMIT" : "FREE_LIMIT" }, { status: 402 });
+  }
+
   const body = await req.json() as {
     name: string;
     birthDate: string;
@@ -201,25 +218,41 @@ export async function POST(req: NextRequest) {
     nodes: ChartNodes;
   };
 
+  // Free generuje TYLKO 2 wolne moduły (mniejszy prompt + niższy max_tokens).
+  const moduleIds = isPaid ? undefined : FREE_CHILD_MODULE_IDS;
+  const maxTokens = isPaid ? 8000 : 3500;
+
   const userMessage = buildChildV2UserPrompt({
     name:       body.name,
     birthDate:  body.birthDate,
     placements: body.placements ?? [],
     aspects:    body.aspects    ?? [],
     nodes:      body.nodes      ?? { north_node_sign: "", south_node_sign: "" },
+    moduleIds,
   });
 
   const client = getClient();
   let rawModules: unknown[];
   let attemptedRepair = false;
+  const t0 = Date.now();
   try {
     const response = await client.messages.create({
       model:       "claude-sonnet-4-6",
-      max_tokens:  8000,
+      max_tokens:  maxTokens,
       system:      CHILD_V2_SYSTEM,
       messages:    [{ role: "user", content: userMessage }],
       tools:       [CHILD_MODULES_TOOL],
       tool_choice: { type: "tool", name: "output_child_modules" },
+    });
+
+    logAiCall({
+      task: isPaid ? "child" : "child-free",
+      model: "claude-sonnet-4-6",
+      input_tokens: response.usage?.input_tokens,
+      output_tokens: response.usage?.output_tokens,
+      latency_ms: Date.now() - t0,
+      status: "ok",
+      user_id: user.id,
     });
 
     const toolBlock = response.content.find(
@@ -255,6 +288,14 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error("[ai-child] API error:", err);
+    logAiCall({
+      task: isPaid ? "child" : "child-free",
+      model: "claude-sonnet-4-6",
+      latency_ms: Date.now() - t0,
+      status: "error",
+      error_msg: (err instanceof Error ? err.message : String(err)).slice(0, 500),
+      user_id: user.id,
+    });
     return NextResponse.json({ error: "Błąd generowania interpretacji" }, { status: 500 });
   }
 
@@ -301,6 +342,9 @@ export async function POST(req: NextRequest) {
   if (modules.length === 0) {
     return NextResponse.json({ error: "Generowanie nie powiodło się — spróbuj ponownie" }, { status: 500 });
   }
+
+  // Udana generacja = utworzenie → inkrementuj delete-proof licznik (best-effort).
+  await incrementUsage(user.id, "child");
 
   return NextResponse.json({ modules, failedIds });
 }

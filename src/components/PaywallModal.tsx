@@ -7,6 +7,9 @@ import { CosmoIcon } from "@/components/CosmoIcon";
 import { useAuth } from "@/components/AuthContext";
 import { track } from "@/components/PostHogProvider";
 import { supabase } from "@/lib/supabase";
+// Ceny z centralnego configu — MUSZĄ zgadzać się z kwotami Stripe Price (to surface zakupu).
+// TODO COPY (Mac) — finalne brzmienie etykiet/badge rocznego.
+import { PLAN_PRICES } from "@/lib/pricing";
 
 type Props = {
   onClose: () => void;
@@ -16,9 +19,9 @@ type Props = {
 const FEATURES = [
   "Pełna interpretacja Twojego kosmogramu",
   "Dzienny odczyt astrologiczny każdego ranka",
-  "Nieograniczone Astro-Matche",
-  "Cosmogram Chat bez limitu",
-  "Karta kosmogramu dziecka",
+  "Cosmo Match — pełna analiza relacji",
+  "Cosmo Chat z Astreą — 50 wiadomości/mc",
+  "Karta kosmogramu dziecka — pełne 6 modułów",
 ];
 
 export default function PaywallModal({ onClose, reason }: Props) {
@@ -221,7 +224,7 @@ export default function PaywallModal({ onClose, reason }: Props) {
             >
               {loading === "monthly"
                 ? <Loader2 className="w-4 h-4 animate-spin" />
-                : "Plus miesięczny — 19,90 zł / miesiąc"
+                : `Plus miesięczny — ${PLAN_PRICES.monthly.amount} ${PLAN_PRICES.monthly.period}`
               }
             </motion.button>
 
@@ -241,8 +244,8 @@ export default function PaywallModal({ onClose, reason }: Props) {
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <span className="flex flex-col items-center leading-tight">
-                  <span className="font-medium">Roczny — 199 zł / rok</span>
-                  <span className="text-[11px] mt-0.5" style={{ color: "#D4AF37" }}>≈ 16,60 zł/mc · oszczędzasz 17%</span>
+                  <span className="font-medium">Roczny — {PLAN_PRICES.annual.amount} {PLAN_PRICES.annual.period}</span>
+                  <span className="text-[11px] mt-0.5" style={{ color: "#D4AF37" }}>{PLAN_PRICES.annual.perMonth} · {PLAN_PRICES.annual.saving}</span>
                 </span>
               )}
             </button>

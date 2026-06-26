@@ -154,7 +154,13 @@ export default function AstroMatchPage() {
       if (!res.ok) {
         const e = await res.json() as { error: string };
         if (e.error === "MONTHLY_LIMIT") {
-          setError("Osiągnięto limit 10 analiz w tym miesiącu. Limit odnawia się 1. dnia miesiąca.");
+          // TODO COPY (Mac)
+          setError("Osiągnięto limit 5 analiz w tym miesiącu. Limit odnawia się 1. dnia miesiąca.");
+          return;
+        }
+        if (e.error === "FREE_LIMIT") {
+          // Free: 1 match gratis → kolejne za paywallem.
+          setShowPaywall(true);
           return;
         }
         throw new Error(e.error ?? "Błąd analizy");
@@ -518,8 +524,9 @@ export default function AstroMatchPage() {
                 </p>
               )}
               {session && !isPro && (
+                /* TODO COPY (Mac) */
                 <p style={{ marginTop: "12px", fontSize: "12px", color: "#877FA0", textAlign: "center" }}>
-                  Score + 1 moduł bezpłatnie · Pełna analiza 8 wymiarów w planie Plus
+                  Score + 3 moduły bezpłatnie · Pełna analiza 8 wymiarów w planie Plus
                 </p>
               )}
             </motion.form>

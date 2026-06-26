@@ -95,6 +95,8 @@ export async function getKartaByChartId(chartId: string): Promise<AstroModule[]>
 export type KartaResult = {
   modules:   AstroModule[];
   failedIds: ModuleId[];
+  /** Ile modułów faktycznie wygenerowano (0 = pełny cache hit). Do anti-abuse capa. */
+  generatedCount: number;
 };
 
 export async function generateNatalKarta(
@@ -110,7 +112,7 @@ export async function generateNatalKarta(
   // 2. Which need generation?
   const toGenerate = targetIds.filter(id => !cached.has(id));
   if (toGenerate.length === 0) {
-    return { modules: targetIds.map(id => cached.get(id)!).filter(Boolean), failedIds: [] };
+    return { modules: targetIds.map(id => cached.get(id)!).filter(Boolean), failedIds: [], generatedCount: 0 };
   }
 
   const systemPrompt = buildSystemPrompt(grammatical_form);
@@ -123,8 +125,8 @@ export async function generateNatalKarta(
       const preMetrics = computeModuleMetrics(ctx.natal_data, moduleId);
       const preTags    = getModuleTags(ctx.natal_data, moduleId);
       const userPrompt = buildUserPrompt(ctx, moduleId, confidence, { metrics: preMetrics, tags: preTags });
-      const rawOutput  = await generateModuleWithRetry(systemPrompt, userPrompt, moduleId);
-      const aiOutput   = await correctModuleWithHaiku(rawOutput);
+      const rawOutput  = await generateModuleWithRetry(systemPrompt, userPrompt, moduleId, 0, user_id);
+      const aiOutput   = await correctModuleWithHaiku(rawOutput, user_id);
       console.log(`[karta] module ${moduleId} AI output received, validating schema`);
       const cacheKey   = await computeCacheKey(user_id, chart_id, moduleId, grammatical_form);
 
@@ -169,5 +171,5 @@ export async function generateNatalKarta(
   const allById = new Map([...cached, ...generated.map(m => [m.id, m] as [ModuleId, AstroModule])]);
   const modules = targetIds.filter(id => !failedIds.includes(id)).map(id => allById.get(id)!).filter(Boolean);
 
-  return { modules, failedIds };
+  return { modules, failedIds, generatedCount: generated.length };
 }

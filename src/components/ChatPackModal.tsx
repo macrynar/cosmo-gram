@@ -6,19 +6,17 @@ import { X, Check, Loader2, MessageCircle, ChevronRight } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { track } from "@/components/PostHogProvider";
 import { supabase } from "@/lib/supabase";
+// TODO COPY (Mac) — ceny paczek wyświetlane; muszą się zgadzać z kwotami Stripe Price.
+import { CHAT_PACKS, type ChatPackSize } from "@/lib/pricing";
 
-type PackSize = "small" | "medium" | "large";
+type PackSize = ChatPackSize;
 
 type Props = {
   onClose: () => void;
   reason?: "monthly_limit" | "need_topup" | "proactive";
 };
 
-const PACKS: { size: PackSize; messages: number; price: string; badge?: string }[] = [
-  { size: "small",  messages: 50,  price: "9,99 zł" },
-  { size: "medium", messages: 150, price: "24,99 zł", badge: "Popularne" },
-  { size: "large",  messages: 500, price: "199,00 zł" },
-];
+const PACKS = CHAT_PACKS;
 
 export default function ChatPackModal({ onClose, reason = "monthly_limit" }: Props) {
   const { session } = useAuth();

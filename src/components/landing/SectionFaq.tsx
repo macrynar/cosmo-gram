@@ -17,7 +17,7 @@ const FAQS = [
   },
   {
     q: "Co dokładnie dostaję za darmo?",
-    a: "Pełnoprawny kosmogram bazowy: koło natalne, pozycje planet i&nbsp;interpretację najważniejszych konfiguracji. Bez karty, bez okresu próbnego, bez gwiazdek. Plus dokłada pozostałe rozdziały, Match bez limitu, kalendarz personalny i&nbsp;Cosmo Chat.",
+    a: "Pełnoprawny kosmogram bazowy: koło natalne, pozycje planet i&nbsp;interpretację najważniejszych konfiguracji. Bez karty, bez okresu próbnego, bez gwiazdek. Plus dokłada pozostałe rozdziały, pełną analizę Match, kalendarz personalny i&nbsp;Cosmo Chat.",
   },
 ];
 

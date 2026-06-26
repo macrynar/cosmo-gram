@@ -312,7 +312,8 @@ export default function CosmogramPage() {
 
   function openChildForm() {
     if (subLoading) return;
-    if (!isPro) { setShowPaywall(true); return; }
+    // Free: 1 dziecko gratis (2/6 modułów); kolejne za paywallem. Spójne z capem serwera.
+    if (!isPro && children.length >= 1) { setShowPaywall(true); return; }
     setChildError("");
     setShowChildForm(true);
   }
@@ -381,6 +382,7 @@ export default function CosmogramPage() {
       });
       if (!aiRes.ok) {
         const e = await aiRes.json().catch(() => ({})) as { error?: string };
+        if (e.error === "FREE_LIMIT" || e.error === "MONTHLY_LIMIT") { setShowPaywall(true); return; }
         throw new Error(e.error ?? "Błąd generowania karty");
       }
       const { modules } = await aiRes.json() as { modules: ChildModule[] };

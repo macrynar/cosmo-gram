@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Lock } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { track } from "@/components/PostHogProvider";
+import { PLAN_PRICES } from "@/lib/pricing";
 
 export default function PaywallTeaser() {
   return (
@@ -43,7 +44,7 @@ export default function PaywallTeaser() {
           <p className="text-xs text-slate-500 mb-5">
             Filtruj po intencji, szukaj miast, porównuj z bliską osobą.
           </p>
-          <div className="text-2xl font-bold text-amber-300 mb-1">19,90 zł<span className="text-base font-normal text-slate-400">/mc</span></div>
+          <div className="text-2xl font-bold text-amber-300 mb-1">{PLAN_PRICES.monthly.amount}<span className="text-base font-normal text-slate-400">/mc</span></div>
           <p className="text-xs text-amber-500/70 mb-5">Anuluj kiedy chcesz · bezpieczna płatność Stripe</p>
           <Link
             href={ROUTES.app.settingsSubscription.path}
