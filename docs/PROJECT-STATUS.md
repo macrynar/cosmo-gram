@@ -337,6 +337,16 @@ Natal / dziecko / match: **5/mc każdy**, liczone od **utworzeń** (nie aktywnyc
 
 ## Release log
 
+### [2026-06-26] Profesjonalny link aktywacyjny na własnej domenie (token_hash)
+
+Link w mailu potwierdzającym rejestrację prowadzi teraz na `www.cosmo-gram.com`,
+nie na `*.supabase.co` — **bez** płatnego Custom Domain.
+
+- **Mechanizm:** szablon maila kieruje na `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=signup`, a `src/app/auth/callback/page.tsx` wymienia token na sesję przez `verifyOtp` (przed fallbackiem `getSession`), po czym leci cała istniejąca logika (welcome-mail dla `signup`, bramka RODO, pending-chart cross-device).
+- **Open-redirect guard** na parametrze `redirect` (tylko ścieżki wewnętrzne `/...`).
+- **Konfiguracja Supabase (ręczna):** Site URL = `https://www.cosmo-gram.com`; szablon „Confirm signup" przepięty na `token_hash`. Recovery/Magic Link NIE ruszane (recovery wymaga osobnej strony „ustaw nowe hasło" — przyszły task).
+- **Custom Domain ($10/mc)** zostaje potrzebny już tylko dla ekranu zgody Google OAuth. Szczegóły: `docs/supabase-custom-domain.md`.
+
 ### [2026-06-25] Finalny model biznesowy — cennik, freemium, limity (DECYZJA, wdrożenie pending)
 
 Domknięto model monetyzacji (szczegóły: sekcja „Model biznesowy" wyżej + `docs/Cosmogram_model_biznesowy.xlsx`).
