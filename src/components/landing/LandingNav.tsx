@@ -8,6 +8,7 @@ const NAV_LINKS = [
   ["Kalendarz", "/calendar"],
   ["Cosmo Match", "/match"],
   ["Cosmo Chat", "/cosmo-chat"],
+  ["Blog", "/blog"],
   ["Cennik", "/pricing"],
 ] as const;
 

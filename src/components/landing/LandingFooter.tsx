@@ -29,6 +29,7 @@ export default function LandingFooter() {
           </div>
           <div>
             <h4 style={{ fontSize:13,letterSpacing:".1em",textTransform:"uppercase",color:"var(--text-muted)",marginBottom:14 }}>Poznaj</h4>
+            <Link href="/blog"          style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Blog</Link>
             <Link href="/app/cosmogram" style={{ display:"block",fontSize:15,color:"var(--text-secondary)",textDecoration:"none",padding:"4px 0" }}>Przykładowy kosmogram</Link>
           </div>
           <div>

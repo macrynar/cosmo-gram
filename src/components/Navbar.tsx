@@ -15,6 +15,7 @@ const PUBLIC_NAV = [
   { label: ROUTES.public.calendar.label,    href: ROUTES.public.calendar.path },
   { label: BRAND.match,                     href: ROUTES.public.match.path },
   { label: BRAND.chat,                      href: ROUTES.public.chatPublic.path },
+  { label: ROUTES.public.blog.label,        href: ROUTES.public.blog.path },
   { label: ROUTES.public.pricing.label,     href: ROUTES.public.pricing.path },
 ];
 
