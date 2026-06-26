@@ -19,9 +19,9 @@ type Props = {
 const FEATURES = [
   "Pełna interpretacja Twojego kosmogramu",
   "Dzienny odczyt astrologiczny każdego ranka",
-  "Nieograniczone Astro-Matche",
-  "Cosmogram Chat bez limitu",
-  "Karta kosmogramu dziecka",
+  "Cosmo Match — pełna analiza relacji",
+  "Cosmo Chat z Astreą — 50 wiadomości/mc",
+  "Karta kosmogramu dziecka — pełne 6 modułów",
 ];
 
 export default function PaywallModal({ onClose, reason }: Props) {

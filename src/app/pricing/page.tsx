@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Cennik — Cosmogram",
   description:
-    "Zacznij za darmo, przejdź na Plus, gdy chcesz więcej. Cosmogram Plus 19,90 zł/mc lub 199 zł/rok — pełna interpretacja, Cosmo Match, Kosmogram dziecka i Cosmo Chat z Astreą. Anuluj kiedy chcesz.",
+    "Zacznij za darmo, przejdź na Plus, gdy chcesz więcej. Cosmogram Plus 24,99 zł/mc lub 199 zł/rok — pełna interpretacja, Cosmo Match, Kosmogram dziecka i Cosmo Chat z Astreą. Anuluj kiedy chcesz.",
   alternates: { canonical: "https://www.cosmo-gram.com/pricing" },
   openGraph: {
     title: "Cennik — Cosmogram",
@@ -45,13 +45,13 @@ const JSON_PRODUCT = {
   "@type": "Product",
   name: "Cosmogram Plus",
   description:
-    "Pełna interpretacja kosmogramu natalnego, Cosmo Match (pełna analiza 8 wymiarów), Kosmogram dziecka i Cosmo Chat z Astreą (150 wiadomości miesięcznie).",
+    "Pełna interpretacja kosmogramu natalnego, Cosmo Match (pełna analiza 8 wymiarów), Kosmogram dziecka i Cosmo Chat z Astreą (50 wiadomości miesięcznie).",
   brand: { "@type": "Brand", name: "Cosmogram" },
   offers: [
     {
       "@type": "Offer",
       name: "Plus miesięczny",
-      price: "19.90",
+      price: "24.99",
       priceCurrency: "PLN",
       availability: "https://schema.org/InStock",
       url: "https://www.cosmo-gram.com/signup?plan=plus",
@@ -84,7 +84,7 @@ const JSON_FAQ = {
       name: "Ile kosztuje Plus?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "19,90 zl miesiecznie lub 199 zl rocznie (oszczedzasz 17%). Ceny brutto, bez ukrytych kosztow.",
+        text: "24,99 zl miesiecznie lub 199 zl rocznie (oszczedzasz ~33%). Ceny brutto, bez ukrytych kosztow.",
       },
     },
     {
@@ -241,8 +241,8 @@ export default function PricingPage() {
             <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
               {([
                 ["Pełny kosmogram urodzeniowy z kołem i Wielką Trójką", false],
-                ["Interpretacja AI kluczowych pozycji", "1 rozdział"],
-                ["Cosmo Match", "wynik + 1 moduł"],
+                ["Interpretacja AI kluczowych pozycji", "3 rozdziały"],
+                ["Cosmo Match", "wynik + 3 moduły"],
                 ["Cosmo Chat", "3 wiadomości na start"],
                 ["Horoskop dzienny — raz dziennie", false],
               ] as [string, string | false][]).map(([label, detail], i) => (
@@ -307,13 +307,13 @@ export default function PricingPage() {
             </div>
 
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
-              <span style={{ ...serif, fontSize: 38 }}>19,90 zł</span>
+              <span style={{ ...serif, fontSize: 38 }}>24,99 zł</span>
               <span style={{ color: "#877FA0", fontSize: 15 }}>/ miesiąc</span>
             </div>
             <div style={{ fontSize: 13, color: "#877FA0", marginBottom: 4 }}>
               lub <strong style={{ color: "#E0B566" }}>199 zł / rok</strong>{" "}
-              <span style={{ color: "#877FA0" }}>&asymp; 16,60 zł/mc</span> &middot;{" "}
-              <span style={{ color: "#E0B566" }}>oszczędzasz 17%</span>
+              <span style={{ color: "#877FA0" }}>&asymp; 16,58 zł/mc</span> &middot;{" "}
+              <span style={{ color: "#E0B566" }}>oszczędzasz ~33%</span>
             </div>
             <div style={{ fontSize: 12, color: "#877FA0", marginBottom: 22 }}>
               Anuluj kiedy chcesz · bezpieczna płatność Stripe
@@ -322,9 +322,9 @@ export default function PricingPage() {
             <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
               {([
                 ["Pełna interpretacja kosmogramu", "wszystkie 8 rozdziałów o Tobie"],
-                ["Cosmo Match — pełna analiza 8 wymiarów", "do 10 analiz miesięcznie: gdzie iskrzy, a gdzie tkwi potencjał"],
-                ["Kosmogram dziecka", "temperament i potrzeby emocjonalne"],
-                ["Cosmo Chat — 150 wiadomości miesięcznie", "z Astreą, z pełnym kontekstem Twojego kosmogramu (+ doładowania)"],
+                ["Cosmo Match — pełna analiza 8 wymiarów", "do 5 analiz miesięcznie: gdzie iskrzy, a gdzie tkwi potencjał"],
+                ["Kosmogram dziecka", "pełne 6 modułów i biblioteka"],
+                ["Cosmo Chat — 50 wiadomości miesięcznie", "z Astreą, z pełnym kontekstem Twojego kosmogramu (+ doładowania)"],
                 ["Priorytetowe, dłuższe i głębsze odpowiedzi AI", false],
               ] as [string, string | false][]).map(([label, detail], i) => (
                 <li key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14, color: "#B6AFC6" }}>
@@ -379,10 +379,10 @@ export default function PricingPage() {
                   {(
                     [
                       ["Kosmogram urodzeniowy z kołem i Wielką Trójką", "check", "check"],
-                      ["Rozdziały interpretacji o Tobie", "1 z 8", "wszystkie 8"],
-                      ["Cosmo Match (synastria)", "wynik + 1 moduł", "pełna analiza · 10 / mies."],
-                      ["Kosmogram dziecka", "none", "check"],
-                      ["Cosmo Chat z Astreą", "3 wiadomości", "150 / miesiąc"],
+                      ["Rozdziały interpretacji o Tobie", "3 z 8", "wszystkie 8"],
+                      ["Cosmo Match (synastria)", "wynik + 3 moduły", "pełna analiza · 5 / mies."],
+                      ["Kosmogram dziecka", "2 z 6", "pełne 6"],
+                      ["Cosmo Chat z Astreą", "3 wiadomości", "50 / miesiąc"],
                       ["Horoskop dzienny", "1× dziennie", "1× dziennie"],
                       ["Priorytetowe, dłuższe odpowiedzi AI", "none", "check"],
                     ] as [string, string, string][]
@@ -433,15 +433,15 @@ export default function PricingPage() {
                 },
                 {
                   q: "Co dokładnie odblokowuje Plus?",
-                  a: "Pełną interpretację (wszystkie 8 rozdziałów), Cosmo Match z pełną analizą relacji (do 10 analiz miesięcznie), Kosmogram dziecka, Cosmo Chat z Astreą (150 wiadomości miesięcznie) z pełnym kontekstem Twojego kosmogramu oraz priorytetowe, dłuższe odpowiedzi AI.",
+                  a: "Pełną interpretację (wszystkie 8 rozdziałów), Cosmo Match z pełną analizą relacji (do 5 analiz miesięcznie), Kosmogram dziecka, Cosmo Chat z Astreą (50 wiadomości miesięcznie) z pełnym kontekstem Twojego kosmogramu oraz priorytetowe, dłuższe odpowiedzi AI.",
                 },
                 {
                   q: "Ile mogę rozmawiać z Astreą?",
-                  a: "W planie Free masz 3 wiadomości na start. W Plus — 150 wiadomości miesięcznie, a licznik odnawia się co okres rozliczeniowy. Gdy potrzebujesz więcej, możesz w każdej chwili doładować dodatkową paczkę wiadomości.",
+                  a: "W planie Free masz 3 wiadomości na start. W Plus — 50 wiadomości miesięcznie, a licznik odnawia się co okres rozliczeniowy. Gdy potrzebujesz więcej, możesz w każdej chwili doładować dodatkową paczkę wiadomości.",
                 },
                 {
                   q: "Ile kosztuje Plus?",
-                  a: "19,90 zł miesięcznie lub 199 zł rocznie (16,60 zł/mc — oszczędzasz 17%). Ceny brutto, bez ukrytych kosztów.",
+                  a: "24,99 zł miesięcznie lub 199 zł rocznie (16,58 zł/mc — oszczędzasz ~33%). Ceny brutto, bez ukrytych kosztów.",
                 },
                 {
                   q: "Czy mogę anulować w każdej chwili?",

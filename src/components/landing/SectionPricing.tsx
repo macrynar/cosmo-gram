@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PLAN_PRICES } from "@/lib/pricing";
 
 export default function SectionPricing() {
   return (
@@ -80,16 +81,16 @@ export default function SectionPricing() {
           <div style={{ position:"relative",zIndex:1 }}>
             <div style={{ fontSize:14,letterSpacing:".12em",textTransform:"uppercase",color:"var(--text-muted)",marginBottom:14 }}>Plus</div>
             <div style={{ fontSize:44,fontWeight:700,letterSpacing:"-.02em",fontVariantNumeric:"tabular-nums" }}>
-              19,99 zł <small style={{ fontSize:16,fontWeight:400,color:"var(--text-muted)" }}>/ mies.</small>
+              {PLAN_PRICES.monthly.amount} <small style={{ fontSize:16,fontWeight:400,color:"var(--text-muted)" }}>/ mies.</small>
             </div>
-            <div style={{ fontSize:14,color:"var(--accent-deep)",margin:"6px 0 26px" }}>lub 149 zł/rok — oszczędzasz 37%</div>
+            <div style={{ fontSize:14,color:"var(--accent-deep)",margin:"6px 0 26px" }}>lub {PLAN_PRICES.annual.amount}/rok — {PLAN_PRICES.annual.saving}</div>
             <ul style={{ listStyle:"none",marginBottom:32,padding:0 }}>
               {[
                 "Pełna interpretacja: wszystkie 8 rozdziałów",
-                "Cosmo Match bez limitu",
+                "Cosmo Match — pełna analiza relacji",
                 "Osobisty horoskop dzienny i&nbsp;Dni Mocy",
-                "Cosmo Chat z&nbsp;Twoim kosmogramem",
-                "Kosmogram dziecka",
+                "Cosmo Chat z&nbsp;Astreą — 50 wiadomości/mc",
+                "Kosmogram dziecka — pełne 6 modułów",
               ].map((item,i) => (
                 <li key={i} style={{ fontSize:15.5,lineHeight:1.5,color:"var(--text-secondary)",padding:"7px 0 7px 28px",position:"relative" }}
                   dangerouslySetInnerHTML={{ __html: `<span style="position:absolute;left:0;color:var(--accent-deep)">✓</span>${item}` }} />
