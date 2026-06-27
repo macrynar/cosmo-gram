@@ -1,14 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/cron/daily-horoscope",
-      "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/daily-personal-horoscope",
-      "schedule": "0 3 * * *"
-    },
-    {
       "path": "/api/cron/letters-drip",
       "schedule": "0 4 * * *"
     },
