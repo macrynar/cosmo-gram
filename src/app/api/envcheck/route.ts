@@ -5,34 +5,40 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const KEYS = [
+// Realne nazwy z kodu (grep process.env.*). Podzielone na must-have i opcjonalne.
+const REQUIRED = [
+  "ANTHROPIC_API_KEY",
   "CRON_SECRET",
   "RESEND_API_KEY",
-  "ANTHROPIC_API_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   "STRIPE_SECRET_KEY",
   "STRIPE_WEBHOOK_SECRET",
-  "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
-  "NEXT_PUBLIC_STRIPE_PRICE_ID",
-  "RESEND_FROM",
+  "STRIPE_PRICE_MONTHLY",
+  "STRIPE_PRICE_YEARLY",
   "NEXT_PUBLIC_APP_URL",
-  "NEXT_PUBLIC_POSTHOG_KEY",
-  "UPSTASH_REDIS_REST_URL",
-  "UPSTASH_REDIS_REST_TOKEN",
   "STRIPE_PRICE_CHAT_PACK_SMALL",
   "STRIPE_PRICE_CHAT_PACK_MEDIUM",
   "STRIPE_PRICE_CHAT_PACK_LARGE",
 ];
+// Działa bez nich, ale lepiej mieć (analityka / rate-limit; rateLimiter ma no-op).
+const OPTIONAL = [
+  "NEXT_PUBLIC_POSTHOG_KEY",
+  "NEXT_PUBLIC_POSTHOG_HOST",
+  "UPSTASH_REDIS_REST_URL",
+  "UPSTASH_REDIS_REST_TOKEN",
+];
+
+const has = (k: string) => (process.env[k]?.length ?? 0) > 0;
 
 export async function GET() {
-  const present: Record<string, boolean> = {};
-  const missing: string[] = [];
-  for (const k of KEYS) {
-    const ok = (process.env[k]?.length ?? 0) > 0;
-    present[k] = ok;
-    if (!ok) missing.push(k);
-  }
-  return NextResponse.json({ present, missing, allPresent: missing.length === 0, marker: "envcheck-v3" });
+  const missingRequired = REQUIRED.filter((k) => !has(k));
+  const missingOptional = OPTIONAL.filter((k) => !has(k));
+  return NextResponse.json({
+    missingRequired,
+    missingOptional,
+    allRequiredPresent: missingRequired.length === 0,
+    marker: "envcheck-v4",
+  });
 }
