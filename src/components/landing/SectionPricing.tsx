@@ -38,6 +38,7 @@ export default function SectionPricing() {
               "Pełny kosmogram bazowy z&nbsp;interpretacją",
               "Koło urodzeniowe z&nbsp;pozycjami planet",
               "Jeden Cosmo Match na start",
+              "Pierwszy list od Astrei",
               "Ogólny kalendarz astrologiczny",
             ].map((item,i) => (
               <li key={i} style={{ fontSize:15.5,lineHeight:1.5,color:"var(--text-secondary)",padding:"7px 0 7px 28px",position:"relative" }}
@@ -90,6 +91,7 @@ export default function SectionPricing() {
                 "Cosmo Match: pełna analiza relacji",
                 "Osobisty horoskop dzienny i&nbsp;Dni Mocy",
                 "Cosmo Chat z&nbsp;Astreą: 50 wiadomości/mc",
+                "Listy od Astrei: nowy list co tydzień, w&nbsp;apce i&nbsp;mailem",
                 "Kosmogram dziecka: pełne 6 modułów",
               ].map((item,i) => (
                 <li key={i} style={{ fontSize:15.5,lineHeight:1.5,color:"var(--text-secondary)",padding:"7px 0 7px 28px",position:"relative" }}
