@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { after } from "next/server";
 import { z } from "zod";
 import { AstroModuleAIOutputSchema, type AstroModuleAIOutput } from "./schemas/astroModule";
 import { STYLE_BLOCK } from "./moduleSpecs";
@@ -31,8 +32,20 @@ export async function logAiCall(entry: {
   /** Per-user cost attribution (§2.8). Null/undefined dla anonimowych / systemowych (cron) wywołań. */
   user_id?: string | null;
 }) {
-  // Fire-and-forget — never let logging break the main call
-  void supabaseAdmin.from("ai_call_logs").insert(entry);
+  const insert = async () => {
+    const { error } = await supabaseAdmin.from("ai_call_logs").insert(entry);
+    if (error) console.error("[logAiCall] insert failed:", error.message);
+  };
+  // Vercel ucina niezawaitowaną pracę async po wysłaniu odpowiedzi — dlatego
+  // fire-and-forget (`void insert()`) nigdy nie dolatywał do Postgresa na prodzie.
+  // after() dokańcza insert PO odpowiedzi w ramach tego samego requestu (zero
+  // latencji na hot-path). Poza request scope (testy/skrypty) after() rzuca —
+  // wtedy fallback na fire-and-forget jak dawniej.
+  try {
+    after(insert);
+  } catch {
+    void insert();
+  }
 }
 
 // ─── generateModuleWithRetry (Claude Sonnet 4.6 — natal modules) ─────────────
