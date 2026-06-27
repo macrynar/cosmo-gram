@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   const ids = (old ?? []).map(c => c.id);
   if (ids.length === 0) {
-    await supabaseAdmin.from("cron_runs").insert({ job: "cleanup_chat_sessions", status: "ok", detail: "nothing to delete" });
+    await supabaseAdmin.from("cron_runs").insert({ name: "cleanup-chat-sessions", status: "ok", metadata: { deleted: 0 } });
     return NextResponse.json({ deleted: 0 });
   }
 
@@ -32,9 +32,9 @@ export async function GET(req: NextRequest) {
   await supabaseAdmin.from("conversations").delete().in("id", ids);
 
   await supabaseAdmin.from("cron_runs").insert({
-    job: "cleanup_chat_sessions",
+    name: "cleanup-chat-sessions",
     status: "ok",
-    detail: `deleted ${ids.length} sessions older than 12 months`,
+    metadata: { deleted: ids.length },
   });
 
   return NextResponse.json({ deleted: ids.length });

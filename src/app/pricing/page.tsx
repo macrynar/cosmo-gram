@@ -255,6 +255,7 @@ export default function PricingPage() {
                 ["Interpretacja AI kluczowych pozycji", "3 rozdziały"],
                 ["Cosmo Match", "wynik + 3 moduły"],
                 ["Cosmo Chat", "3 wiadomości na start"],
+                ["Listy od Astrei", "pierwszy list"],
                 ["Horoskop dzienny, raz dziennie", false],
               ] as [string, string | false][]).map(([label, detail], i) => (
                 <li key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14, color: "#B6AFC6" }}>
@@ -336,6 +337,7 @@ export default function PricingPage() {
                 ["Cosmo Match: pełna analiza 8 wymiarów", "do 5 analiz miesięcznie: gdzie iskrzy, a gdzie tkwi potencjał"],
                 ["Kosmogram dziecka", "pełne 6 modułów i biblioteka"],
                 ["Cosmo Chat: 50 wiadomości miesięcznie", "z Astreą, z pełnym kontekstem Twojego kosmogramu (+ doładowania)"],
+                ["Listy od Astrei co tydzień", "osobiste listy odsłaniające kolejne warstwy Twojego kosmogramu, w skrzynce i mailem"],
                 ["Priorytetowe, dłuższe i głębsze odpowiedzi AI", false],
               ] as [string, string | false][]).map(([label, detail], i) => (
                 <li key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14, color: "#B6AFC6" }}>
@@ -394,6 +396,7 @@ export default function PricingPage() {
                       ["Cosmo Match (synastria)", "wynik + 3 moduły", "pełna analiza · 5 / mies."],
                       ["Kosmogram dziecka", "2 z 6", "pełne 6"],
                       ["Cosmo Chat z Astreą", "3 wiadomości", "50 / miesiąc"],
+                      ["Listy od Astrei", "pierwszy list", "co tydzień + e-mail"],
                       ["Horoskop dzienny", "1× dziennie", "1× dziennie"],
                       ["Priorytetowe, dłuższe odpowiedzi AI", "none", "check"],
                     ] as [string, string, string][]
