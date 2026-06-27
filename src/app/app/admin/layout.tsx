@@ -11,6 +11,7 @@ const NAV = [
   { href: "/app/admin/evals", label: "Ewaluacje" },
   { href: "/app/admin/golden", label: "Golden Tests" },
   { href: "/app/admin/few-shots", label: "Few-shot" },
+  { href: "/app/admin/ai-cost", label: "Koszt AI" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
