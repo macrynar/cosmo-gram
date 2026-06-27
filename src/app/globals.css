@@ -60,9 +60,11 @@
 }
 
 /* ─── PWA bottom nav safe area ─── */
+/* 6rem clears the 4rem bar PLUS the raised center button (which overhangs ~1.25rem
+   above the bar) — at 4.5rem the button covered the last line of page content. */
 @media (max-width: 767px) {
   .app-bottom-safe {
-    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
   }
 }
 

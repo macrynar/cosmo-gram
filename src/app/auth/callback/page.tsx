@@ -4,9 +4,19 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check, Loader2 } from "lucide-react";
+import type { EmailOtpType } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
 type ConsentState = "loading" | "needs_terms" | "done";
+
+// Typy linków e-mail, które wymieniamy na sesję po stronie klienta (verifyOtp).
+const EMAIL_OTP_TYPES: EmailOtpType[] = [
+  "signup",
+  "magiclink",
+  "recovery",
+  "invite",
+  "email_change",
+];
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -22,7 +32,15 @@ export default function AuthCallback() {
     async function handleCallback() {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
-      const redirect = params.get("redirect") ?? "/app/cosmogram";
+      const tokenHash = params.get("token_hash");
+      const emailType = params.get("type") as EmailOtpType | null;
+      // Open-redirect guard: akceptuj tylko ścieżki wewnętrzne ("/...").
+      // Odrzuć absolutne URL-e i protocol-relative ("//evil.com").
+      const redirectParam = params.get("redirect");
+      const redirect =
+        redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+          ? redirectParam
+          : "/app/cosmogram";
       setRedirectTarget(redirect);
 
       let sess: { access_token: string } | null = null;
@@ -33,6 +51,20 @@ export default function AuthCallback() {
         // detectSessionInUrl already consumed the code — we recover via getSession below.
         const { data } = await supabase.auth.exchangeCodeForSession(code).catch(() => ({ data: { session: null } }));
         if (data.session) { sess = data.session; freshOAuth = true; }
+      }
+
+      // Link z maila (rejestracja / magic link / reset hasła). Link żyje na
+      // naszej domenie i niesie token_hash — wymieniamy go na sesję bez
+      // przechodzenia przez brzydki adres *.supabase.co.
+      if (!sess && tokenHash && emailType && EMAIL_OTP_TYPES.includes(emailType)) {
+        const { data } = await supabase.auth
+          .verifyOtp({ token_hash: tokenHash, type: emailType })
+          .catch(() => ({ data: { session: null } }));
+        if (data.session) {
+          sess = data.session;
+          // welcome e-mail tylko przy pierwszym potwierdzeniu konta
+          if (emailType === "signup") freshOAuth = true;
+        }
       }
 
       // Fallback: covers (a) already-consumed code, (b) returning user with a live session.
