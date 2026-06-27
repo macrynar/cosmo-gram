@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { sendDailyHoroscopeEmail } from "@/lib/email";
+import { isAuthorizedCron } from "@/lib/cronAuth";
 
 // Vercel Cron calls this at 06:00 UTC every day
 // Secured by CRON_SECRET env var
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get("authorization");
-  if (secret !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isAuthorizedCron(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

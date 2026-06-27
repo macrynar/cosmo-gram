@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { isAuthorizedCron } from "@/lib/cronAuth";
 
 // Runs monthly — deletes chat sessions (conversations + messages via CASCADE) older than 12 months.
 // Configured in vercel.json: "0 3 1 * *" (03:00 UTC, 1st of each month)
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get("authorization");
-  if (secret !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isAuthorizedCron(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

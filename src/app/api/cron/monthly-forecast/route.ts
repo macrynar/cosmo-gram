@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { isAuthorizedCron } from "@/lib/cronAuth";
 import { render } from "@react-email/render";
 import { MonthlyForecastEmail } from "@/components/emails/HoroscopeEmails";
 import { getOrGenerateMonthContent } from "@/lib/calendar/cronGen";
@@ -152,8 +153,7 @@ async function updateSentTimestamp(userId: string): Promise<void> {
 
 async function runMonthlyCron(req: NextRequest) {
   // Auth check
-  const secret = req.headers.get("authorization");
-  if (secret !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isAuthorizedCron(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

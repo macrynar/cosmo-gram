@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { isAuthorizedCron } from "@/lib/cronAuth";
 import { getTransitsForDate, getDayWeather } from "@/lib/astro/transits";
 import { aiComplete, AiDisabledError } from "@/lib/deepseek";
 import { PersonalHoroscopeAIOutputSchema } from "@/lib/schemas/personalHoroscope";
@@ -35,8 +36,7 @@ Aktywne tranzyty:\n${top3.join("\n")}`;
 }
 
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get("authorization");
-  if (secret !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isAuthorizedCron(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
